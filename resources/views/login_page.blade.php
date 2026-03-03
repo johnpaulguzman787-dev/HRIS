@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediSource - Sign In</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { manrope: ['Manrope', 'sans-serif'] },
+                    colors: {
+                        accent: '#3B7DED',
+                        'content-dark': '#2D2D2D',
+                        'content-light': '#FFFFFF',
+                        'secondary-blue': '#FFFFFF',
+                        'bg-surface': '#FFFFFF',
+                        'bg-base': '#FFFFFF',
+                    },
+                    borderRadius: {
+                        'sm': '2px',
+                        DEFAULT: '4px',
+                        'md': '6px',
+                        'lg': '8px',
+                        'xl': '12px',
+                        '2xl': '16px',
+                        '3xl': '24px',
+                    },
+                    screens: {
+                        'xs': '376px',
+                        'sm': '640px',
+                        'md': '768px',
+                        'lg': '1024px',
+                        'xl': '1280px',
+                        '2xl': '1536px',
+                    },
+                    boxShadow: {
+                        'md': '0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -1px rgba(0,0,0,0.06)',
+                        'lg': '0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -2px rgba(0,0,0,0.05)',
+                    }
+                },
+            },
+        }
+    </script>
+
+    <style>
+        *, *::before, *::after {
+            font-family: 'Manrope', sans-serif;
+            box-sizing: border-box;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Form input */
+        .form-input {
+            width: 100%;
+            height: 46px;
+            padding: 0 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(45, 45, 45, 0.50);
+            background: #FFFFFF;
+            font-size: 14px;
+            font-weight: 300;
+            color: #2D2D2D;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input::placeholder {
+            color: rgba(45, 45, 45, 0.30);
+            font-weight: 300;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #3B7DED;
+            box-shadow: 0 0 0 3px rgba(59, 125, 237, 0.15);
+        }
+
+        /* Sign In button */
+        .btn-signin {
+            width: 60%;
+            height: 45px;
+            border-radius: 12px;
+            background-color: #3B7DED;
+            border: 1px solid transparent;
+            cursor: pointer;
+            color: #FFFFFA;
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -1px rgba(0,0,0,0.06);
+
+            display: block;        /* required for margin auto */
+            margin: 30px auto 0 auto;        /* centers horizontally */
+        }
+        .btn-signin:hover {
+            background-color: #FFFFFF;
+            color: #3B7DED;
+            border-color: rgba(45,45,45,0.15);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+
+        /* Eye button */
+        .eye-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            color: rgba(45, 45, 45, 0.40);
+            transition: color 0.2s;
+        }
+        .eye-btn:hover { color: rgba(45, 45, 45, 0.70); }
+
+        /* Forgot link */
+        .forgot-link {
+            font-size: 14px;
+            font-weight: 300;
+            color: #3B7DED;
+            text-decoration: none;
+        }
+        .forgot-link:hover { text-decoration: underline; }
+
+        /* Asterisk */
+        .deco-asterisk {
+            font-size: 26px;
+            font-weight: 700;
+            color: rgba(255, 255, 250, 0.80);
+            line-height: 1;
+            user-select: none;
+        }
+
+        /* ===== DESKTOP LAYOUT ===== */
+        .page-wrapper {
+            width: 100%;
+            height: 100vh;
+            padding: 24px;
+            background-color: #FFFFFF;
+            display: flex;
+            flex-direction: row;
+            gap: 24px;
+        }
+
+        .left-col {
+            flex: 1;
+            border-radius: 24px;
+            background: linear-gradient(160deg, #C8DCFE 0%, #3B7DED 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px;
+            overflow: hidden;
+        }
+
+        .right-col {
+            flex: 1;
+            border-radius: 24px;
+            background-color: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            overflow: hidden;
+        }
+
+        /* ===== MOBILE LAYOUT (xs, sm) ===== */
+        @media (max-width: 767px) {
+            .page-wrapper {
+                flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+                padding: 16px;
+                gap: 16px;
+            }
+            .left-col {
+                flex: none;
+                min-height: 180px;
+                padding: 24px;
+                border-radius: 16px;
+            }
+            .left-col h1 {
+                font-size: 28px !important;
+            }
+            .left-col p {
+                font-size: 16px !important;
+            }
+            .right-col {
+                flex: 1;
+                padding: 32px 20px;
+                border-radius: 16px;
+            }
+            .form-inner {
+                max-width: 100% !important;
+            }
+            .sign-in-heading {
+                font-size: 28px !important;
+            }
+        }
+
+        /* Shake animation */
+           @keyframes shake {
+           0% { transform: translateX(0); }
+           20% { transform: translateX(-4px); }
+           40% { transform: translateX(4px); }
+           60% { transform: translateX(-4px); }
+           80% { transform: translateX(4px); }
+           100% { transform: translateX(0); }
+        }
+
+           .shake {
+           animation: shake 0.3s ease-in-out;
+        }
+
+           .input-error {
+           border-color: #EF4444; /* Tailwind red-500 */
+           box-shadow: 0 0 0 1px #EF4444;
+         }
+
+       
+
+    </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+
+    <!-- ===== LEFT COLUMN ===== -->
+    <div class="left-col">
+
+        <!-- Asterisk top right -->
+        <div style="display:flex; justify-content:flex-end;">
+           <span class="deco-asterisk" style="font-size:82px;">*</span>
+        </div>
+
+
+        <!-- Welcome text bottom -->
+        <div>
+            <h1 style="font-size:52px; font-weight:700; color:#FFFFFA; line-height:1.2; margin:0 0 12px 0;">
+                Welcome!
+            </h1>
+            <p style="font-size:20px; font-weight:300; color:rgba(255,255,250,0.80); line-height:1.65; margin:0; max-width:320px;">
+                Streamline your HR tasks and <br/> stay connected with your <br/> team, all in one place.
+            </p>
+        </div>
+
+    </div>
+
+    <!-- ===== RIGHT COLUMN ===== -->
+    <div class="right-col">
+
+        <div class="form-inner" style="width:100%; max-width:420px;">
+
+            <!-- Logo -->
+            <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:28px;">
+                <img src="{{ asset('images/place_holder.png') }}" alt="MediSource Logo"
+                     style="width:80px; height:56px; object-fit:contain;"
+                     onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
+                <div id="logo-fallback" style="display:none; width:80px; height:56px; border:2px solid #2D2D2D; border-radius:2px; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+                    <svg width="80" height="56" viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="1" y="1" width="78" height="54" stroke="#2D2D2D" stroke-width="1.5"/>
+                        <line x1="1" y1="1" x2="79" y2="55" stroke="#2D2D2D" stroke-width="1.5"/>
+                        <line x1="79" y1="1" x2="1" y2="55" stroke="#2D2D2D" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                <span style="font-size:18px; font-weight:600; color:#2D2D2D; margin-top:8px; text-transform:uppercase;">
+                    MediSource
+                </span>
+            </div>
+
+            <!-- Heading -->
+            <div style="text-align:center; margin-bottom:28px;">
+                <h2 class="sign-in-heading" style="font-size:32px; font-weight:700; color:#2D2D2D; margin:0 0 6px 0;">
+                    Sign In
+                </h2>
+                <p style="font-size:16px; font-weight:300; color:rgba(45,45,45, 0.80); margin:0;">
+                    Enter your details to log in to your account.
+                </p>
+            </div>
+
+            <!-- Form -->
+            <form method="POST" action="{{ route('login.submit') }}" style="display:flex; flex-direction:column; gap:20px;">
+                
+                @csrf
+
+                <!-- Email -->
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label for="email" style="font-size:16px; font-weight:500; color:#2D2D2D;">Email</label>
+                    <input
+                        id="email"
+                        type="email"
+                        name="email"
+                        placeholder="Enter your email"
+                        autocomplete="email"
+                        value="{{ old('email') }}"
+                        class="form-input @error('email') input-error shake @enderror">
+                    @error('email')
+                        <span style="font-size:13px; color:#EF4444; font-weight:300;">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <!-- Password -->
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label for="password" style="font-size:16px; font-weight:500; color:#2D2D2D;">Password</label>
+                    <div style="position:relative;">
+                        <input
+                            id="password"
+                            type="password"
+                            name="password"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            class="form-input @error('password') input-error shake @enderror"
+                            style="padding-right:44px;">
+                        <button type="button" class="eye-btn" onclick="togglePassword()" tabindex="-1">
+                            <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    @error('password')
+                        <span style="font-size:13px; color:#EF4444; font-weight:300;">{{ $message }}</span>
+                    @enderror
+
+                    <!-- Forgot Password -->
+                    <div style="display:flex; justify-content:flex-end; margin-top:2px;">
+                        <a href="{{ route('password.request') }}" class="forgot-link">Forgot Password?</a>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" class="btn-signin">SIGN IN</button>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function togglePassword() {
+        const input = document.getElementById('password');
+        const icon = document.getElementById('eye-icon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 012.126-3.36M6.108 6.108A9.97 9.97 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.423 5.276M15 12a3 3 0 11-4.243-4.243M3 3l18 18"/>
+            `;
+        } else {
+            input.type = 'password';
+            icon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            `;
+        }
+    }
+</script>
+
+
+
+
+</body>
+</html>

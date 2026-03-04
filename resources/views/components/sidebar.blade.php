@@ -35,7 +35,7 @@
     <!-- Navigation Menu -->
     <nav class="p-4 space-y-1">
         <!-- Dashboard -->
-        <a href="{{ route('dashboard') }}" 
+        <a href="{{ route('admin.dashboard') }}" 
             class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group"
             :class="{
                 'bg-blue-50 text-blue-600': '{{ $activeMenu }}' === 'dashboard',

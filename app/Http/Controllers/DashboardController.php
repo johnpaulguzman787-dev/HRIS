@@ -222,7 +222,7 @@ class DashboardController extends Controller
             'birthdaysThisMonth' => 3,
         ];
         
-        return view('dashboard.admin_dashboard', $data);
+        return view('admin.admin_dashboard', $data);
     }
 
     /**

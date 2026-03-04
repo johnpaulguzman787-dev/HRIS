@@ -42,18 +42,14 @@ Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name(
 
 Route::middleware(['auth'])->group(function () {
 
-    // Admin main dashboard (from your partner)
-    Route::get('/dashboard', [DashboardController::class, 'admin_dashboard'])->name('dashboard');
 
     // Employee Directory
     Route::prefix('employees')->name('employees.')->group(function () {
         Route::get('/directory', [EmployeeController::class, 'directory'])->name('directory');
     });
 
-    // Role-based dashboards (from you)
-    Route::get('/admin', function () {
-        return view('admin.admin_dashboard');
-    })->name('admin.dashboard');
+Route::get('/admin', [DashboardController::class, 'admin_dashboard'])
+    ->name('admin.dashboard');
 
     Route::get('/hr', function () {
         return view('hr.hr_dashboard');

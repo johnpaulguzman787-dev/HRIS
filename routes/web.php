@@ -1,13 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
-
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\SettingsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,15 +41,15 @@ Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name(
 
 Route::middleware(['auth'])->group(function () {
 
-
     // Employee Directory
     Route::prefix('employees')->name('employees.')->group(function () {
         Route::get('/directory', [EmployeeController::class, 'directory'])->name('directory');
     });
 
-Route::get('/admin', [DashboardController::class, 'admin_dashboard'])
-    ->name('admin.dashboard');
+    // Admin Dashboard
+    Route::get('/admin', [DashboardController::class, 'admin_dashboard'])->name('admin.dashboard');
 
+    // Other Dashboards
     Route::get('/hr', function () {
         return view('hr.hr_dashboard');
     })->name('hr.dashboard');
@@ -70,6 +69,18 @@ Route::get('/admin', [DashboardController::class, 'admin_dashboard'])
     Route::get('/employee', function () {
         return view('employee.employee_dashboard');
     })->name('employee.dashboard');
+
+    // =========================
+    // SETTINGS ROUTES
+    // =========================
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [SettingsController::class, 'index'])->name('index');
+        Route::get('/general', [SettingsController::class, 'general'])->name('general');
+        Route::get('/permissions', [SettingsController::class, 'permissions'])->name('permissions');
+        Route::get('/notifications', [SettingsController::class, 'notifications'])->name('notifications');
+        Route::get('/security', [SettingsController::class, 'security'])->name('security');
+        Route::get('/email', [SettingsController::class, 'email'])->name('email');
+    });
 
 });
 

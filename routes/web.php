@@ -66,7 +66,7 @@ Route::middleware(['auth'])->group(function () {
         return view('finance.finance_dashboard');
     })->name('finance.dashboard');
 
-    Route::get('/employee', function () {
+    Route::get('/employees', function () {
         return view('employee.employee_dashboard');
     })->name('employee.dashboard');
 

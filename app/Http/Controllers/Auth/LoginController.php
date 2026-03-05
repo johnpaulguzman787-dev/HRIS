@@ -59,7 +59,7 @@ class LoginController extends Controller
                 return redirect()->route('payroll.dashboard');
             case 'finance_officer':
                 return redirect()->route('finance.dashboard');
-            case 'employee':
+            case 'employees':
                 return redirect()->route('employee.dashboard');
             default:
                 Auth::logout();

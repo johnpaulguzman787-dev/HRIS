@@ -87,6 +87,34 @@
 
     departmentForm: { name: '', head: '' },
 
+    showDepartmentDetails: false,
+    selectedDepartment: null,
+    isDeptEditMode: false,
+
+    viewDepartmentDetails(dept, titles) {
+        this.selectedDepartment = {
+            key: dept,
+            name: dept === 'IT' ? 'IT/Information Technology' : dept === 'Finance' ? 'Finance & Accounting' : dept === 'Nursing' ? 'Healthcare' : dept === 'HR' ? 'Human Resource' : 'Operations',
+            jobTitles: [...titles],
+            newJobTitle: ''
+        };
+        this.isDeptEditMode = false;
+        this.showDepartmentDetails = true;
+    },
+    addJobTitle() {
+        if (this.selectedDepartment.newJobTitle.trim()) {
+            this.selectedDepartment.jobTitles.push(this.selectedDepartment.newJobTitle.trim());
+            this.selectedDepartment.newJobTitle = '';
+        }
+    },
+    removeJobTitle(index) {
+        this.selectedDepartment.jobTitles.splice(index, 1);
+    },
+    saveDepartmentDetails() {
+        this.isDeptEditMode = false;
+        alert('Department details saved!');
+    },
+
     get filteredEmployees() {
         let result = [...this.employees];
         if (this.searchQuery.trim()) {
@@ -210,13 +238,48 @@
                                             </td>
                                             <td class="px-5 py-4 text-sm text-gray-500 text-center" x-text="titles.join(', ')"></td>
                                             <td class="px-5 py-4 text-center">
-                                                <button class="px-4 py-1.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-lg border border-blue-100 hover:bg-blue-100 transition-all duration-200">View Details</button>
+                                                <button @click="viewDepartmentDetails(dept, titles)" class="px-4 py-1.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-lg border border-blue-100 hover:bg-blue-100 transition-all duration-200">View Details</button>
                                             </td>
                                         </tr>
                                     </template>
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DEPARTMENT DETAILS MODAL -->
+            <div x-show="showDepartmentDetails" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);" @click.self="showDepartmentDetails = false; isDeptEditMode = false">
+                <div x-show="showDepartmentDetails"
+                    x-transition:enter="transition-all duration-300 ease-out" x-transition:enter-start="opacity-0 scale-95 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                    x-transition:leave="transition-all duration-200 ease-in" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                    class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative" @click.stop>
+                    <button @click="showDepartmentDetails = false; isDeptEditMode = false" class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full border-2 border-gray-300 text-gray-500 hover:border-gray-600 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200 z-10 bg-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <div class="px-8 pt-8 pb-2"><h2 class="text-2xl font-semibold text-gray-800">Department Details</h2></div>
+                    <div x-show="selectedDepartment" class="px-8 pb-4 space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Department Name</label>
+                            <input type="text" x-model="selectedDepartment.name" :readonly="!isDeptEditMode" :class="{'bg-gray-50 cursor-not-allowed': !isDeptEditMode, 'bg-white': isDeptEditMode}" class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Job Titles</label>
+                            <div class="border border-gray-300 rounded-lg px-4 py-3 space-y-1 min-h-[120px]">
+                                <template x-for="(title, index) in selectedDepartment.jobTitles" :key="index">
+                                    <div class="flex items-center justify-between py-1">
+                                        <span class="text-sm text-gray-700" x-text="title"></span>
+                                        <button x-show="isDeptEditMode" @click="removeJobTitle(index)" class="text-gray-400 hover:text-red-500 transition-colors duration-150 ml-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                                    </div>
+                                </template>
+                                <input x-show="isDeptEditMode" type="text" x-model="selectedDepartment.newJobTitle" @keydown.enter.prevent="addJobTitle()" placeholder="Add Job Title" class="w-full text-sm text-gray-400 placeholder-gray-400 border-none outline-none bg-transparent pt-1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-8 py-5 flex justify-end space-x-3">
+                        <button x-show="!isDeptEditMode" @click="isDeptEditMode = true" class="px-6 py-2.5 bg-white text-blue-600 text-sm font-medium rounded-lg border border-blue-300 hover:bg-blue-50 transition-all duration-200">Edit</button>
+                        <button @click="saveDepartmentDetails()" class="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 hover:shadow-md transition-all duration-200">Save</button>
                     </div>
                 </div>
             </div>

@@ -118,4 +118,9 @@ class EmployeeController extends Controller
 
         return view('employees.directory', compact('employees', 'departments'));
     }
+
+    public function profile()
+    {
+        return view('employees.employee-profile');
+    }
 }

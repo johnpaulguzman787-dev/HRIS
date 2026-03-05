@@ -41,9 +41,10 @@ Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name(
 
 Route::middleware(['auth'])->group(function () {
 
-    // Employee Directory
+    // Employee Routes
     Route::prefix('employees')->name('employees.')->group(function () {
         Route::get('/directory', [EmployeeController::class, 'directory'])->name('directory');
+        Route::get('/profile', [EmployeeController::class, 'profile'])->name('profile');
     });
 
     // Admin Dashboard

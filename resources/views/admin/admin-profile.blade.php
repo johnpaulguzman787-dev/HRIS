@@ -10,28 +10,25 @@
     requestsOpen: false,
     reportsOpen: false,
 
-    employee: {
-        initials: 'JD',
-        full_name: 'John Doe',
-        job_title: 'System Administrator',
-        email: 'johndoe@gmail.com',
-        contact: '09287319873871',
-        address: 'Urdaneta City, Pangasinan, Philippines',
-        dob: '01/02/2000',
-        gender: 'Male',
-        status: 'Active',
-        department: 'IT/Information Technology',
-        employment_type: 'Full-time',
-        employment_status: 'Active',
-        contract_period: 'Indefinite',
-        start_date: '01/01/2026',
-        end_date: '',
-    },
+employee: {
+    initials: '{{ $employee ? strtoupper(substr($employee->fname, 0, 1) . substr($employee->lname, 0, 1)) : strtoupper(substr($user->email, 0, 2)) }}',
+    full_name: '{{ $employee ? trim($employee->fname . " " . ($employee->mi ? $employee->mi . ". " : "") . $employee->lname) : $user->email }}',
+    job_title: '{{ $employee?->jobTitle?->title ?? "—" }}',
+    email: '{{ $user->email }}',
+    contact: '{{ $employee?->contact_no ?? "—" }}',
+    address: '{{ $employee?->address ?? "—" }}',
+    dob: '{{ $employee?->date_of_birth ? \Carbon\Carbon::parse($employee->date_of_birth)->format("m/d/Y") : "—" }}',
+    gender: '{{ $employee?->gender ?? "—" }}',
+    status: '{{ $employee?->employment_status ?? "—" }}',
+    department: '{{ $employee?->department?->name ?? "—" }}',
+    employment_type: '{{ $employee?->employment_type ?? "—" }}',
+    employment_status: '{{ $employee?->employment_status ?? "—" }}',
+    contract_period: '{{ $employee?->contract_period ?? "—" }}',
+    start_date: '{{ $employee?->start_date ? \Carbon\Carbon::parse($employee->start_date)->format("m/d/Y") : "—" }}',
+    end_date: '{{ $employee?->end_date ? \Carbon\Carbon::parse($employee->end_date)->format("m/d/Y") : "" }}',
+},
 
-    documents: [
-        { name: 'contract.pdf' },
-        { name: 'resume.pdf' },
-    ],
+    documents: [],
 
     // Document Preview Modal
     showDocModal: false,
@@ -66,12 +63,12 @@
         <!-- User Card -->
         <div class="p-4 border-b border-gray-100 relative group" :class="sidebarCollapsed ? 'text-center' : 'flex items-center space-x-3'">
             <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-semibold flex-shrink-0 relative overflow-hidden">
-                <span class="relative z-10 transition-transform duration-300 group-hover:scale-110">JD</span>
+                {{ $employee ? strtoupper(substr($employee->fname, 0, 1) . substr($employee->lname, 0, 1)) : strtoupper(substr($user->email, 0, 2)) }}
                 <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
             </div>
             <div x-show="!sidebarCollapsed" class="overflow-hidden">
-                <p class="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">John Doe</p>
-                <p class="text-xs text-gray-500">System Administrator</p>
+                <p class="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">{{ $employee ? trim($employee->fname . ' ' . $employee->lname) : $user->email }}</p>
+<p class="text-xs text-gray-500">{{ $employee?->jobTitle?->title ?? $user->role }}</p>
             </div>
         </div>
 
@@ -231,7 +228,7 @@
         style="transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
 
         <!-- Header -->
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg">
+        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div>
                     <h1 class="text-xl sm:text-2xl font-bold">Employee Profile</h1>
@@ -245,7 +242,7 @@
                         <span class="absolute top-1 right-1 w-2 h-2 bg-red-400 rounded-full animate-ping"></span>
                         <span class="absolute top-1 right-1 w-2 h-2 bg-red-400 rounded-full"></span>
                     </button>
-                    <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center font-semibold cursor-pointer hover:bg-white/30 transition-all duration-200">JD</div>
+                    {{ $employee ? strtoupper(substr($employee->fname, 0, 1) . substr($employee->lname, 0, 1)) : strtoupper(substr($user->email, 0, 2)) }}
                 </div>
             </div>
         </header>

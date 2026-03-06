@@ -40,9 +40,18 @@ class LoginController extends Controller
         }
 
         // Step 3: Successful login
-        $request->session()->regenerate();
+       // Step 3: Check email verification
+if (!Auth::user()->hasVerifiedEmail()) {
+    Auth::logout();
+    return back()->withErrors([
+        'email' => 'Your account is not yet verified. Please check your email for the verification link.',
+    ])->withInput();
+}
 
-        return $this->redirectToRole(Auth::user());
+// Step 4: Successful login
+$request->session()->regenerate();
+
+return $this->redirectToRole(Auth::user());
     }
 
     // Role-based redirect
@@ -59,7 +68,7 @@ class LoginController extends Controller
                 return redirect()->route('payroll.dashboard');
             case 'finance_officer':
                 return redirect()->route('finance.dashboard');
-            case 'employees':
+            case 'employee':
                 return redirect()->route('employee.dashboard');
             default:
                 Auth::logout();

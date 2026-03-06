@@ -3,6 +3,15 @@
 @php
     $currentRoute = request()->route()->getName();
     $isEmployeesSection = in_array($currentRoute, ['employees.directory', 'employees.profile']);
+    $sidebarUser = auth()->user();
+    $sidebarEmployee = $sidebarUser ? \App\Models\Employee::with('jobTitle')->where('user_id', $sidebarUser->id)->first() : null;
+    $sidebarInitials = $sidebarEmployee
+        ? strtoupper(substr($sidebarEmployee->fname, 0, 1) . substr($sidebarEmployee->lname, 0, 1))
+        : ($sidebarUser ? strtoupper(substr($sidebarUser->email, 0, 2)) : 'U');
+    $sidebarName = $sidebarEmployee
+        ? trim($sidebarEmployee->fname . ' ' . $sidebarEmployee->lname)
+        : ($sidebarUser?->email ?? 'User');
+    $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 @endphp
 
 <aside 
@@ -32,13 +41,13 @@
     <!-- User Profile Card -->
     <div class="p-4 border-b border-gray-100 relative group" :class="sidebarCollapsed ? 'text-center' : 'flex items-center space-x-3'">
         <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-semibold flex-shrink-0 relative overflow-hidden">
-            <span class="relative z-10 transition-transform duration-300 group-hover:scale-110">JD</span>
-            <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-        </div>
-        <div x-show="!sidebarCollapsed" class="overflow-hidden">
-            <p class="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">John Doe</p>
-            <p class="text-xs text-gray-500">System Administrator</p>
-        </div>
+    <span class="relative z-10 transition-transform duration-300 group-hover:scale-110">{{ $sidebarInitials }}</span>
+    <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+</div>
+<div x-show="!sidebarCollapsed" class="overflow-hidden">
+    <p class="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">{{ $sidebarName }}</p>
+    <p class="text-xs text-gray-500">{{ $sidebarRole }}</p>
+</div>
     </div>
     
     <!-- Navigation Menu -->

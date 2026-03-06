@@ -30,9 +30,43 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForm'])->name('password.request');
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('password.email');
 
+
 // Reset Password
 Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showForm'])->name('password.reset');
 Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
+
+// Email Verification
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
+
+Route::get('/email/verify/{id}/{hash}', function (Illuminate\Http\Request $request, $id, $hash) {
+    $user = \App\Models\User::findOrFail($id);
+
+    // Validate the hash
+    if (!hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+        abort(403, 'Invalid verification link.');
+    }
+
+    // Check signature
+    if (!$request->hasValidSignature()) {
+        abort(403, 'Verification link has expired.');
+    }
+
+    // Mark as verified
+    if (!$user->hasVerifiedEmail()) {
+        $user->markEmailAsVerified();
+    }
+
+    return redirect()->route('login')->with('success', 'Email verified! You can now log in.');
+})->middleware(['signed'])->name('verification.verify');
+
+Route::post('/email/verification-notification', function (Illuminate\Http\Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+    return back()->with('message', 'Verification link sent!');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
 
 // =========================
@@ -42,10 +76,15 @@ Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name(
 Route::middleware(['auth'])->group(function () {
 
     // Employee Routes
-    Route::prefix('employees')->name('employees.')->group(function () {
-        Route::get('/directory', [EmployeeController::class, 'directory'])->name('directory');
-        Route::get('/profile', [EmployeeController::class, 'profile'])->name('profile');
-    });
+Route::prefix('employees')->name('employees.')->group(function () {
+    Route::get('/directory', [EmployeeController::class, 'directory'])->name('directory');
+    Route::get('/profile', [EmployeeController::class, 'profile'])->name('profile');
+    Route::post('/store', [EmployeeController::class, 'store'])->name('store');
+    Route::post('/departments', [EmployeeController::class, 'storeDepartment'])->name('departments.store');
+Route::match(['POST', 'PUT'], '/departments/{id}', [EmployeeController::class, 'updateDepartment'])->name('departments.update');
+ Route::put('/{id}', [EmployeeController::class, 'update'])->name('update');
+Route::put('/job-title/{id}', [EmployeeController::class, 'updateJobTitle'])->name('job_title.update');
+});
 
     // Admin Dashboard
     Route::get('/admin', [DashboardController::class, 'admin_dashboard'])->name('admin.dashboard');

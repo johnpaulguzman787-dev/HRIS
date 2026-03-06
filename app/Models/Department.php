@@ -8,9 +8,28 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Department extends Model
 {
-    use HasFactory, SoftDeletes; // enable soft deletes
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
     ];
+
+    // ── Relationships ──────────────────────────────
+
+    public function jobTitles()
+    {
+        return $this->hasMany(JobTitle::class);
+    }
+
+    public function employees()
+    {
+        return $this->hasMany(Employee::class);
+    }
+
+    // ── Accessors ──────────────────────────────────
+
+    public function getEmployeeCountAttribute(): int
+    {
+        return $this->employees()->count();
+    }
 }

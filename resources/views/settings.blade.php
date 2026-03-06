@@ -30,17 +30,24 @@
             <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
         </div>
         
-        <!-- User Profile Card -->
-        <div class="p-4 border-b border-gray-100 relative group" :class="sidebarCollapsed ? 'text-center' : 'flex items-center space-x-3'">
-            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-semibold flex-shrink-0 relative overflow-hidden">
-                <span class="relative z-10 transition-transform duration-300 group-hover:scale-110">JD</span>
-                <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-            </div>
-            <div x-show="!sidebarCollapsed" class="overflow-hidden">
-                <p class="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">John Doe</p>
-                <p class="text-xs text-gray-500">System Administrator</p>
-            </div>
-        </div>
+      <!-- User Profile Card -->
+@php
+    $dashUser = auth()->user();
+    $dashEmployee = \App\Models\Employee::with('jobTitle')->where('user_id', $dashUser->id)->first();
+    $dashInitials = $dashEmployee ? strtoupper(substr($dashEmployee->fname, 0, 1) . substr($dashEmployee->lname, 0, 1)) : strtoupper(substr($dashUser->email, 0, 2));
+    $dashName = $dashEmployee ? trim($dashEmployee->fname . ' ' . $dashEmployee->lname) : $dashUser->email;
+    $dashRole = $dashEmployee?->jobTitle?->title ?? $dashUser->role;
+@endphp
+<div class="p-4 border-b border-gray-100 relative group" :class="sidebarCollapsed ? 'text-center' : 'flex items-center space-x-3'">
+    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-semibold flex-shrink-0 relative overflow-hidden">
+        <span class="relative z-10 transition-transform duration-300 group-hover:scale-110">{{ $dashInitials }}</span>
+        <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+    </div>
+    <div x-show="!sidebarCollapsed" class="overflow-hidden">
+        <p class="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">{{ $dashName }}</p>
+        <p class="text-xs text-gray-500">{{ $dashRole }}</p>
+    </div>
+</div>
         
         <!-- Navigation Menu -->
         <nav class="p-4 space-y-1">
@@ -240,7 +247,7 @@
         style="transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);"
     >
         <!-- Top Header -->
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg">
+        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div>
                     <h1 class="text-xl sm:text-2xl font-bold">Settings</h1>
@@ -253,9 +260,9 @@
                         <span class="absolute top-1 right-1 w-2 h-2 bg-red-400 rounded-full animate-ping"></span>
                         <span class="absolute top-1 right-1 w-2 h-2 bg-red-400 rounded-full"></span>
                     </button>
-                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 cursor-pointer">
-                        JD
-                    </div>
+                 <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 cursor-pointer">
+    {{ $dashInitials }}
+</div>
                 </div>
             </div>
         </header>

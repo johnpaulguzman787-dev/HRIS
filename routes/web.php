@@ -5,8 +5,11 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\AdminEmployeeController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\HRDashboardController;
+use App\Http\Controllers\SupervisorDashboardController;
+use App\Http\Controllers\EmployeeDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,27 +80,25 @@ Route::middleware(['auth'])->group(function () {
 
     // Employee Routes
 Route::prefix('employees')->name('employees.')->group(function () {
-    Route::get('/directory', [EmployeeController::class, 'directory'])->name('directory');
-    Route::get('/profile', [EmployeeController::class, 'profile'])->name('profile');
-    Route::post('/store', [EmployeeController::class, 'store'])->name('store');
-    Route::post('/departments', [EmployeeController::class, 'storeDepartment'])->name('departments.store');
-Route::match(['POST', 'PUT'], '/departments/{id}', [EmployeeController::class, 'updateDepartment'])->name('departments.update');
- Route::put('/{id}', [EmployeeController::class, 'update'])->name('update');
-Route::put('/job-title/{id}', [EmployeeController::class, 'updateJobTitle'])->name('job_title.update');
+    Route::get('/directory', [AdminEmployeeController::class, 'directory'])->name('directory');
+    Route::get('/profile', [AdminEmployeeController::class, 'profile'])->name('profile');
+    Route::post('/store', [AdminEmployeeController::class, 'store'])->name('store');
+    Route::post('/departments', [AdminEmployeeController::class, 'storeDepartment'])->name('departments.store');
+Route::match(['POST', 'PUT'], '/departments/{id}', [AdminEmployeeController::class, 'updateDepartment'])->name('departments.update');
+ Route::put('/{id}', [AdminEmployeeController::class, 'update'])->name('update');
+Route::put('/job-title/{id}', [AdminEmployeeController::class, 'updateJobTitle'])->name('job_title.update');
 });
 
     // Admin Dashboard
     Route::get('/admin', [DashboardController::class, 'admin_dashboard'])->name('admin.dashboard');
-
-    // Other Dashboards
-    Route::get('/hr', function () {
-        return view('hr.hr_dashboard');
-    })->name('hr.dashboard');
-
-    Route::get('/supervisor', function () {
-        return view('supervisor.supervisor_dashboard');
-    })->name('supervisor.dashboard');
-
+    // HR Dashboard
+    Route::get('/hr', [HRDashboardController::class, 'index'])->name('hr.dashboard');
+    // Supervisor Dashboards
+    Route::get('/supervisor', [SupervisorDashboardController::class, 'index'])->name('supervisor.dashboard');
+    
+    // Employee Dashboard
+    Route::get('/employee/dashboard', [EmployeeDashboardController::class, 'index'])->name('employee.dashboard');
+ // Other Dashboards
     Route::get('/payroll', function () {
         return view('payroll.payroll_dashboard');
     })->name('payroll.dashboard');
@@ -106,9 +107,9 @@ Route::put('/job-title/{id}', [EmployeeController::class, 'updateJobTitle'])->na
         return view('finance.finance_dashboard');
     })->name('finance.dashboard');
 
-    Route::get('/employees', function () {
-        return view('employee.employee_dashboard');
-    })->name('employee.dashboard');
+
+
+
 
     // =========================
     // SETTINGS ROUTES

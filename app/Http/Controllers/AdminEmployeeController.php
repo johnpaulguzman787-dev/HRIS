@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
-class EmployeeController extends Controller
+class AdminEmployeeController extends Controller
 {
 public function directory()
 {

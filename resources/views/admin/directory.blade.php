@@ -433,7 +433,7 @@ showToast(message, type = 'success') {
 }
 }" class="flex h-screen overflow-hidden bg-gray-50" @keydown.escape.window="closeModal(); closeAddEmployee()">
 
-    @include('components.sidebar', ['activeMenu' => 'employees'])
+    @include('admin.admin_sidebar', ['activeMenu' => 'employees'])
 
     <main class="flex-1 overflow-y-auto transition-all duration-300"
           :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'">

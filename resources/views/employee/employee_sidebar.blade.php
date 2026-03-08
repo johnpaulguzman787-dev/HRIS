@@ -195,6 +195,7 @@
             <form id="employee-logout-form" action="{{ route('logout') }}" method="POST" class="hidden">@csrf</form>
         </div>
     </nav>
+    
 
     <!-- Collapse Button -->
     <button @click="sidebarCollapsed = !sidebarCollapsed"

@@ -27,6 +27,8 @@
     uploadedFiles: [],
     isSaving: false,
     formErrors: {},
+    step1Attempted: false,
+    step2Attempted: false,
 
     newEmployeeForm: {
         first_name: '', last_name: '', mi: '', suffix: '', suffix_other: '',
@@ -49,8 +51,10 @@
     openAddEmployee() {
         this.addStep = 1;
         this.uploadedFiles = [];
-        this.formErrors = {};
-        this.isSaving = false;
+       this.formErrors = {};
+this.isSaving = false;
+this.step1Attempted = false;
+this.step2Attempted = false;
         this.newEmployeeForm = {
             first_name: '', last_name: '', mi: '', suffix: '', suffix_other: '',
             date_of_birth: '', gender: '',
@@ -170,7 +174,7 @@ this.isSaving = false;
         'Administration': ['Admin Officer', 'Office Manager', 'Administrative Assistant', 'Executive Secretary', 'Records Officer']
     },
 
-    departmentForm: { name: '', head: '' },
+    departmentForm: { name: '', jobTitles: [], newJobTitle: '' },
 
     showDepartmentDetails: false,
     selectedDepartment: null,
@@ -310,11 +314,16 @@ this.selectedDepartment.jobTitles = data.job_titles.map(jt => ({
     },
     get resultCount() { return this.filteredEmployees.length; },
     get activeFilterCount() { return this.selectedDepartments.length + (this.selectedSort ? 1 : 0); },
-    resetDepartmentForm() { this.departmentForm = { name: '', head: '' }; },
+    resetDepartmentForm() { this.departmentForm = { name: '', jobTitles: [], newJobTitle: '' }; },
     async saveDepartment() {
     if (!this.departmentForm.name.trim()) {
         this.showToast('Department name cannot be empty.', 'error');
         return;
+    }
+
+    if (this.departmentForm.newJobTitle.trim()) {
+        this.departmentForm.jobTitles.push(this.departmentForm.newJobTitle.trim());
+        this.departmentForm.newJobTitle = '';
     }
 
     this.isSaving = true;
@@ -327,13 +336,22 @@ this.selectedDepartment.jobTitles = data.job_titles.map(jt => ({
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
             },
-            body: JSON.stringify({ name: this.departmentForm.name.trim() })
+            body: JSON.stringify({ name: this.departmentForm.name.trim(), job_titles: this.departmentForm.jobTitles })
         });
 
         const data = await response.json();
 
-        if (response.ok && data.success) {
+       if (response.ok && data.success) {
             this.departments.push(data.department);
+            if (data.department.job_titles) {
+                data.department.job_titles.forEach(jt => {
+                    this.jobTitles.push({
+                        id:            jt.id,
+                        title:         jt.title,
+                        department_id: data.department.id
+                    });
+                });
+            }
             this.showAddDepartment = false;
             this.resetDepartmentForm();
             this.isSaving = false;
@@ -604,18 +622,23 @@ showToast(message, type = 'success') {
                             <input type="text" x-model="departmentForm.name" placeholder="Enter department name" class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Department Head</label>
-                            <div class="relative">
-                                <select x-model="departmentForm.head" class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white transition-all duration-200">
-                                    <option value="" disabled selected>Choose Department Head</option>
-                                    <option value="John Doe">John Doe - IT Director</option>
-                                    <option value="Maria Santos">Maria Santos - Finance Manager</option>
-                                    <option value="Anna Reyes">Anna Reyes - Nursing Director</option>
-                                    <option value="Lisa Villanueva">Lisa Villanueva - HR Manager</option>
-                                    <option value="Carlos Tan">Carlos Tan - Admin Manager</option>
-                                    <option value="Robert Flores">Robert Flores - Finance Supervisor</option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Job Titles</label>
+                            <div class="border border-gray-300 rounded-lg px-4 py-3 space-y-1 min-h-[120px]">
+                                <template x-for="(jt, index) in departmentForm.jobTitles" :key="index">
+                                    <div class="flex items-center justify-between py-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-blue-400 rounded-full flex-shrink-0"></span>
+                                            <span class="text-sm text-gray-700" x-text="jt"></span>
+                                        </div>
+                                        <button @click="departmentForm.jobTitles.splice(index, 1)" class="text-gray-400 hover:text-red-500 transition-colors duration-150 ml-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </div>
+                                </template>
+                                <input type="text" x-model="departmentForm.newJobTitle"
+                                    @keydown.enter.prevent="departmentForm.newJobTitle.trim() && (departmentForm.jobTitles.push(departmentForm.newJobTitle.trim()), departmentForm.newJobTitle = '')"
+                                    placeholder="Type job title and press Enter"
+                                    class="w-full text-sm text-gray-600 placeholder-gray-400 border-none outline-none bg-transparent pt-1">
                             </div>
                         </div>
                     </div>
@@ -685,12 +708,14 @@ showToast(message, type = 'success') {
                                         :class="hasError('first_name') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-gray-400'"
                                         class="w-full px-3 py-2.5 text-sm border rounded-md focus:outline-none focus:ring-1 focus:border-transparent">
                                     <p x-show="hasError('first_name')" x-text="fieldError('first_name')" class="text-xs text-red-500 mt-1"></p>
+                                    <p x-show="!newEmployeeForm.first_name" class="text-xs text-red-500 mt-1">First name is required.</p>
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <input type="text" x-model="newEmployeeForm.last_name" placeholder="Last Name"
                                         :class="hasError('last_name') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-gray-400'"
                                         class="w-full px-3 py-2.5 text-sm border rounded-md focus:outline-none focus:ring-1 focus:border-transparent">
                                     <p x-show="hasError('last_name')" x-text="fieldError('last_name')" class="text-xs text-red-500 mt-1"></p>
+                                    <p x-show="!newEmployeeForm.last_name" class="text-xs text-red-500 mt-1">Last name is required.</p>
                                 </div>
                                 <div>
                                     <input type="text" x-model="newEmployeeForm.mi" placeholder="MI" maxlength="2"
@@ -722,6 +747,7 @@ showToast(message, type = 'success') {
                                     :class="hasError('date_of_birth') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-gray-400'"
                                     class="w-full px-3 py-2.5 text-sm border rounded-md focus:outline-none focus:ring-1 focus:border-transparent text-gray-500">
                                 <p x-show="hasError('date_of_birth')" x-text="fieldError('date_of_birth')" class="text-xs text-red-500 mt-1"></p>
+                                <p x-show="!newEmployeeForm.date_of_birth" class="text-xs text-red-500 mt-1">Date of birth is required.</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-gray-800 mb-1.5">Gender</label>
@@ -738,6 +764,8 @@ showToast(message, type = 'success') {
                                     <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div>
                                 </div>
                                 <p x-show="hasError('gender')" x-text="fieldError('gender')" class="text-xs text-red-500 mt-1"></p>
+                                <p x-show="!newEmployeeForm.gender" class="text-xs text-red-500 mt-1">Gender is required.</p>
+
                             </div>
                         </div>
 
@@ -748,6 +776,7 @@ showToast(message, type = 'success') {
                                 :class="hasError('email') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-gray-400'"
                                 class="w-full px-3 py-2.5 text-sm border rounded-md focus:outline-none focus:ring-1 focus:border-transparent placeholder-gray-400">
                             <p x-show="hasError('email')" x-text="fieldError('email')" class="text-xs text-red-500 mt-1"></p>
+                            <p x-show="!newEmployeeForm.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmployeeForm.email)" class="text-xs text-red-500 mt-1">Please enter a valid email address.</p>
                         </div>
 
                         <!-- Address -->
@@ -757,6 +786,8 @@ showToast(message, type = 'success') {
                                 :class="hasError('address') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-gray-400'"
                                 class="w-full px-3 py-2.5 text-sm border rounded-md focus:outline-none focus:ring-1 focus:border-transparent placeholder-gray-400">
                             <p x-show="hasError('address')" x-text="fieldError('address')" class="text-xs text-red-500 mt-1"></p>
+                            <p x-show="!newEmployeeForm.address" class="text-xs text-red-500 mt-1">Address is required.</p>
+
                         </div>
 
                         <!-- Contact Number -->
@@ -768,6 +799,7 @@ showToast(message, type = 'success') {
                              :class="hasError('contact_no') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-gray-400'"
                              class="w-full px-3 py-2.5 text-sm border rounded-md focus:outline-none focus:ring-1 focus:border-transparent placeholder-gray-400">
                             <p x-show="hasError('contact_no')" x-text="fieldError('contact_no')" class="text-xs text-red-500 mt-1"></p>
+                             <p x-show="newEmployeeForm.contact_no.length < 10" class="text-xs text-red-500 mt-1">Contact number must be at least 10 digits.</p>
                         </div>
 
                         <div class="h-2"></div>
@@ -793,6 +825,7 @@ showToast(message, type = 'success') {
                                     <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div>
                                 </div>
                                 <p x-show="hasError('department_id')" x-text="fieldError('department_id')" class="text-xs text-red-500 mt-1"></p>
+                                <p x-show="!newEmployeeForm.department_id" class="text-xs text-red-500 mt-1">Department is required.</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-gray-800 mb-1.5">Job Title</label>
@@ -809,6 +842,7 @@ showToast(message, type = 'success') {
                                     <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div>
                                 </div>
                                 <p x-show="hasError('job_title_id')" x-text="fieldError('job_title_id')" class="text-xs text-red-500 mt-1"></p>
+                                <p x-show="!newEmployeeForm.job_title_id" class="text-xs text-red-500 mt-1">Job title is required.</p>
                             </div>
                         </div>
 
@@ -829,6 +863,8 @@ showToast(message, type = 'success') {
                                     <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div>
                                 </div>
                                 <p x-show="hasError('employment_type')" x-text="fieldError('employment_type')" class="text-xs text-red-500 mt-1"></p>
+                                <p x-show="!newEmployeeForm.employment_type" class="text-xs text-red-500 mt-1">Employment type is required.</p>
+
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-gray-800 mb-1.5">Employment Status</label>
@@ -847,6 +883,7 @@ showToast(message, type = 'success') {
                                     <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div>
                                 </div>
                                 <p x-show="hasError('employment_status')" x-text="fieldError('employment_status')" class="text-xs text-red-500 mt-1"></p>
+                                <p x-show="!newEmployeeForm.employment_status" class="text-xs text-red-500 mt-1">Employment status is required.</p>
                             </div>
                         </div>
 
@@ -927,9 +964,8 @@ showToast(message, type = 'success') {
                             </button>
                            <button x-show="addStep < 3"
     @click="
-    (addStep === 1 && newEmployeeForm.first_name && newEmployeeForm.last_name && newEmployeeForm.email && newEmployeeForm.contact_no.length >= 10) ||
-    (addStep === 2 && newEmployeeForm.department_id && newEmployeeForm.job_title_id && newEmployeeForm.employment_type && newEmployeeForm.employment_status)
-    ? saveAndContinue() : null
+    addStep === 1 ? (step1Attempted = true, (newEmployeeForm.first_name && newEmployeeForm.last_name && newEmployeeForm.email && newEmployeeForm.contact_no.length >= 10) ? saveAndContinue() : null) :
+addStep === 2 ? (step2Attempted = true, (newEmployeeForm.department_id && newEmployeeForm.job_title_id && newEmployeeForm.employment_type && newEmployeeForm.employment_status) ? saveAndContinue() : null) : null
 "
 :disabled="
     (addStep === 1 && !(newEmployeeForm.first_name && newEmployeeForm.last_name && newEmployeeForm.email && newEmployeeForm.contact_no.length >= 10)) ||

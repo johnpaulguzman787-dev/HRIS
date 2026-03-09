@@ -195,11 +195,26 @@ $user = User::create([
 public function storeDepartment(Request $request)
 {
     $request->validate([
-        'name' => 'required|string|max:255|unique:departments,name',
+        'name'               => 'required|string|max:255|unique:departments,name',
+        'job_titles'         => 'array',
+        'job_titles.*'       => 'string|max:255',
     ]);
 
     try {
-        $department = Department::create(['name' => $request->name]);
+        DB::transaction(function () use ($request, &$department) {
+            $department = Department::create(['name' => $request->name]);
+
+            foreach ($request->job_titles ?? [] as $title) {
+                if (trim($title)) {
+                    \App\Models\JobTitle::create([
+                        'department_id' => $department->id,
+                        'title'         => trim($title),
+                    ]);
+                }
+            }
+        });
+
+        $department->load('jobTitles');
 
         return response()->json([
             'success'    => true,
@@ -208,7 +223,7 @@ public function storeDepartment(Request $request)
                 'id'              => $department->id,
                 'name'            => $department->name,
                 'employees_count' => 0,
-                'job_titles'      => [],
+                'job_titles'      => $department->jobTitles->map(fn($j) => ['id' => $j->id, 'title' => $j->title])->values(),
             ],
         ]);
     } catch (\Exception $e) {

@@ -356,6 +356,7 @@ this.selectedDepartment.jobTitles = data.job_titles.map(jt => ({
             this.resetDepartmentForm();
             this.isSaving = false;
             this.showToast('Department added successfully!', 'success');
+            setTimeout(() => window.location.reload(), 1500);
             return;
         }
 

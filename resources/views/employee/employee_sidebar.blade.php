@@ -9,15 +9,36 @@
         ? trim($sidebarEmployee->fname . ' ' . $sidebarEmployee->lname)
         : ($sidebarUser?->email ?? 'User');
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
+
+    // Auto-open submenus based on current route
+    $attendanceRoutes = ['employee.attendance.reports', 'employee.attendance.shift', 'employee.attendance.leave'];
+    $payrollRoutes    = ['employee.payroll', 'employee.payslips', 'employee.contributions'];
+    $requestRoutes    = ['employee.requests.pending', 'employee.requests.approved'];
 @endphp
+
+<style>
+    .nav-item { transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
+    .nav-item:hover { transform: translateX(2px); }
+    .submenu-item { transition: all 0.18s ease; }
+    .submenu-item:hover { transform: translateX(3px); }
+    .chevron-icon { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .collapse-btn { transition: all 0.2s ease; }
+    .collapse-btn:hover { transform: scale(1.08); }
+    .settings-icon { transition: transform 0.5s ease; }
+    .nav-item:hover .settings-icon { transform: rotate(60deg); }
+    .logout-btn { transition: all 0.2s ease; }
+    .avatar-ring { box-shadow: 0 0 0 3px rgba(59,130,246,0.2); transition: box-shadow 0.3s ease; }
+    .avatar-ring:hover { box-shadow: 0 0 0 5px rgba(59,130,246,0.35); }
+    .profile-card { transition: background 0.2s ease; }
+</style>
 
 <aside
     class="bg-white border-r border-gray-200 h-screen fixed left-0 top-0 overflow-y-auto z-50 flex flex-col"
     x-data="{
         sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
-        attendanceOpen: false,
-        payrollOpen: false,
-        requestsOpen: false
+        attendanceOpen: {{ in_array($currentRoute, $attendanceRoutes) ? 'true' : 'false' }},
+        payrollOpen: {{ in_array($currentRoute, $payrollRoutes) ? 'true' : 'false' }},
+        requestsOpen: {{ in_array($currentRoute, $requestRoutes) ? 'true' : 'false' }}
     }"
     x-init="$watch('sidebarCollapsed', value => localStorage.setItem('sidebarCollapsed', value))"
     :class="sidebarCollapsed ? 'w-20' : 'w-64'"
@@ -91,7 +112,8 @@
         <!-- Time & Attendance -->
         <div>
             <button @click="attendanceOpen = !attendanceOpen"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg
+                    {{ in_array($currentRoute, $attendanceRoutes) ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
                 <div class="flex items-center space-x-3">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -110,7 +132,20 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Attendance Reports</a>
+
+                {{-- ✅ ATTENDANCE REPORTS — now links to the real route --}}
+                <a href="{{ route('employee.attendance.reports') }}"
+                   class="submenu-item flex items-center px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'employee.attendance.reports'
+                           ? 'font-semibold bg-blue-50'
+                           : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
+                   style="{{ $currentRoute === 'employee.attendance.reports' ? 'color:#3b82f6;' : '' }}">
+                    @if($currentRoute === 'employee.attendance.reports')
+                        <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0" style="background:#3b82f6;"></span>
+                    @endif
+                    Attendance Reports
+                </a>
+
                 <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Shift Scheduling</a>
                 <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Leave Management</a>
             </div>

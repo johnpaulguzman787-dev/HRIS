@@ -10,6 +10,10 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\HRDashboardController;
 use App\Http\Controllers\SupervisorDashboardController;
 use App\Http\Controllers\EmployeeDashboardController;
+use App\Http\Controllers\EmployeeAttendanceController;
+use App\Http\Controllers\HRAttendanceController;
+use App\Http\Controllers\SupervisorAttendanceController;
+use App\Http\Controllers\AdminAttendanceController; // ← BAGONG DINAGDAG
 
 /*
 |--------------------------------------------------------------------------
@@ -32,7 +36,6 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 // Forgot Password
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForm'])->name('password.request');
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('password.email');
-
 
 // Reset Password
 Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showForm'])->name('password.reset');
@@ -79,26 +82,43 @@ Route::post('/email/verification-notification', function (Illuminate\Http\Reques
 Route::middleware(['auth'])->group(function () {
 
     // Employee Routes
-Route::prefix('employees')->name('employees.')->group(function () {
-    Route::get('/directory', [AdminEmployeeController::class, 'directory'])->name('directory');
-    Route::get('/profile', [AdminEmployeeController::class, 'profile'])->name('profile');
-    Route::post('/store', [AdminEmployeeController::class, 'store'])->name('store');
-    Route::post('/departments', [AdminEmployeeController::class, 'storeDepartment'])->name('departments.store');
-Route::match(['POST', 'PUT'], '/departments/{id}', [AdminEmployeeController::class, 'updateDepartment'])->name('departments.update');
- Route::put('/{id}', [AdminEmployeeController::class, 'update'])->name('update');
-Route::put('/job-title/{id}', [AdminEmployeeController::class, 'updateJobTitle'])->name('job_title.update');
-});
+    Route::prefix('employees')->name('employees.')->group(function () {
+        Route::get('/directory', [AdminEmployeeController::class, 'directory'])->name('directory');
+        Route::get('/profile', [AdminEmployeeController::class, 'profile'])->name('profile');
+        Route::post('/store', [AdminEmployeeController::class, 'store'])->name('store');
+        Route::post('/departments', [AdminEmployeeController::class, 'storeDepartment'])->name('departments.store');
+        Route::match(['POST', 'PUT'], '/departments/{id}', [AdminEmployeeController::class, 'updateDepartment'])->name('departments.update');
+        Route::put('/{id}', [AdminEmployeeController::class, 'update'])->name('update');
+        Route::put('/job-title/{id}', [AdminEmployeeController::class, 'updateJobTitle'])->name('job_title.update');
+    });
 
     // Admin Dashboard
     Route::get('/admin', [DashboardController::class, 'admin_dashboard'])->name('admin.dashboard');
     // HR Dashboard
     Route::get('/hr', [HRDashboardController::class, 'index'])->name('hr.dashboard');
-    // Supervisor Dashboards
+    // Supervisor Dashboard
     Route::get('/supervisor', [SupervisorDashboardController::class, 'index'])->name('supervisor.dashboard');
-    
+
     // Employee Dashboard
     Route::get('/employee/dashboard', [EmployeeDashboardController::class, 'index'])->name('employee.dashboard');
- // Other Dashboards
+
+    // ── EMPLOYEE ATTENDANCE ROUTES ─────────────────────────────────────────
+    Route::get('/employee/attendance/reports', [EmployeeAttendanceController::class, 'index'])->name('employee.attendance.reports');
+    // ──────────────────────────────────────────────────────────────────────
+
+    // ── HR ATTENDANCE ROUTES ───────────────────────────────────────────────
+    Route::get('/hr/attendance/reports', [HRAttendanceController::class, 'index'])->name('hr.attendance.reports');
+    // ──────────────────────────────────────────────────────────────────────
+
+    // ── SUPERVISOR ATTENDANCE ROUTES ───────────────────────────────────────
+    Route::get('/supervisor/attendance/reports', [SupervisorAttendanceController::class, 'index'])->name('supervisor.attendance.reports');
+    // ──────────────────────────────────────────────────────────────────────
+
+    // ── ADMIN ATTENDANCE ROUTES ────────────────────────────────────────────
+    Route::get('/admin/attendance/reports', [AdminAttendanceController::class, 'index'])->name('admin.attendance.reports');
+    // ──────────────────────────────────────────────────────────────────────
+
+    // Other Dashboards
     Route::get('/payroll', function () {
         return view('payroll.payroll_dashboard');
     })->name('payroll.dashboard');
@@ -106,9 +126,6 @@ Route::put('/job-title/{id}', [AdminEmployeeController::class, 'updateJobTitle']
     Route::get('/finance', function () {
         return view('finance.finance_dashboard');
     })->name('finance.dashboard');
-
-
-
 
 
     // =========================

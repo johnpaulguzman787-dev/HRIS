@@ -9,6 +9,10 @@
         ? trim($sidebarEmployee->fname . ' ' . $sidebarEmployee->lname)
         : ($sidebarUser?->email ?? 'User');
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
+
+    $attendanceRoutes = ['hr.attendance.reports', 'hr.attendance.shift', 'hr.attendance.leave'];
+    $payrollRoutes    = ['hr.payroll', 'hr.payslips', 'hr.contributions'];
+    $requestRoutes    = ['hr.requests.pending', 'hr.requests.approved'];
 @endphp
 
 <aside 
@@ -16,9 +20,9 @@
     x-data="{
         sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
         employeesOpen: false,
-        attendanceOpen: false,
-        payrollOpen: false,
-        requestsOpen: false
+        attendanceOpen: {{ in_array($currentRoute, $attendanceRoutes) ? 'true' : 'false' }},
+        payrollOpen: {{ in_array($currentRoute, $payrollRoutes) ? 'true' : 'false' }},
+        requestsOpen: {{ in_array($currentRoute, $requestRoutes) ? 'true' : 'false' }}
     }"
     x-init="$watch('sidebarCollapsed', value => localStorage.setItem('sidebarCollapsed', value))"
     :class="sidebarCollapsed ? 'w-20' : 'w-64'"
@@ -108,7 +112,8 @@
         <!-- Time & Attendance -->
         <div>
             <button @click="attendanceOpen = !attendanceOpen"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg
+                    {{ in_array($currentRoute, $attendanceRoutes) ? 'text-blue-600' : 'text-gray-600 hover:bg-gray-50' }}">
                 <div class="flex items-center space-x-3">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -127,7 +132,17 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Attendance Reports</a>
+
+                {{-- ✅ UPDATED: now links to hr.attendance.reports --}}
+                <a href="{{ route('hr.attendance.reports') }}"
+                   class="submenu-item flex items-center px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'hr.attendance.reports' ? 'font-semibold' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
+                   style="{{ $currentRoute === 'hr.attendance.reports' ? 'color:#3b82f6;' : '' }}">
+                    @if($currentRoute === 'hr.attendance.reports')
+                        <span class="w-2 h-2 rounded-full mr-2.5 flex-shrink-0" style="background:#3b82f6; animation: pulseDot 2s ease-in-out infinite;"></span>
+                    @endif
+                    Attendance Reports
+                </a>
                 <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Shift Scheduling</a>
                 <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Leave Management</a>
             </div>

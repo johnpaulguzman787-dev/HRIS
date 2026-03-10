@@ -65,9 +65,9 @@ return $this->redirectToRole(Auth::user());
             case 'supervisor':
                 return redirect()->route('supervisor.dashboard');
             case 'payroll_officer':
-                return redirect()->route('payroll.dashboard');
+                return redirect()->route('payroll_officer.dashboard');
             case 'finance_officer':
-                return redirect()->route('finance.dashboard');
+                return redirect()->route('finance_officer.dashboard');
             case 'employee':
                 return redirect()->route('employee.dashboard');
             default:

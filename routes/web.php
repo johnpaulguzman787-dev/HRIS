@@ -119,13 +119,13 @@ Route::middleware(['auth'])->group(function () {
     // ──────────────────────────────────────────────────────────────────────
 
     // Other Dashboards
-    Route::get('/payroll', function () {
-        return view('payroll.payroll_dashboard');
-    })->name('payroll.dashboard');
+     Route::get('/payroll_officer', function () {
+        return view('payroll_officer.payroll_dashboard');
+    })->name('payroll_officer.dashboard');
 
-    Route::get('/finance', function () {
-        return view('finance.finance_dashboard');
-    })->name('finance.dashboard');
+    Route::get('/finance_officer', function () {
+        return view('finance_officer.finance_dashboard');
+    })->name('finance_officer.dashboard');
 
 
     // =========================

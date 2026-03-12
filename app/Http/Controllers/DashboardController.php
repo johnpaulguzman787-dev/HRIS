@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-  use App\Models\Employee;
+use App\Models\Employee;
+use App\Models\AttendanceLog;
+use App\Models\Department;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -15,7 +18,7 @@ class DashboardController extends Controller
         // Dummy data for dashboard
         $data = [
             'totalEmployees' => 156,
-            'presentToday' => 128,
+            'presentToday' => 130,
             'lateToday' => 18,
             'absentToday' => 10,
             'pendingRequests' => 12,
@@ -117,29 +120,45 @@ public function admin_dashboard()
     $dashInitials = $authEmployee ? strtoupper(substr($authEmployee->fname, 0, 1) . substr($authEmployee->lname, 0, 1)) : strtoupper(substr($authUser->email, 0, 2));
     $dashName = $authEmployee ? trim($authEmployee->fname . ' ' . $authEmployee->lname) : $authUser->email;
     $dashRole = $authEmployee?->jobTitle?->title ?? $authUser->role;
+    $todayLog = $authEmployee ? AttendanceLog::where('employee_id', $authEmployee->id)
+    ->whereDate('attendance_date', $today)
+    ->with('shift')
+    ->first() : null;
+
+$availableShifts = \App\Models\Shift::where('is_active', true)->get();
 
     $data = [
         'dashInitials' => $dashInitials,
         'dashName'     => $dashName,
         'dashRole'     => $dashRole,
         'totalEmployees' => Employee::count(), // ← REAL DATA
-        'presentToday' => 128,
-        'lateToday' => 18,
-        'absentToday' => 10,
-        'pendingRequests' => 12,
-        'attendanceSummary' => [
-            'present' => 128,
-            'late' => 18,
-            'absent' => 10,
-            'on_leave' => 8
+        'presentToday'   => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['present', 'undertime', 'overtime'])->count(),
+'lateToday'      => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['late', 'absent'])->count(),
+'absentToday'    => AttendanceLog::whereDate('attendance_date', $today)->where('status', 'absent')->count(),
+'pendingRequests' => 12, // keep dummy until requests module is built
+'todayLog'        => $todayLog,
+'availableShifts' => $availableShifts,
+       'attendanceSummary' => [
+            'present'  => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['present', 'undertime', 'overtime'])->count(),
+            'late'     => AttendanceLog::whereDate('attendance_date', $today)->where('status', 'late')->count(),
+            'absent'   => AttendanceLog::whereDate('attendance_date', $today)->where('status', 'absent')->count(),
+            'on_leave' => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['on_leave', 'holiday'])->count(),
         ],
-        'departmentProgress' => [
-            ['name' => 'IT', 'total' => 45, 'present' => 42, 'percentage' => 93],
-            ['name' => 'Finance', 'total' => 32, 'present' => 28, 'percentage' => 88],
-            ['name' => 'HR', 'total' => 25, 'present' => 23, 'percentage' => 92],
-            ['name' => 'Nursing', 'total' => 78, 'present' => 58, 'percentage' => 74],
-            ['name' => 'Administration', 'total' => 15, 'present' => 14, 'percentage' => 93],
-        ],
+        'departmentProgress' => Department::with(['employees.attendanceLogs' => function ($q) use ($today) {
+            $q->whereDate('attendance_date', $today);
+        }])->get()->map(function ($dept) {
+            $total   = $dept->employees->count();
+            $present = $dept->employees->filter(function ($emp) {
+                return $emp->attendanceLogs->whereIn('status', ['present', 'undertime', 'overtime', 'late'])->count() > 0;
+            })->count();
+            $percentage = $total > 0 ? round($present / $total * 100) : 0;
+            return [
+                'name'       => $dept->name,
+                'total'      => $total,
+                'present'    => $present,
+                'percentage' => $percentage,
+            ];
+        })->filter(fn($d) => $d['total'] > 0)->values()->toArray(),
         'pendingRequestsList' => [
             (object)['id' => 1, 'employee' => (object)['full_name' => 'John Doe', 'initials' => 'JD', 'position' => 'System Administrator'], 'type' => 'leave', 'title' => 'Annual Leave Request', 'date_submitted' => Carbon::today()->subDays(1)->format('M d, Y')],
             (object)['id' => 2, 'employee' => (object)['full_name' => 'Jane Smith', 'initials' => 'JS', 'position' => 'IT Manager'], 'type' => 'overtime', 'title' => 'Overtime Approval', 'date_submitted' => Carbon::today()->subDays(2)->format('M d, Y')],

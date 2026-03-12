@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Employee;
+use App\Models\AttendanceLog;
+use Illuminate\Support\Facades\Auth;
 
 class EmployeeDashboardController extends Controller
 {
@@ -25,12 +27,33 @@ class EmployeeDashboardController extends Controller
 
         $dashRole = $authEmployee?->jobTitle?->title ?? $authUser->role;
 
+        $month = $today->month;
+        $year  = $today->year;
+
+        $todayLog = $authEmployee ? AttendanceLog::where('employee_id', $authEmployee->id)
+            ->whereDate('attendance_date', $today)
+            ->with('shift')
+            ->first() : null;
+
+        $availableShifts = \App\Models\Shift::where('is_active', true)->get();
+
+        $stats = $authEmployee ? [
+            'present'  => AttendanceLog::where('employee_id', $authEmployee->id)->whereMonth('attendance_date', $month)->whereYear('attendance_date', $year)->whereIn('status', ['present', 'undertime', 'overtime'])->count(),
+            'late'     => AttendanceLog::where('employee_id', $authEmployee->id)->whereMonth('attendance_date', $month)->whereYear('attendance_date', $year)->where('status', 'late')->count(),
+            'absent'   => AttendanceLog::where('employee_id', $authEmployee->id)->whereMonth('attendance_date', $month)->whereYear('attendance_date', $year)->where('status', 'absent')->count(),
+            'on_leave' => AttendanceLog::where('employee_id', $authEmployee->id)->whereMonth('attendance_date', $month)->whereYear('attendance_date', $year)->whereIn('status', ['on_leave', 'holiday'])->count(),
+        ] : array_fill_keys(['present', 'late', 'absent', 'on_leave'], 0);
+
         $data = [
-            'dashInitials'   => $dashInitials,
-            'dashName'       => $dashName,
-            'dashRole'       => $dashRole,
-            'totalEmployees' => Employee::count(),
-            'currentDate'    => $today->format('l, F j, Y'),
+            'dashInitials'    => $dashInitials,
+            'dashName'        => $dashName,
+            'dashRole'        => $dashRole,
+            'currentDate'     => $today->format('l, F j, Y'),
+            'todayLog'        => $todayLog,
+            'availableShifts' => $availableShifts,
+            'stats'           => $stats,
+            'month'           => $month,
+            'year'            => $year,
         ];
 
         return view('employee.employee_dashboard', $data);

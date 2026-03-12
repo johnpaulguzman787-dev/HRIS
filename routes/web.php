@@ -13,7 +13,7 @@ use App\Http\Controllers\EmployeeDashboardController;
 use App\Http\Controllers\EmployeeAttendanceController;
 use App\Http\Controllers\HRAttendanceController;
 use App\Http\Controllers\SupervisorAttendanceController;
-use App\Http\Controllers\AdminAttendanceController; // ← BAGONG DINAGDAG
+use App\Http\Controllers\AdminAttendanceController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -146,3 +146,4 @@ Route::middleware(['auth'])->group(function () {
 Route::fallback(function () {
     return redirect()->route('login');
 });
+

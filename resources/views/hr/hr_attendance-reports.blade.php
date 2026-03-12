@@ -448,7 +448,7 @@ function attendancePage() {
             }, 1000);
         },
 
-        tick() {
+        tick() {k
             const n = new Date();
             this.liveTime = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
             this.liveDate = n.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});

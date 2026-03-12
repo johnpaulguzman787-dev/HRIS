@@ -3,7 +3,7 @@
 @php
     $currentRoute = request()->route()->getName();
     $isEmployeesSection = in_array($currentRoute, ['employees.directory', 'employees.profile']);
-    $isAttendanceSection = in_array($currentRoute, ['admin.attendance.reports']);
+    $isAttendanceSection = in_array($currentRoute, ['admin.attendance.reports', 'admin.attendance.employee']);
     $sidebarUser = auth()->user();
     $sidebarEmployee = $sidebarUser ? \App\Models\Employee::with('jobTitle')->where('user_id', $sidebarUser->id)->first() : null;
     $sidebarInitials = $sidebarEmployee
@@ -148,9 +148,10 @@
                     @if($currentRoute === 'admin.attendance.reports')
                         <span class="w-2 h-2 rounded-full mr-2.5 flex-shrink-0" style="background:#3b82f6; animation: pulseDot 2s ease-in-out infinite;"></span>
                     @endif
-                    Attendance Reports
+                    My Attendance
                 </a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Shift Scheduling</a>
+                <a href="{{ route('admin.attendance.employee') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'admin.attendance.employee' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Attendance</a>
+<a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Shift Scheduling</a>
                 <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Leave Management</a>
             </div>
         </div>

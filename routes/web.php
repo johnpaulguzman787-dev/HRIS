@@ -7,7 +7,7 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminEmployeeController;
 use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\HRDashboardController;
+use App\Http\Controllers\HrDashboardController;
 use App\Http\Controllers\SupervisorDashboardController;
 use App\Http\Controllers\EmployeeDashboardController;
 use App\Http\Controllers\EmployeeAttendanceController;
@@ -95,7 +95,7 @@ Route::middleware(['auth'])->group(function () {
     // Admin Dashboard
     Route::get('/admin', [DashboardController::class, 'admin_dashboard'])->name('admin.dashboard');
     // HR Dashboard
-    Route::get('/hr', [HRDashboardController::class, 'index'])->name('hr.dashboard');
+    Route::get('/hr', [HrDashboardController::class, 'index'])->name('hr.dashboard');
     // Supervisor Dashboard
     Route::get('/supervisor', [SupervisorDashboardController::class, 'index'])->name('supervisor.dashboard');
 
@@ -104,20 +104,38 @@ Route::middleware(['auth'])->group(function () {
 
     // ── EMPLOYEE ATTENDANCE ROUTES ─────────────────────────────────────────
     Route::get('/employee/attendance/reports', [EmployeeAttendanceController::class, 'index'])->name('employee.attendance.reports');
+Route::get('/employee/attendance/today', [EmployeeAttendanceController::class, 'today'])->name('employee.attendance.today');
+Route::get('/employee/attendance/records', [EmployeeAttendanceController::class, 'records'])->name('employee.attendance.records');
+Route::post('/employee/attendance/clock-in', [EmployeeAttendanceController::class, 'clockIn'])->name('employee.attendance.clock-in');
+Route::post('/employee/attendance/clock-out', [EmployeeAttendanceController::class, 'clockOut'])->name('employee.attendance.clock-out');
     // ──────────────────────────────────────────────────────────────────────
 
     // ── HR ATTENDANCE ROUTES ───────────────────────────────────────────────
-    Route::get('/hr/attendance/reports', [HRAttendanceController::class, 'index'])->name('hr.attendance.reports');
+    Route::get('/hr/attendance/reports', [HrAttendanceController::class, 'index'])->name('hr.attendance.reports');
+Route::get('/hr/attendance/today', [HrAttendanceController::class, 'today'])->name('hr.attendance.today');
+Route::get('/hr/attendance/records', [HrAttendanceController::class, 'records'])->name('hr.attendance.records');
+Route::post('/hr/attendance/clock-in', [HrAttendanceController::class, 'clockIn'])->name('hr.attendance.clock-in');
+Route::post('/hr/attendance/clock-out', [HrAttendanceController::class, 'clockOut'])->name('hr.attendance.clock-out');
+Route::get('/hr/attendance/employee', [HrAttendanceController::class, 'employeeAttendance'])->name('hr.attendance.employee');
     // ──────────────────────────────────────────────────────────────────────
 
     // ── SUPERVISOR ATTENDANCE ROUTES ───────────────────────────────────────
     Route::get('/supervisor/attendance/reports', [SupervisorAttendanceController::class, 'index'])->name('supervisor.attendance.reports');
+    Route::get('/supervisor/attendance/today', [SupervisorAttendanceController::class, 'today'])->name('supervisor.attendance.today');
+    Route::get('/supervisor/attendance/records', [SupervisorAttendanceController::class, 'records'])->name('supervisor.attendance.records');
+    Route::post('/supervisor/attendance/clock-in', [SupervisorAttendanceController::class, 'clockIn'])->name('supervisor.attendance.clock-in');
+    Route::post('/supervisor/attendance/clock-out', [SupervisorAttendanceController::class, 'clockOut'])->name('supervisor.attendance.clock-out');
+    Route::get('/supervisor/attendance/employee', [SupervisorAttendanceController::class, 'employeeAttendance'])->name('supervisor.attendance.employee');
     // ──────────────────────────────────────────────────────────────────────
 
     // ── ADMIN ATTENDANCE ROUTES ────────────────────────────────────────────
-    Route::get('/admin/attendance/reports', [AdminAttendanceController::class, 'index'])->name('admin.attendance.reports');
-    // ──────────────────────────────────────────────────────────────────────
-
+Route::get('/admin/attendance/reports', [AdminAttendanceController::class, 'index'])->name('admin.attendance.reports');
+Route::get('/admin/attendance/today', [AdminAttendanceController::class, 'today'])->name('admin.attendance.today');
+Route::get('/admin/attendance/records', [AdminAttendanceController::class, 'records'])->name('admin.attendance.records');
+Route::post('/admin/attendance/clock-in', [AdminAttendanceController::class, 'clockIn'])->name('admin.attendance.clock-in');
+Route::post('/admin/attendance/clock-out', [AdminAttendanceController::class, 'clockOut'])->name('admin.attendance.clock-out');
+Route::get('/admin/attendance/employee', [AdminAttendanceController::class, 'employeeAttendance'])->name('admin.attendance.employee');
+// ──────────────────────────────────────────────────────────────────────
     // Other Dashboards
      Route::get('/payroll_officer', function () {
         return view('payroll_officer.payroll_dashboard');

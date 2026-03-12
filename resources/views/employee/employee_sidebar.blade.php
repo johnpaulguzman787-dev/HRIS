@@ -143,7 +143,7 @@
                     @if($currentRoute === 'employee.attendance.reports')
                         <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0" style="background:#3b82f6;"></span>
                     @endif
-                    Attendance Reports
+                    My Attendance
                 </a>
 
                 <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Shift Scheduling</a>

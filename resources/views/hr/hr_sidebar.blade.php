@@ -10,7 +10,7 @@
         : ($sidebarUser?->email ?? 'User');
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 
-    $attendanceRoutes = ['hr.attendance.reports', 'hr.attendance.shift', 'hr.attendance.leave'];
+    $attendanceRoutes = ['hr.attendance.reports', 'hr.attendance.employee', 'hr.attendance.shift', 'hr.attendance.leave'];
     $payrollRoutes    = ['hr.payroll', 'hr.payslips', 'hr.contributions'];
     $requestRoutes    = ['hr.requests.pending', 'hr.requests.approved'];
 @endphp
@@ -141,7 +141,12 @@
                     @if($currentRoute === 'hr.attendance.reports')
                         <span class="w-2 h-2 rounded-full mr-2.5 flex-shrink-0" style="background:#3b82f6; animation: pulseDot 2s ease-in-out infinite;"></span>
                     @endif
-                    Attendance Reports
+                    My Attendance
+                </a>
+                <a href="{{ route('hr.attendance.employee') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'hr.attendance.employee' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                    Employee Attendance
                 </a>
                 <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Shift Scheduling</a>
                 <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Leave Management</a>

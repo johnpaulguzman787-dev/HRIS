@@ -9,25 +9,28 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('employees', function (Blueprint $table) {
+            if (Schema::hasColumn('employees', 'date_hired')) {
+                $table->dropColumn('date_hired');
+            }
 
-            // ✅ REMOVE old column
-            $table->dropColumn('date_hired');
-
-            // ✅ ADD new columns (nullable so existing 6 records won’t break)
-
-            $table->string('suffix')->nullable()->after('lname');
-
-
-            $table->string('employment_type')->nullable()->after('access_level');
-
-            $table->integer('contract_period')->nullable()->after('employment_type');
-
-            $table->date('start_date')->nullable()->after('contract_period');
-
-            $table->date('end_date')->nullable()->after('start_date');
+            if (!Schema::hasColumn('employees', 'suffix')) {
+                $table->string('suffix')->nullable()->after('lname');
+            }
+            if (!Schema::hasColumn('employees', 'employment_type')) {
+                $table->string('employment_type')->nullable(); 
+            }
+            if (!Schema::hasColumn('employees', 'contract_period')) {
+                $table->integer('contract_period')->nullable(); 
+            }
+            if (!Schema::hasColumn('employees', 'start_date')) {
+                $table->date('start_date')->nullable(); 
+            }
+            if (!Schema::hasColumn('employees', 'end_date')) {
+                $table->date('end_date')->nullable(); 
+            }
         });
     }
-
+    
     public function down(): void
     {
         Schema::table('employees', function (Blueprint $table) {

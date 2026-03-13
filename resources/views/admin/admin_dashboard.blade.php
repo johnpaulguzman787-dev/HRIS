@@ -8,10 +8,17 @@
         workSetup: '{{ $todayLog?->work_setup ?? "wfh" }}',
         clockedIn: {{ $todayLog?->clock_in ? 'true' : 'false' }},
         clockedOut: {{ $todayLog?->clock_out ? 'true' : 'false' }},
+        onBreak: {{ $todayLog?->break_start && !$todayLog?->break_end ? 'true' : 'false' }},
+        resumed: {{ $todayLog?->break_end ? 'true' : 'false' }},
+        breakTime: '{{ $todayLog?->break_start ? \Carbon\Carbon::parse($todayLog->break_start)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
+        breakMinutes: {{ $todayLog?->break_minutes ?? 0 }},
+        clockInTimestamp: {{ $todayLog?->clock_in ? \Carbon\Carbon::parse($todayLog->clock_in)->valueOf() : 'null' }},
+        breakStartTimestamp: {{ $todayLog?->break_start && !$todayLog?->break_end ? \Carbon\Carbon::parse($todayLog->break_start)->valueOf() : 'null' }},
         clockInTime:  '{{ $todayLog?->clock_in  ? \Carbon\Carbon::parse($todayLog->clock_in)->setTimezone(config("app.timezone"))->format("h:i A")  : "" }}',
 clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock_out)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         elapsedSeconds: 0,
         selectedShiftId: {{ $todayLog?->shift_id ?? ($availableShifts->first()?->id ?? 'null') }},
+        shifts: {{ Js::from($availableShifts) }},
         currentTime: '',
         currentDate: '',
         get elapsedDisplay() {
@@ -32,6 +39,12 @@ clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock
                 this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
             });
         },
+        formatTime(t) {
+            if (!t) return '—';
+            const [h, m] = t.split(':');
+            const d = new Date(); d.setHours(h, m);
+            return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        },
         updateTime() {
             const now = new Date();
             this.currentTime = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
@@ -42,6 +55,21 @@ clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock
         async handleClock() {
             if (this.clockedOut) return;
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+            if (this.onBreak) {
+                const res = await fetch('{{ route("admin.attendance.clock-in") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    body: JSON.stringify({ work_setup: this.workSetup, shift_id: this.selectedShiftId })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.onBreak = false;
+                    this.resumed = true;
+                    this.clockedIn = true;
+                    this.breakMinutes = data.break_minutes;
+                } else { alert(data.message ?? 'Resume failed.'); }
+                return;
+            }
             if (!this.clockedIn) {
                 const res = await fetch('{{ route("admin.attendance.clock-in") }}', {
                     method: 'POST',
@@ -54,18 +82,38 @@ clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock
                     this.clockInTime = data.clock_in;
                     this.clockInTimestamp = Date.now();
                 } else { alert(data.message ?? 'Clock-in failed.'); }
-            } else {
-                const res = await fetch('{{ route("admin.attendance.clock-out") }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-                    body: JSON.stringify({})
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    this.clockedOut = true;
-                    this.clockOutTime = data.clock_out;
-                } else { alert(data.message ?? 'Clock-out failed.'); }
+                return;
             }
+        },
+        async handleBreak() {
+            if (!this.clockedIn || this.clockedOut || this.onBreak || this.resumed) return;
+            const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+            const res = await fetch('{{ route("admin.attendance.break") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+            if (res.ok) {
+                this.onBreak = true;
+                this.breakTime = data.break_start;
+                this.breakStartTimestamp = Date.now();
+            } else { alert(data.message ?? 'Break failed.'); }
+        },
+        async handleClockOut() {
+            if (!this.clockedIn || this.clockedOut) return;
+            const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+            const res = await fetch('{{ route("admin.attendance.clock-out") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+            if (res.ok) {
+                this.clockedOut = true;
+                this.clockOutTime = data.clock_out;
+                this.onBreak = false;
+            } else { alert(data.message ?? 'Clock-out failed.'); }
         }
     }"
     x-init="initClock()"
@@ -180,10 +228,10 @@ clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock
 
                 <!-- COL 2: Time & Attendance -->
                 <div class="bg-white rounded-xl p-6 card-anim flex flex-col" style="animation-delay:0.35s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Time & Attendance</p>
+                    <p class="text-sm font-bold text-gray-700 uppercase tracking-widest mb-1">Time & Attendance</p>
                     <div class="mb-1">
-                        <p class="font-black text-gray-900 tabular-nums leading-none" style="font-size:3rem; letter-spacing:-1px;" x-text="currentTime"></p>
-                        <p class="text-sm text-gray-400 font-medium mt-1.5" x-text="currentDate"></p>
+                        <p class="text-xs text-gray-400 font-medium mb-1" x-text="currentDate"></p>
+                        <p class="font-black tabular-nums leading-none" style="font-size:2.8rem; letter-spacing:-1px; color:#3b82f6;" x-text="currentTime"></p>
                     </div>
                     <hr class="my-4 border-gray-100">
                     <template x-if="!clockedIn">
@@ -206,18 +254,31 @@ clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock
                                     </svg>
                                 </div>
                             </div>
+                            <div class="mt-2 border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+                                <div class="flex items-center justify-between px-3 py-2">
+                                    <span class="text-xs font-semibold text-gray-600"
+                                          x-text="shifts.find(s => s.id == selectedShiftId)?.name ?? '—'"></span>
+                                    <span class="text-xs text-gray-400"
+                                          x-text="shifts.find(s => s.id == selectedShiftId) ? formatTime(shifts.find(s => s.id == selectedShiftId).start_time) + ' - ' + formatTime(shifts.find(s => s.id == selectedShiftId).end_time) : '—'"></span>
+                                </div>
+                                <div class="flex items-center justify-between px-3 py-2 border-t border-gray-100">
+                                    <span class="text-xs text-gray-400">Break</span>
+                                    <span class="text-xs text-gray-400">12:00 PM - 1:00 PM</span>
+                                </div>
+                            </div>
                         </div>
                     </template>
                     <div class="mb-3">
                         <p class="text-xs font-semibold text-gray-500 mb-2">Work Setup</p>
-                        <div class="flex rounded-xl overflow-hidden border border-gray-200">
+                        <div class="flex rounded-2xl overflow-hidden border border-gray-200 bg-white">
                             <button @click="workSetup='office'"
-                                :class="workSetup==='office' ? 'bg-gray-800 text-white font-bold' : 'bg-white text-gray-500 font-medium hover:bg-gray-50'"
-                                class="setup-btn flex-1 py-2.5 text-sm">Office</button>
+                                :style="workSetup==='office' ? 'background:#dbeafe; color:#1d4ed8;' : ''"
+                                :class="workSetup==='office' ? 'font-bold' : 'bg-transparent text-gray-400 font-medium hover:bg-gray-50'"
+                                class="setup-btn flex-1 py-2.5 text-sm rounded-2xl m-1 transition-all">Office</button>
                             <button @click="workSetup='wfh'"
-                                :class="workSetup==='wfh' ? 'text-white font-bold' : 'bg-white text-gray-500 font-medium hover:bg-gray-50'"
-                                :style="workSetup==='wfh' ? 'background:#3b82f6' : ''"
-                                class="setup-btn flex-1 py-2.5 text-sm">WFH</button>
+                                :style="workSetup==='wfh' ? 'background:#dbeafe; color:#1d4ed8;' : ''"
+                                :class="workSetup==='wfh' ? 'font-bold' : 'bg-transparent text-gray-400 font-medium hover:bg-gray-50'"
+                                class="setup-btn flex-1 py-2.5 text-sm rounded-2xl m-1 transition-all">WFH</button>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -228,19 +289,39 @@ clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock
                                 <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedIn ? clockInTime : '–'"></p>
                             </div>
                             <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50">
+                                <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">BREAK</p>
+                                <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="breakTime ? breakTime : '–'"></p>
+                            </div>
+                            <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50">
                                 <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">CLOCK OUT</p>
                                 <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedOut ? clockOutTime : '–'"></p>
                             </div>
                         </div>
                         <p class="text-xs text-center text-gray-400 font-medium" x-show="!clockedIn"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
                         <p class="text-xs text-center font-medium" x-show="clockedIn && !clockedOut" style="color:#3b82f6;"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
+                        <p class="text-xs text-center font-medium" x-show="onBreak" style="color:#f59e0b;"> On break · timer paused</p>
                         <p class="text-xs text-center font-semibold" x-show="clockedOut" style="color:#22c55e;">✓ Attendance recorded · <span x-text="elapsedDisplay"></span></p>
                     </div>
-                    <button @click="handleClock()" :disabled="clockedOut"
-                            class="clock-btn mt-auto w-full py-3.5 text-white font-bold text-sm tracking-widest uppercase"
-                            :style="clockedOut ? 'background:#94a3b8;' : clockedIn ? 'background:linear-gradient(135deg,#ef4444,#dc2626)' : 'background:linear-gradient(135deg,#3b82f6,#1d4ed8)'"
-                            x-text="clockedOut ? 'COMPLETED' : clockedIn ? 'CLOCK OUT' : 'CLOCK IN'">
-                    </button>
+                    <div class="mt-auto flex gap-2">
+                        <button @click="handleClock()"
+                                :disabled="(clockedIn && !onBreak) || clockedOut"
+                                class="clock-btn flex-1 py-3 text-white font-bold text-xs tracking-widest uppercase"
+                                :style="(clockedIn && !onBreak) || clockedOut ? 'background:#94a3b8;' : 'background:#3b82f6;'">
+                            TIME IN
+                        </button>
+                        <button @click="handleBreak()"
+                                :disabled="!clockedIn || onBreak || resumed || clockedOut"
+                                class="clock-btn flex-1 py-3 font-bold text-xs tracking-widest uppercase"
+                                :style="!clockedIn || onBreak || resumed || clockedOut ? 'background:#94a3b8; color:white;' : 'background:#dbeafe; color:#1d4ed8;'">
+                            BREAK
+                        </button>
+                        <button @click="handleClockOut()"
+                                :disabled="!clockedIn || clockedOut"
+                                class="clock-btn flex-1 py-3 text-white font-bold text-xs tracking-widest uppercase"
+                                :style="!clockedIn || clockedOut ? 'background:#94a3b8;' : 'background:#3b82f6;'">
+                            TIME OUT
+                        </button>
+                    </div>
                 </div>
 
                 <!-- COL 3: Calendar + Upcoming Events -->

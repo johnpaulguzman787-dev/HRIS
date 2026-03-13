@@ -153,7 +153,7 @@
 </div>
                     <p class="text-xs text-center text-gray-400 font-medium" x-show="!clockedIn"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
 <p class="text-xs text-center font-medium" x-show="clockedIn && !onBreak && !clockedOut" style="color:#3b82f6;"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
-<p class="text-xs text-center font-medium" x-show="onBreak" style="color:#f59e0b;">☕ On break · timer paused</p>
+<p class="text-xs text-center font-medium" x-show="onBreak" style="color:#f59e0b;">On break · timer paused</p>
 <p class="text-xs text-center font-semibold" x-show="clockedOut" style="color:#22c55e;">✓ Attendance recorded · <span x-text="elapsedDisplay"></span></p>
                 </div>
                <div class="mt-auto flex gap-2">

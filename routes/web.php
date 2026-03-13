@@ -108,6 +108,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/employee/attendance/records', [EmployeeAttendanceController::class, 'records'])->name('employee.attendance.records');
     Route::post('/employee/attendance/clock-in', [EmployeeAttendanceController::class, 'clockIn'])->name('employee.attendance.clock-in');
     Route::post('/employee/attendance/clock-out', [EmployeeAttendanceController::class, 'clockOut'])->name('employee.attendance.clock-out');
+    Route::post('/employee/attendance/break',     [EmployeeAttendanceController::class, 'breakStart'])->name('employee.attendance.break');
     // ──────────────────────────────────────────────────────────────────────
 
     // ── HR ATTENDANCE ROUTES ───────────────────────────────────────────────
@@ -116,6 +117,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/hr/attendance/records', [HRAttendanceController::class, 'records'])->name('hr.attendance.records');
     Route::post('/hr/attendance/clock-in', [HRAttendanceController::class, 'clockIn'])->name('hr.attendance.clock-in');
     Route::post('/hr/attendance/clock-out', [HRAttendanceController::class, 'clockOut'])->name('hr.attendance.clock-out');
+    Route::post('/hr/attendance/break',     [HRAttendanceController::class, 'breakStart'])->name('hr.attendance.break');
     Route::get('/hr/attendance/employee', [HRAttendanceController::class, 'employeeAttendance'])->name('hr.attendance.employee');
     // ──────────────────────────────────────────────────────────────────────
 
@@ -125,6 +127,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/supervisor/attendance/records', [SupervisorAttendanceController::class, 'records'])->name('supervisor.attendance.records');
     Route::post('/supervisor/attendance/clock-in', [SupervisorAttendanceController::class, 'clockIn'])->name('supervisor.attendance.clock-in');
     Route::post('/supervisor/attendance/clock-out', [SupervisorAttendanceController::class, 'clockOut'])->name('supervisor.attendance.clock-out');
+    Route::post('/supervisor/attendance/break', [SupervisorAttendanceController::class, 'breakStart'])->name('supervisor.attendance.break');
     Route::get('/supervisor/attendance/employee', [SupervisorAttendanceController::class, 'employeeAttendance'])->name('supervisor.attendance.employee');
     // ──────────────────────────────────────────────────────────────────────
 

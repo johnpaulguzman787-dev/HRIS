@@ -134,6 +134,7 @@ Route::get('/admin/attendance/today', [AdminAttendanceController::class, 'today'
 Route::get('/admin/attendance/records', [AdminAttendanceController::class, 'records'])->name('admin.attendance.records');
 Route::post('/admin/attendance/clock-in', [AdminAttendanceController::class, 'clockIn'])->name('admin.attendance.clock-in');
 Route::post('/admin/attendance/clock-out', [AdminAttendanceController::class, 'clockOut'])->name('admin.attendance.clock-out');
+Route::post('/admin/attendance/break', [AdminAttendanceController::class, 'breakStart'])->name('admin.attendance.break');
 Route::get('/admin/attendance/employee', [AdminAttendanceController::class, 'employeeAttendance'])->name('admin.attendance.employee');
 // ──────────────────────────────────────────────────────────────────────
     // Other Dashboards

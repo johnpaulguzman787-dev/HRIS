@@ -8,7 +8,6 @@
         workSetup: '{{ $todayLog?->work_setup ?? "wfh" }}',
         clockedIn: {{ $todayLog?->clock_in ? 'true' : 'false' }},
         clockedOut: {{ $todayLog?->clock_out ? 'true' : 'false' }},
-        clockInTime: '{{ $todayLog?->clock_in ? \Carbon\Carbon::parse($todayLog->clock_in)->format("h:i A") : "" }}',
         clockInTime:  '{{ $todayLog?->clock_in  ? \Carbon\Carbon::parse($todayLog->clock_in)->setTimezone(config("app.timezone"))->format("h:i A")  : "" }}',
 clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock_out)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         elapsedSeconds: 0,
@@ -26,7 +25,7 @@ clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock
             setInterval(() => {
                 this.updateTime();
                 if (this.clockedIn && !this.clockedOut && this.clockInTimestamp) {
-                    this.elapsedSeconds = Math.floor((Date.now() - this.clockInTimestamp) / 1000);
+                    this.elapsedSeconds = Math.floor((Date.now() - this.clockInTimestamp) / 1000) - (this.breakMinutes * 60);
                 }
             }, 1000);
             window.addEventListener('storage', () => {

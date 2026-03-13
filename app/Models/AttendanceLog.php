@@ -16,6 +16,9 @@ class AttendanceLog extends Model
         'attendance_date',
         'work_setup',
         'clock_in',
+        'break_start',
+        'break_end',
+        'break_minutes',
         'clock_out',
         'late_minutes',
         'undertime_minutes',
@@ -25,13 +28,16 @@ class AttendanceLog extends Model
     ];
 
     protected $casts = [
-        'attendance_date' => 'date',
-        'clock_in'        => 'datetime',
-        'clock_out'       => 'datetime',
-        'late_minutes'    => 'integer',
+        'attendance_date'   => 'date',
+        'clock_in'          => 'datetime',
+        'break_start'       => 'datetime',
+        'break_end'         => 'datetime',
+        'break_minutes'     => 'integer',
+        'clock_out'         => 'datetime',
+        'late_minutes'      => 'integer',
         'undertime_minutes' => 'integer',
         'overtime_minutes'  => 'integer',
-        'total_hours'     => 'decimal:2',
+        'total_hours'       => 'decimal:2',
     ];
 
     public function employee()

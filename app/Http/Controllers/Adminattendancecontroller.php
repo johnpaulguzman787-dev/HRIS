@@ -210,6 +210,13 @@ class AdminAttendanceController extends Controller
                 Carbon::today()->toDateString() . ' ' . $selectedShift->end_time
             );
 
+            // Night shift: if end_time is earlier than start_time, it crosses midnight
+            if ($shiftEnd->lt(Carbon::createFromTimeString(
+                Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
+            ))) {
+                $shiftEnd->addDay();
+            }
+
             if ($now->gt($shiftEnd)) {
                 // Clocked out AFTER shift end = overtime
                 $overtimeMinutes = (int) $now->diffInMinutes($shiftEnd);

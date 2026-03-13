@@ -51,11 +51,6 @@ class EmployeeAttendanceController extends Controller
 
     public function clockIn(Request $request)
     {
-        $request->validate([
-            'work_setup' => 'required|in:office,wfh',
-            'shift_id'   => 'nullable|exists:shifts,id',
-        ]);
-
         $user     = Auth::user();
         $employee = Employee::where('user_id', $user->id)->firstOrFail();
         $today    = Carbon::today();
@@ -64,6 +59,24 @@ class EmployeeAttendanceController extends Controller
         $existing = AttendanceLog::where('employee_id', $employee->id)
             ->whereDate('attendance_date', $today)
             ->first();
+
+        if ($existing && $existing->clock_in && $existing->break_start && !$existing->break_end && !$existing->clock_out) {
+            $breakMinutes = (int) Carbon::parse($existing->break_start)->diffInMinutes($now);
+            $existing->update([
+                'break_end'     => $now,
+                'break_minutes' => $breakMinutes,
+            ]);
+            return response()->json([
+                'message'       => 'Break ended, resumed work.',
+                'break_end'     => $now->format('h:i A'),
+                'break_minutes' => $breakMinutes,
+            ]);
+        }
+
+        $request->validate([
+            'work_setup' => 'required|in:office,wfh',
+            'shift_id'   => 'nullable|exists:shifts,id',
+        ]);
 
         if ($existing && $existing->clock_in) {
             return response()->json(['message' => 'Already clocked in today.'], 409);
@@ -140,7 +153,7 @@ class EmployeeAttendanceController extends Controller
         }
 
         $clockIn    = Carbon::parse($log->clock_in);
-        $totalHours = round($clockIn->diffInMinutes($now) / 60, 2);
+        $totalHours = round(($clockIn->diffInMinutes($now) - $log->break_minutes) / 60, 2);
 
         $overtimeMinutes  = 0;
         $undertimeMinutes = 0;
@@ -166,8 +179,18 @@ class EmployeeAttendanceController extends Controller
                 Carbon::today()->toDateString() . ' ' . $selectedShift->end_time
             );
 
+            // Night shift: if end_time is earlier than start_time, it crosses midnight
+            if ($shiftEnd->lt(Carbon::createFromTimeString(
+                Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
+            ))) {
+                $shiftEnd->addDay();
+            }
+
             if ($now->gt($shiftEnd)) {
                 $overtimeMinutes = (int) $now->diffInMinutes($shiftEnd);
+                if ($clockOutStatus !== 'late') {
+                    $clockOutStatus = 'overtime';
+                }
             } elseif ($now->lt($shiftEnd)) {
                 $undertimeMinutes = (int) $now->diffInMinutes($shiftEnd);
                 if ($clockOutStatus !== 'late') {
@@ -210,6 +233,35 @@ class EmployeeAttendanceController extends Controller
             ->paginate(10);
 
         return response()->json($logs);
+    }
+
+    public function breakStart(Request $request)
+    {
+        $user     = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $today    = Carbon::today();
+        $now      = Carbon::now();
+
+        $log = AttendanceLog::where('employee_id', $employee->id)
+            ->whereDate('attendance_date', $today)
+            ->firstOrFail();
+
+        if (!$log->clock_in) {
+            return response()->json(['message' => 'Not clocked in yet.'], 422);
+        }
+        if ($log->break_start) {
+            return response()->json(['message' => 'Already on break.'], 409);
+        }
+        if ($log->clock_out) {
+            return response()->json(['message' => 'Already clocked out.'], 409);
+        }
+
+        $log->update(['break_start' => $now]);
+
+        return response()->json([
+            'message'     => 'Break started.',
+            'break_start' => $now->format('h:i A'),
+        ]);
     }
 
     public function today()

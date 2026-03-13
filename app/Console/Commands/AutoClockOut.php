@@ -41,6 +41,13 @@ class AutoClockOut extends Command
                 $yesterday->toDateString() . ' ' . $shift->end_time
             );
 
+            // Night shift: if end_time is earlier than start_time, it crosses midnight
+            if ($autoClockOut->lt(Carbon::createFromTimeString(
+                $yesterday->toDateString() . ' ' . $shift->start_time
+            ))) {
+                $autoClockOut->addDay();
+            }
+
             // If they were on break and never resumed, close the break too
             $breakMinutes = $log->break_minutes;
             if ($log->break_start && !$log->break_end) {

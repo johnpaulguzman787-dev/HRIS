@@ -99,7 +99,7 @@
         </a>
 
         <!-- Employee Profile -->
-        <a href="#"
+        <a href="{{ route('employee.profile') }}"
             class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg
                 {{ $currentRoute === 'employee.profile' ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}"
             style="{{ $currentRoute === 'employee.profile' ? 'background:#3b82f6;' : '' }}">

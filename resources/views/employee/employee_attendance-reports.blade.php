@@ -98,9 +98,9 @@
 <div id="main-content" class="min-h-screen bg-gray-100 ml-64"
      style="transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1);">
 
-    {{-- Blue Header --}}
-    <div class="anim-fade flex items-center justify-between px-8 py-4"
-         style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);">
+   {{-- Blue Header --}}
+<header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-hidden">
+    <div class="flex items-center justify-between px-8 py-4">
         <h1 class="text-white font-bold text-xl">My Attendance</h1>
         <button class="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-white/20">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,6 +108,7 @@
             </svg>
         </button>
     </div>
+</header>
 
     <div class="p-6 space-y-5">
 

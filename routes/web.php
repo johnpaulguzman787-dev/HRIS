@@ -14,6 +14,8 @@ use App\Http\Controllers\EmployeeAttendanceController;
 use App\Http\Controllers\HRAttendanceController;
 use App\Http\Controllers\SupervisorAttendanceController;
 use App\Http\Controllers\AdminAttendanceController;
+use App\Http\Controllers\HrEmployeeController;
+use App\Http\Controllers\SupervisorEmployeeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -81,7 +83,7 @@ Route::post('/email/verification-notification', function (Illuminate\Http\Reques
 
 Route::middleware(['auth'])->group(function () {
 
-    // Employee Routes
+    // Admin Employee Routes
     Route::prefix('employees')->name('employees.')->group(function () {
         Route::get('/directory', [AdminEmployeeController::class, 'directory'])->name('directory');
         Route::get('/profile', [AdminEmployeeController::class, 'profile'])->name('profile');
@@ -92,6 +94,28 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/job-title/{id}', [AdminEmployeeController::class, 'updateJobTitle'])->name('job_title.update');
     });
 
+    // ── HR EMPLOYEE ROUTES ─────────────────────────────────────────────────
+Route::prefix('hr/employees')->name('hr.employees.')->group(function () {
+    Route::get('/directory', [App\Http\Controllers\HrEmployeeController::class, 'directory'])->name('directory');
+    Route::post('/store', [App\Http\Controllers\HrEmployeeController::class, 'store'])->name('store');
+    Route::post('/departments', [App\Http\Controllers\HrEmployeeController::class, 'storeDepartment'])->name('departments.store');
+    Route::match(['POST', 'PUT'], '/departments/{id}', [App\Http\Controllers\HrEmployeeController::class, 'updateDepartment'])->name('departments.update');
+    Route::post('/{id}', [App\Http\Controllers\HrEmployeeController::class, 'update'])->name('update');
+    Route::get('/profile', [App\Http\Controllers\HrEmployeeController::class, 'profile'])->name('profile');
+   });
+
+   // ──────────────────────────────────────────────────────────────────────
+
+    // ── SUPERVISOR EMPLOYEE ROUTES ─────────────────────────────────────────
+    Route::prefix('supervisor/employees')->name('supervisor.employees.')->group(function () {
+        Route::get('/directory', [SupervisorEmployeeController::class, 'directory'])->name('directory');
+        Route::get('/profile', [SupervisorEmployeeController::class, 'profile'])->name('profile');
+        Route::post('/store', [SupervisorEmployeeController::class, 'store'])->name('store');
+        Route::match(['POST', 'PUT'], '/departments/{id}', [SupervisorEmployeeController::class, 'updateDepartment'])->name('departments.update');
+        Route::post('/{id}', [SupervisorEmployeeController::class, 'update'])->name('update');
+    });
+    // ──────────────────────────────────────────────────────────────────────
+
     // Admin Dashboard
     Route::get('/admin', [DashboardController::class, 'admin_dashboard'])->name('admin.dashboard');
     // HR Dashboard
@@ -101,6 +125,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Employee Dashboard
     Route::get('/employee/dashboard', [EmployeeDashboardController::class, 'index'])->name('employee.dashboard');
+    Route::get('/employee/profile', [App\Http\Controllers\EmployeeProfileController::class, 'profile'])->name('employee.profile');
 
     // ── EMPLOYEE ATTENDANCE ROUTES ─────────────────────────────────────────
     Route::get('/employee/attendance/reports', [EmployeeAttendanceController::class, 'index'])->name('employee.attendance.reports');
@@ -120,6 +145,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/hr/attendance/break',     [HRAttendanceController::class, 'breakStart'])->name('hr.attendance.break');
     Route::get('/hr/attendance/employee', [HRAttendanceController::class, 'employeeAttendance'])->name('hr.attendance.employee');
     // ──────────────────────────────────────────────────────────────────────
+
+    
 
     // ── SUPERVISOR ATTENDANCE ROUTES ───────────────────────────────────────
     Route::get('/supervisor/attendance/reports', [SupervisorAttendanceController::class, 'index'])->name('supervisor.attendance.reports');
@@ -154,6 +181,7 @@ Route::middleware(['auth'])->group(function () {
     // =========================
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/', [SettingsController::class, 'index'])->name('index');
+        Route::post('/permissions', [SettingsController::class, 'updatePermissions'])->name('permissions.update');
         Route::get('/general', [SettingsController::class, 'general'])->name('general');
         Route::get('/permissions', [SettingsController::class, 'permissions'])->name('permissions');
         Route::get('/notifications', [SettingsController::class, 'notifications'])->name('notifications');

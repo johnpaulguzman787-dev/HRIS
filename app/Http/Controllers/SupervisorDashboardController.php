@@ -17,6 +17,8 @@ class SupervisorDashboardController extends Controller
 
         $authUser     = Auth::user();
         $authEmployee = Employee::with('jobTitle')->where('user_id', $authUser->id)->first();
+        $authDeptId   = $authEmployee?->department_id;
+        $authEmpId    = $authEmployee?->id ?? 0;
 
         $dashInitials = $authEmployee
             ? strtoupper(substr($authEmployee->fname, 0, 1) . substr($authEmployee->lname, 0, 1))
@@ -37,7 +39,7 @@ class SupervisorDashboardController extends Controller
 
         $departments = \App\Models\Department::with(['employees.attendanceLogs' => function ($q) use ($today) {
             $q->whereDate('attendance_date', $today);
-        }])->get();
+        }])->where('id', $authDeptId)->get();
 
         $departmentProgress = $departments->map(function ($dept) {
             $total   = $dept->employees->count();
@@ -54,23 +56,43 @@ class SupervisorDashboardController extends Controller
         })->filter(fn($d) => $d['total'] > 0)->values();
 
         $data = [
-            'dashInitials'   => $dashInitials,
-            'dashName'       => $dashName,
-            'dashRole'       => $dashRole,
-            'totalEmployees' => Employee::count(),
-            'presentToday'   => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['present', 'undertime', 'overtime'])->count(),
-            'lateToday'      => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['late', 'absent'])->count(),
-            'pendingRequests' => 12,
+            'dashInitials'    => $dashInitials,
+            'dashName'        => $dashName,
+            'dashRole'        => $dashRole,
             'todayLog'        => $todayLog,
             'availableShifts' => $availableShifts,
+            'pendingRequests' => 0,
+            'currentDate'     => Carbon::today()->format('l, F j, Y'),
+
+            'totalEmployees' => Employee::where('department_id', $authDeptId)
+                ->where('id', '!=', $authEmpId)
+                ->count(),
+
+            'presentToday' => AttendanceLog::whereDate('attendance_date', $today)
+                ->whereIn('status', ['present', 'undertime', 'overtime', 'late'])
+                ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId)->where('id', '!=', $authEmpId))
+                ->count(),
+
             'attendanceSummary' => [
-                'present'  => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['present', 'undertime', 'overtime'])->count(),
-                'late'     => AttendanceLog::whereDate('attendance_date', $today)->where('status', 'late')->count(),
-                'absent'   => AttendanceLog::whereDate('attendance_date', $today)->where('status', 'absent')->count(),
-                'on_leave' => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['on_leave', 'holiday'])->count(),
+                'present'  => AttendanceLog::whereDate('attendance_date', $today)
+                    ->whereIn('status', ['present', 'undertime', 'overtime'])
+                    ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId)->where('id', '!=', $authEmpId))
+                    ->count(),
+                'late'     => AttendanceLog::whereDate('attendance_date', $today)
+                    ->where('late_minutes', '>', 0)
+                    ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId)->where('id', '!=', $authEmpId))
+                    ->count(),
+                'absent'   => AttendanceLog::whereDate('attendance_date', $today)
+                    ->where('status', 'absent')
+                    ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId)->where('id', '!=', $authEmpId))
+                    ->count(),
+                'on_leave' => AttendanceLog::whereDate('attendance_date', $today)
+                    ->whereIn('status', ['on_leave', 'holiday'])
+                    ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId)->where('id', '!=', $authEmpId))
+                    ->count(),
             ],
+
             'departmentProgress' => $departmentProgress,
-            'currentDate' => Carbon::today()->format('l, F j, Y'),
         ];
 
         return view('supervisor.supervisor_dashboard', $data);

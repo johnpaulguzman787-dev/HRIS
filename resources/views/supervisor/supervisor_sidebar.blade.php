@@ -11,6 +11,7 @@
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 
     $attendanceRoutes = ['supervisor.attendance.reports', 'supervisor.attendance.employee', 'supervisor.attendance.shift', 'supervisor.attendance.leave'];
+    $employeeRoutes   = ['supervisor.employees.directory'];
     $payrollRoutes    = ['supervisor.payroll', 'supervisor.payslips', 'supervisor.contributions'];
     $requestRoutes    = ['supervisor.requests.pending', 'supervisor.requests.approved'];
 @endphp
@@ -19,7 +20,7 @@
     class="bg-white border-r border-gray-200 h-screen fixed left-0 top-0 overflow-y-auto z-50 flex flex-col"
     x-data="{
         sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
-        employeesOpen: false,
+        employeesOpen: {{ in_array($currentRoute, $employeeRoutes) ? 'true' : 'false' }},
         attendanceOpen: {{ in_array($currentRoute, $attendanceRoutes) ? 'true' : 'false' }},
         payrollOpen: {{ in_array($currentRoute, $payrollRoutes) ? 'true' : 'false' }},
         requestsOpen: {{ in_array($currentRoute, $requestRoutes) ? 'true' : 'false' }}
@@ -85,7 +86,7 @@
         <!-- Employees -->
         <div>
             <button @click="employeesOpen = !employeesOpen"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg {{ in_array($currentRoute, $employeeRoutes) ? 'text-blue-600' : 'text-gray-600 hover:bg-gray-50' }}">
                 <div class="flex items-center space-x-3">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -104,9 +105,8 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Employee Directory</a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Employee Profile</a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Employee Documents</a>
+                <a href="{{ route('supervisor.employees.directory') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'supervisor.employees.directory' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Directory</a>
+                <a href="{{ route('supervisor.employees.profile') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'supervisor.employees.profile' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Profile</a>
             </div>
         </div>
 

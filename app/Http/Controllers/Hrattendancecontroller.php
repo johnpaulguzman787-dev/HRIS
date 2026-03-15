@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use App\Models\AttendanceLog;
 use App\Models\Employee;
 use App\Models\EmployeeShift;
+use App\Models\Department;
 
 class HrAttendanceController extends Controller
 {
@@ -104,12 +105,12 @@ class HrAttendanceController extends Controller
 
             if ($now->gt($shiftStart)) {
                 $lateMinutes = (int) $shiftStart->diffInMinutes($now);
-                if ($lateMinutes > 0 && $lateMinutes < 360) {
+                if ($lateMinutes > 0) {
                     $status = 'late';
-                } elseif ($lateMinutes >= 360) {
-                    $lateMinutes = 0;
-                    $status = 'present';
+                    if ($lateMinutes > 999) $lateMinutes = 999;
                 }
+            } else {
+                $lateMinutes = 0;
             }
         }
 
@@ -282,8 +283,211 @@ class HrAttendanceController extends Controller
     /**
      * Display all employees' attendance records for HR.
      */
-    public function employeeAttendance()
+    public function employeeAttendance(Request $request)
     {
-        return view('hr.hr_employee_attendance-reports');
+        $currentView  = $request->get('view', 'daily');
+        $departments  = Department::orderBy('name')->get();
+        $authEmployee = Employee::where('user_id', Auth::id())->first();
+        $authEmpId    = $authEmployee?->id ?? 0;
+
+        // ── DETAIL VIEW (drilldown for one employee) ──
+        if ($currentView === 'monthly' && $request->filled('employee_id')) {
+            $selectedMonth  = $request->get('month', now()->format('Y-m'));
+            $selectedPeriod = $request->get('period', '1');
+            [$year, $month] = explode('-', $selectedMonth);
+
+            $period1Start = Carbon::parse("$selectedMonth-01");
+            $period1End   = Carbon::parse("$selectedMonth-15");
+            $period2Start = Carbon::parse("$selectedMonth-16");
+            $period2End   = Carbon::parse("$selectedMonth-01")->endOfMonth();
+
+            $start = $selectedPeriod == '1' ? $period1Start : $period2Start;
+            $end   = $selectedPeriod == '1' ? $period1End   : $period2End;
+
+            $logs = AttendanceLog::with('shift')
+                ->where('employee_id', $request->employee_id)
+                ->whereBetween('attendance_date', [$start->toDateString(), $end->toDateString()])
+                ->orderBy('attendance_date')
+                ->get();
+
+            $fmt = fn($m) => floor($m / 60) . 'h ' . str_pad((int)($m % 60), 2, '0', STR_PAD_LEFT) . 'm';
+
+            $dailyRecords = $logs->map(function ($log) use ($fmt) {
+                return (object) [
+                    'date'                => $log->attendance_date,
+                    'work_setup'          => $log->work_setup ? strtoupper($log->work_setup) : '—',
+                    'shift_type'          => $log->shift?->name ?? '—',
+                    'schedule'            => $log->shift
+                        ? Carbon::parse($log->shift->start_time)->format('g:i A') . ' – ' . Carbon::parse($log->shift->end_time)->format('g:i A')
+                        : '—',
+                    'time_in'             => $log->clock_in,
+                    'time_out'            => $log->clock_out,
+                    'overtime_formatted'  => $log->overtime_minutes  > 0 ? $fmt($log->overtime_minutes)  : '00h 00m',
+                    'undertime_formatted' => $log->undertime_minutes > 0 ? $fmt($log->undertime_minutes) : '00h 00m',
+                    'status'              => $log->status,
+                ];
+            });
+
+            $totalWorkMinutes      = $logs->sum(fn($l) => round(($l->total_hours ?? 0) * 60));
+            $totalOvertimeMinutes  = $logs->sum('overtime_minutes');
+            $totalUndertimeMinutes = $logs->sum('undertime_minutes');
+
+            $workingDaysInPeriod = 0;
+            $cursor = $start->copy();
+            while ($cursor->lte($end)) {
+                if (!$cursor->isWeekend()) $workingDaysInPeriod++;
+                $cursor->addDay();
+            }
+
+            $totals = [
+                'work_hours'      => $fmt($totalWorkMinutes),
+                'overtime_hours'  => $fmt($totalOvertimeMinutes),
+                'undertime_hours' => $fmt($totalUndertimeMinutes),
+                'working_days'    => $logs->count() . '/' . $workingDaysInPeriod,
+            ];
+
+            return view('hr.hr_employee_attendance-reports', compact(
+                'currentView', 'departments', 'dailyRecords',
+                'selectedMonth', 'selectedPeriod', 'totals'
+            ));
+        }
+
+        // ── DAILY VIEW ──
+        if ($currentView === 'daily') {
+            $date = $request->get('date', now()->toDateString());
+
+            $query = AttendanceLog::with(['employee.department', 'shift'])
+                ->whereDate('attendance_date', $date)
+                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId));
+
+            if ($request->filled('department')) {
+                $query->whereHas('employee', fn($q) => $q->where('department_id', $request->department));
+            }
+            if ($request->filled('search')) {
+                $s = $request->search;
+                $query->whereHas('employee', fn($q) =>
+                    $q->where('fname', 'like', "%$s%")->orWhere('lname', 'like', "%$s%")
+                );
+            }
+
+            $records      = $query->paginate(15);
+            $totalEmp     = Employee::where('id', '!=', $authEmpId)->count();
+            $presentCount = AttendanceLog::whereDate('attendance_date', $date)
+                ->whereIn('status', ['present', 'late', 'overtime', 'undertime'])
+                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+                ->count();
+            $lateCount    = AttendanceLog::whereDate('attendance_date', $date)
+                ->where('late_minutes', '>', 0)
+                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+                ->count();
+            $absentCount  = $totalEmp - $presentCount;
+
+            $otMins = AttendanceLog::whereDate('attendance_date', $date)
+                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+                ->sum('overtime_minutes');
+            $utMins = AttendanceLog::whereDate('attendance_date', $date)
+                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+                ->sum('undertime_minutes');
+
+            $overtimeEmployees  = AttendanceLog::whereDate('attendance_date', $date)
+                ->where('overtime_minutes', '>', 0)
+                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+                ->count();
+            $undertimeEmployees = AttendanceLog::whereDate('attendance_date', $date)
+                ->where('undertime_minutes', '>', 0)
+                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+                ->count();
+
+            $presentRate    = $totalEmp > 0 ? round(($presentCount / $totalEmp) * 100, 1) . '%' : '0%';
+            $lateRate       = $totalEmp > 0 ? round(($lateCount    / $totalEmp) * 100, 1) . '%' : '0%';
+            $absentRate     = $totalEmp > 0 ? round(($absentCount  / $totalEmp) * 100, 1) . '%' : '0%';
+            $overtimeHours  = floor($otMins / 60) . ' hrs';
+            $undertimeHours = floor($utMins / 60) . ' hrs';
+
+            return view('hr.hr_employee_attendance-reports', compact(
+                'currentView', 'departments', 'records',
+                'presentCount', 'presentRate',
+                'lateCount', 'lateRate',
+                'absentCount', 'absentRate',
+                'overtimeHours', 'overtimeEmployees',
+                'undertimeHours', 'undertimeEmployees'
+            ));
+        }
+
+        // ── MONTHLY LIST VIEW ──
+        $selectedMonth = $request->get('month', now()->format('Y-m'));
+        [$year, $month] = explode('-', $selectedMonth);
+
+        $empQuery = Employee::with('department')
+            ->where('id', '!=', $authEmpId);
+
+        if ($request->filled('department')) {
+            $empQuery->where('department_id', $request->department);
+        }
+
+        $fmt       = fn($m) => floor($m / 60) . 'h ' . str_pad((int)($m % 60), 2, '0', STR_PAD_LEFT) . 'm';
+        $employees = $empQuery->paginate(15);
+
+        $monthlyRecords = $employees->through(function ($emp) use ($month, $year, $fmt) {
+            $logs = AttendanceLog::where('employee_id', $emp->id)
+                ->whereMonth('attendance_date', $month)
+                ->whereYear('attendance_date', $year)
+                ->get();
+
+            return (object) [
+                'employee_id'  => $emp->id,
+                'employee'     => $emp,
+                'present_days' => $logs->whereIn('status', ['present', 'overtime', 'undertime'])->count(),
+                'late_days'    => $logs->where('status', 'late')->count(),
+                'absent_days'  => $logs->where('status', 'absent')->count(),
+                'leave_days'   => $logs->whereIn('status', ['on_leave', 'holiday'])->count(),
+                'total_hours'  => $fmt($logs->sum(fn($l) => round(($l->total_hours ?? 0) * 60))),
+                'ot_hours'     => $fmt($logs->sum('overtime_minutes')),
+                'ut_hours'     => $fmt($logs->sum('undertime_minutes')),
+            ];
+        });
+
+        $date         = now()->toDateString();
+        $totalEmp     = Employee::where('id', '!=', $authEmpId)->count();
+        $presentCount = AttendanceLog::whereDate('attendance_date', $date)
+            ->whereIn('status', ['present', 'late', 'overtime', 'undertime'])
+            ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+            ->count();
+        $lateCount    = AttendanceLog::whereDate('attendance_date', $date)
+            ->where('late_minutes', '>', 0)
+            ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+            ->count();
+        $absentCount  = $totalEmp - $presentCount;
+
+        $otMins = AttendanceLog::whereDate('attendance_date', $date)
+            ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+            ->sum('overtime_minutes');
+        $utMins = AttendanceLog::whereDate('attendance_date', $date)
+            ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+            ->sum('undertime_minutes');
+
+        $overtimeEmployees  = AttendanceLog::whereDate('attendance_date', $date)
+            ->where('overtime_minutes', '>', 0)
+            ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+            ->count();
+        $undertimeEmployees = AttendanceLog::whereDate('attendance_date', $date)
+            ->where('undertime_minutes', '>', 0)
+            ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+            ->count();
+
+        $presentRate    = $totalEmp > 0 ? round(($presentCount / $totalEmp) * 100, 1) . '%' : '0%';
+        $lateRate       = $totalEmp > 0 ? round(($lateCount    / $totalEmp) * 100, 1) . '%' : '0%';
+        $absentRate     = $totalEmp > 0 ? round(($absentCount  / $totalEmp) * 100, 1) . '%' : '0%';
+        $overtimeHours  = floor($otMins / 60) . ' hrs';
+        $undertimeHours = floor($utMins / 60) . ' hrs';
+
+        return view('hr.hr_employee_attendance-reports', compact(
+            'currentView', 'departments', 'monthlyRecords', 'selectedMonth',
+            'presentCount', 'presentRate',
+            'lateCount', 'lateRate',
+            'absentCount', 'absentRate',
+            'overtimeHours', 'overtimeEmployees',
+            'undertimeHours', 'undertimeEmployees'
+        ));
     }
 }

@@ -103,13 +103,13 @@ class EmployeeAttendanceController extends Controller
             );
 
             if ($now->gt($shiftStart)) {
-                $lateMinutes = (int) $now->diffInMinutes($shiftStart);
-                if ($lateMinutes > 0 && $lateMinutes < 360) {
+                $lateMinutes = (int) $shiftStart->diffInMinutes($now);
+                if ($lateMinutes > 0) {
                     $status = 'late';
-                } elseif ($lateMinutes >= 360) {
-                    $lateMinutes = 0;
-                    $status = 'present';
+                    if ($lateMinutes > 999) $lateMinutes = 999;
                 }
+            } else {
+                $lateMinutes = 0;
             }
         }
 

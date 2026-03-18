@@ -302,9 +302,13 @@
             display: inline-block; padding: 4px 12px;
             border-radius: 20px; font-size: 12px; font-weight: 600;
         }
-        .badge-present { background: var(--green-bg); color: #16a34a; }
-        .badge-late    { background: var(--orange-bg); color: #ea580c; }
-        .badge-absent  { background: var(--red-bg); color: #dc2626; }
+        .badge-present  { background: var(--green-bg); color: #16a34a; }
+        .badge-late     { background: var(--orange-bg); color: #ea580c; }
+        .badge-absent   { background: var(--red-bg); color: #dc2626; }
+        .badge-overtime { background: var(--blue-light); color: #1d4ed8; }
+        .badge-undertime { background: var(--purple-bg); color: #6d28d9; }
+        .badge-on_leave  { background: var(--yellow-bg); color: #a16207; }
+        .badge-holiday   { background: #ede9fe; color: #7c3aed; }
 
         /* ── PAGINATION ── */
         .att-pagination {

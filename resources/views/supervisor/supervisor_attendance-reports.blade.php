@@ -92,49 +92,30 @@
                     <p class="font-black tabular-nums leading-none" style="font-size:2.8rem; letter-spacing:-1px; color:#3b82f6;" x-text="liveTime"></p>
                 </div>
                 <hr class="my-4 border-gray-100">
-                <template x-if="!clockedIn">
-    <div class="mb-3">
-        <p class="text-xs font-semibold text-gray-500 mb-2">Shift Schedule</p>
-        <div class="relative">
-            <select x-model="selectedShiftId"
-                class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50 font-semibold text-gray-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-300">
-                @forelse($availableShifts as $shift)
-                    <option value="{{ $shift->id }}">{{ $shift->name }}</option>
-                @empty
-                    <option value="">No shifts available</option>
-                @endforelse
-            </select>
-            <div class="mt-2 border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
-                <div class="flex items-center justify-between px-3 py-2">
-                    <span class="text-xs font-semibold text-gray-600"
-                          x-text="shifts.find(s => s.id == selectedShiftId)?.name ?? '—'"></span>
-                    <span class="text-xs text-gray-400"
-                          x-text="shifts.find(s => s.id == selectedShiftId) ? formatTime(shifts.find(s => s.id == selectedShiftId).start_time) + ' - ' + formatTime(shifts.find(s => s.id == selectedShiftId).end_time) : '—'"></span>
-                </div>
-                <div class="flex items-center justify-between px-3 py-2 border-t border-gray-100">
-                    <span class="text-xs text-gray-400">Break</span>
-                    <span class="text-xs text-gray-400">12:00 PM - 1:00 PM</span>
-                </div>
-            </div>
-            <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </div>
-        </div>
-    </div>
-</template>
+
                 <div class="mb-3">
-                    <p class="text-xs font-semibold text-gray-500 mb-2">Work Setup</p>
-                    <div class="flex rounded-2xl overflow-hidden border border-gray-200 bg-white">
-                        <button @click="workSetup='office'"
-                                :style="workSetup==='office' ? 'background:#dbeafe; color:#1d4ed8;' : ''"
-                                :class="workSetup==='office' ? 'font-bold' : 'bg-transparent text-gray-400 font-medium hover:bg-gray-50'"
-                                class="setup-btn flex-1 py-2.5 text-sm rounded-2xl m-1 transition-all">Office</button>
-                        <button @click="workSetup='wfh'"
-                                :class="workSetup==='wfh' ? 'font-bold' : 'bg-transparent text-gray-400 font-medium hover:bg-gray-50'"
-                                :style="workSetup==='wfh' ? 'background:#dbeafe; color:#1d4ed8;' : ''"
-                                class="setup-btn flex-1 py-2.5 text-sm rounded-2xl m-1 transition-all">WFH</button>
+                    <p class="text-xs font-semibold text-gray-500 mb-2">Shift Schedule</p>
+                    @if($employeeShift)
+                    <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+                        <div class="flex items-center justify-between px-3 py-2">
+                            <span class="text-xs font-semibold text-gray-600">{{ $employeeShift->shift->name ?? '—' }}</span>
+                            <span class="text-xs text-gray-400">
+                                {{ $employeeShift->shift ? \Carbon\Carbon::parse($employeeShift->shift->start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($employeeShift->shift->end_time)->format('g:i A') : '—' }}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between px-3 py-2 border-t border-gray-100">
+                            <span class="text-xs text-gray-400">Work Setup</span>
+                            <span class="text-xs font-semibold" style="color:#1d4ed8;">{{ strtoupper($employeeShift->work_setup ?? '—') }}</span>
+                        </div>
                     </div>
+                    @else
+                    <div class="border border-dashed border-gray-200 rounded-xl px-3 py-4 bg-gray-50 text-center">
+                        <p class="text-xs text-gray-400 font-medium">No shift assigned yet.</p>
+                        <p class="text-xs text-gray-300 mt-1">Contact your HR to assign a shift.</p>
+                    </div>
+                    @endif
                 </div>
+
                 <div class="mb-3">
                     <p class="text-xs font-semibold text-gray-500 mb-2">Today's Attendance</p>
                     <div class="flex gap-2 mb-2">
@@ -294,9 +275,8 @@
 <script>
 function attendancePage() {
     return {
-        workSetup: '{{ $todayLog?->work_setup ?? "wfh" }}',
-        selectedShiftId: {{ $todayLog?->shift_id ?? ($availableShifts->first()?->id ?? 'null') }},
-        shifts: @json($availableShifts),
+        workSetup: '{{ $todayLog?->work_setup ?? ($employeeShift?->work_setup ?? "wfh") }}',
+        assignedShiftId: {{ $employeeShift?->shift_id ?? 'null' }},
         clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
         clockedOut:  {{ $todayLog?->clock_out   ? 'true' : 'false' }},
         onBreak:     {{ $todayLog?->break_start && !$todayLog?->break_end ? 'true' : 'false' }},
@@ -306,7 +286,6 @@ function attendancePage() {
         clockInTime:  '{{ $todayLog?->clock_in  ? \Carbon\Carbon::parse($todayLog->clock_in)->setTimezone(config("app.timezone"))->format("h:i A")  : "" }}',
         clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock_out)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         clockInTimestamp: {{ $todayLog?->clock_in ? \Carbon\Carbon::parse($todayLog->clock_in)->valueOf() : 'null' }},
-        breakStartTimestamp: {{ $todayLog?->break_start && !$todayLog?->break_end ? \Carbon\Carbon::parse($todayLog->break_start)->valueOf() : 'null' }},
         liveTime: '', liveDate: '', elapsedSeconds: 0,
         rows: [], currentPage: 1, totalRecords: 0, perPage: 10,
         currentMonth: {{ $month }}, currentYear: {{ $year }},
@@ -351,7 +330,7 @@ function attendancePage() {
                 const res = await fetch('{{ route("supervisor.attendance.clock-in") }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                    body: JSON.stringify({ work_setup: this.workSetup, shift_id: this.selectedShiftId })
+                    body: JSON.stringify({ work_setup: this.workSetup, shift_id: this.assignedShiftId })
                 });
                 const data = await res.json();
                 if (res.ok) {
@@ -369,7 +348,7 @@ function attendancePage() {
                 const res = await fetch('{{ route("supervisor.attendance.clock-in") }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                    body: JSON.stringify({ work_setup: this.workSetup, shift_id: this.selectedShiftId })
+                    body: JSON.stringify({ work_setup: this.workSetup, shift_id: this.assignedShiftId })
                 });
                 const data = await res.json();
                 if (res.ok) {

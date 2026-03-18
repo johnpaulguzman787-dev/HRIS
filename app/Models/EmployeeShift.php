@@ -12,6 +12,8 @@ class EmployeeShift extends Model
     protected $fillable = [
         'employee_id',
         'shift_id',
+        'work_setup',
+        'days_off',
         'effective_date',
         'end_date',
         'is_active',

@@ -512,31 +512,11 @@
                             <td><span class="status-badge badge-{{ $st }}">{{ ucfirst($rec->status ?? 'Present') }}</span></td>
                         </tr>
                         @empty
-                        @php $cursor = $start->copy(); @endphp
-                        @while($cursor->lte($end))
-                        @php $isWknd = $cursor->isWeekend(); @endphp
-                        <tr class="{{ $isWknd ? 'rest-row' : '' }}">
-                            <td style="font-weight:600;color:#111827;white-space:nowrap;">
-                                {{ $cursor->format('F j, Y') }}
-                                @if($isWknd)<span style="font-size:10px;color:#9ca3af;font-weight:500;margin-left:4px;">(Rest Day)</span>@endif
-                            </td>
-                            <td style="color:var(--muted);font-size:12.5px;">WFH</td>
-                            <td style="color:var(--muted);font-size:12.5px;">Day Shift</td>
-                            <td style="color:var(--muted);font-size:12.5px;">7:00 AM – 4:00 PM</td>
-                            <td style="font-weight:700;">{{ $isWknd ? '—' : '7:00 AM' }}</td>
-                            <td style="font-weight:700;">{{ $isWknd ? '—' : '4:00 PM' }}</td>
-                            <td><span class="hp-zero">00h 00m</span></td>
-                            <td><span class="hp-zero">00h 00m</span></td>
-                            <td>
-                                @if($isWknd)
-                                    <span class="status-badge badge-rest">Rest Day</span>
-                                @else
-                                    <span class="status-badge badge-present">Present</span>
-                                @endif
+                        <tr>
+                            <td colspan="9" style="text-align:center; padding:40px 16px; color:#9ca3af; font-size:13px;">
+                                No attendance records found for this period.
                             </td>
                         </tr>
-                        @php $cursor->addDay(); @endphp
-                        @endwhile
                         @endforelse
                     </tbody>
                 </table>

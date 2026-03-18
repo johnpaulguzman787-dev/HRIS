@@ -10,8 +10,8 @@
         : ($sidebarUser?->email ?? 'User');
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 
-    $attendanceRoutes = ['hr.attendance.reports', 'hr.attendance.employee', 'hr.attendance.shift', 'hr.attendance.leave'];
-    $employeeRoutes   = ['hr.employees.directory'];
+    $attendanceRoutes = ['hr.attendance.reports', 'hr.attendance.employee', 'hr.attendance.shift', 'hr.attendance.leave', 'hr.shift.scheduling'];
+    $employeeRoutes   = ['hr.employees.directory', 'hr.employees.profile'];
     $payrollRoutes    = ['hr.payroll', 'hr.payslips', 'hr.contributions'];
     $requestRoutes    = ['hr.requests.pending', 'hr.requests.approved'];
 @endphp
@@ -106,7 +106,7 @@
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
                 <a href="{{ route('hr.employees.directory') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'hr.employees.directory' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Directory</a>
-                <a href="{{ route('hr.employees.profile') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'hr.employees.profile' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Profile</a>
+                <a href="{{ route('hr.employees.profile') }}"   class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'hr.employees.profile'   ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Profile</a>
             </div>
         </div>
 
@@ -134,7 +134,6 @@
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
 
-                {{-- ✅ UPDATED: now links to hr.attendance.reports --}}
                 <a href="{{ route('hr.attendance.reports') }}"
                    class="submenu-item flex items-center px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'hr.attendance.reports' ? 'font-semibold' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
@@ -149,7 +148,14 @@
                        {{ $currentRoute === 'hr.attendance.employee' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Employee Attendance
                 </a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Shift Scheduling</a>
+
+                {{-- ✅ UPDATED: Shift Scheduling — may actual route na --}}
+                <a href="{{ route('hr.shift.scheduling') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'hr.shift.scheduling' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                    Shift Scheduling
+                </a>
+
                 <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Leave Management</a>
             </div>
         </div>

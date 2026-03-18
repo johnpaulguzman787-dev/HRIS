@@ -10,7 +10,7 @@
         : ($sidebarUser?->email ?? 'User');
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 
-    $attendanceRoutes = ['supervisor.attendance.reports', 'supervisor.attendance.employee', 'supervisor.attendance.shift', 'supervisor.attendance.leave'];
+    $attendanceRoutes = ['supervisor.attendance.reports', 'supervisor.attendance.employee', 'supervisor.attendance.shift', 'supervisor.attendance.leave', 'supervisor.shift.scheduling'];
     $employeeRoutes   = ['supervisor.employees.directory'];
     $payrollRoutes    = ['supervisor.payroll', 'supervisor.payslips', 'supervisor.contributions'];
     $requestRoutes    = ['supervisor.requests.pending', 'supervisor.requests.approved'];
@@ -134,7 +134,6 @@
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
 
-                {{-- ✅ FIXED: Attendance Reports - may actual route na --}}
                 <a href="{{ route('supervisor.attendance.reports') }}"
                    class="submenu-item flex items-center px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'supervisor.attendance.reports' ? 'font-semibold' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
@@ -144,12 +143,20 @@
                     @endif
                     My Attendance
                 </a>
+
                 <a href="{{ route('supervisor.attendance.employee') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'supervisor.attendance.employee' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Employee Attendance
                 </a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Shift Scheduling</a>
+
+                {{-- ✅ UPDATED: Shift Scheduling — may actual route na --}}
+                <a href="{{ route('supervisor.shift.scheduling') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'supervisor.shift.scheduling' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                    Shift Scheduling
+                </a>
+
                 <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Leave Management</a>
             </div>
         </div>

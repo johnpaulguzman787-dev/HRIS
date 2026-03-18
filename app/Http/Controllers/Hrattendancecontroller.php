@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 use App\Models\AttendanceLog;
 use App\Models\Employee;
 use App\Models\EmployeeShift;
 use App\Models\Department;
 
-class HrAttendanceController extends Controller
+class HRAttendanceController extends Controller
 {
     public function index()
     {
@@ -102,7 +103,6 @@ class HrAttendanceController extends Controller
             $shiftStart = Carbon::createFromTimeString(
                 Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
             );
-
             if ($now->gt($shiftStart)) {
                 $lateMinutes = (int) $shiftStart->diffInMinutes($now);
                 if ($lateMinutes > 0) {
@@ -148,7 +148,6 @@ class HrAttendanceController extends Controller
         if (!$log->clock_in) {
             return response()->json(['message' => 'No clock-in record found for today.'], 422);
         }
-
         if ($log->clock_out) {
             return response()->json(['message' => 'Already clocked out today.'], 409);
         }
@@ -179,8 +178,6 @@ class HrAttendanceController extends Controller
             $shiftEnd = Carbon::createFromTimeString(
                 Carbon::today()->toDateString() . ' ' . $selectedShift->end_time
             );
-
-            // Night shift: if end_time is earlier than start_time, it crosses midnight
             if ($shiftEnd->lt(Carbon::createFromTimeString(
                 Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
             ))) {
@@ -189,14 +186,10 @@ class HrAttendanceController extends Controller
 
             if ($now->gt($shiftEnd)) {
                 $overtimeMinutes = (int) $now->diffInMinutes($shiftEnd);
-                if ($clockOutStatus !== 'late') {
-                    $clockOutStatus = 'overtime';
-                }
+                if ($clockOutStatus !== 'late') $clockOutStatus = 'overtime';
             } elseif ($now->lt($shiftEnd)) {
                 $undertimeMinutes = (int) $now->diffInMinutes($shiftEnd);
-                if ($clockOutStatus !== 'late') {
-                    $clockOutStatus = 'undertime';
-                }
+                if ($clockOutStatus !== 'late') $clockOutStatus = 'undertime';
             }
         }
 
@@ -260,17 +253,9 @@ class HrAttendanceController extends Controller
             ->whereDate('attendance_date', $today)
             ->firstOrFail();
 
-        if (!$log->clock_in) {
-            return response()->json(['message' => 'Not clocked in yet.'], 422);
-        }
-
-        if ($log->break_start) {
-            return response()->json(['message' => 'Already on break.'], 409);
-        }
-
-        if ($log->clock_out) {
-            return response()->json(['message' => 'Already clocked out.'], 409);
-        }
+        if (!$log->clock_in)  return response()->json(['message' => 'Not clocked in yet.'], 422);
+        if ($log->break_start) return response()->json(['message' => 'Already on break.'], 409);
+        if ($log->clock_out)  return response()->json(['message' => 'Already clocked out.'], 409);
 
         $log->update(['break_start' => $now]);
 
@@ -280,9 +265,6 @@ class HrAttendanceController extends Controller
         ]);
     }
 
-    /**
-     * Display all employees' attendance records for HR.
-     */
     public function employeeAttendance(Request $request)
     {
         $currentView  = $request->get('view', 'daily');
@@ -290,7 +272,6 @@ class HrAttendanceController extends Controller
         $authEmployee = Employee::where('user_id', Auth::id())->first();
         $authEmpId    = $authEmployee?->id ?? 0;
 
-        // ── DETAIL VIEW (drilldown for one employee) ──
         if ($currentView === 'monthly' && $request->filled('employee_id')) {
             $selectedMonth  = $request->get('month', now()->format('Y-m'));
             $selectedPeriod = $request->get('period', '1');
@@ -352,7 +333,6 @@ class HrAttendanceController extends Controller
             ));
         }
 
-        // ── DAILY VIEW ──
         if ($currentView === 'daily') {
             $date = $request->get('date', now()->toDateString());
 
@@ -372,31 +352,13 @@ class HrAttendanceController extends Controller
 
             $records      = $query->paginate(15);
             $totalEmp     = Employee::where('id', '!=', $authEmpId)->count();
-            $presentCount = AttendanceLog::whereDate('attendance_date', $date)
-                ->whereIn('status', ['present', 'late', 'overtime', 'undertime'])
-                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
-                ->count();
-            $lateCount    = AttendanceLog::whereDate('attendance_date', $date)
-                ->where('late_minutes', '>', 0)
-                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
-                ->count();
+            $presentCount = AttendanceLog::whereDate('attendance_date', $date)->whereIn('status', ['present', 'late', 'overtime', 'undertime'])->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->count();
+            $lateCount    = AttendanceLog::whereDate('attendance_date', $date)->where('late_minutes', '>', 0)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->count();
             $absentCount  = $totalEmp - $presentCount;
-
-            $otMins = AttendanceLog::whereDate('attendance_date', $date)
-                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
-                ->sum('overtime_minutes');
-            $utMins = AttendanceLog::whereDate('attendance_date', $date)
-                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
-                ->sum('undertime_minutes');
-
-            $overtimeEmployees  = AttendanceLog::whereDate('attendance_date', $date)
-                ->where('overtime_minutes', '>', 0)
-                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
-                ->count();
-            $undertimeEmployees = AttendanceLog::whereDate('attendance_date', $date)
-                ->where('undertime_minutes', '>', 0)
-                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
-                ->count();
+            $otMins       = AttendanceLog::whereDate('attendance_date', $date)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->sum('overtime_minutes');
+            $utMins       = AttendanceLog::whereDate('attendance_date', $date)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->sum('undertime_minutes');
+            $overtimeEmployees  = AttendanceLog::whereDate('attendance_date', $date)->where('overtime_minutes', '>', 0)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->count();
+            $undertimeEmployees = AttendanceLog::whereDate('attendance_date', $date)->where('undertime_minutes', '>', 0)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->count();
 
             $presentRate    = $totalEmp > 0 ? round(($presentCount / $totalEmp) * 100, 1) . '%' : '0%';
             $lateRate       = $totalEmp > 0 ? round(($lateCount    / $totalEmp) * 100, 1) . '%' : '0%';
@@ -406,21 +368,17 @@ class HrAttendanceController extends Controller
 
             return view('hr.hr_employee_attendance-reports', compact(
                 'currentView', 'departments', 'records',
-                'presentCount', 'presentRate',
-                'lateCount', 'lateRate',
-                'absentCount', 'absentRate',
-                'overtimeHours', 'overtimeEmployees',
+                'presentCount', 'presentRate', 'lateCount', 'lateRate',
+                'absentCount', 'absentRate', 'overtimeHours', 'overtimeEmployees',
                 'undertimeHours', 'undertimeEmployees'
             ));
         }
 
-        // ── MONTHLY LIST VIEW ──
+        // ── Monthly List View ──────────────────────────────────────────────
         $selectedMonth = $request->get('month', now()->format('Y-m'));
         [$year, $month] = explode('-', $selectedMonth);
 
-        $empQuery = Employee::with('department')
-            ->where('id', '!=', $authEmpId);
-
+        $empQuery = Employee::with('department')->where('id', '!=', $authEmpId);
         if ($request->filled('department')) {
             $empQuery->where('department_id', $request->department);
         }
@@ -433,7 +391,6 @@ class HrAttendanceController extends Controller
                 ->whereMonth('attendance_date', $month)
                 ->whereYear('attendance_date', $year)
                 ->get();
-
             return (object) [
                 'employee_id'  => $emp->id,
                 'employee'     => $emp,
@@ -449,31 +406,13 @@ class HrAttendanceController extends Controller
 
         $date         = now()->toDateString();
         $totalEmp     = Employee::where('id', '!=', $authEmpId)->count();
-        $presentCount = AttendanceLog::whereDate('attendance_date', $date)
-            ->whereIn('status', ['present', 'late', 'overtime', 'undertime'])
-            ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
-            ->count();
-        $lateCount    = AttendanceLog::whereDate('attendance_date', $date)
-            ->where('late_minutes', '>', 0)
-            ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
-            ->count();
+        $presentCount = AttendanceLog::whereDate('attendance_date', $date)->whereIn('status', ['present', 'late', 'overtime', 'undertime'])->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->count();
+        $lateCount    = AttendanceLog::whereDate('attendance_date', $date)->where('late_minutes', '>', 0)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->count();
         $absentCount  = $totalEmp - $presentCount;
-
-        $otMins = AttendanceLog::whereDate('attendance_date', $date)
-            ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
-            ->sum('overtime_minutes');
-        $utMins = AttendanceLog::whereDate('attendance_date', $date)
-            ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
-            ->sum('undertime_minutes');
-
-        $overtimeEmployees  = AttendanceLog::whereDate('attendance_date', $date)
-            ->where('overtime_minutes', '>', 0)
-            ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
-            ->count();
-        $undertimeEmployees = AttendanceLog::whereDate('attendance_date', $date)
-            ->where('undertime_minutes', '>', 0)
-            ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
-            ->count();
+        $otMins       = AttendanceLog::whereDate('attendance_date', $date)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->sum('overtime_minutes');
+        $utMins       = AttendanceLog::whereDate('attendance_date', $date)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->sum('undertime_minutes');
+        $overtimeEmployees  = AttendanceLog::whereDate('attendance_date', $date)->where('overtime_minutes', '>', 0)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->count();
+        $undertimeEmployees = AttendanceLog::whereDate('attendance_date', $date)->where('undertime_minutes', '>', 0)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->count();
 
         $presentRate    = $totalEmp > 0 ? round(($presentCount / $totalEmp) * 100, 1) . '%' : '0%';
         $lateRate       = $totalEmp > 0 ? round(($lateCount    / $totalEmp) * 100, 1) . '%' : '0%';
@@ -483,11 +422,78 @@ class HrAttendanceController extends Controller
 
         return view('hr.hr_employee_attendance-reports', compact(
             'currentView', 'departments', 'monthlyRecords', 'selectedMonth',
-            'presentCount', 'presentRate',
-            'lateCount', 'lateRate',
-            'absentCount', 'absentRate',
-            'overtimeHours', 'overtimeEmployees',
+            'presentCount', 'presentRate', 'lateCount', 'lateRate',
+            'absentCount', 'absentRate', 'overtimeHours', 'overtimeEmployees',
             'undertimeHours', 'undertimeEmployees'
+        ));
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // SHIFT SCHEDULING
+    // ══════════════════════════════════════════════════════════════════════
+
+    public function shiftScheduling(Request $request)
+    {
+        $activeTab   = $request->get('tab', 'weekly');
+        $departments = Department::orderBy('name')->get();
+
+        // ── Weekly Schedule ────────────────────────────────────────────────
+        $weekStart = $request->get('week_start')
+            ? Carbon::parse($request->get('week_start'))->startOfWeek(Carbon::MONDAY)
+            : Carbon::now()->startOfWeek(Carbon::MONDAY);
+        $weekEnd         = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
+        $scheduleRecords = collect();
+        $employees       = Employee::with('department')->get();
+
+        // ── Shift Types ────────────────────────────────────────────────────
+        try {
+            $shiftTypes = \App\Models\Shift::withCount('employeeShifts as assigned')
+                ->orderBy('name')
+                ->get()
+                ->map(function ($shift) {
+                    $shift->work_hours = round(
+                        Carbon::parse($shift->start_time)->diffInMinutes(Carbon::parse($shift->end_time)) / 60, 1
+                    );
+                    $shift->night_diff = $shift->night_diff_rate
+                        ? $shift->night_diff_rate . '%'
+                        : 'None';
+                    return $shift;
+                });
+        } catch (\Exception $e) {
+            $shiftTypes = collect();
+        }
+
+        // ── Holiday Calendar ───────────────────────────────────────────────
+        $currentYear     = (int) $request->get('year', now()->year);
+        $holidays        = collect();
+        $regularHolidays = 0;
+        $specialHolidays = 0;
+        $localHolidays   = 0;
+        $localRegion     = '—';
+
+        try {
+            $columns = \Illuminate\Support\Facades\Schema::getColumnListing('holidays');
+            $dateCol = 'date';
+            foreach (['holiday_date', 'date', 'holiday_day', 'event_date'] as $c) {
+                if (in_array($c, $columns)) { $dateCol = $c; break; }
+            }
+            $typeCol = in_array('type', $columns) ? 'type'
+                : (in_array('holiday_type', $columns) ? 'holiday_type' : 'type');
+
+            $holidays        = \App\Models\Holiday::whereYear($dateCol, $currentYear)->orderBy($dateCol)->get();
+            $regularHolidays = $holidays->where($typeCol, 'regular')->count();
+            $specialHolidays = $holidays->where($typeCol, 'special')->count();
+            $localHolidays   = $holidays->where($typeCol, 'local')->count();
+            $localRegion     = $holidays->where($typeCol, 'local')->first()?->region ?? '—';
+        } catch (\Exception $e) {
+            // holidays table not ready yet
+        }
+
+        return view('hr.hr_shift_scheduling', compact(
+            'activeTab', 'departments', 'weekStart', 'weekEnd',
+            'scheduleRecords', 'employees', 'shiftTypes',
+            'currentYear', 'holidays',
+            'regularHolidays', 'specialHolidays', 'localHolidays', 'localRegion'
         ));
     }
 }

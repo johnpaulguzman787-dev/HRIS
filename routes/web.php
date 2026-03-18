@@ -14,6 +14,7 @@ use App\Http\Controllers\EmployeeAttendanceController;
 use App\Http\Controllers\HRAttendanceController;
 use App\Http\Controllers\SupervisorAttendanceController;
 use App\Http\Controllers\AdminAttendanceController;
+
 use App\Http\Controllers\HrEmployeeController;
 use App\Http\Controllers\SupervisorEmployeeController;
 
@@ -83,7 +84,7 @@ Route::post('/email/verification-notification', function (Illuminate\Http\Reques
 
 Route::middleware(['auth'])->group(function () {
 
-    // Admin Employee Routes
+    // Employee Routes
     Route::prefix('employees')->name('employees.')->group(function () {
         Route::get('/directory', [AdminEmployeeController::class, 'directory'])->name('directory');
         Route::get('/profile', [AdminEmployeeController::class, 'profile'])->name('profile');
@@ -95,16 +96,15 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ── HR EMPLOYEE ROUTES ─────────────────────────────────────────────────
-Route::prefix('hr/employees')->name('hr.employees.')->group(function () {
-    Route::get('/directory', [App\Http\Controllers\HrEmployeeController::class, 'directory'])->name('directory');
-    Route::post('/store', [App\Http\Controllers\HrEmployeeController::class, 'store'])->name('store');
-    Route::post('/departments', [App\Http\Controllers\HrEmployeeController::class, 'storeDepartment'])->name('departments.store');
-    Route::match(['POST', 'PUT'], '/departments/{id}', [App\Http\Controllers\HrEmployeeController::class, 'updateDepartment'])->name('departments.update');
-    Route::post('/{id}', [App\Http\Controllers\HrEmployeeController::class, 'update'])->name('update');
-    Route::get('/profile', [App\Http\Controllers\HrEmployeeController::class, 'profile'])->name('profile');
-   });
-
-   // ──────────────────────────────────────────────────────────────────────
+    Route::prefix('hr/employees')->name('hr.employees.')->group(function () {
+        Route::get('/directory', [App\Http\Controllers\HrEmployeeController::class, 'directory'])->name('directory');
+        Route::post('/store', [App\Http\Controllers\HrEmployeeController::class, 'store'])->name('store');
+        Route::post('/departments', [App\Http\Controllers\HrEmployeeController::class, 'storeDepartment'])->name('departments.store');
+        Route::match(['POST', 'PUT'], '/departments/{id}', [App\Http\Controllers\HrEmployeeController::class, 'updateDepartment'])->name('departments.update');
+        Route::post('/{id}', [App\Http\Controllers\HrEmployeeController::class, 'update'])->name('update');
+        Route::get('/profile', [App\Http\Controllers\HrEmployeeController::class, 'profile'])->name('profile');
+    });
+    // ──────────────────────────────────────────────────────────────────────
 
     // ── SUPERVISOR EMPLOYEE ROUTES ─────────────────────────────────────────
     Route::prefix('supervisor/employees')->name('supervisor.employees.')->group(function () {
@@ -133,7 +133,7 @@ Route::prefix('hr/employees')->name('hr.employees.')->group(function () {
     Route::get('/employee/attendance/records', [EmployeeAttendanceController::class, 'records'])->name('employee.attendance.records');
     Route::post('/employee/attendance/clock-in', [EmployeeAttendanceController::class, 'clockIn'])->name('employee.attendance.clock-in');
     Route::post('/employee/attendance/clock-out', [EmployeeAttendanceController::class, 'clockOut'])->name('employee.attendance.clock-out');
-    Route::post('/employee/attendance/break',     [EmployeeAttendanceController::class, 'breakStart'])->name('employee.attendance.break');
+    Route::post('/employee/attendance/break', [EmployeeAttendanceController::class, 'breakStart'])->name('employee.attendance.break');
     // ──────────────────────────────────────────────────────────────────────
 
     // ── HR ATTENDANCE ROUTES ───────────────────────────────────────────────
@@ -142,11 +142,10 @@ Route::prefix('hr/employees')->name('hr.employees.')->group(function () {
     Route::get('/hr/attendance/records', [HRAttendanceController::class, 'records'])->name('hr.attendance.records');
     Route::post('/hr/attendance/clock-in', [HRAttendanceController::class, 'clockIn'])->name('hr.attendance.clock-in');
     Route::post('/hr/attendance/clock-out', [HRAttendanceController::class, 'clockOut'])->name('hr.attendance.clock-out');
-    Route::post('/hr/attendance/break',     [HRAttendanceController::class, 'breakStart'])->name('hr.attendance.break');
+    Route::post('/hr/attendance/break', [HRAttendanceController::class, 'breakStart'])->name('hr.attendance.break');
     Route::get('/hr/attendance/employee', [HRAttendanceController::class, 'employeeAttendance'])->name('hr.attendance.employee');
+    Route::get('/hr/shift/scheduling', [HRAttendanceController::class, 'shiftScheduling'])->name('hr.shift.scheduling');
     // ──────────────────────────────────────────────────────────────────────
-
-    
 
     // ── SUPERVISOR ATTENDANCE ROUTES ───────────────────────────────────────
     Route::get('/supervisor/attendance/reports', [SupervisorAttendanceController::class, 'index'])->name('supervisor.attendance.reports');
@@ -156,9 +155,10 @@ Route::prefix('hr/employees')->name('hr.employees.')->group(function () {
     Route::post('/supervisor/attendance/clock-out', [SupervisorAttendanceController::class, 'clockOut'])->name('supervisor.attendance.clock-out');
     Route::post('/supervisor/attendance/break', [SupervisorAttendanceController::class, 'breakStart'])->name('supervisor.attendance.break');
     Route::get('/supervisor/attendance/employee', [SupervisorAttendanceController::class, 'employeeAttendance'])->name('supervisor.attendance.employee');
+    Route::get('/supervisor/shift/scheduling', [SupervisorAttendanceController::class, 'shiftScheduling'])->name('supervisor.shift.scheduling');
     // ──────────────────────────────────────────────────────────────────────
 
-// ── ADMIN ATTENDANCE ROUTES ────────────────────────────────────────────
+    // ── ADMIN ATTENDANCE ROUTES ────────────────────────────────────────────
     Route::get('/admin/attendance/reports', [AdminAttendanceController::class, 'index'])->name('admin.attendance.reports');
     Route::get('/admin/attendance/today', [AdminAttendanceController::class, 'today'])->name('admin.attendance.today');
     Route::get('/admin/attendance/records', [AdminAttendanceController::class, 'records'])->name('admin.attendance.records');
@@ -166,7 +166,9 @@ Route::prefix('hr/employees')->name('hr.employees.')->group(function () {
     Route::post('/admin/attendance/clock-out', [AdminAttendanceController::class, 'clockOut'])->name('admin.attendance.clock-out');
     Route::post('/admin/attendance/break', [AdminAttendanceController::class, 'breakStart'])->name('admin.attendance.break');
     Route::get('/admin/attendance/employee', [AdminAttendanceController::class, 'employeeAttendance'])->name('admin.attendance.employee');
-    // ──────────────────────────────────────────────────────────────────────    // Other Dashboards
+    // ──────────────────────────────────────────────────────────────────────
+
+    // Other Dashboards
     Route::get('/payroll_officer', function () {
         return view('payroll_officer.payroll_dashboard');
     })->name('payroll_officer.dashboard');

@@ -10,6 +10,9 @@ use App\Models\AttendanceLog;
 use App\Models\Employee;
 use App\Models\EmployeeShift;
 use App\Models\Department;
+use App\Models\LeaveType;
+use App\Models\LeaveCredit;
+use App\Models\LeaveRequest;
 
 class SupervisorAttendanceController extends Controller
 {
@@ -535,18 +538,113 @@ class SupervisorAttendanceController extends Controller
 
     public function leaveManagement(Request $request)
     {
-        $activeTab   = $request->get('tab', 'my-leave');
-        $departments = Department::orderBy('name')->get();
-        $employees   = Employee::with('department')->get();
+        $activeTab    = $request->get('tab', 'my-leave');
+        $currentYear  = (int) $request->get('year', now()->year);
+        $leaveTypes   = LeaveType::where('is_active', true)->orderBy('name')->get();
 
+        $user         = Auth::user();
+        $authEmployee = Employee::where('user_id', $user->id)->first();
+        $authDeptId   = $authEmployee?->department_id;
+
+        $departments  = Department::where('id', $authDeptId)->get();
+        $employees    = Employee::with('department')
+            ->where('department_id', $authDeptId)
+            ->where('employment_status', 'Active')
+            ->orderBy('fname')
+            ->get();
+
+        // ── MY LEAVE tab ──────────────────────────────────────────────
         $myLeaveStats    = [];
         $myLeaveRequests = collect();
-        $creditStats     = [];
-        $leaveHistory    = collect();
-        $calendarEvents  = collect();
-        $currentYear     = (int) $request->get('year', now()->year);
 
-        $leaveTypes = collect();
+        if ($activeTab === 'my-leave' && $authEmployee) {
+            $myLeaveRequests = LeaveRequest::with(['leaveType', 'approver'])
+                ->where('employee_id', $authEmployee->id)
+                ->orderByDesc('created_at')
+                ->get();
+
+            $credits = LeaveCredit::with('leaveType')
+                ->where('employee_id', $authEmployee->id)
+                ->where('year', $currentYear)
+                ->get();
+
+            $myLeaveStats['pending'] = $myLeaveRequests->where('status', 'pending')->count();
+
+            foreach ($credits as $credit) {
+                $key = strtolower($credit->leaveType->code ?? '');
+                $myLeaveStats[$key . '_used']      = $credit->used_days;
+                $myLeaveStats[$key . '_remaining']  = $credit->remaining_days;
+                $myLeaveStats[$key . '_total']      = $credit->total_days;
+            }
+        }
+
+        // ── LEAVE CREDITS tab — dept employees only ───────────────────
+        $creditStats  = [];
+        $leaveHistory = collect();
+
+        if ($activeTab === 'leave-credits') {
+            $selectedEmpId = $request->get('employee_id', $authEmployee?->id);
+            $selectedEmp   = Employee::where('id', $selectedEmpId)
+                ->where('department_id', $authDeptId)
+                ->first();
+
+            if ($selectedEmp) {
+                $leaveHistory = LeaveRequest::with(['leaveType', 'approver'])
+                    ->where('employee_id', $selectedEmp->id)
+                    ->orderByDesc('created_at')
+                    ->get();
+
+                $credits = LeaveCredit::with('leaveType')
+                    ->where('employee_id', $selectedEmp->id)
+                    ->where('year', $currentYear)
+                    ->get();
+
+                foreach ($credits as $credit) {
+                    $key = strtolower($credit->leaveType->code ?? '');
+                    $creditStats[$key . '_used']      = $credit->used_days;
+                    $creditStats[$key . '_remaining']  = $credit->remaining_days;
+                    $creditStats[$key . '_total']      = $credit->total_days;
+                }
+            }
+        }
+
+        // ── LEAVE CALENDAR tab — dept only ────────────────────────────
+        $calendarEvents = collect();
+
+        if ($activeTab === 'leave-calendar') {
+            $calMonth = $request->get('month')
+                ? Carbon::parse($request->get('month') . '-01')
+                : Carbon::now()->startOfMonth();
+
+            $calStart = $calMonth->copy()->startOfMonth();
+            $calEnd   = $calMonth->copy()->endOfMonth();
+
+            $query = LeaveRequest::with(['employee', 'leaveType'])
+                ->where('status', 'approved')
+                ->whereBetween('start_date', [$calStart->toDateString(), $calEnd->toDateString()])
+                ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId));
+
+            if ($request->filled('leave_type_id')) {
+                $query->where('leave_type_id', $request->leave_type_id);
+            }
+
+            $approvedLeaves = $query->get();
+
+            foreach ($approvedLeaves as $leave) {
+                $cursor = Carbon::parse($leave->start_date);
+                $end    = Carbon::parse($leave->end_date);
+                while ($cursor->lte($end)) {
+                    if ($cursor->between($calStart, $calEnd)) {
+                        $calendarEvents->push([
+                            'day'   => (int) $cursor->format('j'),
+                            'type'  => 'cal-' . strtolower($leave->leaveType->code ?? 'vl'),
+                            'label' => ($leave->leaveType->code ?? 'LV') . ' - ' . ($leave->employee->fname ?? ''),
+                        ]);
+                    }
+                    $cursor->addDay();
+                }
+            }
+        }
 
         return view('supervisor.supervisor_leave-management', compact(
             'activeTab', 'departments', 'employees',
@@ -554,5 +652,115 @@ class SupervisorAttendanceController extends Controller
             'creditStats', 'leaveHistory',
             'calendarEvents', 'leaveTypes', 'currentYear'
         ));
+    }
+
+    public function fileLeave(Request $request)
+    {
+        $request->validate([
+            'leave_type_id' => 'required|exists:leave_types,id',
+            'start_date'    => 'required|date|after_or_equal:today',
+            'end_date'      => 'required|date|after_or_equal:start_date',
+            'reason'        => 'required|string|max:500',
+            'document'      => 'nullable|file|mimes:pdf,docx|max:10240',
+        ]);
+
+        $user     = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+
+        $start     = Carbon::parse($request->start_date);
+        $end       = Carbon::parse($request->end_date);
+        $totalDays = 0;
+        $cursor    = $start->copy();
+        while ($cursor->lte($end)) {
+            if (!$cursor->isWeekend()) $totalDays++;
+            $cursor->addDay();
+        }
+
+        $lastRef = LeaveRequest::where('ref_no', 'like', 'REQ-%')
+            ->orderByDesc('id')->value('ref_no');
+        $nextNum = $lastRef ? (int) substr($lastRef, 4) + 1 : 1;
+        $refNo   = 'REQ-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+
+        $docPath = null;
+        if ($request->hasFile('document')) {
+            $docPath = $request->file('document')->store('leave_documents', 'public');
+        }
+
+        LeaveRequest::create([
+            'ref_no'        => $refNo,
+            'employee_id'   => $employee->id,
+            'leave_type_id' => $request->leave_type_id,
+            'start_date'    => $request->start_date,
+            'end_date'      => $request->end_date,
+            'total_days'    => $totalDays,
+            'reason'        => $request->reason,
+            'document_path' => $docPath,
+            'status'        => 'pending',
+        ]);
+
+        return response()->json(['message' => 'Leave request filed successfully.', 'ref_no' => $refNo]);
+    }
+
+    public function cancelLeave(Request $request, $id)
+    {
+        $user     = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $leave    = LeaveRequest::where('id', $id)
+            ->where('employee_id', $employee->id)
+            ->firstOrFail();
+
+        if (!in_array($leave->status, ['pending', 'approved'])) {
+            return response()->json(['message' => 'This leave cannot be cancelled.'], 409);
+        }
+
+        if ($leave->status === 'approved') {
+            AttendanceLog::where('employee_id', $leave->employee_id)
+                ->whereBetween('attendance_date', [$leave->start_date, $leave->end_date])
+                ->where('status', 'on_leave')
+                ->delete();
+
+            $credit = LeaveCredit::where('employee_id', $leave->employee_id)
+                ->where('leave_type_id', $leave->leave_type_id)
+                ->where('year', Carbon::parse($leave->start_date)->year)
+                ->first();
+
+            if ($credit) {
+                $credit->used_days      = max(0, $credit->used_days - $leave->total_days);
+                $credit->remaining_days = $credit->total_days - $credit->used_days;
+                $credit->save();
+            }
+        }
+
+        $leave->update(['status' => 'cancelled']);
+
+        return response()->json(['message' => 'Leave cancelled successfully.']);
+    }
+
+    public function getLeaveRequest($id)
+    {
+        $user     = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $leave    = LeaveRequest::with(['leaveType', 'approver'])
+            ->where('id', $id)
+            ->where('employee_id', $employee->id)
+            ->firstOrFail();
+
+        return response()->json([
+            'id'               => $leave->id,
+            'ref_no'           => $leave->ref_no,
+            'leave_type'       => $leave->leaveType->name ?? '—',
+            'leave_type_code'  => $leave->leaveType->code ?? '—',
+            'start_date'       => $leave->start_date->format('m/d/Y'),
+            'end_date'         => $leave->end_date->format('m/d/Y'),
+            'total_days'       => $leave->total_days,
+            'reason'           => $leave->reason,
+            'status'           => $leave->status,
+            'approver_name'    => $leave->approver
+                ? trim($leave->approver->fname . ' ' . $leave->approver->lname)
+                : '—',
+            'rejection_reason' => $leave->rejection_reason,
+            'hr_notes'         => $leave->hr_notes,
+            'filed_on'         => $leave->created_at->format('m/d/Y'),
+        ]);
     }
 }

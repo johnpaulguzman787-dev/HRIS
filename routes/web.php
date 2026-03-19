@@ -134,7 +134,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/employee/attendance/clock-in', [EmployeeAttendanceController::class, 'clockIn'])->name('employee.attendance.clock-in');
     Route::post('/employee/attendance/clock-out', [EmployeeAttendanceController::class, 'clockOut'])->name('employee.attendance.clock-out');
     Route::post('/employee/attendance/break', [EmployeeAttendanceController::class, 'breakStart'])->name('employee.attendance.break');
-    Route::get('/employee/leave/management', [EmployeeAttendanceController::class, 'leaveManagement'])->name('employee.leave.management');
+    Route::get('/employee/leave/management',  [EmployeeAttendanceController::class, 'leaveManagement'])->name('employee.leave.management');
+// ── EMPLOYEE LEAVE ROUTES ─────────────────────────────────────────────
+    Route::post('/employee/leave/file',            [EmployeeAttendanceController::class, 'fileLeave'])->name('employee.leave.file');
+    Route::post('/employee/leave/{id}/cancel',     [EmployeeAttendanceController::class, 'cancelLeave'])->name('employee.leave.cancel');
+    Route::get('/employee/leave/{id}',             [EmployeeAttendanceController::class, 'getLeaveRequest'])->name('employee.leave.get');
+// ─────────────────────────────────────────────────────────────────────
     // ──────────────────────────────────────────────────────────────────────
 
     // ── HR ATTENDANCE ROUTES ───────────────────────────────────────────────
@@ -156,8 +161,19 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/hr/holidays/{id}/update', [HRAttendanceController::class, 'updateHoliday'])->name('hr.holidays.update');
     Route::delete('/hr/holidays/{id}', [HRAttendanceController::class, 'destroyHoliday'])->name('hr.holidays.destroy');
     Route::get('/hr/holidays/{id}', [HRAttendanceController::class, 'getHoliday'])->name('hr.holidays.get');
-    Route::get('/hr/leave/management', [HRAttendanceController::class, 'leaveManagement'])->name('hr.leave.management');
-    // ──────────────────────────────────────────────────────────────────────
+    Route::get('/hr/leave/management',           [HRAttendanceController::class, 'leaveManagement'])->name('hr.leave.management');
+// ── HR LEAVE MANAGEMENT ROUTES ────────────────────────────────────────
+    Route::get('/hr/leave/credits',              [HRAttendanceController::class, 'getLeaveCredits'])->name('hr.leave.credits.get'); 
+    Route::post('/hr/leave/types/store',         [HRAttendanceController::class, 'storeLeaveType'])->name('hr.leave.type.store');
+    Route::get('/hr/leave/types/{id}',           [HRAttendanceController::class, 'getLeaveType'])->name('hr.leave.type.get');
+    Route::post('/hr/leave/types/{id}/update',   [HRAttendanceController::class, 'updateLeaveType'])->name('hr.leave.type.update');
+    Route::post('/hr/leave/file',                [HRAttendanceController::class, 'fileLeave'])->name('hr.leave.file');
+    Route::post('/hr/leave/{id}/approve',        [HRAttendanceController::class, 'approveLeave'])->name('hr.leave.approve');
+    Route::post('/hr/leave/{id}/reject',         [HRAttendanceController::class, 'rejectLeave'])->name('hr.leave.reject');
+    Route::post('/hr/leave/{id}/cancel',         [HRAttendanceController::class, 'cancelLeave'])->name('hr.leave.cancel');
+    Route::get('/hr/leave/{id}',                 [HRAttendanceController::class, 'getLeaveRequest'])->name('hr.leave.get');
+// ──────────────────────────────────────────────────────────────────────
+
 
     // ── SUPERVISOR ATTENDANCE ROUTES ───────────────────────────────────────
     Route::get('/supervisor/attendance/reports', [SupervisorAttendanceController::class, 'index'])->name('supervisor.attendance.reports');
@@ -169,6 +185,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/supervisor/attendance/employee', [SupervisorAttendanceController::class, 'employeeAttendance'])->name('supervisor.attendance.employee');
     Route::get('/supervisor/shift/scheduling', [SupervisorAttendanceController::class, 'shiftScheduling'])->name('supervisor.shift.scheduling');
     Route::get('/supervisor/leave/management', [SupervisorAttendanceController::class, 'leaveManagement'])->name('supervisor.leave.management');
+// ── SUPERVISOR LEAVE ROUTES ───────────────────────────────────────────
+    Route::post('/supervisor/leave/file',              [SupervisorAttendanceController::class, 'fileLeave'])->name('supervisor.leave.file');
+    Route::post('/supervisor/leave/{id}/cancel',       [SupervisorAttendanceController::class, 'cancelLeave'])->name('supervisor.leave.cancel');
+    Route::get('/supervisor/leave/{id}',               [SupervisorAttendanceController::class, 'getLeaveRequest'])->name('supervisor.leave.get');
+// ─────────────────────────────────────────────────────────────────────
     Route::post('/supervisor/shift/assign', [SupervisorAttendanceController::class, 'assignShift'])->name('supervisor.shift.assign');
     Route::post('/supervisor/shift/update', [SupervisorAttendanceController::class, 'updateShift'])->name('supervisor.shift.update');
     Route::get('/supervisor/shift/employees-by-dept', [SupervisorAttendanceController::class, 'employeesByDept'])->name('supervisor.shift.employees-by-dept');
@@ -183,6 +204,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/attendance/break', [AdminAttendanceController::class, 'breakStart'])->name('admin.attendance.break');
     Route::get('/admin/attendance/employee', [AdminAttendanceController::class, 'employeeAttendance'])->name('admin.attendance.employee');
     Route::get('/admin/leave/management', [AdminAttendanceController::class, 'leaveManagement'])->name('admin.leave.management');
+    // ── ADMIN LEAVE ROUTES ───────────────────────────────────────────
+    Route::post('/admin/leave/file',        [AdminAttendanceController::class, 'fileLeave'])->name('admin.leave.file');
+    Route::post('/admin/leave/{id}/cancel', [AdminAttendanceController::class, 'cancelLeave'])->name('admin.leave.cancel');
+    Route::get('/admin/leave/{id}',         [AdminAttendanceController::class, 'getLeaveRequest'])->name('admin.leave.get');
     // ──────────────────────────────────────────────────────────────────────
 
     // Other Dashboards

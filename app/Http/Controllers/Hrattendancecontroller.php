@@ -10,6 +10,9 @@ use App\Models\AttendanceLog;
 use App\Models\Employee;
 use App\Models\EmployeeShift;
 use App\Models\Department;
+use App\Models\LeaveType;
+use App\Models\LeaveCredit;
+use App\Models\LeaveRequest;
 
 class HRAttendanceController extends Controller
 {
@@ -802,16 +805,105 @@ class HRAttendanceController extends Controller
     {
         $activeTab   = $request->get('tab', 'my-leave');
         $departments = Department::orderBy('name')->get();
-        $employees   = Employee::with('department')->get();
+        $employees   = Employee::with('department')->orderBy('fname')->get();
+        $currentYear = (int) $request->get('year', now()->year);
+        $leaveTypes  = LeaveType::where('is_active', true)->orderBy('name')->get();
 
+        $user     = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->first();
+
+        // ── MY LEAVE tab ──────────────────────────────────────────────
         $myLeaveStats    = [];
         $myLeaveRequests = collect();
-        $creditStats     = [];
-        $leaveHistory    = collect();
-        $calendarEvents  = collect();
-        $currentYear     = (int) $request->get('year', now()->year);
 
-        $leaveTypes = collect();
+        if ($activeTab === 'my-leave' && $employee) {
+            $myLeaveRequests = LeaveRequest::with(['leaveType', 'approver'])
+                ->where('employee_id', $employee->id)
+                ->orderByDesc('created_at')
+                ->get();
+
+            $credits = LeaveCredit::with('leaveType')
+                ->where('employee_id', $employee->id)
+                ->where('year', $currentYear)
+                ->get();
+
+            $myLeaveStats['pending'] = $myLeaveRequests->where('status', 'pending')->count();
+
+            foreach ($credits as $credit) {
+                $key = strtolower($credit->leaveType->code ?? '');
+                $myLeaveStats[$key . '_used']      = $credit->used_days;
+                $myLeaveStats[$key . '_remaining']  = $credit->remaining_days;
+                $myLeaveStats[$key . '_total']      = $credit->total_days;
+            }
+        }
+
+        // ── LEAVE CREDITS tab ─────────────────────────────────────────
+        $creditStats  = [];
+        $leaveHistory = collect();
+
+        if ($activeTab === 'leave-credits') {
+            $selectedEmpId = $request->get('employee_id', $employee?->id);
+            $selectedEmp   = Employee::find($selectedEmpId);
+
+            if ($selectedEmp) {
+                $leaveHistory = LeaveRequest::with(['leaveType', 'approver'])
+                    ->where('employee_id', $selectedEmp->id)
+                    ->orderByDesc('created_at')
+                    ->get();
+
+                $credits = LeaveCredit::with('leaveType')
+                    ->where('employee_id', $selectedEmp->id)
+                    ->where('year', $currentYear)
+                    ->get();
+
+                foreach ($credits as $credit) {
+                    $key = strtolower($credit->leaveType->code ?? '');
+                    $creditStats[$key . '_used']      = $credit->used_days;
+                    $creditStats[$key . '_remaining']  = $credit->remaining_days;
+                    $creditStats[$key . '_total']      = $credit->total_days;
+                }
+            }
+        }
+
+        // ── LEAVE CALENDAR tab ────────────────────────────────────────
+        $calendarEvents = collect();
+
+        if ($activeTab === 'leave-calendar') {
+            $calMonth  = $request->get('month')
+                ? Carbon::parse($request->get('month') . '-01')
+                : Carbon::now()->startOfMonth();
+
+            $calStart = $calMonth->copy()->startOfMonth();
+            $calEnd   = $calMonth->copy()->endOfMonth();
+
+            $query = LeaveRequest::with(['employee', 'leaveType'])
+                ->where('status', 'approved')
+                ->whereBetween('start_date', [$calStart->toDateString(), $calEnd->toDateString()]);
+
+            if ($request->filled('department')) {
+                $query->whereHas('employee', fn($q) => $q->where('department_id', $request->department));
+            }
+            if ($request->filled('leave_type_id')) {
+                $query->where('leave_type_id', $request->leave_type_id);
+            }
+
+            $approvedLeaves = $query->get();
+
+            foreach ($approvedLeaves as $leave) {
+                $cursor = Carbon::parse($leave->start_date);
+                $end    = Carbon::parse($leave->end_date);
+                while ($cursor->lte($end)) {
+                    if ($cursor->between($calStart, $calEnd)) {
+                        $calendarEvents->push([
+                            'day'   => (int) $cursor->format('j'),
+                            'type'  => 'cal-' . strtolower($leave->leaveType->code ?? 'vl'),
+                            'label' => ($leave->leaveType->code ?? 'LV') . ' - ' . ($leave->employee->fname ?? ''),
+                        ]);
+                    }
+                    $cursor->addDay();
+                }
+            }
+        }
 
         return view('hr.hr_leave-management', compact(
             'activeTab', 'departments', 'employees',
@@ -819,5 +911,278 @@ class HRAttendanceController extends Controller
             'creditStats', 'leaveHistory',
             'calendarEvents', 'leaveTypes', 'currentYear'
         ));
+    }
+
+    public function fileLeave(Request $request)
+    {
+        $request->validate([
+            'leave_type_id' => 'required|exists:leave_types,id',
+            'start_date'    => 'required|date|after_or_equal:today',
+            'end_date'      => 'required|date|after_or_equal:start_date',
+            'reason'        => 'required|string|max:500',
+            'document'      => 'nullable|file|mimes:pdf,docx|max:10240',
+        ]);
+
+        $user     = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+
+        $start     = Carbon::parse($request->start_date);
+        $end       = Carbon::parse($request->end_date);
+        $totalDays = 0;
+        $cursor    = $start->copy();
+        while ($cursor->lte($end)) {
+            if (!$cursor->isWeekend()) $totalDays++;
+            $cursor->addDay();
+        }
+
+        $lastRef = LeaveRequest::where('ref_no', 'like', 'REQ-%')
+            ->orderByDesc('id')->value('ref_no');
+        $nextNum = $lastRef ? (int) substr($lastRef, 4) + 1 : 1;
+        $refNo   = 'REQ-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+
+        $docPath = null;
+        if ($request->hasFile('document')) {
+            $docPath = $request->file('document')->store('leave_documents', 'public');
+        }
+
+        LeaveRequest::create([
+            'ref_no'        => $refNo,
+            'employee_id'   => $employee->id,
+            'leave_type_id' => $request->leave_type_id,
+            'start_date'    => $request->start_date,
+            'end_date'      => $request->end_date,
+            'total_days'    => $totalDays,
+            'reason'        => $request->reason,
+            'document_path' => $docPath,
+            'status'        => 'pending',
+        ]);
+
+        return response()->json(['message' => 'Leave request filed successfully.', 'ref_no' => $refNo]);
+    }
+
+    public function approveLeave(Request $request, $id)
+    {
+        $leave    = LeaveRequest::with('leaveType')->findOrFail($id);
+        $approver = Employee::where('user_id', Auth::id())->firstOrFail();
+
+        if ($leave->status !== 'pending') {
+            return response()->json(['message' => 'Leave is no longer pending.'], 409);
+        }
+
+        $leave->update([
+            'status'      => 'approved',
+            'approved_by' => $approver->id,
+            'approved_at' => now(),
+            'hr_notes'    => $request->hr_notes ?? null,
+        ]);
+
+        // Write on_leave into attendance_logs for each working day
+        $cursor = Carbon::parse($leave->start_date);
+        $end    = Carbon::parse($leave->end_date);
+        while ($cursor->lte($end)) {
+            if (!$cursor->isWeekend()) {
+                AttendanceLog::updateOrCreate(
+                    [
+                        'employee_id'     => $leave->employee_id,
+                        'attendance_date' => $cursor->toDateString(),
+                    ],
+                    [
+                        'status'    => 'on_leave',
+                        'work_setup' => null,
+                    ]
+                );
+            }
+            $cursor->addDay();
+        }
+
+        // Deduct from leave credits
+        $credit = LeaveCredit::where('employee_id', $leave->employee_id)
+            ->where('leave_type_id', $leave->leave_type_id)
+            ->where('year', Carbon::parse($leave->start_date)->year)
+            ->first();
+
+        if ($credit) {
+            $credit->used_days      += $leave->total_days;
+            $credit->remaining_days  = max(0, $credit->total_days - $credit->used_days);
+            $credit->save();
+        }
+
+        return response()->json(['message' => 'Leave approved successfully.']);
+    }
+
+    public function rejectLeave(Request $request, $id)
+    {
+        $request->validate([
+            'rejection_reason' => 'required|string|max:500',
+        ]);
+
+        $leave = LeaveRequest::findOrFail($id);
+
+        if ($leave->status !== 'pending') {
+            return response()->json(['message' => 'Leave is no longer pending.'], 409);
+        }
+
+        $leave->update([
+            'status'           => 'rejected',
+            'rejection_reason' => $request->rejection_reason,
+        ]);
+
+        return response()->json(['message' => 'Leave rejected.']);
+    }
+
+    public function cancelLeave(Request $request, $id)
+    {
+        $user     = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $leave    = LeaveRequest::where('id', $id)
+            ->where('employee_id', $employee->id)
+            ->firstOrFail();
+
+        if (!in_array($leave->status, ['pending', 'approved'])) {
+            return response()->json(['message' => 'This leave cannot be cancelled.'], 409);
+        }
+
+        // If approved, reverse attendance logs and credits
+        if ($leave->status === 'approved') {
+            AttendanceLog::where('employee_id', $leave->employee_id)
+                ->whereBetween('attendance_date', [$leave->start_date, $leave->end_date])
+                ->where('status', 'on_leave')
+                ->delete();
+
+            $credit = LeaveCredit::where('employee_id', $leave->employee_id)
+                ->where('leave_type_id', $leave->leave_type_id)
+                ->where('year', Carbon::parse($leave->start_date)->year)
+                ->first();
+
+            if ($credit) {
+                $credit->used_days      = max(0, $credit->used_days - $leave->total_days);
+                $credit->remaining_days = $credit->total_days - $credit->used_days;
+                $credit->save();
+            }
+        }
+
+        $leave->update(['status' => 'cancelled']);
+
+        return response()->json(['message' => 'Leave cancelled successfully.']);
+    }
+
+    public function getLeaveRequest($id)
+    {
+        $leave = LeaveRequest::with(['leaveType', 'approver'])->findOrFail($id);
+        return response()->json([
+            'id'               => $leave->id,
+            'ref_no'           => $leave->ref_no,
+            'leave_type'       => $leave->leaveType->name ?? '—',
+            'leave_type_code'  => $leave->leaveType->code ?? '—',
+            'start_date'       => $leave->start_date->format('m/d/Y'),
+            'end_date'         => $leave->end_date->format('m/d/Y'),
+            'total_days'       => $leave->total_days,
+            'reason'           => $leave->reason,
+            'status'           => $leave->status,
+            'approver_name'    => $leave->approver
+                ? trim($leave->approver->fname . ' ' . $leave->approver->lname)
+                : '—',
+            'rejection_reason' => $leave->rejection_reason,
+            'hr_notes'         => $leave->hr_notes,
+            'document_path'    => $leave->document_path,
+            'filed_on'         => $leave->created_at->format('m/d/Y'),
+        ]);
+    }
+
+    public function getLeaveCredits(Request $request)
+    {
+        $employeeId = $request->get('employee_id');
+        $year       = $request->get('year', now()->year);
+
+        $credits = LeaveCredit::with('leaveType')
+            ->where('employee_id', $employeeId)
+            ->where('year', $year)
+            ->get()
+            ->mapWithKeys(fn($c) => [
+                strtolower($c->leaveType->code ?? 'unknown') => [
+                    'total'     => $c->total_days,
+                    'used'      => $c->used_days,
+                    'remaining' => $c->remaining_days,
+                ]
+            ]);
+
+        return response()->json($credits);
+    }
+
+    public function storeLeaveType(Request $request)
+    {
+        $request->validate([
+            'name'               => 'required|string|max:100',
+            'code'               => 'required|string|max:20|unique:leave_types,code',
+            'days_entitled'      => 'nullable|integer|min:1|max:365',
+            'is_paid'            => 'boolean',
+            'requires_document'  => 'boolean',
+            'applicable_to'      => 'nullable|string|max:255',
+            'carry_over'         => 'boolean',
+        ]);
+
+        $leaveType = LeaveType::create([
+            'name'              => $request->name,
+            'code'              => strtoupper($request->code),
+            'days_entitled'     => $request->days_entitled,
+            'is_paid'           => $request->boolean('is_paid'),
+            'requires_document' => $request->boolean('requires_document'),
+            'applicable_to'     => $request->applicable_to,
+            'carry_over'        => $request->boolean('carry_over'),
+            'is_active'         => true,
+        ]);
+
+        // Seed credits for all active employees
+        if ($request->days_entitled) {
+            $activeEmployees = Employee::where('employment_status', 'Active')->get();
+            foreach ($activeEmployees as $emp) {
+                LeaveCredit::firstOrCreate(
+                    [
+                        'employee_id'   => $emp->id,
+                        'leave_type_id' => $leaveType->id,
+                        'year'          => now()->year,
+                    ],
+                    [
+                        'total_days'     => $request->days_entitled,
+                        'used_days'      => 0,
+                        'remaining_days' => $request->days_entitled,
+                    ]
+                );
+            }
+        }
+
+        return response()->json(['message' => 'Leave type created successfully.']);
+    }
+
+    public function getLeaveType($id)
+    {
+        $lt = LeaveType::findOrFail($id);
+        return response()->json($lt);
+    }
+
+    public function updateLeaveType(Request $request, $id)
+    {
+        $request->validate([
+            'name'              => 'required|string|max:100',
+            'code'              => 'required|string|max:20|unique:leave_types,code,' . $id,
+            'days_entitled'     => 'nullable|integer|min:1|max:365',
+            'is_paid'           => 'boolean',
+            'requires_document' => 'boolean',
+            'applicable_to'     => 'nullable|string|max:255',
+            'carry_over'        => 'boolean',
+        ]);
+
+        $lt = LeaveType::findOrFail($id);
+        $lt->update([
+            'name'              => $request->name,
+            'code'              => strtoupper($request->code),
+            'days_entitled'     => $request->days_entitled,
+            'is_paid'           => $request->boolean('is_paid'),
+            'requires_document' => $request->boolean('requires_document'),
+            'applicable_to'     => $request->applicable_to,
+            'carry_over'        => $request->boolean('carry_over'),
+        ]);
+
+        return response()->json(['message' => 'Leave type updated successfully.']);
     }
 }

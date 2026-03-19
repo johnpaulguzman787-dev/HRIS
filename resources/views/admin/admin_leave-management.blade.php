@@ -241,136 +241,39 @@
 </head>
 <body class="bg-gray-50">
 
-{{-- ══════════ HR SIDEBAR ══════════ --}}
-<aside
-    class="bg-white border-r border-gray-200 h-screen fixed left-0 top-0 overflow-y-auto z-50 flex flex-col"
-    x-data="{
-        sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
-        employeesOpen:  {{ $isEmployeesSection  ? 'true' : 'false' }},
-        attendanceOpen: {{ $isAttendanceSection ? 'true' : 'false' }},
-        payrollOpen:    {{ $isPayrollSection    ? 'true' : 'false' }},
-        requestsOpen:   {{ $isRequestsSection   ? 'true' : 'false' }}
-    }"
-    x-init="$watch('sidebarCollapsed', value => localStorage.setItem('sidebarCollapsed', value))"
-    :class="sidebarCollapsed ? 'w-20' : 'w-64'"
-    style="transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 2px 0 20px rgba(0,0,0,0.06);">
-
-    <!-- Logo -->
-    <div class="px-6 py-5 border-b border-gray-100">
-        <div class="flex items-center space-x-3" :class="sidebarCollapsed ? 'justify-center' : ''">
-            <div class="w-9 h-9 border-2 border-gray-800 flex items-center justify-center flex-shrink-0" style="border-radius:6px;">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            </div>
-            <h1 x-show="!sidebarCollapsed" x-transition:enter="transition ease-out duration-300 delay-100" x-transition:enter-start="opacity-0 -translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="font-bold text-gray-900 text-lg tracking-widest whitespace-nowrap">MEDISOURCE</h1>
-        </div>
-    </div>
-
-    <!-- User Profile -->
-    <div class="px-4 py-4 border-b border-gray-100" :class="sidebarCollapsed ? 'flex justify-center' : 'flex items-center space-x-3'">
-        <div class="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm avatar-ring" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">{{ $sidebarInitials }}</div>
-        <div x-show="!sidebarCollapsed" x-transition:enter="transition ease-out duration-300 delay-100" x-transition:enter-start="opacity-0 -translate-x-3" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="overflow-hidden">
-            <p class="font-semibold text-gray-800 text-sm leading-tight truncate">{{ $sidebarName }}</p>
-            <p class="text-xs mt-0.5 font-semibold" style="color:#3b82f6;">{{ $sidebarRole }}</p>
-        </div>
-    </div>
-
-    <!-- Navigation -->
-    <nav class="p-3 space-y-0.5 flex-1 overflow-y-auto">
-        <p x-show="!sidebarCollapsed" class="text-xs text-gray-400 font-semibold px-3 py-2 uppercase tracking-widest">Main Menu</p>
-
-        <!-- Dashboard -->
-        <a href="{{ route('admin.dashboard') }}" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ $currentRoute === 'admin.dashboard' ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}" style="{{ $currentRoute === 'admin.dashboard' ? 'background:#3b82f6;' : '' }}">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-            <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Dashboard</span>
-        </a>
-
-        <!-- Employees -->
-        <div>
-            <button @click="employeesOpen = !employeesOpen" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg {{ $isEmployeesSection ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}" style="{{ $isEmployeesSection ? 'background:#3b82f6;' : '' }}">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Employees</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180': employeesOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div x-show="employeesOpen && !sidebarCollapsed" x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95" x-transition:enter-end="opacity-100 translate-y-0 scale-y-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 scale-y-100" x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95" class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('employees.directory') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'employees.directory' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Directory</a>
-                <a href="{{ route('employees.profile') }}"   class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'employees.profile'   ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Profile</a>
-            </div>
-        </div>
-
-        <!-- Time & Attendance -->
-        <div>
-            <button @click="attendanceOpen = !attendanceOpen" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg {{ $isAttendanceSection ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Time & Attendance</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180': attendanceOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div x-show="attendanceOpen && !sidebarCollapsed" x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95" x-transition:enter-end="opacity-100 translate-y-0 scale-y-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 scale-y-100" x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95" class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('admin.attendance.reports') }}" class="submenu-item flex items-center px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'admin.attendance.reports' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
-                    @if($currentRoute === 'admin.attendance.reports')<span class="w-2 h-2 rounded-full mr-2.5 flex-shrink-0" style="background:#3b82f6;animation:pulseDot 2s ease-in-out infinite;"></span>@endif
-                    My Attendance
-                </a>
-                <a href="{{ route('admin.attendance.employee') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'admin.attendance.employee' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Attendance</a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Shift Scheduling</a>
-                <a href="{{ route('admin.leave.management') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'admin.leave.management' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Leave Management</a>
-            </div>
-        </div>
-
-        <!-- Payroll -->
-        <div>
-            <button @click="payrollOpen = !payrollOpen" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg {{ $isPayrollSection ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Payroll</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180': payrollOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div x-show="payrollOpen && !sidebarCollapsed" x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95" x-transition:enter-end="opacity-100 translate-y-0 scale-y-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 scale-y-100" x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95" class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Payslips</a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Govt. Contributions</a>
-            </div>
-        </div>
-
-        <!-- Requests & Approval -->
-        <div>
-            <button @click="requestsOpen = !requestsOpen" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg {{ $isRequestsSection ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Requests & Approval</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180': requestsOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div x-show="requestsOpen && !sidebarCollapsed" x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95" x-transition:enter-end="opacity-100 translate-y-0 scale-y-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 scale-y-100" x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95" class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Pending Requests</a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Approved Logs</a>
-            </div>
-        </div>
-
-        <!-- Others -->
-        <div class="pt-3 mt-2 border-t border-gray-100">
-            <p x-show="!sidebarCollapsed" class="text-xs text-gray-400 font-semibold px-3 py-2 uppercase tracking-widest">Others</p>
-            <a href="{{ route('settings.index') }}" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ $currentRoute === 'settings.index' ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}" style="{{ $currentRoute === 'settings.index' ? 'background:#3b82f6;' : '' }}">
-                <svg class="w-5 h-5 flex-shrink-0 settings-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Settings</span>
-            </a>
-            <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('admin-logout-form').submit();" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-500">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Logout</span>
-            </a>
-            <form id="admin-logout-form" action="{{ route('logout') }}" method="POST" class="hidden">@csrf</form>
-        </div>
-    </nav>
-
-    <button @click="sidebarCollapsed = !sidebarCollapsed" class="m-3 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-200 self-end collapse-btn" style="transition:background .15s;">
-        <svg class="w-4 h-4 chevron-icon" :class="{'rotate-180': sidebarCollapsed}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
-    </button>
-</aside>
+{{-- ══════════ ADMIN SIDEBAR ══════════ --}}
+@include('admin.admin_sidebar')
 
 {{-- ══════════ MAIN CONTENT ══════════ --}}
-<div x-data="{ collapsed: localStorage.getItem('sidebarCollapsed') === 'true', showFileLeave: false, showAddLeaveType: false, showLeaveDetails: false, selectedLeave: {} }"
+<div x-data="{
+         collapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+         showFileLeave: false,
+         showLeaveDetails: false,
+         selectedLeave: {},
+         leaveError: '',
+         cancelling: false,
+         async openLeaveDetails(id) {
+             this.leaveError = '';
+             this.selectedLeave = {};
+             const res = await fetch(`/admin/leave/${id}`, {
+                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+             });
+             const data = await res.json();
+             if (res.ok) { this.selectedLeave = data; this.showLeaveDetails = true; }
+             else { this.leaveError = data.message ?? 'Failed to load leave details.'; }
+         },
+         async cancelLeave(id) {
+             if (!confirm('Are you sure you want to cancel this leave request?')) return;
+             this.cancelling = true;
+             const res = await fetch(`/admin/leave/${id}/cancel`, {
+                 method: 'POST',
+                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+             });
+             this.cancelling = false;
+             if (res.ok) { window.location.reload(); }
+             else { this.leaveError = 'Failed to cancel leave request.'; }
+         }
+     }"
      x-init="window.addEventListener('storage', e => { if(e.key==='sidebarCollapsed') collapsed = e.newValue==='true' })"
      :style="collapsed ? 'margin-left:5rem' : 'margin-left:16rem'"
      style="transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1); min-height:100vh;">
@@ -400,36 +303,32 @@
         @if($activeTab === 'my-leave')
 
         <div class="leave-cards">
-            <div class="leave-card">
-                <span class="leave-badge lb-vl">VL</span>
-                <div class="leave-card-label">Vacation Leave</div>
-                <div class="leave-card-value">{{ $myLeaveStats['vl_used'] ?? 7 }}</div>
-                <div class="leave-card-sub">{{ $myLeaveStats['vl_remaining'] ?? 8 }} remaining</div>
-            </div>
-            <div class="leave-card">
-                <span class="leave-badge lb-sl">SL</span>
-                <div class="leave-card-label">Sick Leave</div>
-                <div class="leave-card-value">{{ $myLeaveStats['sl_used'] ?? 2 }}</div>
-                <div class="leave-card-sub">{{ $myLeaveStats['sl_remaining'] ?? 13 }} remaining</div>
-            </div>
-            <div class="leave-card">
-                <span class="leave-badge lb-lwop">LWOP</span>
-                <div class="leave-card-label">Leave Without Pay</div>
-                <div class="leave-card-value">{{ $myLeaveStats['lwop_used'] ?? 0 }}</div>
-                <div class="leave-card-sub">&nbsp;</div>
-            </div>
-            <div class="leave-card">
-                <div class="leave-card-label">Pending Request</div>
-                <div class="leave-card-value">{{ $myLeaveStats['pending'] ?? 1 }}</div>
-                <div class="leave-card-sub">Waiting for Approval</div>
-            </div>
-        </div>
+    @foreach($leaveTypes as $lt)
+    @php $key = strtolower($lt->code); @endphp
+    <div class="leave-card">
+        <span class="leave-badge" style="background:#dbeafe;color:#1d4ed8;">{{ $lt->code }}</span>
+        <div class="leave-card-label">{{ $lt->name }}</div>
+        <div class="leave-card-value">{{ $myLeaveStats[$key.'_used'] ?? 0 }}</div>
+        <div class="leave-card-sub">{{ $myLeaveStats[$key.'_remaining'] ?? 0 }} remaining</div>
+    </div>
+    @endforeach
+    <div class="leave-card">
+        <div class="leave-card-label">Pending Request</div>
+        <div class="leave-card-value">{{ $myLeaveStats['pending'] ?? 0 }}</div>
+        <div class="leave-card-sub">Waiting for Approval</div>
+    </div>
+</div>
 
         <div class="toolbar">
             <div class="toolbar-title">My Leave Requests</div>
             <div class="toolbar-right">
                 <select class="filter-select"><option>All Status</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
-                <select class="filter-select"><option>All Types</option><option>Vacation Leave</option><option>Sick Leave</option><option>LWOP</option></select>
+<select class="filter-select">
+    <option value="">All Types</option>
+    @foreach($leaveTypes as $lt)
+        <option value="{{ $lt->id }}">{{ $lt->name }}</option>
+    @endforeach
+</select>
                 <button class="btn-primary" @click="showFileLeave = true">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     File Leave
@@ -443,36 +342,28 @@
                     <th>Ref #</th><th>Leave Type</th><th>Filed On</th><th>Date From</th><th>Date To</th><th>Days</th><th>Reason</th><th>Approver</th><th>Status</th><th></th>
                 </tr></thead>
                 <tbody>
-                @forelse($myLeaveRequests ?? [] as $req)
-                <tr>
-                    <td style="font-weight:600;color:#6b7280;">{{ $req->ref_no }}</td>
-                    <td><span class="lt-{{ strtolower(str_replace(' ','_',$req->leave_type ?? 'vl')) }}">{{ $req->leave_type ?? '—' }}</span></td>
-                    <td>{{ \Carbon\Carbon::parse($req->filed_on)->format('m/d/Y') }}</td>
-                    <td>{{ \Carbon\Carbon::parse($req->date_from)->format('m/d/Y') }}</td>
-                    <td>{{ \Carbon\Carbon::parse($req->date_to)->format('m/d/Y') }}</td>
-                    <td>{{ $req->days }}</td>
-                    <td style="color:#6b7280;">{{ $req->reason }}</td>
-                    <td><div style="font-weight:700;font-size:13px;">{{ $req->approver_name }}</div><div style="font-size:11px;color:#9ca3af;">{{ $req->approver_role }}</div></td>
-                    <td><span class="status-{{ strtolower($req->status) }}">{{ ucfirst($req->status) }}</span></td>
-                    <td><button class="btn-outline-sm" @click="selectedLeave = { leave_type: 'Vacation Leave (VL)', date_from: '03/10/2026', date_to: '03/12/2026', reason: 'Family Trip', status: 'Pending Approval' }; showLeaveDetails = true">View</button></td>
-                </tr>
-                @empty
-                @foreach([
-                    ['REQ-0002','Vacation Leave','lt-vl','03/06/2026','03/10/2026','03/12/2026',3,'Family Trip to Cebu','John Dee','HR Manager','pending'],
-                    ['REQ-0001','Sick Leave','lt-sl','02/25/2026','02/25/2026','02/26/2026',2,'Medical Appointment','John Dee','HR Manager','approved'],
-                ] as $r)
-                <tr>
-                    <td style="font-weight:600;color:#6b7280;">{{ $r[0] }}</td>
-                    <td><span class="{{ $r[2] }}">{{ $r[1] }}</span></td>
-                    <td>{{ $r[3] }}</td><td>{{ $r[4] }}</td><td>{{ $r[5] }}</td><td>{{ $r[6] }}</td>
-                    <td style="color:#6b7280;">{{ $r[7] }}</td>
-                    <td><div style="font-weight:700;font-size:13px;">{{ $r[8] }}</div><div style="font-size:11px;color:#9ca3af;">{{ $r[9] }}</div></td>
-                    <td><span class="status-{{ $r[10] }}">{{ ucfirst($r[10]) }}</span></td>
-                    <td><button class="btn-outline-sm" @click="selectedLeave = { leave_type: 'Vacation Leave (VL)', date_from: '03/10/2026', date_to: '03/12/2026', reason: 'Family Trip', status: 'Pending Approval' }; showLeaveDetails = true">View</button></td>
-                </tr>
-                @endforeach
-                @endforelse
-                </tbody>
+@forelse($myLeaveRequests as $req)
+<tr>
+    <td style="font-weight:600;color:#6b7280;">{{ $req->ref_no }}</td>
+    <td><span style="background:#dbeafe;color:#1d4ed8;padding:3px 11px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;">{{ $req->leaveType->name ?? '—' }}</span></td>
+    <td>{{ $req->created_at->format('m/d/Y') }}</td>
+    <td>{{ $req->start_date->format('m/d/Y') }}</td>
+    <td>{{ $req->end_date->format('m/d/Y') }}</td>
+    <td>{{ $req->total_days }}</td>
+    <td style="color:#6b7280;">{{ $req->reason }}</td>
+    <td>
+        <div style="font-weight:700;font-size:13px;">{{ $req->approver ? trim($req->approver->fname.' '.$req->approver->lname) : '—' }}</div>
+        <div style="font-size:11px;color:#9ca3af;">{{ $req->approver?->jobTitle?->title ?? '—' }}</div>
+    </td>
+    <td><span class="status-{{ $req->status }}">{{ ucfirst($req->status) }}</span></td>
+    <td><button class="btn-outline-sm" @click="openLeaveDetails({{ $req->id }})">View</button></td>
+</tr>
+@empty
+<tr>
+    <td colspan="10" style="text-align:center;padding:40px 16px;color:#9ca3af;font-size:13px;">No leave requests found.</td>
+</tr>
+@endforelse
+</tbody>
             </table>
         </div>
 
@@ -493,25 +384,22 @@
                 </a>
             </div>
             <div class="toolbar-right">
-                <select class="filter-select"><option>All Departments</option>@foreach($departments ?? [] as $d)<option>{{ $d->name }}</option>@endforeach</select>
-                <select class="filter-select"><option>All Types</option><option>Vacation Leave</option><option>Sick Leave</option><option>LWOP</option></select>
+                <form method="GET" action="{{ route('admin.leave.management') }}" id="calFilterForm" style="display:contents;">
+    <input type="hidden" name="tab" value="leave-calendar">
+    <input type="hidden" name="month" value="{{ $calMonth->format('Y-m') }}">
+    <select class="filter-select" name="leave_type_id" onchange="document.getElementById('calFilterForm').submit()">
+        <option value="">All Types</option>
+        @foreach($leaveTypes as $lt)
+            <option value="{{ $lt->id }}" {{ request('leave_type_id') == $lt->id ? 'selected' : '' }}>{{ $lt->name }}</option>
+        @endforeach
+    </select>
+</form>
             </div>
         </div>
 
         @php
-            $calEvents = $calendarEvents ?? [];
-            if(empty($calEvents)) {
-                $calEvents = [
-                    ['day' => 6,  'type' => 'cal-sl',    'label' => 'SL - Ana Reyes'],
-                    ['day' => 6,  'type' => 'cal-vl',    'label' => 'VL - Lisa Valdez'],
-                    ['day' => 10, 'type' => 'cal-vl',    'label' => 'VL - Juan Dela Cruz'],
-                    ['day' => 11, 'type' => 'cal-vl',    'label' => 'VL - Juan Dela Cruz'],
-                    ['day' => 12, 'type' => 'cal-vl',    'label' => 'VL - Juan Dela Cruz'],
-                    ['day' => 20, 'type' => 'cal-holiday','label' => 'Holiday'],
-                ];
-            }
-            $eventsByDay = collect($calEvents)->groupBy('day');
-        @endphp
+    $eventsByDay = $calendarEvents->groupBy('day');
+@endphp
 
         <table class="cal-grid">
             <thead>
@@ -543,10 +431,13 @@
         </table>
 
         <div class="cal-legend">
-            <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#dbeafe;"></div> VL – Vacation Leave</div>
-            <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#fce7f3;"></div> SL – Sick Leave</div>
-            <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#ffedd5;"></div> LWOP – Leave Without Pay</div>
-        </div>
+    @foreach($leaveTypes as $lt)
+    <div class="cal-legend-item">
+        <div class="cal-legend-dot" style="background:#dbeafe;"></div>
+        {{ $lt->code }} – {{ $lt->name }}
+    </div>
+    @endforeach
+</div>
 
         @endif
 
@@ -562,49 +453,65 @@
                     </button>
                 </div>
 
-                <div style="margin-bottom:16px;">
-                    <label class="form-label">Leave Type</label>
-                    <select class="form-input" style="appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;width:100%;">
-                        <option value="">Choose leave type</option>
-                        <option>Vacation Leave</option>
-                        <option>Sick Leave</option>
-                        <option>Leave Without Pay</option>
-                        <option>Maternity Leave</option>
-                        <option>Paternity Leave</option>
-                        <option>Solo Parent Leave</option>
-                    </select>
-                </div>
-
-                <div class="form-row" style="margin-bottom:16px;">
-                    <div>
-                        <label class="form-label">Start Date</label>
-                        <input type="date" class="form-input" placeholder="MM/DD/YYYY">
-                    </div>
-                    <div>
-                        <label class="form-label">End Date</label>
-                        <input type="date" class="form-input" placeholder="MM/DD/YYYY">
-                    </div>
-                </div>
-
-                <div style="margin-bottom:16px;">
-                    <label class="form-label">Reason/Remarks</label>
-                    <input type="text" class="form-input" placeholder="Enter brief description of your leave reason">
-                </div>
-
-                <div style="margin-bottom:16px;">
-                    <label class="form-label">Supporting Document</label>
-                    <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed #d1d5db;border-radius:10px;padding:28px 20px;background:#f9fafb;cursor:pointer;">
-                        <svg style="width:28px;height:28px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        <div style="font-size:13px;font-weight:600;color:#374151;">Choose a file to upload</div>
-                        <div style="font-size:12px;color:#9ca3af;">PDF or DOCX file size no more than 10MB</div>
-                        <input type="file" accept=".pdf,.docx" style="display:none;">
-                    </label>
-                </div>
-
-                <div class="modal-actions">
-                    <button class="btn-cancel" @click="showFileLeave = false">Cancel</button>
-                    <button class="btn-save">Submit</button>
-                </div>
+                <div x-data="{
+    leaveTypeId: '', startDate: '', endDate: '', reason: '',
+    fileName: '', saving: false, errorMsg: '',
+    handleFile(e) { const f = e.target.files[0]; this.fileName = f ? f.name : ''; },
+    async submit() {
+        this.errorMsg = '';
+        if (!this.leaveTypeId || !this.startDate || !this.endDate || !this.reason) {
+            this.errorMsg = 'Please fill in all required fields.'; return;
+        }
+        this.saving = true;
+        const form = new FormData();
+        form.append('leave_type_id', this.leaveTypeId);
+        form.append('start_date', this.startDate);
+        form.append('end_date', this.endDate);
+        form.append('reason', this.reason);
+        const fileInput = document.getElementById('adminLeaveDocInput');
+        if (fileInput.files[0]) form.append('document', fileInput.files[0]);
+        form.append('_token', document.querySelector('meta[name=csrf-token]').content);
+        const res = await fetch('{{ route('admin.leave.file') }}', { method: 'POST', body: form });
+        this.saving = false;
+        const data = await res.json();
+        if (res.ok) { window.location.reload(); }
+        else { this.errorMsg = data.message ?? 'Something went wrong.'; }
+    }
+}">
+    <template x-if="errorMsg">
+        <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
+    </template>
+    <div style="margin-bottom:16px;">
+        <label class="form-label">Leave Type</label>
+        <select class="form-input" x-model="leaveTypeId" style="appearance:none;width:100%;">
+            <option value="">Choose leave type</option>
+            @foreach($leaveTypes as $lt)
+            <option value="{{ $lt->id }}">{{ $lt->name }} ({{ $lt->code }})</option>
+            @endforeach
+        </select>
+    </div>
+    <div class="form-row" style="margin-bottom:16px;">
+        <div><label class="form-label">Start Date</label><input type="date" class="form-input" x-model="startDate"></div>
+        <div><label class="form-label">End Date</label><input type="date" class="form-input" x-model="endDate"></div>
+    </div>
+    <div style="margin-bottom:16px;">
+        <label class="form-label">Reason/Remarks</label>
+        <input type="text" class="form-input" x-model="reason" placeholder="Enter brief description of your leave reason">
+    </div>
+    <div style="margin-bottom:16px;">
+        <label class="form-label">Supporting Document</label>
+        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed #d1d5db;border-radius:10px;padding:28px 20px;background:#f9fafb;cursor:pointer;">
+            <svg style="width:28px;height:28px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <div style="font-size:13px;font-weight:600;color:#374151;" x-text="fileName || 'Choose a file to upload'"></div>
+            <div style="font-size:12px;color:#9ca3af;">PDF or DOCX, max 10MB</div>
+            <input id="adminLeaveDocInput" type="file" accept=".pdf,.docx" style="display:none;" @change="handleFile($event)">
+        </label>
+    </div>
+    <div class="modal-actions">
+        <button class="btn-cancel" @click="showFileLeave = false">Cancel</button>
+        <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving ? 'Submitting…' : 'Submit'"></button>
+    </div>
+</div>
             </div>
         </div>
 
@@ -681,36 +588,52 @@
                     </button>
                 </div>
 
-                <div style="margin-bottom:16px;">
-                    <label class="form-label">Leave Type</label>
-                    <div class="form-input" style="background:#f9fafb;color:#6b7280;cursor:default;" x-text="selectedLeave.leave_type || 'Vacation Leave (VL)'"></div>
-                </div>
-
-                <div class="form-row" style="margin-bottom:16px;">
-                    <div>
-                        <label class="form-label">Start Date</label>
-                        <div class="form-input" style="background:#f9fafb;color:#6b7280;cursor:default;" x-text="selectedLeave.date_from || '03/10/2026'"></div>
-                    </div>
-                    <div>
-                        <label class="form-label">End Date</label>
-                        <div class="form-input" style="background:#f9fafb;color:#6b7280;cursor:default;" x-text="selectedLeave.date_to || '03/12/2026'"></div>
-                    </div>
-                </div>
-
-                <div style="margin-bottom:16px;">
-                    <label class="form-label">Reason/Remarks</label>
-                    <div class="form-input" style="background:#f9fafb;color:#6b7280;cursor:default;" x-text="selectedLeave.reason || 'Family Trip'"></div>
-                </div>
-
-                <div style="margin-bottom:16px;">
-                    <label class="form-label">Progress</label>
-                    <div class="form-input" style="background:#f9fafb;color:#6b7280;cursor:default;" x-text="selectedLeave.status || 'Pending Approval'"></div>
-                </div>
-
-                <div class="modal-actions">
-                    <button class="btn-cancel" @click="showLeaveDetails = false">Cancel Request</button>
-                    <button class="btn-save" @click="showLeaveDetails = false">Close</button>
-                </div>
+                <template x-if="leaveError">
+    <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="leaveError"></div>
+</template>
+<div style="margin-bottom:16px;">
+    <label class="form-label">Ref #</label>
+    <div class="form-input" style="background:#f9fafb;color:#6b7280;cursor:default;" x-text="selectedLeave.ref_no || '—'"></div>
+</div>
+<div style="margin-bottom:16px;">
+    <label class="form-label">Leave Type</label>
+    <div class="form-input" style="background:#f9fafb;color:#6b7280;cursor:default;" x-text="selectedLeave.leave_type || '—'"></div>
+</div>
+<div class="form-row" style="margin-bottom:16px;">
+    <div>
+        <label class="form-label">Start Date</label>
+        <div class="form-input" style="background:#f9fafb;color:#6b7280;cursor:default;" x-text="selectedLeave.start_date || '—'"></div>
+    </div>
+    <div>
+        <label class="form-label">End Date</label>
+        <div class="form-input" style="background:#f9fafb;color:#6b7280;cursor:default;" x-text="selectedLeave.end_date || '—'"></div>
+    </div>
+</div>
+<div style="margin-bottom:16px;">
+    <label class="form-label">Total Days</label>
+    <div class="form-input" style="background:#f9fafb;color:#6b7280;cursor:default;" x-text="selectedLeave.total_days || '—'"></div>
+</div>
+<div style="margin-bottom:16px;">
+    <label class="form-label">Reason/Remarks</label>
+    <div class="form-input" style="background:#f9fafb;color:#6b7280;cursor:default;" x-text="selectedLeave.reason || '—'"></div>
+</div>
+<div style="margin-bottom:16px;">
+    <label class="form-label">Status</label>
+    <div class="form-input" style="background:#f9fafb;color:#6b7280;cursor:default;" x-text="selectedLeave.status ? selectedLeave.status.charAt(0).toUpperCase() + selectedLeave.status.slice(1) : '—'"></div>
+</div>
+<template x-if="selectedLeave.rejection_reason">
+    <div style="margin-bottom:16px;">
+        <label class="form-label">Rejection Reason</label>
+        <div class="form-input" style="background:#fef2f2;color:#dc2626;cursor:default;" x-text="selectedLeave.rejection_reason"></div>
+    </div>
+</template>
+<div class="modal-actions">
+    <template x-if="selectedLeave.status === 'pending'">
+        <button class="btn-cancel" style="background:#fef2f2;color:#dc2626;border-color:#fecaca;"
+            @click="cancelLeave(selectedLeave.id)" x-text="cancelling ? 'Cancelling…' : 'Cancel Request'"></button>
+    </template>
+    <button class="btn-save" @click="showLeaveDetails = false">Close</button>
+</div>
             </div>
         </div>
 

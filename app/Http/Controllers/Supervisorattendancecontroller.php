@@ -525,9 +525,7 @@ class SupervisorAttendanceController extends Controller
 
         return view('supervisor.supervisor_shift_scheduling', compact(
             'activeTab', 'departments', 'weekStart', 'weekEnd',
-            'scheduleRecords', 'employees', 'shiftTypes',
-            'currentYear', 'holidays',
-            'regularHolidays', 'specialHolidays', 'localHolidays', 'localRegion'
+            'scheduleRecords', 'employees', 'shiftTypes'
         ));
     }
 

@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use App\Models\Employee;
 use App\Models\AttendanceLog;
 use App\Models\Department;
+use App\Models\EmployeeShift;
 
 class HrDashboardController extends Controller
 {
@@ -34,6 +35,16 @@ class HrDashboardController extends Controller
             ->first() : null;
 
         $availableShifts = \App\Models\Shift::where('is_active', true)->get();
+
+        $employeeShift = $authEmployee ? EmployeeShift::with('shift')
+            ->where('employee_id', $authEmployee->id)
+            ->where('is_active', true)
+            ->whereDate('effective_date', '<=', Carbon::today())
+            ->where(function ($q) {
+                $q->whereNull('end_date')->orWhereDate('end_date', '>=', Carbon::today());
+            })
+            ->latest('effective_date')
+            ->first() : null;
 
         $departments = Department::with(['employees.attendanceLogs' => function ($q) use ($today) {
             $q->whereDate('attendance_date', $today);
@@ -63,6 +74,7 @@ class HrDashboardController extends Controller
             'pendingRequests' => 12,
             'todayLog'        => $todayLog,
             'availableShifts' => $availableShifts,
+            'employeeShift'   => $employeeShift,
             'attendanceSummary' => [
                 'present'  => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['present', 'undertime', 'overtime'])->count(),
                 'late'     => AttendanceLog::whereDate('attendance_date', $today)->where('status', 'late')->count(),

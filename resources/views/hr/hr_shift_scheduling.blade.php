@@ -306,224 +306,21 @@
             display: flex; align-items: center; justify-content: space-between;
             padding: 16px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap;
         }
+
+        .delete-btn {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 5px 14px; border-radius: 7px; font-size: 12px;
+            font-weight: 600; font-family: inherit; cursor: pointer;
+            border: 1.5px solid #fecaca; background: #fef2f2;
+            color: #dc2626; transition: all .15s;
+        }
+        .delete-btn:hover { background: #fee2e2; }
     </style>
 </head>
 <body class="bg-gray-50">
 
 {{-- ══════════ HR SIDEBAR (inline) ══════════ --}}
-<aside
-    class="bg-white border-r border-gray-200 h-screen fixed left-0 top-0 overflow-y-auto z-50 flex flex-col"
-    x-data="{
-        sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
-        employeesOpen:  {{ in_array($currentRoute, $employeeRoutes)   ? 'true' : 'false' }},
-        attendanceOpen: {{ in_array($currentRoute, $attendanceRoutes) ? 'true' : 'false' }},
-        payrollOpen:    {{ in_array($currentRoute, $payrollRoutes)    ? 'true' : 'false' }},
-        requestsOpen:   {{ in_array($currentRoute, $requestRoutes)    ? 'true' : 'false' }}
-    }"
-    x-init="$watch('sidebarCollapsed', value => localStorage.setItem('sidebarCollapsed', value))"
-    :class="sidebarCollapsed ? 'w-20' : 'w-64'"
-    style="transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 2px 0 20px rgba(0,0,0,0.06);">
-
-    <!-- Logo -->
-    <div class="px-6 py-5 border-b border-gray-100">
-        <div class="flex items-center space-x-3" :class="sidebarCollapsed ? 'justify-center' : ''">
-            <div class="w-9 h-9 border-2 border-gray-800 flex items-center justify-center flex-shrink-0" style="border-radius:6px;">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
-            </div>
-            <h1 x-show="!sidebarCollapsed"
-                x-transition:enter="transition ease-out duration-300 delay-100"
-                x-transition:enter-start="opacity-0 -translate-x-4"
-                x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-100"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0"
-                class="font-bold text-gray-900 text-lg tracking-widest whitespace-nowrap">MEDISOURCE</h1>
-        </div>
-    </div>
-
-    <!-- User Profile -->
-    <div class="px-4 py-4 border-b border-gray-100"
-         :class="sidebarCollapsed ? 'flex justify-center' : 'flex items-center space-x-3'">
-        <div class="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm"
-             style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); box-shadow: 0 0 0 3px rgba(59,130,246,.25);">
-            {{ $sidebarInitials }}
-        </div>
-        <div x-show="!sidebarCollapsed"
-             x-transition:enter="transition ease-out duration-300 delay-100"
-             x-transition:enter-start="opacity-0 -translate-x-3"
-             x-transition:enter-end="opacity-100 translate-x-0"
-             x-transition:leave="transition ease-in duration-100"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             class="overflow-hidden">
-            <p class="font-semibold text-gray-800 text-sm leading-tight truncate">{{ $sidebarName }}</p>
-            <p class="text-xs mt-0.5 font-semibold" style="color:#3b82f6;">{{ $sidebarRole }}</p>
-        </div>
-    </div>
-
-    <!-- Navigation -->
-    <nav class="p-3 space-y-0.5 flex-1 overflow-y-auto">
-        <p x-show="!sidebarCollapsed" class="text-xs text-gray-400 font-semibold px-3 py-2 uppercase tracking-widest">Main Menu</p>
-
-        <!-- Dashboard -->
-        <a href="{{ route('hr.dashboard') }}"
-           class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ $currentRoute === 'hr.dashboard' ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}"
-           style="{{ $currentRoute === 'hr.dashboard' ? 'background:#3b82f6;' : '' }}">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-            </svg>
-            <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Dashboard</span>
-        </a>
-
-        <!-- Employees -->
-        <div>
-            <button @click="employeesOpen = !employeesOpen"
-                    class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg {{ in_array($currentRoute, $employeeRoutes) ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                    </svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Employees</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180': employeesOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div x-show="employeesOpen && !sidebarCollapsed"
-                 x-transition:enter="transition ease-out duration-250"
-                 x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
-                 class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('hr.employees.directory') }}" class="block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'hr.employees.directory' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Directory</a>
-                <a href="{{ route('hr.employees.profile') }}"   class="block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'hr.employees.profile'   ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Profile</a>
-            </div>
-        </div>
-
-        <!-- Time & Attendance -->
-        <div>
-            <button @click="attendanceOpen = !attendanceOpen"
-                    class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg {{ in_array($currentRoute, $attendanceRoutes) ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Time & Attendance</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180': attendanceOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div x-show="attendanceOpen && !sidebarCollapsed"
-                 x-transition:enter="transition ease-out duration-250"
-                 x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
-                 class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('hr.attendance.reports') }}"
-                   class="flex items-center px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'hr.attendance.reports' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
-                    @if($currentRoute === 'hr.attendance.reports')
-                        <span class="w-2 h-2 rounded-full mr-2.5 flex-shrink-0" style="background:#3b82f6; animation:pulseDot 2s ease-in-out infinite;"></span>
-                    @endif
-                    My Attendance
-                </a>
-                <a href="{{ route('hr.attendance.employee') }}" class="block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'hr.attendance.employee' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Attendance</a>
-                <a href="{{ route('hr.shift.scheduling') }}"   class="block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'hr.shift.scheduling'   ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Shift Scheduling</a>
-                <a href="#" class="block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Leave Management</a>
-            </div>
-        </div>
-
-        <!-- Payroll -->
-        <div>
-            <button @click="payrollOpen = !payrollOpen"
-                    class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg {{ in_array($currentRoute, $payrollRoutes) ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Payroll</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180': payrollOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div x-show="payrollOpen && !sidebarCollapsed"
-                 x-transition:enter="transition ease-out duration-250"
-                 x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
-                 class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="#" class="block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Payroll</a>
-                <a href="#" class="block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Payslips</a>
-                <a href="#" class="block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Govt. Contributions</a>
-            </div>
-        </div>
-
-        <!-- Requests & Approval -->
-        <div>
-            <button @click="requestsOpen = !requestsOpen"
-                    class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg {{ in_array($currentRoute, $requestRoutes) ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                    </svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Requests & Approval</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180': requestsOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div x-show="requestsOpen && !sidebarCollapsed"
-                 x-transition:enter="transition ease-out duration-250"
-                 x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
-                 class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="#" class="block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Pending Requests</a>
-                <a href="#" class="block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Approved Logs</a>
-            </div>
-        </div>
-
-        <!-- Others -->
-        <div class="pt-3 mt-2 border-t border-gray-100">
-            <p x-show="!sidebarCollapsed" class="text-xs text-gray-400 font-semibold px-3 py-2 uppercase tracking-widest">Others</p>
-            <a href="#" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Settings</span>
-            </a>
-            <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('hr-logout-form').submit();"
-               class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-500">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Logout</span>
-            </a>
-            <form id="hr-logout-form" action="{{ route('logout') }}" method="POST" class="hidden">@csrf</form>
-        </div>
-    </nav>
-
-    <!-- Collapse Button -->
-    <button @click="sidebarCollapsed = !sidebarCollapsed"
-            class="m-3 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-200 self-end"
-            style="transition: background .15s;">
-        <svg class="w-4 h-4 chevron-icon" :class="{'rotate-180': sidebarCollapsed}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-        </svg>
-    </button>
-</aside>
+@include('hr.hr_sidebar')
 
 {{-- ══════════ MAIN CONTENT ══════════ --}}
 <div x-data="{ collapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
@@ -572,6 +369,16 @@
         {{-- ══════════ TAB: WEEKLY SCHEDULE ══════════ --}}
         @if($activeTab === 'weekly')
 
+        <div x-data="{
+            search: '',
+            deptFilter: '',
+            visible(name, dept) {
+                const s = this.search.toLowerCase();
+                const d = this.deptFilter.toLowerCase();
+                return (!s || name.toLowerCase().includes(s)) &&
+                       (!d || dept.toLowerCase() === d);
+            }
+        }">
         <div class="toolbar">
             <div class="toolbar-left">
                 <div class="week-nav">
@@ -591,12 +398,12 @@
             <div class="toolbar-right">
                 <div class="search-box">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <input type="text" placeholder="Search employee…">
+                    <input type="text" placeholder="Search employee…" x-model="search">
                 </div>
-                <select class="dept-select">
-                    <option>All Departments</option>
+                <select class="dept-select" x-model="deptFilter">
+                    <option value="">All Departments</option>
                     @foreach($departments ?? [] as $dept)
-                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                        <option value="{{ strtolower($dept->name) }}">{{ $dept->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -618,30 +425,40 @@
                     </thead>
                     <tbody>
                         @forelse($scheduleRecords ?? [] as $rec)
-                        <tr>
+                        @php
+                            $recName = trim(($rec->employee->fname ?? '') . ' ' . ($rec->employee->lname ?? ''));
+                            $recDept = strtolower($rec->employee->department->name ?? '');
+                        @endphp
+                        <tr x-show="visible('{{ $recName }}', '{{ $recDept }}')">
                             <td class="emp-cell">
                                 <div class="emp-info">
-                                    <div class="emp-name">{{ trim(($rec->employee->fname ?? '') . ' ' . ($rec->employee->lname ?? '')) }}</div>
+                                    <div class="emp-name">{{ $recName }}</div>
                                     <div class="emp-dept">{{ $rec->employee->department->name ?? '—' }}</div>
                                 </div>
                             </td>
                             @foreach($weekDays as $day)
                             @php
-                                $dayKey   = $day->format('Y-m-d');
-                                $dayShift = $rec->shifts[$dayKey] ?? null;
-                                $isWknd   = $day->isWeekend();
+                                $dayKey   = $day->toDateString();
+                                $cell     = $rec->days[$dayKey] ?? ['type' => 'none'];
+                                $cellType = $cell['type'];
                             @endphp
-                            <td style="{{ $isWknd ? 'background:#f9fafb;' : '' }}">
-                                @if($isWknd)
+                            <td style="{{ $cellType === 'day_off' ? 'background:#f9fafb;' : '' }}">
+                                @if($cellType === 'day_off')
                                     <span class="day-off-text">Day Off</span>
-                                @elseif($dayShift)
+                                @elseif($cellType === 'leave')
+                                    <span class="pill-leave">Leave</span>
+                                @elseif($cellType === 'shift')
+                                    @php
+                                        $setup    = strtolower($cell['work_setup'] ?? 'wfh');
+                                        $sName    = $cell['shift_name'] ?? '—';
+                                        $sLow     = strtolower($sName);
+                                    @endphp
                                     <div class="shift-cell">
-                                        <span class="pill-setup {{ strtolower($dayShift->setup ?? 'wfh') === 'office' ? 'pill-office' : 'pill-wfh' }}">
-                                            {{ $dayShift->setup ?? 'WFH' }}
+                                        <span class="pill-setup {{ $setup === 'office' ? 'pill-office' : 'pill-wfh' }}">
+                                            {{ strtoupper($setup) }}
                                         </span>
-                                        @php $st = strtolower($dayShift->type ?? 'day'); @endphp
-                                        <span class="pill-shift {{ $st === 'night' ? 'pill-night' : ($st === 'mid' ? 'pill-mid' : 'pill-day') }}">
-                                            {{ ucfirst($dayShift->type ?? 'Day') }}
+                                        <span class="pill-shift {{ str_contains($sLow,'night') ? 'pill-night' : (str_contains($sLow,'mid') ? 'pill-mid' : 'pill-day') }}">
+                                            {{ $sName }}
                                         </span>
                                     </div>
                                 @else
@@ -651,74 +468,85 @@
                             @endforeach
                         </tr>
                         @empty
-                        {{-- Placeholder rows --}}
-                        @php
-                            $demoEmployees = [
-                                ['name' => 'Juan Dela Cruz',  'dept' => 'IT', 'shifts' => ['wfh','wfh','wfh','wfh','wfh',null,null], 'types' => ['Day','Day','Day','Day','Day',null,null]],
-                                ['name' => 'Jan Dela Cruz',   'dept' => 'IT', 'shifts' => ['wfh','office','wfh','office','wfh',null,null], 'types' => ['Day','Day','Day','Day','Day',null,null]],
-                                ['name' => 'Jane Dela Cruz',  'dept' => 'IT', 'shifts' => ['office','wfh','wfh','wfh','office',null,null], 'types' => ['Night','Night','Night','Night','Night',null,null]],
-                                ['name' => 'Jam Dela Cruz',   'dept' => 'IT', 'shifts' => ['office','office','office','office','office',null,null], 'types' => ['Night','Night','Night','Night','Night',null,null]],
-                                ['name' => 'Jimmy Dela Cruz', 'dept' => 'IT', 'shifts' => ['leave','leave','leave','leave','leave',null,null], 'types' => [null,null,null,null,null,null,null]],
-                                ['name' => 'New Dela Cruz',   'dept' => 'IT', 'shifts' => [null,null,null,null,null,null,null], 'types' => [null,null,null,null,null,null,null]],
-                            ];
-                        @endphp
-                        @foreach($demoEmployees as $demo)
                         <tr>
-                            <td class="emp-cell">
-                                <div class="emp-info">
-                                    <div class="emp-name">{{ $demo['name'] }}</div>
-                                    <div class="emp-dept">{{ $demo['dept'] }}</div>
-                                </div>
+                            <td colspan="8" style="text-align:center; padding:40px 16px; color:#9ca3af; font-size:13px;">
+                                No employees found.
                             </td>
-                            @foreach($weekDays as $idx => $day)
-                            @php
-                                $setup = $demo['shifts'][$idx] ?? null;
-                                $type  = $demo['types'][$idx]  ?? null;
-                                $isWknd = $day->isWeekend();
-                            @endphp
-                            <td style="{{ $isWknd ? 'background:#f9fafb;' : '' }}">
-                                @if($isWknd)
-                                    <span class="day-off-text">Day Off</span>
-                                @elseif($setup === 'leave')
-                                    <span class="pill-leave">Leave</span>
-                                @elseif($setup)
-                                    <div class="shift-cell">
-                                        <span class="pill-setup {{ $setup === 'office' ? 'pill-office' : 'pill-wfh' }}">{{ strtoupper($setup) }}</span>
-                                        @if($type)
-                                        <span class="pill-shift {{ strtolower($type) === 'night' ? 'pill-night' : ($type === 'Mid' ? 'pill-mid' : 'pill-day') }}">{{ $type }}</span>
-                                        @endif
-                                    </div>
-                                @else
-                                    <span class="day-off-text">—</span>
-                                @endif
-                            </td>
-                            @endforeach
                         </tr>
-                        @endforeach
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
+        </div>{{-- end x-data wrapper --}}
 
         {{-- ══════════ TAB: SHIFT TYPES ══════════ --}}
         @elseif($activeTab === 'shift-types')
 
-        <div class="table-card">
+        <div class="table-card" x-data="{
+            shiftSearch: '',
+            showEditShiftTypeModal: false,
+            editShift: { id: null, name: '', code: '', start_time: '', end_time: '', break_start: '', break_end: '' },
+            saving: false,
+            errorMsg: '',
+            async openEdit(id) {
+                this.errorMsg = '';
+                const res = await fetch(`/hr/shift/type/${id}`, {
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+                });
+                const data = await res.json();
+                const bs = data.break_schedule ? JSON.parse(data.break_schedule) : {};
+                this.editShift = {
+                    id:          data.id,
+                    name:        data.name,
+                    code:        data.code,
+                    start_time:  data.start_time ? data.start_time.substring(0,5) : '',
+                    end_time:    data.end_time   ? data.end_time.substring(0,5)   : '',
+                    break_start: bs.start ?? '',
+                    break_end:   bs.end   ?? '',
+                };
+                this.showEditShiftTypeModal = true;
+            },
+            async submitEdit() {
+                this.errorMsg = '';
+                this.saving = true;
+                const res = await fetch(`/hr/shift/type/${this.editShift.id}/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                    body: JSON.stringify({
+                        name:        this.editShift.name,
+                        code:        this.editShift.code,
+                        start_time:  this.editShift.start_time,
+                        end_time:    this.editShift.end_time,
+                        break_start: this.editShift.break_start || null,
+                        break_end:   this.editShift.break_end   || null,
+                    })
+                });
+                this.saving = false;
+                const data = await res.json();
+                if (res.ok) { window.location.reload(); }
+                else { this.errorMsg = data.message ?? 'Something went wrong.'; }
+            }
+        }">
             <div class="table-toolbar">
                 <div class="toolbar-left">
                     <div class="search-box">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <input type="text" placeholder="Search…">
+                        <input type="text" placeholder="Search…" x-model="shiftSearch">
                     </div>
                 </div>
                 <div class="toolbar-right">
-                    <select class="dept-select">
-                        <option>All Departments</option>
-                        @foreach($departments ?? [] as $dept)
-                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
-                        @endforeach
-                    </select>
+                    <form method="GET" action="{{ route('hr.shift.scheduling') }}" id="shiftTypeFilterForm" style="display:contents;">
+                        <input type="hidden" name="tab" value="shift-types">
+                        <select class="dept-select" name="department" onchange="document.getElementById('shiftTypeFilterForm').submit()">
+                            <option value="">All Departments</option>
+                            @foreach($departments ?? [] as $dept)
+                                <option value="{{ $dept->id }}" {{ request('department') == $dept->id ? 'selected' : '' }}>
+                                    {{ $dept->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
                     <button class="btn-primary" @click="showAddShiftTypeModal = true">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Add Shift Type
@@ -741,39 +569,98 @@
                     </thead>
                     <tbody>
                         @forelse($shiftTypes ?? [] as $shift)
-                        <tr>
-                            <td style="font-weight:600;">{{ $shift->name }}</td>
-                            <td>{{ \Carbon\Carbon::parse($shift->time_in)->format('g:i A') }}</td>
-                            <td>{{ \Carbon\Carbon::parse($shift->break_start)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->break_end)->format('g:i A') }}</td>
-                            <td>{{ \Carbon\Carbon::parse($shift->time_out)->format('g:i A') }}</td>
-                            <td>{{ $shift->work_hours }}h</td>
-                            <td>
-                                @php $nd = $shift->night_diff ?? 'None'; @endphp
-                                <span class="night-diff-badge {{ $nd === 'None' ? 'nd-none' : ($nd === '10%' ? 'nd-10' : 'nd-20') }}">{{ $nd }}</span>
+                        @php
+                            $bs = is_string($shift->break_schedule)
+                                ? json_decode($shift->break_schedule, true)
+                                : $shift->break_schedule;
+                        @endphp
+                        <tr x-show="!shiftSearch || '{{ strtolower($shift->name) }}'.includes(shiftSearch.toLowerCase())">
+                            <td style="font-weight:600;">
+                                {{ $shift->name }}
+                                <span style="font-size:11px;color:#9ca3af;font-weight:400;">({{ $shift->code }})</span>
                             </td>
+                            <td>{{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }}</td>
+                            <td>
+                                {{ isset($bs['start'], $bs['end'])
+                                    ? \Carbon\Carbon::parse($bs['start'])->format('g:i A') . ' – ' . \Carbon\Carbon::parse($bs['end'])->format('g:i A')
+                                    : '—' }}
+                            </td>
+                            <td>{{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }}</td>
+                            <td>{{ $shift->work_hours }}h</td>
+                            <td><span class="night-diff-badge nd-none">None</span></td>
                             <td>{{ $shift->assigned ?? 0 }}</td>
-                            <td><button class="edit-btn">Edit</button></td>
+                            <td>
+                                <button class="edit-btn" @click="openEdit({{ $shift->id }})">Edit</button>
+                            </td>
                         </tr>
                         @empty
-                        @foreach([
-                            ['Day Shift',   '7:00 AM',  '12:00 PM - 1:00 PM', '4:00 PM',  '8h', 'None', 42],
-                            ['Mid Shift',   '2:00 PM',  '6:00 PM - 7:00 PM',  '11:00 PM', '8h', '10%',  12],
-                            ['Night Shift', '10:00 PM', '2:00 AM - 3:00 AM',  '6:00 PM',  '8h', '20%',  48],
-                        ] as $row)
                         <tr>
-                            <td style="font-weight:600;">{{ $row[0] }}</td>
-                            <td>{{ $row[1] }}</td>
-                            <td>{{ $row[2] }}</td>
-                            <td>{{ $row[3] }}</td>
-                            <td>{{ $row[4] }}</td>
-                            <td><span class="night-diff-badge {{ $row[5] === 'None' ? 'nd-none' : ($row[5] === '10%' ? 'nd-10' : 'nd-20') }}">{{ $row[5] }}</span></td>
-                            <td>{{ $row[6] }}</td>
-                            <td><button class="edit-btn">Edit</button></td>
+                            <td colspan="8" style="text-align:center; padding:40px 16px; color:#9ca3af; font-size:13px;">
+                                No shift types found. Add one using the button above.
+                            </td>
                         </tr>
-                        @endforeach
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            {{-- Edit Shift Type Modal --}}
+            <div x-show="showEditShiftTypeModal" class="modal-overlay" x-cloak @click.self="showEditShiftTypeModal = false">
+                <div class="modal-box" style="width:520px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+                        <div class="modal-title" style="margin-bottom:0;">Edit Shift Type</div>
+                        <button @click="showEditShiftTypeModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;">
+                            <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <template x-if="errorMsg">
+                        <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
+                    </template>
+
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label">Shift Name</label>
+                        <input type="text" class="form-input" x-model="editShift.name" placeholder="e.g. Day Shift">
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label">Shift Code</label>
+                        <input type="text" class="form-input" x-model="editShift.code" placeholder="e.g. DS-001">
+                    </div>
+
+                    <div class="form-row" style="margin-bottom:16px;">
+                        <div>
+                            <label class="form-label">Time In</label>
+                            <input type="time" class="form-input" x-model="editShift.start_time">
+                        </div>
+                        <div>
+                            <label class="form-label">Time Out</label>
+                            <input type="time" class="form-input" x-model="editShift.end_time">
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="margin-bottom:16px;">
+                        <div>
+                            <label class="form-label">Break Start</label>
+                            <input type="time" class="form-input" x-model="editShift.break_start">
+                        </div>
+                        <div>
+                            <label class="form-label">Break End</label>
+                            <input type="time" class="form-input" x-model="editShift.break_end">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label">Night Differential</label>
+                        <input type="text" class="form-input" value="None" disabled
+                            style="background:#f9fafb;color:#9ca3af;cursor:not-allowed;">
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="btn-cancel" @click="showEditShiftTypeModal = false">Cancel</button>
+                        <button class="btn-save" @click="submitEdit()" :disabled="saving" x-text="saving ? 'Saving…' : 'Save Changes'"></button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -784,34 +671,85 @@
         <div class="holiday-stat-grid">
             <div class="holiday-stat-card hsc-regular">
                 <div class="hsc-label">Regular Holidays</div>
-                <div class="hsc-value">{{ $regularHolidays ?? 12 }}</div>
+                <div class="hsc-value">{{ $regularHolidays ?? 0 }}</div>
                 <div class="hsc-sub">200% pay rate</div>
             </div>
             <div class="holiday-stat-card hsc-special">
                 <div class="hsc-label">Special Non-Working</div>
-                <div class="hsc-value">{{ $specialHolidays ?? 3 }}</div>
+                <div class="hsc-value">{{ $specialHolidays ?? 0 }}</div>
                 <div class="hsc-sub">130% pay rate</div>
             </div>
             <div class="holiday-stat-card hsc-local">
                 <div class="hsc-label">Local Holidays</div>
-                <div class="hsc-value">{{ $localHolidays ?? 2 }}</div>
-                <div class="hsc-sub">{{ $localRegion ?? 'Pangasinan' }}</div>
+                <div class="hsc-value">{{ $localHolidays ?? 0 }}</div>
+                <div class="hsc-sub">{{ $localRegion !== '—' ? $localRegion : 'None yet' }}</div>
             </div>
         </div>
 
-        <div class="table-card">
+        <div class="table-card" x-data="{
+            holidaySearch: '',
+            typeFilter: '',
+            showEditHolidayModal: false,
+            editHoliday: { id: null, name: '', date: '', type: '', pay_rate: '', region: '', yearly: false },
+            saving: false,
+            errorMsg: '',
+            visible(name, type) {
+                const s = this.holidaySearch.toLowerCase();
+                const t = this.typeFilter.toLowerCase();
+                return (!s || name.toLowerCase().includes(s)) &&
+                       (!t || type.toLowerCase() === t);
+            },
+            async openEdit(id) {
+                this.errorMsg = '';
+                const res = await fetch(`/hr/holidays/${id}`, {
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+                });
+                const data = await res.json();
+                this.editHoliday = {
+                    id:       data.id,
+                    name:     data.name,
+                    date:     data.date,
+                    type:     data.type,
+                    pay_rate: data.pay_rate,
+                    region:   data.region ?? '',
+                    yearly:   data.yearly ?? false,
+                };
+                this.showEditHolidayModal = true;
+            },
+            async submitEdit() {
+                this.errorMsg = '';
+                this.saving = true;
+                const res = await fetch(`/hr/holidays/${this.editHoliday.id}/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                    body: JSON.stringify(this.editHoliday)
+                });
+                this.saving = false;
+                const data = await res.json();
+                if (res.ok) { window.location.reload(); }
+                else { this.errorMsg = data.message ?? 'Something went wrong.'; }
+            },
+            async deleteHoliday(id) {
+                if (!confirm('Delete this holiday?')) return;
+                const res = await fetch(`/hr/holidays/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+                });
+                if (res.ok) { window.location.reload(); }
+            }
+        }">
             <div class="table-toolbar">
                 <div style="font-size:15px; font-weight:800; color:#111827;">{{ $currentYear }} HOLIDAYS</div>
                 <div class="toolbar-right">
                     <div class="search-box">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <input type="text" placeholder="Search holiday…">
+                        <input type="text" placeholder="Search holiday…" x-model="holidaySearch">
                     </div>
-                    <select class="dept-select">
-                        <option>All Types</option>
-                        <option>Regular</option>
-                        <option>Special Non-Working</option>
-                        <option>Local</option>
+                    <select class="dept-select" x-model="typeFilter">
+                        <option value="">All Types</option>
+                        <option value="regular">Regular</option>
+                        <option value="special">Special Non-Working</option>
+                        <option value="local">Local</option>
                     </select>
                     <button class="btn-primary" @click="showAddHolidayModal = true">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -828,59 +766,104 @@
                             <th>Day</th>
                             <th>Type</th>
                             <th>Pay Rate</th>
+                            <th>Yearly</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($holidays ?? [] as $holiday)
-                        <tr>
+                        @php $ht = strtolower($holiday->type ?? 'regular'); @endphp
+                        <tr x-show="visible('{{ addslashes($holiday->name) }}', '{{ $ht }}')">
                             <td style="font-weight:600;">{{ $holiday->name }}</td>
                             <td>{{ \Carbon\Carbon::parse($holiday->date)->format('M j') }}</td>
                             <td>{{ \Carbon\Carbon::parse($holiday->date)->format('D') }}</td>
                             <td>
-                                @php $ht = strtolower($holiday->type ?? 'regular'); @endphp
                                 <span class="type-badge {{ $ht === 'special' ? 'tb-special' : ($ht === 'local' ? 'tb-local' : 'tb-regular') }}">
-                                    {{ ucfirst($holiday->type ?? 'Regular') }}
+                                    {{ $ht === 'special' ? 'Special' : ucfirst($ht) }}
                                 </span>
                             </td>
-                            <td>{{ $holiday->pay_rate ?? '200%' }}</td>
-                            <td><button class="edit-btn">Edit</button></td>
+                            <td>{{ $holiday->pay_rate ?? '—' }}</td>
+                            <td>
+                                <span style="font-size:12px; font-weight:600; color:{{ $holiday->yearly ? '#16a34a' : '#9ca3af' }}">
+                                    {{ $holiday->yearly ? 'Yes' : 'No' }}
+                                </span>
+                            </td>
+                            <td style="display:flex; gap:6px;">
+                                <button class="edit-btn" @click="openEdit({{ $holiday->id }})">Edit</button>
+                                <button class="edit-btn" style="border-color:#fecaca; background:#fef2f2; color:#dc2626;"
+                                    @click="deleteHoliday({{ $holiday->id }})">Delete</button>
+                            </td>
                         </tr>
                         @empty
-                        @foreach([
-                            ["New Year's Day",       'Jan 1',  'Thu', 'Regular', '200%'],
-                            ["Araw ng Kagitingan",   'Apr 9',  'Thu', 'Regular', '200%'],
-                            ["Maundy Thursday",      'Apr 17', 'Thu', 'Regular', '200%'],
-                            ["Good Friday",          'Apr 18', 'Fri', 'Regular', '200%'],
-                            ["Labor Day",            'May 1',  'Thu', 'Regular', '200%'],
-                            ["Independence Day",     'Jun 12', 'Thu', 'Regular', '200%'],
-                            ["National Heroes Day",  'Aug 25', 'Mon', 'Regular', '200%'],
-                            ["Bonifacio Day",        'Nov 30', 'Sun', 'Regular', '200%'],
-                            ["Christmas Day",        'Dec 25', 'Thu', 'Regular', '200%'],
-                            ["Rizal Day",            'Dec 30', 'Tue', 'Regular', '200%'],
-                            ["EDSA People Power",    'Feb 25', 'Tue', 'Special',  '130%'],
-                            ["Black Saturday",       'Apr 19', 'Sat', 'Special',  '130%'],
-                            ["All Saints Day",       'Nov 1',  'Sat', 'Special',  '130%'],
-                            ["Feast of Immaculate",  'Dec 8',  'Mon', 'Special',  '130%'],
-                            ["Linggo ng Wika",       'Aug 19', 'Tue', 'Local',    '130%'],
-                            ["Founding Anniversary", 'Jul 15', 'Tue', 'Local',    '130%'],
-                            ["Charter Day",          'Nov 10', 'Mon', 'Local',    '130%'],
-                        ] as $row)
                         <tr>
-                            <td style="font-weight:600;">{{ $row[0] }}</td>
-                            <td>{{ $row[1] }}</td>
-                            <td>{{ $row[2] }}</td>
-                            <td>
-                                @php $ht = strtolower($row[3]); @endphp
-                                <span class="type-badge {{ $ht === 'special' ? 'tb-special' : ($ht === 'local' ? 'tb-local' : 'tb-regular') }}">{{ $row[3] }}</span>
+                            <td colspan="7" style="text-align:center; padding:40px 16px; color:#9ca3af; font-size:13px;">
+                                No holidays found for {{ $currentYear }}. Add one using the button above.
                             </td>
-                            <td>{{ $row[4] }}</td>
-                            <td><button class="edit-btn">Edit</button></td>
                         </tr>
-                        @endforeach
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            {{-- Edit Holiday Modal --}}
+            <div x-show="showEditHolidayModal" class="modal-overlay" x-cloak @click.self="showEditHolidayModal = false">
+                <div class="modal-box" style="width:520px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+                        <div class="modal-title" style="margin-bottom:0;">Edit Holiday</div>
+                        <button @click="showEditHolidayModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;">
+                            <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <template x-if="errorMsg">
+                        <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
+                    </template>
+
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label">Holiday Name</label>
+                        <input type="text" class="form-input" x-model="editHoliday.name" placeholder="Enter holiday name">
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-input" x-model="editHoliday.date">
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label">Type</label>
+                        <select class="form-input dept-select" style="width:100%;" x-model="editHoliday.type">
+                            <option value="regular">Regular</option>
+                            <option value="special">Special Non-Working</option>
+                            <option value="local">Local</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label">Pay Rate</label>
+                        <select class="form-input dept-select" style="width:100%;" x-model="editHoliday.pay_rate">
+                            <option value="200%">200%</option>
+                            <option value="130%">130%</option>
+                            <option value="100%">100%</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label">Region (for local holidays)</label>
+                        <input type="text" class="form-input" x-model="editHoliday.region" placeholder="e.g. Pangasinan">
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;cursor:pointer;">
+                            <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;" x-model="editHoliday.yearly">
+                            Repeat Yearly
+                        </label>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="btn-cancel" @click="showEditHolidayModal = false">Cancel</button>
+                        <button class="btn-save" @click="submitEdit()" :disabled="saving" x-text="saving ? 'Saving…' : 'Save Changes'"></button>
+                    </div>
+                </div>
             </div>
         </div>
         @endif
@@ -888,7 +871,64 @@
         {{-- ══════════ MODALS ══════════ --}}
 
         {{-- Edit Shift Modal --}}
-        <div x-show="showEditShiftModal" class="modal-overlay" x-cloak @click.self="showEditShiftModal = false">
+        <div x-show="showEditShiftModal" class="modal-overlay" x-cloak @click.self="showEditShiftModal = false"
+             x-data="{
+                 empId: '',
+                 empShiftId: '',
+                 shiftId: '',
+                 workSetup: '',
+                 effectiveDate: '',
+                 endDate: '',
+                 daysOff: ['Sat','Sun'],
+                 currentInfo: null,
+                 saving: false,
+                 errorMsg: '',
+                 async onEmpChange() {
+                     this.currentInfo = null;
+                     this.empShiftId = '';
+                     if (!this.empId) return;
+                     const res = await fetch('{{ route('hr.shift.employees-by-dept') }}?employee_id=' + this.empId, {
+                         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+                     });
+                     const data = await res.json();
+                     if (data.shift) {
+                         this.currentInfo   = data.shift;
+                         this.empShiftId    = data.shift.id;
+                         this.shiftId       = data.shift.shift_id;
+                         this.workSetup     = data.shift.work_setup ?? '';
+                         this.effectiveDate = data.shift.effective_date ?? '';
+                         this.endDate       = data.shift.end_date ?? '';
+                         this.daysOff       = data.shift.days_off ? JSON.parse(data.shift.days_off) : ['Sat','Sun'];
+                     }
+                 },
+                 toggleDay(day) {
+                     if (this.daysOff.includes(day)) this.daysOff = this.daysOff.filter(d => d !== day);
+                     else this.daysOff.push(day);
+                 },
+                 async submit() {
+                     this.errorMsg = '';
+                     if (!this.empShiftId || !this.shiftId || !this.workSetup || !this.effectiveDate) {
+                         this.errorMsg = 'Please fill in all required fields.'; return;
+                     }
+                     this.saving = true;
+                     const res = await fetch('{{ route('hr.shift.update') }}', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                         body: JSON.stringify({
+                             employee_shift_id: this.empShiftId,
+                             shift_id: this.shiftId,
+                             work_setup: this.workSetup,
+                             effective_date: this.effectiveDate,
+                             end_date: this.endDate || null,
+                             days_off: this.daysOff,
+                         })
+                     });
+                     this.saving = false;
+                     const data = await res.json();
+                     if (res.ok) { window.location.reload(); }
+                     else { this.errorMsg = data.message ?? 'Something went wrong.'; }
+                 }
+             }">
             <div class="modal-box" style="width:520px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
                     <div class="modal-title" style="margin-bottom:0;">Edit Shift</div>
@@ -897,84 +937,138 @@
                     </button>
                 </div>
 
+                <template x-if="errorMsg">
+                    <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
+                </template>
+
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Employee</label>
-                    <select class="form-input dept-select" style="width:100%;">
-                        <option value="">Juan  Dela Cruz</option>
+                    <select class="form-input dept-select" style="width:100%;" x-model="empId" @change="onEmpChange()">
+                        <option value="">Choose employee</option>
                         @foreach($employees ?? [] as $emp)
                             <option value="{{ $emp->id }}">{{ trim($emp->fname . ' ' . $emp->lname) }}</option>
                         @endforeach
                     </select>
                 </div>
 
-                {{-- Current Shift Assignment info box --}}
-                <div style="background:#f0f9ff;border-radius:8px;padding:14px 16px;margin-bottom:18px;">
-                    <div style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:8px;">Current Shift Assignment</div>
-                    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;">
-                        <div><div style="font-size:11px;color:#9ca3af;">Shift Type</div><div style="font-size:13px;font-weight:600;color:#111827;">Day</div></div>
-                        <div><div style="font-size:11px;color:#9ca3af;">Work Setup</div><div style="font-size:13px;font-weight:600;color:#111827;">WFH</div></div>
-                        <div><div style="font-size:11px;color:#9ca3af;">Day Off</div><div style="font-size:13px;font-weight:600;color:#111827;">Sat, Sun</div></div>
-                        <div><div style="font-size:11px;color:#9ca3af;">Effective From</div><div style="font-size:13px;font-weight:600;color:#111827;">January 1, 2026</div></div>
-                        <div><div style="font-size:11px;color:#9ca3af;">Effective Until</div><div style="font-size:13px;font-weight:600;color:#111827;">June 1, 2026</div></div>
-                        <div><div style="font-size:11px;color:#9ca3af;">Schedule</div><div style="font-size:13px;font-weight:600;color:#111827;">7:00 AM - 4:00 PM</div></div>
+                <template x-if="currentInfo">
+                    <div style="background:#f0f9ff;border-radius:8px;padding:14px 16px;margin-bottom:18px;">
+                        <div style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:8px;">Current Shift Assignment</div>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+                            <div><div style="font-size:11px;color:#9ca3af;">Shift</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.shift_name ?? '—'"></div></div>
+                            <div><div style="font-size:11px;color:#9ca3af;">Work Setup</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.work_setup ? currentInfo.work_setup.toUpperCase() : '—'"></div></div>
+                            <div><div style="font-size:11px;color:#9ca3af;">Day Off</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.days_off ? JSON.parse(currentInfo.days_off).join(', ') : '—'"></div></div>
+                            <div><div style="font-size:11px;color:#9ca3af;">Effective From</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.effective_date ?? '—'"></div></div>
+                            <div><div style="font-size:11px;color:#9ca3af;">Effective Until</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.end_date ?? 'Ongoing'"></div></div>
+                            <div><div style="font-size:11px;color:#9ca3af;">Schedule</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.schedule ?? '—'"></div></div>
+                        </div>
                     </div>
-                </div>
+                </template>
 
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Change Shift Type</label>
-                    <select class="form-input dept-select" style="width:100%;">
-                        <option>Day Shift</option>
-                        <option>Mid Shift</option>
-                        <option>Night Shift</option>
+                    <select class="form-input dept-select" style="width:100%;" x-model="shiftId">
+                        <option value="">Choose shift type</option>
+                        @foreach($shiftTypes ?? [] as $shift)
+                            <option value="{{ $shift->id }}">
+                                {{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }})
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Change Work Setup</label>
-                    <select class="form-input dept-select" style="width:100%;">
-                        <option>WFH</option>
-                        <option>Office</option>
+                    <select class="form-input dept-select" style="width:100%;" x-model="workSetup">
+                        <option value="">Choose work setup</option>
+                        <option value="wfh">WFH</option>
+                        <option value="office">Office</option>
                     </select>
                 </div>
 
                 <div class="form-row" style="margin-bottom:16px;">
                     <div>
                         <label class="form-label">Effective From</label>
-                        <input type="date" class="form-input" value="2026-01-01">
+                        <input type="date" class="form-input" x-model="effectiveDate">
                     </div>
                     <div>
-                        <label class="form-label">Effective Until</label>
-                        <input type="date" class="form-input" value="2026-06-01">
+                        <label class="form-label">Effective Until (optional)</label>
+                        <input type="date" class="form-input" x-model="endDate">
                     </div>
                 </div>
 
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Day Off</label>
                     <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;">
-                        @foreach(['Mon','Tue','Wed','Thurs','Fri','Sat','Sun'] as $day)
+                        @foreach(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as $d)
                         <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:#374151;cursor:pointer;">
-                            <input type="checkbox" {{ in_array($day,['Sat','Sun']) ? 'checked' : '' }}
-                                style="width:15px;height:15px;accent-color:#3b82f6;">
-                            {{ $day }}
+                            <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;"
+                                :checked="daysOff.includes('{{ $d }}')"
+                                @change="toggleDay('{{ $d }}')">
+                            {{ $d }}
                         </label>
                         @endforeach
                     </div>
                 </div>
 
-                <div style="margin-bottom:16px;">
-                    <label class="form-label">Reason For Change</label>
-                    <input type="text" class="form-input" placeholder="e.g. Medical, Operational Leave">
-                </div>
-
                 <div class="modal-actions">
                     <button class="btn-cancel" @click="showEditShiftModal = false">Cancel</button>
-                    <button class="btn-save">Save</button>
+                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving ? 'Saving…' : 'Save Changes'"></button>
                 </div>
             </div>
         </div>
 
+
         {{-- Assign Shift Modal --}}
-        <div x-show="showAssignShiftModal" class="modal-overlay" x-cloak @click.self="showAssignShiftModal = false">
+        <div x-show="showAssignShiftModal" class="modal-overlay" x-cloak @click.self="showAssignShiftModal = false"
+             x-data="{
+                 deptId: '',
+                 empId: '',
+                 shiftId: '',
+                 workSetup: '',
+                 effectiveDate: '',
+                 endDate: '',
+                 daysOff: ['Sat','Sun'],
+                 empList: [],
+                 saving: false,
+                 errorMsg: '',
+                 async onDeptChange() {
+                     this.empId = '';
+                     this.empList = [];
+                     if (!this.deptId) return;
+                     const res = await fetch('{{ route('hr.shift.employees-by-dept') }}?department_id=' + this.deptId, {
+                         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+                     });
+                     this.empList = await res.json();
+                 },
+                 toggleDay(day) {
+                     if (this.daysOff.includes(day)) this.daysOff = this.daysOff.filter(d => d !== day);
+                     else this.daysOff.push(day);
+                 },
+                 async submit() {
+                     this.errorMsg = '';
+                     if (!this.empId || !this.shiftId || !this.workSetup || !this.effectiveDate) {
+                         this.errorMsg = 'Please fill in all required fields.'; return;
+                     }
+                     this.saving = true;
+                     const res = await fetch('{{ route('hr.shift.assign') }}', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                         body: JSON.stringify({
+                             employee_id: this.empId,
+                             shift_id: this.shiftId,
+                             work_setup: this.workSetup,
+                             effective_date: this.effectiveDate,
+                             end_date: this.endDate || null,
+                             days_off: this.daysOff,
+                         })
+                     });
+                     this.saving = false;
+                     const data = await res.json();
+                     if (res.ok) { window.location.reload(); }
+                     else { this.errorMsg = data.message ?? 'Something went wrong.'; }
+                 }
+             }">
             <div class="modal-box" style="width:520px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
                     <div class="modal-title" style="margin-bottom:0;">Assign Shift</div>
@@ -983,9 +1077,13 @@
                     </button>
                 </div>
 
+                <template x-if="errorMsg">
+                    <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
+                </template>
+
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Department</label>
-                    <select class="form-input dept-select" style="width:100%;">
+                    <select class="form-input dept-select" style="width:100%;" x-model="deptId" @change="onDeptChange()">
                         <option value="">Choose department</option>
                         @foreach($departments ?? [] as $dept)
                             <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -995,51 +1093,58 @@
 
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Employee</label>
-                    <select class="form-input dept-select" style="width:100%;">
-                        <option value="">Choose employee</option>
-                        @foreach($employees ?? [] as $emp)
-                            <option value="{{ $emp->id }}">{{ trim($emp->fname . ' ' . $emp->lname) }}</option>
+                    <select class="form-input dept-select" style="width:100%;" x-model="empId"
+                        :disabled="!deptId || empList.length === 0"
+                        :style="!deptId ? 'opacity:0.5; cursor:not-allowed;' : ''">
+                        <option value="">Choose a department first</option>
+                        <template x-for="emp in empList" :key="emp.id">
+                            <option :value="emp.id" x-text="emp.fname + ' ' + emp.lname"></option>
+                        </template>
+                    </select>
+                    <p x-show="!deptId" style="font-size:11.5px;color:#9ca3af;margin-top:4px;">Select a department to load employees.</p>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <label class="form-label">Shift Type</label>
+                    <select class="form-input dept-select" style="width:100%;" x-model="shiftId">
+                        <option value="">Choose shift type</option>
+                        @foreach($shiftTypes ?? [] as $shift)
+                            <option value="{{ $shift->id }}">
+                                {{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }})
+                            </option>
                         @endforeach
                     </select>
                 </div>
 
                 <div style="margin-bottom:16px;">
-                    <label class="form-label">Shift Type</label>
-                    <select class="form-input dept-select" style="width:100%;">
-                        <option value="">Choose shift type</option>
-                        <option>Day Shift</option>
-                        <option>Mid Shift</option>
-                        <option>Night Shift</option>
-                    </select>
-                </div>
-
-                <div style="margin-bottom:16px;">
                     <label class="form-label">Work Setup</label>
-                    <select class="form-input dept-select" style="width:100%;">
+                    <select class="form-input dept-select" style="width:100%;" x-model="workSetup">
                         <option value="">Choose work setup</option>
-                        <option>WFH</option>
-                        <option>Office</option>
+                        <option value="wfh">WFH</option>
+                        <option value="office">Office</option>
                     </select>
                 </div>
 
                 <div class="form-row" style="margin-bottom:16px;">
                     <div>
                         <label class="form-label">Effective From</label>
-                        <input type="date" class="form-input" placeholder="MM/DD/YYYY">
+                        <input type="date" class="form-input" x-model="effectiveDate">
                     </div>
                     <div>
-                        <label class="form-label">Effective Until</label>
-                        <input type="date" class="form-input" placeholder="MM/DD/YYYY">
+                        <label class="form-label">Effective Until (optional)</label>
+                        <input type="date" class="form-input" x-model="endDate">
                     </div>
                 </div>
 
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Day Off</label>
                     <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;">
-                        @foreach(['Mon','Tue','Wed','Thurs','Fri','Sat','Sun'] as $day)
+                        @foreach(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as $d)
                         <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:#374151;cursor:pointer;">
-                            <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;">
-                            {{ $day }}
+                            <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;"
+                                :checked="daysOff.includes('{{ $d }}')"
+                                @change="toggleDay('{{ $d }}')">
+                            {{ $d }}
                         </label>
                         @endforeach
                     </div>
@@ -1047,13 +1152,41 @@
 
                 <div class="modal-actions">
                     <button class="btn-cancel" @click="showAssignShiftModal = false">Cancel</button>
-                    <button class="btn-save">Add Shift</button>
+                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving ? 'Saving…' : 'Add Shift'"></button>
                 </div>
             </div>
         </div>
 
         {{-- Add Shift Type Modal --}}
-        <div x-show="showAddShiftTypeModal" class="modal-overlay" x-cloak @click.self="showAddShiftTypeModal = false">
+        <div x-show="showAddShiftTypeModal" class="modal-overlay" x-cloak @click.self="showAddShiftTypeModal = false"
+             x-data="{
+                 name: '', code: '', start_time: '07:00', end_time: '16:00',
+                 break_start: '12:00', break_end: '13:00',
+                 saving: false, errorMsg: '',
+                 async submit() {
+                     this.errorMsg = '';
+                     if (!this.name || !this.code || !this.start_time || !this.end_time) {
+                         this.errorMsg = 'Please fill in all required fields.'; return;
+                     }
+                     this.saving = true;
+                     const res = await fetch('{{ route('hr.shift.type.store') }}', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                         body: JSON.stringify({
+                             name:        this.name,
+                             code:        this.code,
+                             start_time:  this.start_time,
+                             end_time:    this.end_time,
+                             break_start: this.break_start || null,
+                             break_end:   this.break_end   || null,
+                         })
+                     });
+                     this.saving = false;
+                     const data = await res.json();
+                     if (res.ok) { window.location.reload(); }
+                     else { this.errorMsg = data.message ?? 'Something went wrong.'; }
+                 }
+             }">
             <div class="modal-box" style="width:520px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
                     <div class="modal-title" style="margin-bottom:0;">Add Shift Type</div>
@@ -1062,51 +1195,80 @@
                     </button>
                 </div>
 
+                <template x-if="errorMsg">
+                    <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
+                </template>
+
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Shift Name</label>
-                    <input type="text" class="form-input" placeholder="Enter shift name e.g. Early Morning Shift">
+                    <input type="text" class="form-input" x-model="name" placeholder="e.g. Early Morning Shift">
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <label class="form-label">Shift Code</label>
+                    <input type="text" class="form-input" x-model="code" placeholder="e.g. EMS-001">
                 </div>
 
                 <div class="form-row" style="margin-bottom:16px;">
                     <div>
                         <label class="form-label">Time In</label>
-                        <input type="time" class="form-input" value="06:00">
+                        <input type="time" class="form-input" x-model="start_time">
                     </div>
                     <div>
                         <label class="form-label">Time Out</label>
-                        <input type="time" class="form-input" value="15:00">
+                        <input type="time" class="form-input" x-model="end_time">
                     </div>
                 </div>
 
                 <div class="form-row" style="margin-bottom:16px;">
                     <div>
                         <label class="form-label">Break Start</label>
-                        <input type="time" class="form-input" value="10:00">
+                        <input type="time" class="form-input" x-model="break_start">
                     </div>
                     <div>
                         <label class="form-label">Break End</label>
-                        <input type="time" class="form-input" value="11:00">
+                        <input type="time" class="form-input" x-model="break_end">
                     </div>
                 </div>
 
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Night Differential</label>
-                    <select class="form-input dept-select" style="width:100%;">
-                        <option value="">None</option>
-                        <option>10%</option>
-                        <option>20%</option>
-                    </select>
+                    <input type="text" class="form-input" value="None" disabled
+                        style="background:#f9fafb;color:#9ca3af;cursor:not-allowed;">
                 </div>
 
                 <div class="modal-actions">
                     <button class="btn-cancel" @click="showAddShiftTypeModal = false">Cancel</button>
-                    <button class="btn-save">Add Shift Type</button>
+                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving ? 'Saving…' : 'Add Shift Type'"></button>
                 </div>
             </div>
         </div>
 
         {{-- Add Holiday Modal --}}
-        <div x-show="showAddHolidayModal" class="modal-overlay" x-cloak @click.self="showAddHolidayModal = false">
+        <div x-show="showAddHolidayModal" class="modal-overlay" x-cloak @click.self="showAddHolidayModal = false"
+             x-data="{
+                 name: '', date: '', type: '', pay_rate: '', region: '', yearly: false,
+                 saving: false, errorMsg: '',
+                 async submit() {
+                     this.errorMsg = '';
+                     if (!this.name || !this.date || !this.type || !this.pay_rate) {
+                         this.errorMsg = 'Please fill in all required fields.'; return;
+                     }
+                     this.saving = true;
+                     const res = await fetch('{{ route('hr.holidays.store') }}', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                         body: JSON.stringify({
+                             name: this.name, date: this.date, type: this.type,
+                             pay_rate: this.pay_rate, region: this.region, yearly: this.yearly
+                         })
+                     });
+                     this.saving = false;
+                     const data = await res.json();
+                     if (res.ok) { window.location.reload(); }
+                     else { this.errorMsg = data.message ?? 'Something went wrong.'; }
+                 }
+             }">
             <div class="modal-box" style="width:520px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
                     <div class="modal-title" style="margin-bottom:0;">Add Holiday</div>
@@ -1115,47 +1277,55 @@
                     </button>
                 </div>
 
+                <template x-if="errorMsg">
+                    <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
+                </template>
+
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Holiday Name</label>
-                    <input type="text" class="form-input" placeholder="Enter holiday name">
+                    <input type="text" class="form-input" x-model="name" placeholder="Enter holiday name">
                 </div>
 
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Date</label>
-                    <input type="date" class="form-input" placeholder="MM/DD/YYYY">
+                    <input type="date" class="form-input" x-model="date">
                 </div>
 
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Type</label>
-                    <select class="form-input dept-select" style="width:100%;">
+                    <select class="form-input dept-select" style="width:100%;" x-model="type">
                         <option value="">Choose type</option>
-                        <option>Regular</option>
-                        <option>Special Non-Working</option>
-                        <option>Local</option>
+                        <option value="regular">Regular</option>
+                        <option value="special">Special Non-Working</option>
+                        <option value="local">Local</option>
                     </select>
                 </div>
 
                 <div style="margin-bottom:16px;">
-                    <label class="form-label">Choose Pay Rate</label>
-                    <select class="form-input dept-select" style="width:100%;">
+                    <label class="form-label">Pay Rate</label>
+                    <select class="form-input dept-select" style="width:100%;" x-model="pay_rate">
                         <option value="">Choose rate</option>
-                        <option>200%</option>
-                        <option>130%</option>
-                        <option>100%</option>
+                        <option value="200%">200%</option>
+                        <option value="130%">130%</option>
+                        <option value="100%">100%</option>
                     </select>
                 </div>
 
                 <div style="margin-bottom:16px;">
-                    <label class="form-label">Repeat</label>
-                    <label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:#374151;cursor:pointer;">
-                        <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;">
-                        Yearly
+                    <label class="form-label">Region (for local holidays)</label>
+                    <input type="text" class="form-input" x-model="region" placeholder="e.g. Pangasinan">
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;cursor:pointer;">
+                        <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;" x-model="yearly">
+                        Repeat Yearly
                     </label>
                 </div>
 
                 <div class="modal-actions">
                     <button class="btn-cancel" @click="showAddHolidayModal = false">Cancel</button>
-                    <button class="btn-save">Add Holiday</button>
+                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving ? 'Saving…' : 'Add Holiday'"></button>
                 </div>
             </div>
         </div>

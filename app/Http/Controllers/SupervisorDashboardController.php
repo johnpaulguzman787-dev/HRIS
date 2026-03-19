@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use App\Models\Employee;
 use App\Models\AttendanceLog;
 use App\Models\Department;
+use App\Models\EmployeeShift;
 
 class SupervisorDashboardController extends Controller
 {
@@ -35,6 +36,16 @@ class SupervisorDashboardController extends Controller
             ->with('shift')
             ->first() : null;
 
+        $employeeShift = $authEmployee ? \App\Models\EmployeeShift::with('shift')
+            ->where('employee_id', $authEmployee->id)
+            ->where('is_active', true)
+            ->whereDate('effective_date', '<=', Carbon::today())
+            ->where(function ($q) {
+                $q->whereNull('end_date')->orWhereDate('end_date', '>=', Carbon::today());
+            })
+            ->latest('effective_date')
+            ->first() : null;
+
         $availableShifts = \App\Models\Shift::where('is_active', true)->get();
 
         $departments = \App\Models\Department::with(['employees.attendanceLogs' => function ($q) use ($today) {
@@ -60,6 +71,7 @@ class SupervisorDashboardController extends Controller
             'dashName'        => $dashName,
             'dashRole'        => $dashRole,
             'todayLog'        => $todayLog,
+            'employeeShift'   => $employeeShift,
             'availableShifts' => $availableShifts,
             'pendingRequests' => 0,
             'currentDate'     => Carbon::today()->format('l, F j, Y'),

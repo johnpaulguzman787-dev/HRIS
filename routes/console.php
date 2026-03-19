@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('attendance:auto-clockout')->dailyAt('00:01');
+Schedule::command('attendance:mark-holidays')->dailyAt('23:55');

@@ -146,6 +146,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/hr/attendance/break', [HRAttendanceController::class, 'breakStart'])->name('hr.attendance.break');
     Route::get('/hr/attendance/employee', [HRAttendanceController::class, 'employeeAttendance'])->name('hr.attendance.employee');
     Route::get('/hr/shift/scheduling', [HRAttendanceController::class, 'shiftScheduling'])->name('hr.shift.scheduling');
+    Route::post('/hr/shift/assign', [HRAttendanceController::class, 'assignShift'])->name('hr.shift.assign');
+    Route::post('/hr/shift/update', [HRAttendanceController::class, 'updateShift'])->name('hr.shift.update');
+    Route::get('/hr/shift/employees-by-dept', [HRAttendanceController::class, 'employeesByDept'])->name('hr.shift.employees-by-dept');
+    Route::get('/hr/shift/type/{id}', [HRAttendanceController::class, 'getShiftType'])->name('hr.shift.type.get');
+    Route::post('/hr/shift/type/{id}/update', [HRAttendanceController::class, 'updateShiftType'])->name('hr.shift.type.update');
+    Route::post('/hr/shift/type/store', [HRAttendanceController::class, 'storeShiftType'])->name('hr.shift.type.store');
+    Route::post('/hr/holidays', [HRAttendanceController::class, 'storeHoliday'])->name('hr.holidays.store');
+    Route::post('/hr/holidays/{id}/update', [HRAttendanceController::class, 'updateHoliday'])->name('hr.holidays.update');
+    Route::delete('/hr/holidays/{id}', [HRAttendanceController::class, 'destroyHoliday'])->name('hr.holidays.destroy');
+    Route::get('/hr/holidays/{id}', [HRAttendanceController::class, 'getHoliday'])->name('hr.holidays.get');
     Route::get('/hr/leave/management', [HRAttendanceController::class, 'leaveManagement'])->name('hr.leave.management');
     // ──────────────────────────────────────────────────────────────────────
 
@@ -158,6 +168,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/supervisor/attendance/break', [SupervisorAttendanceController::class, 'breakStart'])->name('supervisor.attendance.break');
     Route::get('/supervisor/attendance/employee', [SupervisorAttendanceController::class, 'employeeAttendance'])->name('supervisor.attendance.employee');
     Route::get('/supervisor/shift/scheduling', [SupervisorAttendanceController::class, 'shiftScheduling'])->name('supervisor.shift.scheduling');
+    Route::post('/supervisor/shift/assign', [SupervisorAttendanceController::class, 'assignShift'])->name('supervisor.shift.assign');
+    Route::post('/supervisor/shift/update', [SupervisorAttendanceController::class, 'updateShift'])->name('supervisor.shift.update');
+    Route::get('/supervisor/shift/employees-by-dept', [SupervisorAttendanceController::class, 'employeesByDept'])->name('supervisor.shift.employees-by-dept');
     Route::get('/supervisor/leave/management', [SupervisorAttendanceController::class, 'leaveManagement'])->name('supervisor.leave.management');
     // ──────────────────────────────────────────────────────────────────────
 

@@ -134,6 +134,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/employee/attendance/clock-in', [EmployeeAttendanceController::class, 'clockIn'])->name('employee.attendance.clock-in');
     Route::post('/employee/attendance/clock-out', [EmployeeAttendanceController::class, 'clockOut'])->name('employee.attendance.clock-out');
     Route::post('/employee/attendance/break', [EmployeeAttendanceController::class, 'breakStart'])->name('employee.attendance.break');
+    Route::get('/employee/leave/management', [EmployeeAttendanceController::class, 'leaveManagement'])->name('employee.leave.management');
     // ──────────────────────────────────────────────────────────────────────
 
     // ── HR ATTENDANCE ROUTES ───────────────────────────────────────────────
@@ -155,6 +156,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/hr/holidays/{id}/update', [HRAttendanceController::class, 'updateHoliday'])->name('hr.holidays.update');
     Route::delete('/hr/holidays/{id}', [HRAttendanceController::class, 'destroyHoliday'])->name('hr.holidays.destroy');
     Route::get('/hr/holidays/{id}', [HRAttendanceController::class, 'getHoliday'])->name('hr.holidays.get');
+    Route::get('/hr/leave/management', [HRAttendanceController::class, 'leaveManagement'])->name('hr.leave.management');
     // ──────────────────────────────────────────────────────────────────────
 
     // ── SUPERVISOR ATTENDANCE ROUTES ───────────────────────────────────────
@@ -166,6 +168,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/supervisor/attendance/break', [SupervisorAttendanceController::class, 'breakStart'])->name('supervisor.attendance.break');
     Route::get('/supervisor/attendance/employee', [SupervisorAttendanceController::class, 'employeeAttendance'])->name('supervisor.attendance.employee');
     Route::get('/supervisor/shift/scheduling', [SupervisorAttendanceController::class, 'shiftScheduling'])->name('supervisor.shift.scheduling');
+    Route::get('/supervisor/leave/management', [SupervisorAttendanceController::class, 'leaveManagement'])->name('supervisor.leave.management');
     Route::post('/supervisor/shift/assign', [SupervisorAttendanceController::class, 'assignShift'])->name('supervisor.shift.assign');
     Route::post('/supervisor/shift/update', [SupervisorAttendanceController::class, 'updateShift'])->name('supervisor.shift.update');
     Route::get('/supervisor/shift/employees-by-dept', [SupervisorAttendanceController::class, 'employeesByDept'])->name('supervisor.shift.employees-by-dept');
@@ -179,6 +182,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/attendance/clock-out', [AdminAttendanceController::class, 'clockOut'])->name('admin.attendance.clock-out');
     Route::post('/admin/attendance/break', [AdminAttendanceController::class, 'breakStart'])->name('admin.attendance.break');
     Route::get('/admin/attendance/employee', [AdminAttendanceController::class, 'employeeAttendance'])->name('admin.attendance.employee');
+    Route::get('/admin/leave/management', [AdminAttendanceController::class, 'leaveManagement'])->name('admin.leave.management');
     // ──────────────────────────────────────────────────────────────────────
 
     // Other Dashboards

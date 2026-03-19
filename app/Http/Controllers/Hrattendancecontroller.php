@@ -793,4 +793,31 @@ class HRAttendanceController extends Controller
 
 
 
+
+    // ══════════════════════════════════════════════════════════════════════
+    // LEAVE MANAGEMENT
+    // ══════════════════════════════════════════════════════════════════════
+
+    public function leaveManagement(Request $request)
+    {
+        $activeTab   = $request->get('tab', 'my-leave');
+        $departments = Department::orderBy('name')->get();
+        $employees   = Employee::with('department')->get();
+
+        $myLeaveStats    = [];
+        $myLeaveRequests = collect();
+        $creditStats     = [];
+        $leaveHistory    = collect();
+        $calendarEvents  = collect();
+        $currentYear     = (int) $request->get('year', now()->year);
+
+        $leaveTypes = collect();
+
+        return view('hr.hr_leave-management', compact(
+            'activeTab', 'departments', 'employees',
+            'myLeaveStats', 'myLeaveRequests',
+            'creditStats', 'leaveHistory',
+            'calendarEvents', 'leaveTypes', 'currentYear'
+        ));
+    }
 }

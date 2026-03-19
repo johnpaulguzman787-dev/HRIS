@@ -525,114 +525,36 @@ class SupervisorAttendanceController extends Controller
 
         return view('supervisor.supervisor_shift_scheduling', compact(
             'activeTab', 'departments', 'weekStart', 'weekEnd',
-            'scheduleRecords', 'employees', 'shiftTypes'
+            'scheduleRecords', 'employees', 'shiftTypes',
+            'currentYear', 'holidays',
+            'regularHolidays', 'specialHolidays', 'localHolidays', 'localRegion'
         ));
     }
 
     // ══════════════════════════════════════════════════════════════════════
-    // SHIFT ASSIGNMENT
+    // LEAVE MANAGEMENT
     // ══════════════════════════════════════════════════════════════════════
 
-    public function employeesByDept(Request $request)
+    public function leaveManagement(Request $request)
     {
-        $authEmployee = Employee::where('user_id', Auth::id())->first();
-        $authDeptId   = $authEmployee?->department_id;
+        $activeTab   = $request->get('tab', 'my-leave');
+        $departments = Department::orderBy('name')->get();
+        $employees   = Employee::with('department')->get();
 
-        if ($request->filled('employee_id')) {
-            $empShift = EmployeeShift::with('shift')
-                ->where('employee_id', $request->employee_id)
-                ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId))
-                ->where('is_active', true)
-                ->latest('effective_date')
-                ->first();
+        $myLeaveStats    = [];
+        $myLeaveRequests = collect();
+        $creditStats     = [];
+        $leaveHistory    = collect();
+        $calendarEvents  = collect();
+        $currentYear     = (int) $request->get('year', now()->year);
 
-            return response()->json([
-                'shift' => $empShift ? [
-                    'id'             => $empShift->id,
-                    'shift_id'       => $empShift->shift_id,
-                    'shift_name'     => $empShift->shift?->name,
-                    'schedule'       => $empShift->shift
-                        ? Carbon::parse($empShift->shift->start_time)->format('g:i A') . ' – ' . Carbon::parse($empShift->shift->end_time)->format('g:i A')
-                        : null,
-                    'work_setup'     => $empShift->work_setup,
-                    'effective_date' => $empShift->effective_date,
-                    'end_date'       => $empShift->end_date,
-                    'days_off'       => $empShift->days_off,
-                ] : null
-            ]);
-        }
+        $leaveTypes = collect();
 
-        $employees = Employee::where('department_id', $authDeptId)
-            ->where('employment_status', 'Active')
-            ->get(['id', 'fname', 'lname']);
-
-        return response()->json($employees);
-    }
-
-    public function assignShift(Request $request)
-    {
-        $authEmployee = Employee::where('user_id', Auth::id())->first();
-        $authDeptId   = $authEmployee?->department_id;
-
-        $request->validate([
-            'employee_id'    => 'required|exists:employees,id',
-            'shift_id'       => 'required|exists:shifts,id',
-            'work_setup'     => 'required|in:office,wfh',
-            'effective_date' => 'required|date',
-            'end_date'       => 'nullable|date|after_or_equal:effective_date',
-            'days_off'       => 'nullable|array',
-        ]);
-
-        // Ensure employee belongs to supervisor's department
-        $targetEmployee = Employee::where('id', $request->employee_id)
-            ->where('department_id', $authDeptId)
-            ->firstOrFail();
-
-        EmployeeShift::where('employee_id', $targetEmployee->id)
-            ->where('is_active', true)
-            ->update([
-                'is_active' => false,
-                'end_date'  => Carbon::parse($request->effective_date)->subDay()->toDateString(),
-            ]);
-
-        EmployeeShift::create([
-            'employee_id'    => $targetEmployee->id,
-            'shift_id'       => $request->shift_id,
-            'work_setup'     => $request->work_setup,
-            'effective_date' => $request->effective_date,
-            'end_date'       => $request->end_date ?? null,
-            'days_off'       => json_encode($request->days_off ?? ['Sat', 'Sun']),
-            'is_active'      => true,
-        ]);
-
-        return response()->json(['message' => 'Shift assigned successfully.']);
-    }
-
-    public function updateShift(Request $request)
-    {
-        $authEmployee = Employee::where('user_id', Auth::id())->first();
-        $authDeptId   = $authEmployee?->department_id;
-
-        $request->validate([
-            'employee_shift_id' => 'required|exists:employee_shifts,id',
-            'shift_id'          => 'required|exists:shifts,id',
-            'work_setup'        => 'required|in:office,wfh',
-            'effective_date'    => 'required|date',
-            'end_date'          => 'nullable|date|after_or_equal:effective_date',
-            'days_off'          => 'nullable|array',
-        ]);
-
-        $empShift = EmployeeShift::whereHas('employee', fn($q) => $q->where('department_id', $authDeptId))
-            ->findOrFail($request->employee_shift_id);
-
-        $empShift->update([
-            'shift_id'       => $request->shift_id,
-            'work_setup'     => $request->work_setup,
-            'effective_date' => $request->effective_date,
-            'end_date'       => $request->end_date ?? null,
-            'days_off'       => json_encode($request->days_off ?? ['Sat', 'Sun']),
-        ]);
-
-        return response()->json(['message' => 'Shift updated successfully.']);
+        return view('supervisor.supervisor_leave-management', compact(
+            'activeTab', 'departments', 'employees',
+            'myLeaveStats', 'myLeaveRequests',
+            'creditStats', 'leaveHistory',
+            'calendarEvents', 'leaveTypes', 'currentYear'
+        ));
     }
 }

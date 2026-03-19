@@ -276,4 +276,30 @@ class EmployeeAttendanceController extends Controller
 
         return response()->json($log);
     }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // LEAVE MANAGEMENT — added below, nothing above was changed
+    // ══════════════════════════════════════════════════════════════════════
+
+    public function leaveManagement(Request $request)
+    {
+        $activeTab   = $request->get('tab', 'my-leave');
+        $departments = collect();
+        $employees   = collect();
+
+        $myLeaveStats    = [];
+        $myLeaveRequests = collect();
+        $creditStats     = [];
+        $leaveHistory    = collect();
+        $calendarEvents  = collect();
+        $currentYear     = (int) $request->get('year', now()->year);
+        $leaveTypes      = collect();
+
+        return view('employee.employee_leave-management', compact(
+            'activeTab', 'departments', 'employees',
+            'myLeaveStats', 'myLeaveRequests',
+            'creditStats', 'leaveHistory',
+            'calendarEvents', 'leaveTypes', 'currentYear'
+        ));
+    }
 }

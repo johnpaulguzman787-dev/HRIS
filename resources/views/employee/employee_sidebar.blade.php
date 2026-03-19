@@ -11,7 +11,7 @@
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 
     // Auto-open submenus based on current route
-    $attendanceRoutes = ['employee.attendance.reports', 'employee.attendance.shift', 'employee.attendance.leave'];
+    $attendanceRoutes = ['employee.attendance.reports', 'employee.attendance.shift', 'employee.attendance.leave', 'employee.leave.management'];
     $payrollRoutes    = ['employee.payroll', 'employee.payslips', 'employee.contributions'];
     $requestRoutes    = ['employee.requests.pending', 'employee.requests.approved'];
 @endphp
@@ -133,7 +133,6 @@
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
 
-                {{-- ✅ ATTENDANCE REPORTS — now links to the real route --}}
                 <a href="{{ route('employee.attendance.reports') }}"
                    class="submenu-item flex items-center px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'employee.attendance.reports'
@@ -147,7 +146,13 @@
                 </a>
 
                 <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Shift Scheduling</a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Leave Management</a>
+
+                {{-- ✅ UPDATED: Leave Management — may actual route na --}}
+                <a href="{{ route('employee.leave.management') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'employee.leave.management' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                    Leave Management
+                </a>
             </div>
         </div>
 

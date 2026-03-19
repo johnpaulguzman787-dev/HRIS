@@ -10,7 +10,7 @@
         : ($sidebarUser?->email ?? 'User');
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 
-    $attendanceRoutes = ['supervisor.attendance.reports', 'supervisor.attendance.employee', 'supervisor.attendance.shift', 'supervisor.attendance.leave', 'supervisor.shift.scheduling'];
+    $attendanceRoutes = ['supervisor.attendance.reports', 'supervisor.attendance.employee', 'supervisor.attendance.shift', 'supervisor.attendance.leave', 'supervisor.shift.scheduling', 'supervisor.leave.management'];
     $employeeRoutes   = ['supervisor.employees.directory'];
     $payrollRoutes    = ['supervisor.payroll', 'supervisor.payslips', 'supervisor.contributions'];
     $requestRoutes    = ['supervisor.requests.pending', 'supervisor.requests.approved'];
@@ -157,7 +157,7 @@
                     Shift Scheduling
                 </a>
 
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Leave Management</a>
+                <a href="{{ route('supervisor.leave.management') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'supervisor.leave.management' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Leave Management</a>
             </div>
         </div>
 

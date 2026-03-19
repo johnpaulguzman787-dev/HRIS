@@ -168,10 +168,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/supervisor/attendance/break', [SupervisorAttendanceController::class, 'breakStart'])->name('supervisor.attendance.break');
     Route::get('/supervisor/attendance/employee', [SupervisorAttendanceController::class, 'employeeAttendance'])->name('supervisor.attendance.employee');
     Route::get('/supervisor/shift/scheduling', [SupervisorAttendanceController::class, 'shiftScheduling'])->name('supervisor.shift.scheduling');
+    Route::get('/supervisor/leave/management', [SupervisorAttendanceController::class, 'leaveManagement'])->name('supervisor.leave.management');
     Route::post('/supervisor/shift/assign', [SupervisorAttendanceController::class, 'assignShift'])->name('supervisor.shift.assign');
     Route::post('/supervisor/shift/update', [SupervisorAttendanceController::class, 'updateShift'])->name('supervisor.shift.update');
     Route::get('/supervisor/shift/employees-by-dept', [SupervisorAttendanceController::class, 'employeesByDept'])->name('supervisor.shift.employees-by-dept');
-    Route::get('/supervisor/leave/management', [SupervisorAttendanceController::class, 'leaveManagement'])->name('supervisor.leave.management');
     // ──────────────────────────────────────────────────────────────────────
 
     // ── ADMIN ATTENDANCE ROUTES ────────────────────────────────────────────

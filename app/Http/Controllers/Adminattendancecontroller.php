@@ -12,6 +12,8 @@ use App\Models\Department;
 use App\Models\LeaveType;
 use App\Models\LeaveCredit;
 use App\Models\LeaveRequest;
+use App\Models\OvertimeRequest;
+use App\Models\ShiftChangeRequest;
 
 class AdminAttendanceController extends Controller
 {
@@ -74,6 +76,10 @@ class AdminAttendanceController extends Controller
     $existing = AttendanceLog::where('employee_id', $employee->id)
         ->whereDate('attendance_date', $today)
         ->first();
+
+    if ($existing && $existing->status === 'on_leave') {
+        return response()->json(['message' => 'You are on approved leave today.'], 409);
+    }
 
     if ($existing && $existing->clock_in && $existing->break_start && !$existing->break_end && !$existing->clock_out) {
         $breakMinutes = (int) Carbon::parse($existing->break_start)->diffInMinutes($now);
@@ -631,7 +637,7 @@ public function fileLeave(Request $request)
     $totalDays = 0;
     $cursor    = $start->copy();
     while ($cursor->lte($end)) {
-        if (!$cursor->isWeekend()) $totalDays++;
+        $totalDays++;
         $cursor->addDay();
     }
 
@@ -720,4 +726,144 @@ public function getLeaveRequest($id)
         'filed_on'         => $leave->created_at->format('m/d/Y'),
     ]);
 }
+
+// ══════════════════════════════════════════════════════════════════════
+    // REQUESTS & APPROVAL — same as employee, view + cancel only
+    // ══════════════════════════════════════════════════════════════════════
+
+    public function pendingRequests(Request $request)
+    {
+        $filterType = $request->get('type', 'all');
+
+        $leaveQuery = LeaveRequest::with(['leaveType', 'employee.department'])
+            ->whereIn('status', ['pending', 'supervisor_approved']);
+
+        $otQuery = OvertimeRequest::with(['employee.department'])
+            ->whereIn('status', ['pending', 'supervisor_approved']);
+
+        $shiftQuery = ShiftChangeRequest::with(['currentShift', 'requestedShift', 'employee.department'])
+            ->whereIn('status', ['pending', 'supervisor_approved']);
+
+        $leaveCount    = $leaveQuery->count();
+        $overtimeCount = $otQuery->count();
+        $shiftCount    = $shiftQuery->count();
+        $awaitingCount = $leaveCount + $overtimeCount + $shiftCount;
+
+        $allRequests = collect();
+
+        if ($filterType === 'all' || $filterType === 'leave') {
+            foreach ($leaveQuery->get() as $r) {
+                $allRequests->push((object)[
+                    'type'          => 'leave',
+                    'id'            => $r->id,
+                    'ref_no'        => $r->ref_no,
+                    'status'        => $r->status,
+                    'employee'      => $r->employee,
+                    'leaveType'     => $r->leaveType,
+                    'start_date'    => $r->start_date,
+                    'end_date'      => $r->end_date,
+                    'total_days'    => $r->total_days,
+                    'reason'        => $r->reason,
+                    'document_path' => $r->document_path,
+                    'created_at'    => $r->created_at,
+                    'credit'        => LeaveCredit::where('employee_id', $r->employee_id)
+                                        ->where('leave_type_id', $r->leave_type_id)
+                                        ->where('year', Carbon::parse($r->start_date)->year)
+                                        ->first(),
+                ]);
+            }
+        }
+
+        if ($filterType === 'all' || $filterType === 'overtime') {
+            foreach ($otQuery->get() as $r) {
+                $allRequests->push((object)[
+                    'type'            => 'overtime',
+                    'id'              => $r->id,
+                    'ref_no'          => $r->ref_no,
+                    'status'          => $r->status,
+                    'employee'        => $r->employee,
+                    'ot_date'         => $r->ot_date,
+                    'ot_start_time'   => $r->ot_start_time,
+                    'ot_end_time'     => $r->ot_end_time,
+                    'requested_hours' => $r->requested_hours,
+                    'reason'          => $r->reason,
+                    'document_path'   => $r->document_path,
+                    'created_at'      => $r->created_at,
+                ]);
+            }
+        }
+
+        if ($filterType === 'all' || $filterType === 'shift') {
+            foreach ($shiftQuery->get() as $r) {
+                $allRequests->push((object)[
+                    'type'            => 'shift',
+                    'id'              => $r->id,
+                    'ref_no'          => $r->ref_no,
+                    'status'          => $r->status,
+                    'employee'        => $r->employee,
+                    'current_shift'   => $r->currentShift,
+                    'requested_shift' => $r->requestedShift,
+                    'effective_from'  => $r->effective_from,
+                    'effective_until' => $r->effective_until,
+                    'reason'          => $r->reason,
+                    'document_path'   => $r->document_path,
+                    'created_at'      => $r->created_at,
+                ]);
+            }
+        }
+
+        $requests    = $allRequests->sortByDesc('created_at')->values();
+        $leaveTypes  = LeaveType::where('is_active', true)->orderBy('name')->get();
+        $shiftTypes  = \App\Models\Shift::where('is_active', true)->orderBy('name')->get();
+        $departments = Department::orderBy('name')->get();
+
+        return view('admin.admin_pending-requests', compact(
+            'departments', 'leaveTypes', 'shiftTypes',
+            'awaitingCount', 'leaveCount', 'shiftCount', 'overtimeCount',
+            'requests', 'filterType'
+        ));
+    }
+
+    public function approvedRequests(Request $request)
+    {
+        $departments = Department::orderBy('name')->get();
+        $requests    = collect();
+
+        return view('admin.admin_approved-requests', compact('departments', 'requests'));
+    }
+
+    public function cancelRequest(Request $request, $id)
+    {
+        $leave = LeaveRequest::find($id);
+        if ($leave) {
+            if (!in_array($leave->status, ['pending', 'supervisor_approved'])) {
+                return response()->json(['message' => 'This leave cannot be cancelled.'], 409);
+            }
+            $leave->update(['status' => 'cancelled']);
+            return response()->json(['message' => 'Leave request cancelled.']);
+        }
+
+        $ot = OvertimeRequest::find($id);
+        if ($ot) {
+            if (!in_array($ot->status, ['pending', 'supervisor_approved'])) {
+                return response()->json(['message' => 'This request cannot be cancelled.'], 409);
+            }
+            $ot->update(['status' => 'cancelled']);
+            return response()->json(['message' => 'Overtime request cancelled.']);
+        }
+
+        $scr = ShiftChangeRequest::find($id);
+        if ($scr) {
+            if (!in_array($scr->status, ['pending', 'supervisor_approved'])) {
+                return response()->json(['message' => 'This request cannot be cancelled.'], 409);
+            }
+            $scr->update(['status' => 'cancelled']);
+            return response()->json(['message' => 'Shift change request cancelled.']);
+        }
+
+        return response()->json(['message' => 'Request not found.'], 404);
+    }
+
+
+
 }

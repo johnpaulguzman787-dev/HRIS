@@ -101,7 +101,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/store', [App\Http\Controllers\HrEmployeeController::class, 'store'])->name('store');
         Route::post('/departments', [App\Http\Controllers\HrEmployeeController::class, 'storeDepartment'])->name('departments.store');
         Route::match(['POST', 'PUT'], '/departments/{id}', [App\Http\Controllers\HrEmployeeController::class, 'updateDepartment'])->name('departments.update');
-        Route::post('/{id}', [App\Http\Controllers\HrEmployeeController::class, 'update'])->name('update');
+        Route::put('/{id}', [App\Http\Controllers\HrEmployeeController::class, 'update'])->name('update');
         Route::get('/profile', [App\Http\Controllers\HrEmployeeController::class, 'profile'])->name('profile');
     });
     // ──────────────────────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/profile', [SupervisorEmployeeController::class, 'profile'])->name('profile');
         Route::post('/store', [SupervisorEmployeeController::class, 'store'])->name('store');
         Route::match(['POST', 'PUT'], '/departments/{id}', [SupervisorEmployeeController::class, 'updateDepartment'])->name('departments.update');
-        Route::post('/{id}', [SupervisorEmployeeController::class, 'update'])->name('update');
+        Route::put('/{id}', [SupervisorEmployeeController::class, 'update'])->name('update');
     });
     // ──────────────────────────────────────────────────────────────────────
 
@@ -145,7 +145,9 @@ Route::middleware(['auth'])->group(function () {
     // ── EMPLOYEE REQUESTS & APPROVAL ─────────────────────────────────────
     Route::get('/employee/requests/pending',       [EmployeeAttendanceController::class, 'pendingRequests'])->name('employee.requests.pending');
     Route::get('/employee/requests/approved',      [EmployeeAttendanceController::class, 'approvedRequests'])->name('employee.requests.approved');
-    Route::post('/employee/requests/{id}/cancel',  [EmployeeAttendanceController::class, 'cancelRequest'])->name('employee.requests.cancel');
+    Route::post('/employee/requests/{id}/cancel',        [EmployeeAttendanceController::class, 'cancelRequest'])->name('employee.requests.cancel');
+    Route::post('/employee/requests/overtime/file',      [EmployeeAttendanceController::class, 'fileOvertimeRequest'])->name('employee.requests.overtime.file');
+    Route::post('/employee/requests/shift/file',         [EmployeeAttendanceController::class, 'fileShiftChangeRequest'])->name('employee.requests.shift.file');
     // ──────────────────────────────────────────────────────────────────────
     // ── HR ATTENDANCE ROUTES ───────────────────────────────────────────────
     Route::get('/hr/attendance/reports', [HRAttendanceController::class, 'index'])->name('hr.attendance.reports');
@@ -182,6 +184,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/hr/requests/approved',          [HRAttendanceController::class, 'approvedRequests'])->name('hr.requests.approved');
     Route::post('/hr/requests/{id}/approve',     [HRAttendanceController::class, 'approveRequest'])->name('hr.requests.approve');
     Route::post('/hr/requests/{id}/reject',      [HRAttendanceController::class, 'rejectRequest'])->name('hr.requests.reject');
+    Route::post('/hr/requests/overtime/file',    [HRAttendanceController::class, 'fileOvertimeRequest'])->name('hr.requests.overtime.file');
+    Route::post('/hr/requests/shift/file',       [HRAttendanceController::class, 'fileShiftChangeRequest'])->name('hr.requests.shift.file');
+    Route::post('/hr/requests/overtime/{id}/approve',    [HRAttendanceController::class, 'approveOvertimeRequest'])->name('hr.requests.overtime.approve');
+    Route::post('/hr/requests/overtime/{id}/reject',     [HRAttendanceController::class, 'rejectOvertimeRequest'])->name('hr.requests.overtime.reject');
+    Route::post('/hr/requests/shift/{id}/approve',       [HRAttendanceController::class, 'approveShiftChangeRequest'])->name('hr.requests.shift.approve');
+    Route::post('/hr/requests/shift/{id}/reject',        [HRAttendanceController::class, 'rejectShiftChangeRequest'])->name('hr.requests.shift.reject');
 // ──────────────────────────────────────────────────────────────────────
 
 
@@ -210,6 +218,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/supervisor/requests/approved',          [SupervisorAttendanceController::class, 'approvedRequests'])->name('supervisor.requests.approved');
     Route::post('/supervisor/requests/{id}/approve',     [SupervisorAttendanceController::class, 'approveRequest'])->name('supervisor.requests.approve');
     Route::post('/supervisor/requests/{id}/reject',      [SupervisorAttendanceController::class, 'rejectRequest'])->name('supervisor.requests.reject');
+    Route::post('/supervisor/requests/overtime/file',    [SupervisorAttendanceController::class, 'fileOvertimeRequest'])->name('supervisor.requests.overtime.file');
+    Route::post('/supervisor/requests/shift/file',       [SupervisorAttendanceController::class, 'fileShiftChangeRequest'])->name('supervisor.requests.shift.file');
     // ──────────────────────────────────────────────────────────────────────
     // ── ADMIN ATTENDANCE ROUTES ────────────────────────────────────────────
     Route::get('/admin/attendance/reports', [AdminAttendanceController::class, 'index'])->name('admin.attendance.reports');
@@ -224,6 +234,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/leave/file',        [AdminAttendanceController::class, 'fileLeave'])->name('admin.leave.file');
     Route::post('/admin/leave/{id}/cancel', [AdminAttendanceController::class, 'cancelLeave'])->name('admin.leave.cancel');
     Route::get('/admin/leave/{id}',         [AdminAttendanceController::class, 'getLeaveRequest'])->name('admin.leave.get');
+    // ──────────────────────────────────────────────────────────────────────
+    // ── ADMIN REQUESTS & APPROVAL ─────────────────────────────────────────
+    Route::get('/admin/requests/pending',        [AdminAttendanceController::class, 'pendingRequests'])->name('admin.requests.pending');
+    Route::get('/admin/requests/approved',       [AdminAttendanceController::class, 'approvedRequests'])->name('admin.requests.approved');
+    Route::post('/admin/requests/{id}/cancel',   [AdminAttendanceController::class, 'cancelRequest'])->name('admin.requests.cancel');
     // ──────────────────────────────────────────────────────────────────────
 
     // Other Dashboards

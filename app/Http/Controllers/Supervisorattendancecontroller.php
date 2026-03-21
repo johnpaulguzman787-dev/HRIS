@@ -13,6 +13,8 @@ use App\Models\Department;
 use App\Models\LeaveType;
 use App\Models\LeaveCredit;
 use App\Models\LeaveRequest;
+use App\Models\OvertimeRequest;
+use App\Models\ShiftChangeRequest;
 
 class SupervisorAttendanceController extends Controller
 {
@@ -65,7 +67,11 @@ class SupervisorAttendanceController extends Controller
             ->whereDate('attendance_date', $today)
             ->first();
 
-        if ($existing && $existing->clock_in && $existing->break_start && !$existing->break_end && !$existing->clock_out) {
+        if ($existing && $existing->status === 'on_leave') {
+    return response()->json(['message' => 'You are on approved leave today.'], 409);
+}
+
+if ($existing && $existing->clock_in && $existing->break_start && !$existing->break_end && !$existing->clock_out) {
             $breakMinutes = (int) Carbon::parse($existing->break_start)->diffInMinutes($now);
             $existing->update([
                 'break_end'     => $now,
@@ -672,7 +678,7 @@ class SupervisorAttendanceController extends Controller
         $totalDays = 0;
         $cursor    = $start->copy();
         while ($cursor->lte($end)) {
-            if (!$cursor->isWeekend()) $totalDays++;
+            $totalDays++;
             $cursor->addDay();
         }
 
@@ -841,19 +847,119 @@ class SupervisorAttendanceController extends Controller
     public function pendingRequests(Request $request)
     {
         $authEmployee = Employee::where('user_id', Auth::id())->first();
+        $authEmpId    = $authEmployee?->id ?? 0;
         $authDeptId   = $authEmployee?->department_id;
         $departments  = Department::where('id', $authDeptId)->get();
+        $shiftTypes   = \App\Models\Shift::where('is_active', true)->orderBy('name')->get();
+        $leaveTypes   = LeaveType::where('is_active', true)->orderBy('name')->get();
 
-        $awaitingCount = 0;
-        $leaveCount    = 0;
-        $shiftCount    = 0;
-        $overtimeCount = 0;
-        $requests      = collect();
+        $filterType = $request->get('type', 'all');
+        $search     = $request->get('search');
+
+        // ── Leave Requests — dept employees only, excluding supervisor's own ──
+        $leaveQuery = LeaveRequest::with(['employee.department', 'employee.jobTitle', 'leaveType'])
+            ->where('status', 'pending')
+            ->where('employee_id', '!=', $authEmpId)
+            ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId));
+        if ($search) {
+            $leaveQuery->whereHas('employee', fn($q) =>
+                $q->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%")
+            );
+        }
+
+        // ── Overtime Requests — dept employees only, excluding supervisor's own ──
+        $otQuery = OvertimeRequest::with(['employee.department', 'employee.jobTitle'])
+            ->where('status', 'pending')
+            ->where('employee_id', '!=', $authEmpId)
+            ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId));
+        if ($search) {
+            $otQuery->whereHas('employee', fn($q) =>
+                $q->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%")
+            );
+        }
+
+        // ── Shift Change Requests — dept employees only, excluding supervisor's own ──
+        $shiftQuery = ShiftChangeRequest::with(['employee.department', 'employee.jobTitle', 'currentShift', 'requestedShift'])
+            ->where('status', 'pending')
+            ->where('employee_id', '!=', $authEmpId)
+            ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId));
+        if ($search) {
+            $shiftQuery->whereHas('employee', fn($q) =>
+                $q->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%")
+            );
+        }
+
+        $leaveCount    = $leaveQuery->count();
+        $overtimeCount = $otQuery->count();
+        $shiftCount    = $shiftQuery->count();
+        $awaitingCount = $leaveCount + $overtimeCount + $shiftCount;
+
+        $allRequests = collect();
+
+        if ($filterType === 'all' || $filterType === 'leave') {
+            foreach ($leaveQuery->get() as $r) {
+                $allRequests->push((object)[
+                    'type'          => 'leave',
+                    'id'            => $r->id,
+                    'ref_no'        => $r->ref_no,
+                    'employee'      => $r->employee,
+                    'leaveType'     => $r->leaveType,
+                    'start_date'    => $r->start_date,
+                    'end_date'      => $r->end_date,
+                    'total_days'    => $r->total_days,
+                    'reason'        => $r->reason,
+                    'document_path' => $r->document_path,
+                    'created_at'    => $r->created_at,
+                    'credit'        => LeaveCredit::where('employee_id', $r->employee_id)
+                                        ->where('leave_type_id', $r->leave_type_id)
+                                        ->where('year', Carbon::parse($r->start_date)->year)
+                                        ->first(),
+                ]);
+            }
+        }
+
+        if ($filterType === 'all' || $filterType === 'overtime') {
+            foreach ($otQuery->get() as $r) {
+                $allRequests->push((object)[
+                    'type'            => 'overtime',
+                    'id'              => $r->id,
+                    'ref_no'          => $r->ref_no,
+                    'employee'        => $r->employee,
+                    'ot_date'         => $r->ot_date,
+                    'ot_start_time'   => $r->ot_start_time,
+                    'ot_end_time'     => $r->ot_end_time,
+                    'requested_hours' => $r->requested_hours,
+                    'reason'          => $r->reason,
+                    'document_path'   => $r->document_path,
+                    'created_at'      => $r->created_at,
+                ]);
+            }
+        }
+
+        if ($filterType === 'all' || $filterType === 'shift') {
+            foreach ($shiftQuery->get() as $r) {
+                $allRequests->push((object)[
+                    'type'            => 'shift',
+                    'id'              => $r->id,
+                    'ref_no'          => $r->ref_no,
+                    'employee'        => $r->employee,
+                    'current_shift'   => $r->currentShift,
+                    'requested_shift' => $r->requestedShift,
+                    'effective_from'  => $r->effective_from,
+                    'effective_until' => $r->effective_until,
+                    'reason'          => $r->reason,
+                    'document_path'   => $r->document_path,
+                    'created_at'      => $r->created_at,
+                ]);
+            }
+        }
+
+        $requests = $allRequests->sortByDesc('created_at')->values();
 
         return view('supervisor.supervisor_pending-requests', compact(
-            'departments',
+            'departments', 'shiftTypes', 'leaveTypes',
             'awaitingCount', 'leaveCount', 'shiftCount', 'overtimeCount',
-            'requests'
+            'requests', 'filterType'
         ));
     }
 
@@ -869,14 +975,189 @@ class SupervisorAttendanceController extends Controller
 
     public function approveRequest(Request $request, $id)
     {
-        // TODO: implement approval logic per request type
-        return response()->json(['message' => 'Request approved.']);
+        $authEmployee = Employee::where('user_id', Auth::id())->firstOrFail();
+        $authDeptId   = $authEmployee->department_id;
+
+        // Determine type from query param or try all models
+        $type = $request->get('type', 'leave');
+
+        if ($type === 'overtime') {
+            $ot = OvertimeRequest::whereHas('employee', fn($q) => $q->where('department_id', $authDeptId))
+                ->findOrFail($id);
+            if ($ot->status !== 'pending') {
+                return response()->json(['message' => 'Request is no longer pending.'], 409);
+            }
+            $ot->update([
+                'status'      => 'supervisor_approved',
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+            ]);
+            return response()->json(['message' => 'Overtime request forwarded to HR for final approval.']);
+        }
+
+        if ($type === 'shift') {
+            $scr = ShiftChangeRequest::whereHas('employee', fn($q) => $q->where('department_id', $authDeptId))
+                ->findOrFail($id);
+            if ($scr->status !== 'pending') {
+                return response()->json(['message' => 'Request is no longer pending.'], 409);
+            }
+            $scr->update([
+                'status'      => 'supervisor_approved',
+                'approved_by' => $authEmployee->id,
+                'approved_at' => now(),
+            ]);
+            return response()->json(['message' => 'Shift change request forwarded to HR for final approval.']);
+        }
+
+        // Default: leave
+        $leave = LeaveRequest::whereHas('employee', fn($q) => $q->where('department_id', $authDeptId))
+            ->findOrFail($id);
+        if ($leave->status !== 'pending') {
+            return response()->json(['message' => 'Leave is no longer pending.'], 409);
+        }
+        $leave->update([
+            'status'      => 'supervisor_approved',
+            'approved_by' => $authEmployee->id,
+            'approved_at' => now(),
+        ]);
+        return response()->json(['message' => 'Leave forwarded to HR for final approval.']);
     }
 
     public function rejectRequest(Request $request, $id)
     {
-        $request->validate(['reason' => 'nullable|string|max:500']);
-        // TODO: implement rejection logic per request type
-        return response()->json(['message' => 'Request rejected.']);
+        $request->validate(['rejection_reason' => 'required|string|max:500']);
+
+        $authEmployee = Employee::where('user_id', Auth::id())->firstOrFail();
+        $authDeptId   = $authEmployee->department_id;
+
+        $type = $request->get('type', 'leave');
+
+        if ($type === 'overtime') {
+            $ot = OvertimeRequest::whereHas('employee', fn($q) => $q->where('department_id', $authDeptId))
+                ->findOrFail($id);
+            if ($ot->status !== 'pending') {
+                return response()->json(['message' => 'Request is no longer pending.'], 409);
+            }
+            $ot->update([
+                'status'           => 'rejected',
+                'rejection_reason' => $request->rejection_reason,
+            ]);
+            return response()->json(['message' => 'Overtime request rejected.']);
+        }
+
+        if ($type === 'shift') {
+            $scr = ShiftChangeRequest::whereHas('employee', fn($q) => $q->where('department_id', $authDeptId))
+                ->findOrFail($id);
+            if ($scr->status !== 'pending') {
+                return response()->json(['message' => 'Request is no longer pending.'], 409);
+            }
+            $scr->update([
+                'status'           => 'rejected',
+                'rejection_reason' => $request->rejection_reason,
+            ]);
+            return response()->json(['message' => 'Shift change request rejected.']);
+        }
+
+        // Default: leave
+        $leave = LeaveRequest::whereHas('employee', fn($q) => $q->where('department_id', $authDeptId))
+            ->findOrFail($id);
+        if ($leave->status !== 'pending') {
+            return response()->json(['message' => 'Leave is no longer pending.'], 409);
+        }
+        $leave->update([
+            'status'           => 'rejected',
+            'rejection_reason' => $request->rejection_reason,
+        ]);
+        return response()->json(['message' => 'Leave rejected.']);
     }
+
+    public function fileOvertimeRequest(Request $request)
+    {
+        $request->validate([
+            'ot_date'       => 'required|date',
+            'ot_start_time' => 'required',
+            'ot_end_time'   => 'required|after:ot_start_time',
+            'reason'        => 'required|string|max:500',
+            'document'      => 'nullable|file|mimes:pdf,docx|max:10240',
+        ]);
+
+        $employee = Employee::where('user_id', Auth::id())->firstOrFail();
+
+        $start          = Carbon::parse($request->ot_date . ' ' . $request->ot_start_time);
+        $end            = Carbon::parse($request->ot_date . ' ' . $request->ot_end_time);
+        $requestedHours = round($start->diffInMinutes($end) / 60, 2);
+
+        $lastRef = OvertimeRequest::where('ref_no', 'like', 'OT-%')
+            ->orderByDesc('id')->value('ref_no');
+        $nextNum = $lastRef ? (int) substr($lastRef, 3) + 1 : 1;
+        $refNo   = 'OT-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+
+        $docPath = null;
+        if ($request->hasFile('document')) {
+            $docPath = $request->file('document')->store('ot_documents', 'public');
+        }
+
+        OvertimeRequest::create([
+            'ref_no'          => $refNo,
+            'employee_id'     => $employee->id,
+            'requested_by'    => Auth::id(),
+            'ot_date'         => $request->ot_date,
+            'ot_start_time'   => $request->ot_start_time,
+            'ot_end_time'     => $request->ot_end_time,
+            'requested_hours' => $requestedHours,
+            'reason'          => $request->reason,
+            'document_path'   => $docPath,
+            'status'          => 'pending',
+        ]);
+
+        return response()->json(['message' => 'Overtime request filed successfully.', 'ref_no' => $refNo]);
+    }
+
+    public function fileShiftChangeRequest(Request $request)
+    {
+        $request->validate([
+            'requested_shift_id' => 'required|exists:shifts,id',
+            'effective_from'     => 'required|date|after_or_equal:today',
+            'effective_until'    => 'nullable|date|after_or_equal:effective_from',
+            'reason'             => 'required|string|max:500',
+            'document'           => 'nullable|file|mimes:pdf,docx|max:10240',
+        ]);
+
+        $employee = Employee::where('user_id', Auth::id())->firstOrFail();
+
+        $currentShift = EmployeeShift::where('employee_id', $employee->id)
+            ->where('is_active', true)
+            ->latest('effective_date')
+            ->first();
+
+        $lastRef = ShiftChangeRequest::where('ref_no', 'like', 'SCR-%')
+            ->orderByDesc('id')->value('ref_no');
+        $nextNum = $lastRef ? (int) substr($lastRef, 4) + 1 : 1;
+        $refNo   = 'SCR-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+
+        $docPath = null;
+        if ($request->hasFile('document')) {
+            $docPath = $request->file('document')->store('shift_documents', 'public');
+        }
+
+        ShiftChangeRequest::create([
+            'ref_no'             => $refNo,
+            'employee_id'        => $employee->id,
+            'current_shift_id'   => $currentShift?->shift_id,
+            'requested_shift_id' => $request->requested_shift_id,
+            'effective_from'     => $request->effective_from,
+            'effective_until'    => $request->effective_until ?? null,
+            'reason'             => $request->reason,
+            'document_path'      => $docPath,
+            'status'             => 'pending',
+        ]);
+
+        return response()->json(['message' => 'Shift change request filed successfully.', 'ref_no' => $refNo]);
+    }
+
+
+
+
+
+
 }

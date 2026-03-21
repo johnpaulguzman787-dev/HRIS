@@ -145,7 +145,7 @@
                     My Attendance
                 </a>
 
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Shift Scheduling</a>
+                
 
                 {{-- ✅ UPDATED: Leave Management — may actual route na --}}
                 <a href="{{ route('employee.leave.management') }}"

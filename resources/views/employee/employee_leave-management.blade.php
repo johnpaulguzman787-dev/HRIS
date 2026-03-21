@@ -204,7 +204,12 @@
         <div class="toolbar">
             <div class="toolbar-title">My Leave Requests</div>
             <div class="toolbar-right">
-                <select class="filter-select"><option>All Status</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
+                <select class="filter-select" onchange="window.location.href='?tab=my-leave&status='+this.value">
+    <option value="">All Status</option>
+    <option value="pending" {{ request('status')==='pending' ? 'selected' : '' }}>Pending</option>
+    <option value="approved" {{ request('status')==='approved' ? 'selected' : '' }}>Approved</option>
+    <option value="rejected" {{ request('status')==='rejected' ? 'selected' : '' }}>Rejected</option>
+</select>
                 <select class="filter-select">
                     <option value="">All Types</option>
                     @foreach($leaveTypes as $lt)

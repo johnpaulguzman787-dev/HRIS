@@ -117,124 +117,7 @@
 <body class="bg-gray-50">
 
 {{-- ══════════ SIDEBAR ══════════ --}}
-<aside class="bg-white border-r border-gray-200 h-screen fixed left-0 top-0 overflow-y-auto z-50 flex flex-col"
-    x-data="{
-        sidebarCollapsed:localStorage.getItem('sidebarCollapsed')==='true',
-        employeesOpen:{{ in_array($currentRoute,$employeeRoutes)?'true':'false' }},
-        attendanceOpen:{{ in_array($currentRoute,$attendanceRoutes)?'true':'false' }},
-        payrollOpen:{{ in_array($currentRoute,$payrollRoutes)?'true':'false' }},
-        requestsOpen:{{ in_array($currentRoute,$requestRoutes)?'true':'false' }}
-    }"
-    x-init="$watch('sidebarCollapsed',v=>localStorage.setItem('sidebarCollapsed',v))"
-    :class="sidebarCollapsed?'w-20':'w-64'"
-    style="transition:width .35s cubic-bezier(.4,0,.2,1);box-shadow:2px 0 20px rgba(0,0,0,.06);">
-
-    <div class="px-6 py-5 border-b border-gray-100">
-        <div class="flex items-center space-x-3" :class="sidebarCollapsed?'justify-center':''">
-            <div class="w-9 h-9 border-2 border-gray-800 flex items-center justify-center flex-shrink-0" style="border-radius:6px;">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            </div>
-            <h1 x-show="!sidebarCollapsed" x-transition:enter="transition ease-out duration-300 delay-100" x-transition:enter-start="opacity-0 -translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="font-bold text-gray-900 text-lg tracking-widest whitespace-nowrap">MEDISOURCE</h1>
-        </div>
-    </div>
-
-    <div class="px-4 py-4 border-b border-gray-100" :class="sidebarCollapsed?'flex justify-center':'flex items-center space-x-3'">
-        <div class="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm avatar-ring" style="background:linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%);">{{ $sidebarInitials }}</div>
-        <div x-show="!sidebarCollapsed" x-transition:enter="transition ease-out duration-300 delay-100" x-transition:enter-start="opacity-0 -translate-x-3" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="overflow-hidden">
-            <p class="font-semibold text-gray-800 text-sm leading-tight">{{ $sidebarName }}</p>
-            <p class="text-xs mt-0.5 font-semibold" style="color:#3b82f6;">{{ $sidebarRole }}</p>
-        </div>
-    </div>
-
-    <nav class="p-3 space-y-0.5 flex-1 overflow-y-auto">
-        <p x-show="!sidebarCollapsed" class="text-xs text-gray-400 font-semibold px-3 py-2 uppercase tracking-widest">Main Menu</p>
-
-        <a href="{{ route('hr.dashboard') }}" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ $currentRoute==='hr.dashboard'?'text-white':'text-gray-600 hover:bg-gray-50' }}" style="{{ $currentRoute==='hr.dashboard'?'background:#3b82f6;':'' }}">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-            <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Dashboard</span>
-        </a>
-
-        <div>
-            <button @click="employeesOpen=!employeesOpen" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg {{ in_array($currentRoute,$employeeRoutes)?'text-blue-600':'text-gray-600 hover:bg-gray-50' }}">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Employees</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180':employeesOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div x-show="employeesOpen&&!sidebarCollapsed" x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95" x-transition:enter-end="opacity-100 translate-y-0 scale-y-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 scale-y-100" x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95" class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('hr.employees.directory') }}" class="block px-3 py-2 text-sm rounded-lg {{ $currentRoute==='hr.employees.directory'?'text-blue-600 font-semibold bg-blue-50':'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Directory</a>
-                <a href="{{ route('hr.employees.profile') }}"   class="block px-3 py-2 text-sm rounded-lg {{ $currentRoute==='hr.employees.profile'?'text-blue-600 font-semibold bg-blue-50':'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Profile</a>
-            </div>
-        </div>
-
-        <div>
-            <button @click="attendanceOpen=!attendanceOpen" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg {{ in_array($currentRoute,$attendanceRoutes)?'text-blue-600':'text-gray-600 hover:bg-gray-50' }}">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Time & Attendance</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180':attendanceOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div x-show="attendanceOpen&&!sidebarCollapsed" x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95" x-transition:enter-end="opacity-100 translate-y-0 scale-y-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 scale-y-100" x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95" class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('hr.attendance.reports') }}"  class="flex items-center px-3 py-2 text-sm rounded-lg {{ $currentRoute==='hr.attendance.reports'?'font-semibold bg-blue-50':'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}" style="{{ $currentRoute==='hr.attendance.reports'?'color:#3b82f6;':'' }}">
-                    @if($currentRoute==='hr.attendance.reports')<span class="w-2 h-2 rounded-full mr-2.5 flex-shrink-0" style="background:#3b82f6;animation:pulseDot 2s ease-in-out infinite;"></span>@endif
-                    My Attendance
-                </a>
-                <a href="{{ route('hr.attendance.employee') }}" class="block px-3 py-2 text-sm rounded-lg {{ $currentRoute==='hr.attendance.employee'?'text-blue-600 font-semibold bg-blue-50':'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Employee Attendance</a>
-                <a href="{{ route('hr.shift.scheduling') }}"   class="block px-3 py-2 text-sm rounded-lg {{ $currentRoute==='hr.shift.scheduling'?'text-blue-600 font-semibold bg-blue-50':'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Shift Scheduling</a>
-                <a href="{{ route('hr.leave.management') }}"   class="block px-3 py-2 text-sm rounded-lg {{ $currentRoute==='hr.leave.management'?'text-blue-600 font-semibold bg-blue-50':'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Leave Management</a>
-            </div>
-        </div>
-
-        <div>
-            <button @click="payrollOpen=!payrollOpen" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Payroll</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180':payrollOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div x-show="payrollOpen&&!sidebarCollapsed" x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95" x-transition:enter-end="opacity-100 translate-y-0 scale-y-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 scale-y-100" x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95" class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="#" class="block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Payroll</a>
-                <a href="#" class="block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Payslips</a>
-                <a href="#" class="block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Govt. Contributions</a>
-            </div>
-        </div>
-
-        <div>
-            <button @click="requestsOpen=!requestsOpen" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg {{ in_array($currentRoute,$requestRoutes)?'text-blue-600 bg-blue-50':'text-gray-600 hover:bg-gray-50' }}">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Requests & Approval</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180':requestsOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div x-show="requestsOpen&&!sidebarCollapsed" x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95" x-transition:enter-end="opacity-100 translate-y-0 scale-y-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 scale-y-100" x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95" class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('hr.requests.pending') }}"  class="block px-3 py-2 text-sm rounded-lg {{ $currentRoute==='hr.requests.pending'?'text-blue-600 font-semibold bg-blue-50':'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Pending Requests</a>
-                <a href="{{ route('hr.requests.approved') }}" class="block px-3 py-2 text-sm rounded-lg {{ $currentRoute==='hr.requests.approved'?'text-blue-600 font-semibold bg-blue-50':'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Approved Logs</a>
-            </div>
-        </div>
-
-        <div class="pt-3 mt-2 border-t border-gray-100">
-            <p x-show="!sidebarCollapsed" class="text-xs text-gray-400 font-semibold px-3 py-2 uppercase tracking-widest">Others</p>
-            <a href="#" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Settings</span>
-            </a>
-            <a href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('hr-logout-form').submit();" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-500">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Logout</span>
-            </a>
-            <form id="hr-logout-form" action="{{ route('logout') }}" method="POST" class="hidden">@csrf</form>
-        </div>
-    </nav>
-
-    <button @click="sidebarCollapsed=!sidebarCollapsed" class="m-3 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-200 self-end" style="transition:background .15s;">
-        <svg class="w-4 h-4 chevron-icon" :class="{'rotate-180':sidebarCollapsed}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
-    </button>
-</aside>
-
+@include('hr.hr_sidebar')
 {{-- ══════════ MAIN ══════════ --}}
 <div x-data="{
         collapsed:localStorage.getItem('sidebarCollapsed')==='true',
@@ -243,7 +126,14 @@
         showApprove:false,
         showReject:false,
         selName:'',
-        selId:null
+        selId:null,
+        rejectReason:'',
+        selApproveUrl:'',
+        selRejectUrl:'',
+        showResult:false,
+        resultType:'success',
+        resultTitle:'',
+        resultMessage:''
      }"
      x-init="window.addEventListener('storage',e=>{if(e.key==='sidebarCollapsed')collapsed=e.newValue==='true'})"
      :style="collapsed?'margin-left:5rem':'margin-left:16rem'"
@@ -306,121 +196,95 @@
         </div>
 
         {{-- REQUEST CARDS --}}
-        @forelse($requests ?? [] as $req)
+        @forelse($requests as $req)
+        @php
+            $empName  = trim(($req->employee->fname ?? '') . ' ' . ($req->employee->lname ?? ''));
+            $initials = strtoupper(substr($req->employee->fname ?? 'U', 0, 1) . substr($req->employee->lname ?? 'K', 0, 1));
+            $approveUrl = match($req->type) {
+                'overtime' => '/hr/requests/overtime/' . $req->id . '/approve',
+                'shift'    => '/hr/requests/shift/'    . $req->id . '/approve',
+                default    => '/hr/requests/'          . $req->id . '/approve',
+            };
+            $rejectUrl = match($req->type) {
+                'overtime' => '/hr/requests/overtime/' . $req->id . '/reject',
+                'shift'    => '/hr/requests/shift/'    . $req->id . '/reject',
+                default    => '/hr/requests/'          . $req->id . '/reject',
+            };
+        @endphp
         <div class="rcard">
             <div class="rcard-head">
                 <div class="rcard-left">
-                    <div class="emp-av" style="background:{{ $req->avatar_color ?? '#3b82f6' }};">
-                        {{ strtoupper(substr($req->employee->fname??'U',0,1).substr($req->employee->lname??'K',0,1)) }}
-                    </div>
+                    <div class="emp-av" style="background:{{ $req->type === 'overtime' ? '#ef4444' : ($req->type === 'shift' ? '#8b5cf6' : '#3b82f6') }};">{{ $initials }}</div>
                     <div>
-                        <div class="emp-name">{{ trim(($req->employee->fname??'').(' ').($req->employee->lname??'')) }}</div>
-                        <div class="emp-dept">{{ $req->employee->department->name??'—' }} · {{ $req->employee->jobTitle->title??'—' }}</div>
+                        <div class="emp-name">{{ $empName }}</div>
+                        <div class="emp-dept">{{ $req->employee->department->name ?? '—' }} · {{ $req->employee->jobTitle->title ?? '—' }}</div>
                     </div>
                 </div>
                 <div class="rcard-right">
                     <span class="req-id">{{ $req->ref_no }}</span>
-                    @if($req->type==='leave')<span class="badge b-leave">Leave Request</span>
-                    @elseif($req->type==='overtime')<span class="badge b-ot">Overtime Request</span>
-                    @elseif($req->type==='shift')<span class="badge b-shift">Shift Arrangement Request</span>@endif
+                    @if($req->type === 'leave')   <span class="badge b-leave">Leave Request</span>
+                    @elseif($req->type === 'overtime') <span class="badge b-ot">Overtime Request</span>
+                    @elseif($req->type === 'shift')    <span class="badge b-shift">Shift Arrangement Request</span>
+                    @endif
                     <span class="badge b-await">Awaiting Your Approval</span>
                 </div>
             </div>
             <div class="rcard-body">
-                @if($req->type==='leave')
+                @if($req->type === 'leave')
                 <div class="dgrid">
-                    <div><div class="dlabel">Leave Type</div><div class="dval">{{ $req->leave_type }}</div></div>
-                    <div><div class="dlabel">Date</div><div class="dval">{{ \Carbon\Carbon::parse($req->date_from)->format('F j').' - '.\Carbon\Carbon::parse($req->date_to)->format('j, Y') }}</div></div>
-                    <div><div class="dlabel">Filed On</div><div class="dval">{{ \Carbon\Carbon::parse($req->filed_on)->format('F j, Y') }}</div></div>
-                    <div><div class="dlabel">VL Balance</div><div class="dval">{{ $req->vl_balance??'—' }} days remaining</div></div>
+                    <div><div class="dlabel">Leave Type</div><div class="dval">{{ $req->leaveType->name ?? '—' }}</div></div>
+                    <div><div class="dlabel">Date</div><div class="dval">{{ \Carbon\Carbon::parse($req->start_date)->format('F j') }} – {{ \Carbon\Carbon::parse($req->end_date)->format('j, Y') }}</div></div>
+                    <div><div class="dlabel">Filed On</div><div class="dval">{{ $req->created_at->format('F j, Y') }}</div></div>
+                    <div><div class="dlabel">Balance</div><div class="dval">{{ $req->credit ? $req->credit->remaining_days . ' days remaining' : '—' }}</div></div>
                 </div>
-                @elseif($req->type==='overtime')
+                @elseif($req->type === 'overtime')
                 <div class="dgrid">
                     <div><div class="dlabel">OT Date</div><div class="dval">{{ \Carbon\Carbon::parse($req->ot_date)->format('F j, Y') }}</div></div>
-                    <div><div class="dlabel">OT Hours</div><div class="dval">{{ $req->ot_hours??'—' }}</div></div>
-                    <div><div class="dlabel">Time Range</div><div class="dval">{{ $req->time_range??'—' }}</div></div>
-                    <div></div>
+                    <div><div class="dlabel">OT Hours</div><div class="dval">{{ $req->requested_hours }}h</div></div>
+                    <div><div class="dlabel">Time Range</div><div class="dval">{{ $req->ot_start_time ? \Carbon\Carbon::parse($req->ot_start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($req->ot_end_time)->format('g:i A') : '—' }}</div></div>
+                    <div><div class="dlabel">Filed On</div><div class="dval">{{ $req->created_at->format('F j, Y') }}</div></div>
                 </div>
-                @elseif($req->type==='shift')
+                @elseif($req->type === 'shift')
                 <div class="dgrid">
-                    <div><div class="dlabel">Current Shift</div><div class="dval">{{ $req->current_shift??'—' }}</div></div>
-                    <div><div class="dlabel">Requested Shift</div><div class="dval">{{ $req->requested_shift??'—' }}</div></div>
-                    <div><div class="dlabel">Effective Date</div><div class="dval">{{ isset($req->effective_from)?\Carbon\Carbon::parse($req->effective_from)->format('F j, Y'):'—' }}</div></div>
-                    <div><div class="dlabel">Duration</div><div class="dval">{{ $req->duration??'—' }}</div></div>
+                    <div><div class="dlabel">Current Shift</div><div class="dval">{{ $req->current_shift->name ?? '—' }}</div></div>
+                    <div><div class="dlabel">Requested Shift</div><div class="dval">{{ $req->requested_shift->name ?? '—' }}</div></div>
+                    <div><div class="dlabel">Effective From</div><div class="dval">{{ \Carbon\Carbon::parse($req->effective_from)->format('F j, Y') }}</div></div>
+                    <div><div class="dlabel">Until</div><div class="dval">{{ $req->effective_until ? \Carbon\Carbon::parse($req->effective_until)->format('F j, Y') : 'Ongoing' }}</div></div>
                 </div>
                 @endif
-                <div class="rsection"><div class="rlabel">Reason</div><div class="rtext">{{ $req->reason??'—' }}</div></div>
-                @if(!empty($req->document))<div style="margin-bottom:10px;"><div class="rlabel">Documents</div><div style="font-size:13px;color:#3b82f6;font-weight:500;">{{ $req->document }}</div></div>@endif
+                <div class="rsection"><div class="rlabel">Reason</div><div class="rtext">{{ $req->reason ?? '—' }}</div></div>
+                @if($req->document_path)
+                <div style="margin-bottom:10px;"><div class="rlabel">Documents</div><div style="font-size:13px;color:#3b82f6;font-weight:500;">{{ basename($req->document_path) }}</div></div>
+                @endif
                 <div><div class="rlabel">Approval Progress</div>
                 <div class="prog-steps">
+                    <div class="pstep"><div class="pcircle pc-done"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div><div class="pname">Employee</div><div class="pstatus">Filed</div></div>
+                    @if(isset($req->employee->department_id))
+                    <div class="pline"></div>
+                    @if($req->status === 'supervisor_approved')
                     <div class="pstep"><div class="pcircle pc-done"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div><div class="pname">Supervisor</div><div class="pstatus">Approved</div></div>
+                    @else
+                    <div class="pstep"><div class="pcircle" style="background:#f9fafb;border:2px solid #d1d5db;color:#9ca3af;"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01"/></svg></div><div class="pname">Supervisor</div><div class="pstatus">Bypassed</div></div>
+                    @endif
+                    @endif
                     <div class="pline"></div>
                     <div class="pstep"><div class="pcircle pc-active"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01"/></svg></div><div class="pname">HR Manager</div><div class="pstatus">Pending Approval</div></div>
                 </div></div>
             </div>
             <div class="action-row">
-                <button class="btn-approve" @click="selId={{ $req->id }};selName='{{ addslashes(trim(($req->employee->fname??'').(' ').($req->employee->lname??''))) }}';showApprove=true">
+                <button class="btn-approve" @click="selId={{ $req->id }};selName='{{ addslashes($empName) }}';selApproveUrl='{{ $approveUrl }}';showApprove=true">
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Approve
                 </button>
-                <button class="btn-reject" @click="selId={{ $req->id }};selName='{{ addslashes(trim(($req->employee->fname??'').(' ').($req->employee->lname??''))) }}';showReject=true">
+                <button class="btn-reject" @click="selId={{ $req->id }};selName='{{ addslashes($empName) }}';selRejectUrl='{{ $rejectUrl }}';showReject=true">
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Reject
                 </button>
             </div>
         </div>
         @empty
-        {{-- ── DEMO CARDS ── --}}
-        @php
-        $demos=[
-            ['id'=>2,'type'=>'leave','av'=>'JD','color'=>'#3b82f6','name'=>'Juan Dela Cruz','dept'=>'IT - Senior Programmer','ref'=>'REQ-2026-002',
-             'grid'=>[['Leave Type','Vacation Leave (VL)'],['Date','March 10-12, 2026'],['Filed On','March 6, 2026'],['VL Balance','8 days remaining']],
-             'reason'=>'Family trip','doc'=>null],
-            ['id'=>3,'type'=>'overtime','av'=>'RM','color'=>'#ef4444','name'=>'Roberto Mendoza','dept'=>'IT - Senior Programmer','ref'=>'REQ-2026-003',
-             'grid'=>[['OT Date','March 6, 2026'],['OT Hours','2h'],['Time Range','6:00 - 7:00 PM'],['','']],
-             'reason'=>'System migration project - server deployment before Monday operations.','doc'=>null],
-            ['id'=>4,'type'=>'shift','av'=>'MS','color'=>'#8b5cf6','name'=>'Mary Santos','dept'=>'Finance & Accounting - Shift Arrangement','ref'=>'REQ-2026-004',
-             'grid'=>[['Current Shift','Night (10PM-6AM)'],['Requested Shift','Day (8AM-5PM)'],['Effective Date','March 16, 2026'],['Duration','March 23, 2026 - March 23, 3037']],
-             'reason'=>'Medical - doctor\'s recommendation to avoid night shift due to hypertension. Medical Certificate attached.','doc'=>'medicalcertificate.pdf'],
-        ];
-        $bmap=['leave'=>['b-leave','Leave Request'],'overtime'=>['b-ot','Overtime Request'],'shift'=>['b-shift','Shift Arrangement Request']];
-        @endphp
-        @foreach($demos as $d)
-        <div class="rcard">
-            <div class="rcard-head">
-                <div class="rcard-left">
-                    <div class="emp-av" style="background:{{ $d['color'] }};">{{ $d['av'] }}</div>
-                    <div><div class="emp-name">{{ $d['name'] }}</div><div class="emp-dept">{{ $d['dept'] }}</div></div>
-                </div>
-                <div class="rcard-right">
-                    <span class="req-id">{{ $d['ref'] }}</span>
-                    <span class="badge {{ $bmap[$d['type']][0] }}">{{ $bmap[$d['type']][1] }}</span>
-                    <span class="badge b-await">Awaiting Your Approval</span>
-                </div>
-            </div>
-            <div class="rcard-body">
-                <div class="dgrid">
-                    @foreach($d['grid'] as $g)
-                    <div>@if($g[0])<div class="dlabel">{{ $g[0] }}</div><div class="dval">{{ $g[1] }}</div>@endif</div>
-                    @endforeach
-                </div>
-                <div class="rsection"><div class="rlabel">Reason</div><div class="rtext">{{ $d['reason'] }}</div></div>
-                @if($d['doc'])<div style="margin-bottom:10px;"><div class="rlabel">Documents</div><div style="font-size:13px;color:#3b82f6;font-weight:500;">{{ $d['doc'] }}</div></div>@endif
-                <div><div class="rlabel">Approval Progress</div>
-                <div class="prog-steps">
-                    <div class="pstep"><div class="pcircle pc-done"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div><div class="pname">Supervisor</div><div class="pstatus">Approved</div></div>
-                    <div class="pline"></div>
-                    <div class="pstep"><div class="pcircle pc-active"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01"/></svg></div><div class="pname">HR Manager</div><div class="pstatus">Pending Approval</div></div>
-                </div></div>
-            </div>
-            <div class="action-row">
-                <button class="btn-approve" @click="selId={{ $d['id'] }};selName='{{ $d['name'] }}';showApprove=true">
-                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Approve
-                </button>
-                <button class="btn-reject" @click="selId={{ $d['id'] }};selName='{{ $d['name'] }}';showReject=true">
-                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Reject
-                </button>
-            </div>
+        <div style="text-align:center;padding:60px 16px;">
+            <div style="font-size:15px;font-weight:600;color:#9ca3af;">No pending requests at this time.</div>
+            <div style="font-size:13px;color:#d1d5db;margin-top:4px;">All leave requests will appear here when submitted.</div>
         </div>
-        @endforeach
         @endforelse
 
     </div>{{-- /padding --}}
@@ -444,72 +308,172 @@
             </div>
 
             {{-- LEAVE --}}
-            <div x-show="reqType==='leave'" x-transition>
+            <div x-show="reqType==='leave'" x-transition
+                 x-data="{ leaveTypeId:'', startDate:'', endDate:'', reason:'', fileName:'', saving:false, errorMsg:'',
+                     handleFile(e){ const f=e.target.files[0]; this.fileName=f?f.name:''; },
+                     async submit(){
+                         this.errorMsg='';
+                         if(!this.leaveTypeId||!this.startDate||!this.endDate||!this.reason){ this.errorMsg='Please fill in all required fields.'; return; }
+                         this.saving=true;
+                         const form=new FormData();
+                         form.append('leave_type_id',this.leaveTypeId);
+                         form.append('start_date',this.startDate);
+                         form.append('end_date',this.endDate);
+                         form.append('reason',this.reason);
+                         const fi=document.getElementById('hrLeaveDocInput');
+                         if(fi.files[0]) form.append('document',fi.files[0]);
+                         form.append('_token',document.querySelector('meta[name=csrf-token]').content);
+                         const res=await fetch('{{ route('hr.leave.file') }}',{method:'POST',body:form});
+                         this.saving=false;
+                         const data=await res.json();
+                         if(res.ok){ window.dispatchEvent(new CustomEvent('show-toast',{detail:{message:'Leave request filed!',type:'success'}})); setTimeout(()=>window.location.reload(),1500); }
+                         else{ this.errorMsg=data.message??'Something went wrong.'; }
+                     }
+                 }">
+                <template x-if="errorMsg"><div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div></template>
                 <div style="margin-bottom:16px;">
                     <label class="flabel">Leave Type</label>
-                    <select class="finput fsel-modal" style="appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;">
-                        <option>Vacation Leave (VL)</option><option>Sick Leave (SL)</option><option>Leave Without Pay (LWOP)</option>
-                        <option>Maternity Leave (ML)</option><option>Paternity Leave (PL)</option><option>Solo Parent Leave (SPL)</option>
+                    <select class="finput" x-model="leaveTypeId" style="appearance:none;width:100%;">
+                        <option value="">Choose leave type</option>
+                        @foreach($leaveTypes as $lt)
+                        <option value="{{ $lt->id }}">{{ $lt->name }} ({{ $lt->code }})</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="frow" style="margin-bottom:16px;">
-                    <div><label class="flabel">From</label><input type="date" class="finput"></div>
-                    <div><label class="flabel">To</label><input type="date" class="finput"></div>
+                    <div><label class="flabel">From</label><input type="date" class="finput" x-model="startDate"></div>
+                    <div><label class="flabel">To</label><input type="date" class="finput" x-model="endDate"></div>
                 </div>
                 <div style="margin-bottom:16px;">
                     <label class="flabel">Reason/Remarks</label>
-                    <input type="text" class="finput" placeholder="Enter details">
+                    <input type="text" class="finput" x-model="reason" placeholder="Enter details">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label class="flabel">Supporting Document (optional)</label>
+                    <label class="doc-upload">
+                        <svg style="width:28px;height:28px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <div style="font-size:13px;font-weight:600;color:#374151;" x-text="fileName||'Choose a file to upload'"></div>
+                        <div style="font-size:12px;color:#9ca3af;">PDF or DOCX, max 10MB</div>
+                        <input id="hrLeaveDocInput" type="file" accept=".pdf,.docx" style="display:none;" @change="handleFile($event)">
+                    </label>
+                </div>
+                <div class="mactions">
+                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
+                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving?'Submitting…':'Submit'"></button>
                 </div>
             </div>
 
             {{-- OVERTIME --}}
-            <div x-show="reqType==='overtime'" x-transition>
+            <div x-show="reqType==='overtime'" x-transition
+                 x-data="{ otDate:'', otStart:'', otEnd:'', reason:'', fileName:'', saving:false, errorMsg:'',
+                     handleFile(e){ const f=e.target.files[0]; this.fileName=f?f.name:''; },
+                     async submit(){
+                         this.errorMsg='';
+                         if(!this.otDate||!this.otStart||!this.otEnd||!this.reason){ this.errorMsg='Please fill in all required fields.'; return; }
+                         this.saving=true;
+                         const form=new FormData();
+                         form.append('ot_date',this.otDate);
+                         form.append('ot_start_time',this.otStart);
+                         form.append('ot_end_time',this.otEnd);
+                         form.append('reason',this.reason);
+                         const fi=document.getElementById('hrOtDocInput');
+                         if(fi.files[0]) form.append('document',fi.files[0]);
+                         form.append('_token',document.querySelector('meta[name=csrf-token]').content);
+                         const res=await fetch('{{ route('hr.requests.overtime.file') }}',{method:'POST',body:form});
+                         this.saving=false;
+                         const data=await res.json();
+                         if(res.ok){ window.dispatchEvent(new CustomEvent('show-toast',{detail:{message:'Overtime request filed!',type:'success'}})); setTimeout(()=>window.location.reload(),1500); }
+                         else{ this.errorMsg=data.message??'Something went wrong.'; }
+                     }
+                 }">
+                <template x-if="errorMsg"><div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div></template>
                 <div style="margin-bottom:16px;">
                     <label class="flabel">Date</label>
-                    <input type="date" class="finput">
+                    <input type="date" class="finput" x-model="otDate">
                 </div>
                 <div class="frow" style="margin-bottom:16px;">
-                    <div><label class="flabel">OT Start</label><input type="time" class="finput"></div>
-                    <div><label class="flabel">OT End</label><input type="time" class="finput"></div>
+                    <div><label class="flabel">OT Start</label><input type="time" class="finput" x-model="otStart"></div>
+                    <div><label class="flabel">OT End</label><input type="time" class="finput" x-model="otEnd"></div>
                 </div>
                 <div style="margin-bottom:16px;">
                     <label class="flabel">Reason/Remarks</label>
-                    <input type="text" class="finput" placeholder="Enter details">
+                    <input type="text" class="finput" x-model="reason" placeholder="Enter details">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label class="flabel">Supporting Document (optional)</label>
+                    <label class="doc-upload">
+                        <svg style="width:28px;height:28px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <div style="font-size:13px;font-weight:600;color:#374151;" x-text="fileName||'Choose a file to upload'"></div>
+                        <div style="font-size:12px;color:#9ca3af;">PDF or DOCX, max 10MB</div>
+                        <input id="hrOtDocInput" type="file" accept=".pdf,.docx" style="display:none;" @change="handleFile($event)">
+                    </label>
+                </div>
+                <div class="mactions">
+                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
+                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving?'Submitting…':'Submit'"></button>
                 </div>
             </div>
 
             {{-- SHIFT --}}
-            <div x-show="reqType==='shift'" x-transition>
+            <div x-show="reqType==='shift'" x-transition
+                 x-data="{ requestedShiftId:'', effectiveFrom:'', effectiveUntil:'', reason:'', fileName:'', saving:false, errorMsg:'',
+                     handleFile(e){ const f=e.target.files[0]; this.fileName=f?f.name:''; },
+                     async submit(){
+                         this.errorMsg='';
+                         if(!this.requestedShiftId||!this.effectiveFrom||!this.reason){ this.errorMsg='Please fill in all required fields.'; return; }
+                         this.saving=true;
+                         const form=new FormData();
+                         form.append('requested_shift_id',this.requestedShiftId);
+                         form.append('effective_from',this.effectiveFrom);
+                         if(this.effectiveUntil) form.append('effective_until',this.effectiveUntil);
+                         form.append('reason',this.reason);
+                         const fi=document.getElementById('hrShiftDocInput');
+                         if(fi.files[0]) form.append('document',fi.files[0]);
+                         form.append('_token',document.querySelector('meta[name=csrf-token]').content);
+                         const res=await fetch('{{ route('hr.requests.shift.file') }}',{method:'POST',body:form});
+                         this.saving=false;
+                         const data=await res.json();
+                         if(res.ok){ window.dispatchEvent(new CustomEvent('show-toast',{detail:{message:'Shift change request filed!',type:'success'}})); setTimeout(()=>window.location.reload(),1500); }
+                         else{ this.errorMsg=data.message??'Something went wrong.'; }
+                     }
+                 }">
+                <template x-if="errorMsg"><div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div></template>
                 <div style="margin-bottom:16px;">
                     <label class="flabel">Change Shift To</label>
-                    <select class="finput fsel-modal" style="appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;">
+                    <select class="finput" x-model="requestedShiftId" style="appearance:none;width:100%;">
                         <option value="">Choose shift type</option>
-                        <option>Day Shift (8AM-5PM)</option><option>Mid Shift (2PM-11PM)</option><option>Night Shift (10PM-6AM)</option>
+                        @foreach($shiftTypes as $shift)
+                        <option value="{{ $shift->id }}">{{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }})</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="frow" style="margin-bottom:16px;">
-                    <div><label class="flabel">Effective From</label><input type="date" class="finput"></div>
-                    <div><label class="flabel">Effective Until</label><input type="date" class="finput"></div>
+                    <div><label class="flabel">Effective From</label><input type="date" class="finput" x-model="effectiveFrom"></div>
+                    <div><label class="flabel">Effective Until (optional)</label><input type="date" class="finput" x-model="effectiveUntil"></div>
                 </div>
                 <div style="margin-bottom:16px;">
                     <label class="flabel">Reason/Remarks</label>
-                    <input type="text" class="finput" placeholder="Enter details">
+                    <input type="text" class="finput" x-model="reason" placeholder="Enter details">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label class="flabel">Supporting Document (optional)</label>
+                    <label class="doc-upload">
+                        <svg style="width:28px;height:28px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <div style="font-size:13px;font-weight:600;color:#374151;" x-text="fileName||'Choose a file to upload'"></div>
+                        <div style="font-size:12px;color:#9ca3af;">PDF or DOCX, max 10MB</div>
+                        <input id="hrShiftDocInput" type="file" accept=".pdf,.docx" style="display:none;" @change="handleFile($event)">
+                    </label>
+                </div>
+                <div class="mactions">
+                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
+                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving?'Submitting…':'Submit'"></button>
                 </div>
             </div>
 
-            <div style="margin-bottom:16px;" x-show="reqType!==''">
-                <label class="flabel">Supporting Document (optional)</label>
-                <label class="doc-upload">
-                    <svg style="width:28px;height:28px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    <div style="font-size:13px;font-weight:600;color:#374151;">Choose a file to upload</div>
-                    <div style="font-size:12px;color:#9ca3af;">PDF or DOCX file size no more than 10MB</div>
-                    <input type="file" accept=".pdf,.docx" style="display:none;">
-                </label>
-            </div>
-
-            <div class="mactions">
-                <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
-                <button class="btn-save" x-show="reqType!==''">Submit</button>
+            <div x-show="reqType===''">
+                <div class="mactions">
+                    <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
@@ -524,7 +488,7 @@
             <div style="font-size:13px;color:#6b7280;margin-bottom:24px;">Are you sure you want to approve the request from <strong x-text="selName"></strong>? This action cannot be undone.</div>
             <div style="display:flex;justify-content:center;gap:12px;">
                 <button class="btn-cancel" style="min-width:100px;" @click="showApprove=false">Cancel</button>
-                <button style="min-width:100px;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#16a34a;color:#fff;" @click="showApprove=false">Approve</button>
+                <button style="min-width:100px;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#16a34a;color:#fff;" @click="fetch(selApproveUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({})}).then(async r=>{const d=await r.json();showApprove=false;if(r.ok){resultType='success';resultTitle='Request Approved';resultMessage=d.message??'The request has been approved successfully.';showResult=true;setTimeout(()=>window.location.reload(),2500);}else{resultType='error';resultTitle='Approval Failed';resultMessage=d.message??'Something went wrong. Please try again.';showResult=true;}}).catch(()=>{showApprove=false;resultType='error';resultTitle='Error';resultMessage='An error occurred. Please try again.';showResult=true;})">Approve</button>
             </div>
         </div>
     </div>
@@ -537,11 +501,28 @@
             </div>
             <div style="font-size:17px;font-weight:800;color:#111827;margin-bottom:8px;">Reject Request?</div>
             <div style="font-size:13px;color:#6b7280;margin-bottom:14px;">Please provide a reason for rejecting <strong x-text="selName"></strong>'s request.</div>
-            <textarea class="finput" rows="3" placeholder="Enter rejection reason..." style="resize:none;text-align:left;"></textarea>
+            <textarea class="finput" rows="3" placeholder="Enter rejection reason..." style="resize:none;text-align:left;" x-model="rejectReason"></textarea>
             <div style="display:flex;justify-content:center;gap:12px;margin-top:16px;">
                 <button class="btn-cancel" style="min-width:100px;" @click="showReject=false">Cancel</button>
-                <button style="min-width:100px;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#dc2626;color:#fff;" @click="showReject=false">Reject</button>
+                <button style="min-width:100px;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#dc2626;color:#fff;" @click="fetch(selRejectUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({reason:rejectReason,rejection_reason:rejectReason})}).then(async r=>{const d=await r.json();showReject=false;rejectReason='';if(r.ok){resultType='success';resultTitle='Request Rejected';resultMessage=d.message??'The request has been rejected successfully.';showResult=true;setTimeout(()=>window.location.reload(),2500);}else{resultType='error';resultTitle='Rejection Failed';resultMessage=d.message??'Something went wrong. Please try again.';showResult=true;}}).catch(()=>{showReject=false;resultType='error';resultTitle='Error';resultMessage='An error occurred. Please try again.';showResult=true;})">Reject</button>
             </div>
+        </div>
+    </div>
+
+{{-- ══ RESULT MODAL ══ --}}
+    <div x-show="showResult" class="modal-overlay" x-cloak @click.self="showResult=false">
+        <div class="modal-box" style="width:400px;text-align:center;">
+            <div :style="resultType==='success' ? 'width:64px;height:64px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;' : 'width:64px;height:64px;background:#fee2e2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;'">
+                <template x-if="resultType==='success'">
+                    <svg style="width:30px;height:30px;color:#16a34a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                </template>
+                <template x-if="resultType==='error'">
+                    <svg style="width:30px;height:30px;color:#dc2626;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </template>
+            </div>
+            <div style="font-size:18px;font-weight:800;color:#111827;margin-bottom:8px;" x-text="resultTitle"></div>
+            <div style="font-size:13px;color:#6b7280;margin-bottom:24px;" x-text="resultMessage"></div>
+            <button @click="showResult=false" style="padding:10px 32px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#111827;color:#fff;">OK</button>
         </div>
     </div>
 

@@ -73,7 +73,15 @@ class SupervisorDashboardController extends Controller
             'todayLog'        => $todayLog,
             'employeeShift'   => $employeeShift,
             'availableShifts' => $availableShifts,
-            'pendingRequests' => 0,
+            'pendingRequests' => \App\Models\LeaveRequest::where('status', 'pending')
+                ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId)->where('id', '!=', $authEmpId))
+                ->count()
+                + \App\Models\OvertimeRequest::where('status', 'pending')
+                ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId)->where('id', '!=', $authEmpId))
+                ->count()
+                + \App\Models\ShiftChangeRequest::where('status', 'pending')
+                ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId)->where('id', '!=', $authEmpId))
+                ->count(),
             'currentDate'     => Carbon::today()->format('l, F j, Y'),
 
             'totalEmployees' => Employee::where('department_id', $authDeptId)
@@ -105,6 +113,10 @@ class SupervisorDashboardController extends Controller
             ],
 
             'departmentProgress' => $departmentProgress,
+            'upcomingHolidays'   => \App\Models\Holiday::whereDate('date', '>=', $today)
+                ->whereDate('date', '<=', Carbon::today()->endOfMonth())
+                ->orderBy('date')
+                ->get(),
         ];
 
         return view('supervisor.supervisor_dashboard', $data);

@@ -13,17 +13,17 @@
         : ($sidebarUser?->email ?? 'User');
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 
-    $attendanceRoutes = ['employee.attendance.reports', 'employee.attendance.shift', 'employee.attendance.leave', 'employee.leave.management'];
-    $employeeRoutes   = ['employee.dashboard','employee.profile'];
-    $payrollRoutes    = ['employee.payroll', 'employee.payslips', 'employee.contributions'];
-    $requestRoutes    = ['employee.requests.pending','employee.requests.approved'];
+    $attendanceRoutes = ['admin.attendance', 'admin.attendance.logs'];
+    $employeeRoutes   = ['admin.employees', 'admin.employees.create', 'admin.employees.show'];
+    $payrollRoutes    = ['admin.payroll', 'admin.payslips', 'admin.contributions'];
+    $requestRoutes    = ['admin.requests.pending','admin.requests.approved'];
 @endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pending Requests — MEDISOURCE</title>
+    <title>Pending Requests — MEDISOURCE Admin</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -54,8 +54,6 @@
         .search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:9px;padding:8px 14px;}
         .search-box input{border:none;background:transparent;outline:none;font-size:13px;color:#111827;width:150px;font-family:inherit;}
         .fsel{appearance:none;background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:8px 28px 8px 12px;font-size:13px;color:#374151;cursor:pointer;outline:none;font-family:inherit;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
-        .btn-primary{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:var(--blue);color:#fff;transition:background .15s;white-space:nowrap;}
-        .btn-primary:hover{background:var(--blue-dark);}
 
         /* request card */
         .rcard{background:#fff;border:1px solid var(--border);border-radius:14px;margin-bottom:16px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.04);}
@@ -117,7 +115,7 @@
 <body class="bg-gray-50">
 
 {{-- ══════════ SIDEBAR ══════════ --}}
-@include('employee.employee_sidebar')
+@include('admin.admin_sidebar')
 
 {{-- ══════════ MAIN ══════════ --}}
 <div x-data="{
@@ -185,10 +183,6 @@
                 </div>
                 <select class="fsel"><option>All Stages</option><option>Awaiting Approval</option><option>Approved</option><option>Rejected</option></select>
                 <select class="fsel"><option>All Types</option><option>Leave Request</option><option>Overtime Request</option><option>Shift Arrangement</option></select>
-                <button class="btn-primary" @click="showFileReq=true">
-                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    File a Request
-                </button>
             </div>
         </div>
 
@@ -198,11 +192,11 @@
             <div class="rcard-head">
                 <div class="rcard-left">
                     <div class="emp-av" style="background:{{ $req->type === 'overtime' ? '#ef4444' : ($req->type === 'shift' ? '#8b5cf6' : '#3b82f6') }};">
-                        {{ strtoupper(substr(auth()->user()->employee->fname ?? 'M', 0, 1) . substr(auth()->user()->employee->lname ?? 'E', 0, 1)) }}
+                        {{ strtoupper(substr($req->employee->fname ?? 'M', 0, 1) . substr($req->employee->lname ?? 'E', 0, 1)) }}
                     </div>
                     <div>
-                        <div class="emp-name">{{ trim((auth()->user()->employee->fname ?? '') . ' ' . (auth()->user()->employee->lname ?? '')) }}</div>
-                        <div class="emp-dept">{{ auth()->user()->employee->department->name ?? '—' }}</div>
+                        <div class="emp-name">{{ trim(($req->employee->fname ?? '') . ' ' . ($req->employee->lname ?? '')) }}</div>
+                        <div class="emp-dept">{{ $req->employee->department->name ?? '—' }}</div>
                     </div>
                 </div>
                 <div class="rcard-right">
@@ -241,7 +235,7 @@
                 @if($req->document_path)<div style="margin-bottom:10px;"><div class="rlabel">Documents</div><div style="font-size:13px;color:#3b82f6;font-weight:500;">{{ basename($req->document_path) }}</div></div>@endif
                 <div><div class="rlabel">Approval Progress</div>
                 <div class="prog-steps">
-                    <div class="pstep"><div class="pcircle pc-done"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div><div class="pname">You</div><div class="pstatus">Filed</div></div>
+                    <div class="pstep"><div class="pcircle pc-done"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div><div class="pname">Employee</div><div class="pstatus">Filed</div></div>
                     <div class="pline" style="background:#d1d5db;"></div>
                     @if($req->status === 'supervisor_approved')
                     <div class="pstep"><div class="pcircle pc-done"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div><div class="pname">Supervisor</div><div class="pstatus">Approved</div></div>
@@ -253,7 +247,7 @@
                 </div></div>
             </div>
             <div class="action-row" style="grid-template-columns:1fr;">
-                <button class="btn-reject" @click="selId={{ $req->id }};selName='{{ addslashes(trim((auth()->user()->employee->fname ?? '').' '.(auth()->user()->employee->lname ?? ''))) }}';selCancelUrl='/employee/requests/{{ $req->id }}/cancel';showCancel=true">
+                <button class="btn-reject" @click="selId={{ $req->id }};selName='{{ addslashes(trim(($req->employee->fname ?? '').' '.($req->employee->lname ?? ''))) }}';selCancelUrl='/admin/requests/{{ $req->id }}/cancel';showCancel=true">
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Cancel Request
                 </button>
             </div>
@@ -267,195 +261,6 @@
 
     </div>{{-- /padding --}}
 
-    {{-- ══ FILE REQUEST MODAL ══ --}}
-    <div x-show="showFileReq" class="modal-overlay" x-cloak @click.self="showFileReq=false;reqType=''">
-        <div class="modal-box" style="max-height:90vh;overflow-y:auto;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
-                <div class="modal-title">File Request</div>
-                <button @click="showFileReq=false;reqType=''" class="close-btn"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
-            </div>
-
-            <div style="margin-bottom:16px;">
-                <label class="flabel">Request Type</label>
-                <select class="finput fsel-modal" x-model="reqType" style="appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;">
-                    <option value="">Choose request type</option>
-                    <option value="leave">Leave Request</option>
-                    <option value="overtime">Overtime Request</option>
-                    <option value="shift">Shift Arrangement</option>
-                </select>
-            </div>
-
-            {{-- LEAVE --}}
-            <div x-show="reqType==='leave'" x-transition
-                 x-data="{ leaveTypeId:'', startDate:'', endDate:'', reason:'', fileName:'', saving:false, errorMsg:'',
-                     handleFile(e){ const f=e.target.files[0]; this.fileName=f?f.name:''; },
-                     async submit(){
-                         this.errorMsg='';
-                         if(!this.leaveTypeId||!this.startDate||!this.endDate||!this.reason){ this.errorMsg='Please fill in all required fields.'; return; }
-                         this.saving=true;
-                         const form=new FormData();
-                         form.append('leave_type_id',this.leaveTypeId);
-                         form.append('start_date',this.startDate);
-                         form.append('end_date',this.endDate);
-                         form.append('reason',this.reason);
-                         const fi=document.getElementById('empReqLeaveDoc');
-                         if(fi.files[0]) form.append('document',fi.files[0]);
-                         form.append('_token',document.querySelector('meta[name=csrf-token]').content);
-                         const res=await fetch('{{ route('employee.leave.file') }}',{method:'POST',body:form});
-                         this.saving=false;
-                         const data=await res.json();
-                         if(res.ok){ window.dispatchEvent(new CustomEvent('show-toast',{detail:{message:'Leave request filed!',type:'success'}})); setTimeout(()=>window.location.reload(),1500); }
-                         else{ this.errorMsg=data.message??'Something went wrong.'; }
-                     }
-                 }">
-                <template x-if="errorMsg"><div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div></template>
-                <div style="margin-bottom:16px;">
-                    <label class="flabel">Leave Type</label>
-                    <select class="finput" x-model="leaveTypeId" style="appearance:none;width:100%;">
-                        <option value="">Choose leave type</option>
-                        @foreach($leaveTypes as $lt)
-                        <option value="{{ $lt->id }}">{{ $lt->name }} ({{ $lt->code }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="frow" style="margin-bottom:16px;">
-                    <div><label class="flabel">From</label><input type="date" class="finput" x-model="startDate"></div>
-                    <div><label class="flabel">To</label><input type="date" class="finput" x-model="endDate"></div>
-                </div>
-                <div style="margin-bottom:16px;">
-                    <label class="flabel">Reason/Remarks</label>
-                    <input type="text" class="finput" x-model="reason" placeholder="Enter details">
-                </div>
-                <div style="margin-bottom:16px;">
-                    <label class="flabel">Supporting Document (optional)</label>
-                    <label class="doc-upload">
-                        <svg style="width:28px;height:28px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        <div style="font-size:13px;font-weight:600;color:#374151;" x-text="fileName||'Choose a file to upload'"></div>
-                        <div style="font-size:12px;color:#9ca3af;">PDF or DOCX, max 10MB</div>
-                        <input id="empReqLeaveDoc" type="file" accept=".pdf,.docx" style="display:none;" @change="handleFile($event)">
-                    </label>
-                </div>
-                <div class="mactions">
-                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
-                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving?'Submitting…':'Submit'"></button>
-                </div>
-            </div>
-
-            {{-- OVERTIME --}}
-            <div x-show="reqType==='overtime'" x-transition
-                 x-data="{ otDate:'', otStart:'', otEnd:'', reason:'', fileName:'', saving:false, errorMsg:'',
-                     handleFile(e){ const f=e.target.files[0]; this.fileName=f?f.name:''; },
-                     async submit(){
-                         this.errorMsg='';
-                         if(!this.otDate||!this.otStart||!this.otEnd||!this.reason){ this.errorMsg='Please fill in all required fields.'; return; }
-                         this.saving=true;
-                         const form=new FormData();
-                         form.append('ot_date',this.otDate);
-                         form.append('ot_start_time',this.otStart);
-                         form.append('ot_end_time',this.otEnd);
-                         form.append('reason',this.reason);
-                         const fi=document.getElementById('empReqOtDoc');
-                         if(fi.files[0]) form.append('document',fi.files[0]);
-                         form.append('_token',document.querySelector('meta[name=csrf-token]').content);
-                         const res=await fetch('{{ route('employee.requests.overtime.file') }}',{method:'POST',body:form});
-                         this.saving=false;
-                         const data=await res.json();
-                         if(res.ok){ window.dispatchEvent(new CustomEvent('show-toast',{detail:{message:'Overtime request filed!',type:'success'}})); setTimeout(()=>window.location.reload(),1500); }
-                         else{ this.errorMsg=data.message??'Something went wrong.'; }
-                     }
-                 }">
-                <template x-if="errorMsg"><div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div></template>
-                <div style="margin-bottom:16px;">
-                    <label class="flabel">Date</label>
-                    <input type="date" class="finput" x-model="otDate">
-                </div>
-                <div class="frow" style="margin-bottom:16px;">
-                    <div><label class="flabel">OT Start</label><input type="time" class="finput" x-model="otStart"></div>
-                    <div><label class="flabel">OT End</label><input type="time" class="finput" x-model="otEnd"></div>
-                </div>
-                <div style="margin-bottom:16px;">
-                    <label class="flabel">Reason/Remarks</label>
-                    <input type="text" class="finput" x-model="reason" placeholder="Enter details">
-                </div>
-                <div style="margin-bottom:16px;">
-                    <label class="flabel">Supporting Document (optional)</label>
-                    <label class="doc-upload">
-                        <svg style="width:28px;height:28px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        <div style="font-size:13px;font-weight:600;color:#374151;" x-text="fileName||'Choose a file to upload'"></div>
-                        <div style="font-size:12px;color:#9ca3af;">PDF or DOCX, max 10MB</div>
-                        <input id="empReqOtDoc" type="file" accept=".pdf,.docx" style="display:none;" @change="handleFile($event)">
-                    </label>
-                </div>
-                <div class="mactions">
-                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
-                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving?'Submitting…':'Submit'"></button>
-                </div>
-            </div>
-
-            {{-- SHIFT --}}
-            <div x-show="reqType==='shift'" x-transition
-                 x-data="{ requestedShiftId:'', effectiveFrom:'', effectiveUntil:'', reason:'', fileName:'', saving:false, errorMsg:'',
-                     handleFile(e){ const f=e.target.files[0]; this.fileName=f?f.name:''; },
-                     async submit(){
-                         this.errorMsg='';
-                         if(!this.requestedShiftId||!this.effectiveFrom||!this.reason){ this.errorMsg='Please fill in all required fields.'; return; }
-                         this.saving=true;
-                         const form=new FormData();
-                         form.append('requested_shift_id',this.requestedShiftId);
-                         form.append('effective_from',this.effectiveFrom);
-                         if(this.effectiveUntil) form.append('effective_until',this.effectiveUntil);
-                         form.append('reason',this.reason);
-                         const fi=document.getElementById('empReqShiftDoc');
-                         if(fi.files[0]) form.append('document',fi.files[0]);
-                         form.append('_token',document.querySelector('meta[name=csrf-token]').content);
-                         const res=await fetch('{{ route('employee.requests.shift.file') }}',{method:'POST',body:form});
-                         this.saving=false;
-                         const data=await res.json();
-                         if(res.ok){ window.dispatchEvent(new CustomEvent('show-toast',{detail:{message:'Shift change request filed!',type:'success'}})); setTimeout(()=>window.location.reload(),1500); }
-                         else{ this.errorMsg=data.message??'Something went wrong.'; }
-                     }
-                 }">
-                <template x-if="errorMsg"><div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div></template>
-                <div style="margin-bottom:16px;">
-                    <label class="flabel">Change Shift To</label>
-                    <select class="finput" x-model="requestedShiftId" style="appearance:none;width:100%;">
-                        <option value="">Choose shift type</option>
-                        @foreach($shiftTypes as $shift)
-                        <option value="{{ $shift->id }}">{{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="frow" style="margin-bottom:16px;">
-                    <div><label class="flabel">Effective From</label><input type="date" class="finput" x-model="effectiveFrom"></div>
-                    <div><label class="flabel">Effective Until (optional)</label><input type="date" class="finput" x-model="effectiveUntil"></div>
-                </div>
-                <div style="margin-bottom:16px;">
-                    <label class="flabel">Reason/Remarks</label>
-                    <input type="text" class="finput" x-model="reason" placeholder="Enter details">
-                </div>
-                <div style="margin-bottom:16px;">
-                    <label class="flabel">Supporting Document (optional)</label>
-                    <label class="doc-upload">
-                        <svg style="width:28px;height:28px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        <div style="font-size:13px;font-weight:600;color:#374151;" x-text="fileName||'Choose a file to upload'"></div>
-                        <div style="font-size:12px;color:#9ca3af;">PDF or DOCX, max 10MB</div>
-                        <input id="empReqShiftDoc" type="file" accept=".pdf,.docx" style="display:none;" @change="handleFile($event)">
-                    </label>
-                </div>
-                <div class="mactions">
-                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
-                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving?'Submitting…':'Submit'"></button>
-                </div>
-            </div>
-
-            <div x-show="reqType===''">
-                <div class="mactions">
-                    <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     {{-- ══ CANCEL CONFIRM ══ --}}
     <div x-show="showCancel" class="modal-overlay" x-cloak @click.self="showCancel=false">
         <div class="modal-box" style="width:420px;text-align:center;">
@@ -467,7 +272,7 @@
             <div style="display:flex;justify-content:center;gap:12px;">
                 <button class="btn-cancel" style="min-width:100px;" @click="showCancel=false">Back</button>
                 <button style="min-width:100px;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#dc2626;color:#fff;"
-                    @click="fetch(selCancelUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({})}).then(async r=>{const d=await r.json();showCancel=false;if(r.ok){resultType='success';resultTitle='Request Cancelled';resultMessage=d.message??'Your request has been cancelled successfully.';showResult=true;setTimeout(()=>window.location.reload(),2500);}else{resultType='error';resultTitle='Cancellation Failed';resultMessage=d.message??'Something went wrong. Please try again.';showResult=true;}}).catch(()=>{showCancel=false;resultType='error';resultTitle='Error';resultMessage='An error occurred. Please try again.';showResult=true;})">
+                    @click="fetch(selCancelUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({})}).then(async r=>{const d=await r.json();showCancel=false;if(r.ok){resultType='success';resultTitle='Request Cancelled';resultMessage=d.message??'The request has been cancelled successfully.';showResult=true;setTimeout(()=>window.location.reload(),2500);}else{resultType='error';resultTitle='Cancellation Failed';resultMessage=d.message??'Something went wrong. Please try again.';showResult=true;}}).catch(()=>{showCancel=false;resultType='error';resultTitle='Error';resultMessage='An error occurred. Please try again.';showResult=true;})">
                     Yes, Cancel
                 </button>
             </div>

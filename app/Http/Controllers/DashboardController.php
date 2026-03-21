@@ -7,6 +7,9 @@ use Carbon\Carbon;
 use App\Models\Employee;
 use App\Models\AttendanceLog;
 use App\Models\Department;
+use App\Models\LeaveRequest;
+use App\Models\OvertimeRequest;
+use App\Models\ShiftChangeRequest;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -135,7 +138,9 @@ $availableShifts = \App\Models\Shift::where('is_active', true)->get();
         'presentToday'   => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['present', 'undertime', 'overtime'])->count(),
 'lateToday'      => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['late', 'absent'])->count(),
 'absentToday'    => AttendanceLog::whereDate('attendance_date', $today)->where('status', 'absent')->count(),
-'pendingRequests' => 12, // keep dummy until requests module is built
+'pendingRequests' => \App\Models\LeaveRequest::whereIn('status', ['pending', 'supervisor_approved'])->count()
+    + \App\Models\OvertimeRequest::whereIn('status', ['pending', 'supervisor_approved'])->count()
+    + \App\Models\ShiftChangeRequest::whereIn('status', ['pending', 'supervisor_approved'])->count(),
 'todayLog'        => $todayLog,
 'availableShifts' => $availableShifts,
        'attendanceSummary' => [
@@ -172,7 +177,11 @@ $availableShifts = \App\Models\Shift::where('is_active', true)->get();
             (object)['title' => 'Health & Safety Workshop', 'date' => Carbon::today()->addDays(6)->format('M d, Y'), 'time' => '9:30 AM', 'department' => 'Nursing', 'color' => 'purple'],
             (object)['title' => 'Monthly Review', 'date' => Carbon::today()->addDays(9)->format('M d, Y'), 'time' => '3:00 PM', 'department' => 'Management', 'color' => 'red'],
         ],
-        'currentDate' => Carbon::today()->format('l, F j, Y'),
+        'currentDate'      => Carbon::today()->format('l, F j, Y'),
+        'upcomingHolidays' => \App\Models\Holiday::whereDate('date', '>=', $today)
+            ->whereDate('date', '<=', Carbon::today()->endOfMonth())
+            ->orderBy('date')
+            ->get(),
         'totalDepartments' => 7,
         'newHires' => 5,
         'birthdaysThisMonth' => 3,

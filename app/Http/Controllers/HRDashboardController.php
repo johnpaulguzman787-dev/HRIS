@@ -64,6 +64,11 @@ class HrDashboardController extends Controller
             ];
         })->filter(fn($d) => $d['total'] > 0)->values();
 
+        $upcomingHolidays = \App\Models\Holiday::whereDate('date', '>=', $today)
+            ->whereDate('date', '<=', Carbon::today()->endOfMonth())
+            ->orderBy('date')
+            ->get();
+
         $data = [
             'dashInitials'    => $dashInitials,
             'dashName'        => $dashName,
@@ -71,7 +76,9 @@ class HrDashboardController extends Controller
             'totalEmployees'  => Employee::count(),
             'presentToday'    => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['present', 'undertime', 'overtime'])->count(),
             'lateToday'       => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['late', 'absent'])->count(),
-            'pendingRequests' => 12,
+            'pendingRequests' => \App\Models\LeaveRequest::whereIn('status', ['pending', 'supervisor_approved'])->count()
+                + \App\Models\OvertimeRequest::whereIn('status', ['pending', 'supervisor_approved'])->count()
+                + \App\Models\ShiftChangeRequest::whereIn('status', ['pending', 'supervisor_approved'])->count(),
             'todayLog'        => $todayLog,
             'availableShifts' => $availableShifts,
             'employeeShift'   => $employeeShift,
@@ -82,7 +89,8 @@ class HrDashboardController extends Controller
                 'on_leave' => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['on_leave', 'holiday'])->count(),
             ],
             'departmentProgress' => $departmentProgress,
-            'currentDate' => Carbon::today()->format('l, F j, Y'),
+            'currentDate'      => Carbon::today()->format('l, F j, Y'),
+            'upcomingHolidays' => $upcomingHolidays,
         ];
 
         return view('hr.hr_dashboard', $data);

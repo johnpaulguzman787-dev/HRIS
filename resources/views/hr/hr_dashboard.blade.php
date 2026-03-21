@@ -6,6 +6,7 @@
 <div x-data="{
         sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
         workSetup: '{{ $todayLog?->work_setup ?? ($employeeShift?->work_setup ?? "wfh") }}',
+        onLeave: {{ $todayLog?->status === 'on_leave' ? 'true' : 'false' }},
         clockedIn: {{ $todayLog?->clock_in ? 'true' : 'false' }},
         clockedOut: {{ $todayLog?->clock_out ? 'true' : 'false' }},
         onBreak:  {{ $todayLog?->break_start && !$todayLog?->break_end ? 'true' : 'false' }},
@@ -280,12 +281,13 @@
                         <p class="text-xs text-center font-medium" x-show="clockedIn && !onBreak && !clockedOut" style="color:#3b82f6;"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
                         <p class="text-xs text-center font-medium" x-show="onBreak" style="color:#f59e0b;">On break · timer paused</p>
                         <p class="text-xs text-center font-semibold" x-show="clockedOut" style="color:#22c55e;">✓ Attendance recorded · <span x-text="elapsedDisplay"></span></p>
+                        <p x-show="onLeave" class="text-xs text-center font-semibold" style="color:#6366f1;">You are on approved leave today.</p>
                     </div>
                     <div class="mt-auto flex gap-2">
                         <button @click="handleClock()"
-                                :disabled="(clockedIn && !onBreak) || clockedOut"
+                                :disabled="onLeave || (clockedIn && !onBreak) || clockedOut"
                                 class="clock-btn flex-1 py-3 text-white font-bold text-xs tracking-widest uppercase"
-                                :style="(clockedIn && !onBreak) || clockedOut ? 'background:#94a3b8;' : 'background:#3b82f6;'">
+                                :style="onLeave || (clockedIn && !onBreak) || clockedOut ? 'background:#94a3b8;' : 'background:#3b82f6;'">
                             TIME IN
                         </button>
                         <button @click="handleBreak()"
@@ -343,8 +345,17 @@
                     <!-- Upcoming Events -->
                     <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-3">Upcoming Events</h2>
                     <div class="space-y-3">
-                        <div class="shimmer h-10 rounded-lg"></div>
-                        <div class="shimmer h-10 rounded-lg" style="animation-delay:0.15s"></div>
+                        @forelse($upcomingHolidays as $holiday)
+                        <div class="flex items-center gap-3 p-3 rounded-lg" style="background:#eff6ff;">
+                            <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:#3b82f6;"></div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-semibold text-gray-700 truncate">{{ $holiday->name }}</p>
+                                <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($holiday->date)->format('F d, Y') }} · {{ ucfirst($holiday->type) }}</p>
+                            </div>
+                        </div>
+                        @empty
+                        <p class="text-xs text-gray-400 text-center py-3">No upcoming events this month.</p>
+                        @endforelse
                     </div>
                 </div>
 

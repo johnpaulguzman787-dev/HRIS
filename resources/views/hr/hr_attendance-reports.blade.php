@@ -137,12 +137,14 @@
                     <p class="text-xs text-center font-medium" x-show="clockedIn && !onBreak && !clockedOut" style="color:#3b82f6;"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
                     <p class="text-xs text-center font-medium" x-show="onBreak" style="color:#f59e0b;">On break · timer paused</p>
                     <p class="text-xs text-center font-semibold" x-show="clockedOut" style="color:#22c55e;">✓ Attendance recorded · <span x-text="elapsedDisplay"></span></p>
+                    <p x-show="onLeave" class="text-xs text-center font-semibold" style="color:#6366f1;">You are on approved leave today.</p>
                 </div>
+                
                 <div class="mt-auto flex gap-2">
                     <button @click="handleClock()"
-                            :disabled="(clockedIn && !onBreak) || clockedOut"
+                            :disabled="onLeave || (clockedIn && !onBreak) || clockedOut"
                             class="clock-btn flex-1 py-3 text-white font-bold text-xs tracking-widest uppercase rounded-2xl"
-                            :style="(clockedIn && !onBreak) || clockedOut ? 'background:#94a3b8;' : 'background:#3b82f6;'">
+                            :style="onLeave || (clockedIn && !onBreak) || clockedOut ? 'background:#94a3b8;' : 'background:#3b82f6;'"
                         TIME IN
                     </button>
                     <button @click="handleBreak()"
@@ -278,6 +280,7 @@ function attendancePage() {
     return {
         workSetup: '{{ $todayLog?->work_setup ?? ($employeeShift?->work_setup ?? "wfh") }}',
         assignedShiftId: {{ $employeeShift?->shift_id ?? 'null' }},
+        onLeave:     {{ $todayLog?->status === 'on_leave' ? 'true' : 'false' }},
         clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
         clockedOut:  {{ $todayLog?->clock_out   ? 'true' : 'false' }},
         onBreak:     {{ $todayLog?->break_start && !$todayLog?->break_end ? 'true' : 'false' }},

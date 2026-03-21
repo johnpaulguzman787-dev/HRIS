@@ -54,6 +54,10 @@ class EmployeeDashboardController extends Controller
             'stats'           => $stats,
             'month'           => $month,
             'year'            => $year,
+            'upcomingHolidays' => \App\Models\Holiday::whereDate('date', '>=', $today)
+                ->whereDate('date', '<=', Carbon::today()->endOfMonth())
+                ->orderBy('date')
+                ->get(),
         ];
 
         return view('employee.employee_dashboard', $data);

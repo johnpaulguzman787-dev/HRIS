@@ -763,4 +763,120 @@ class SupervisorAttendanceController extends Controller
             'filed_on'         => $leave->created_at->format('m/d/Y'),
         ]);
     }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // SHIFT ASSIGNMENT
+    // ══════════════════════════════════════════════════════════════════════
+
+    public function employeesByDept(Request $request)
+    {
+        $authEmployee = Employee::where('user_id', Auth::id())->first();
+        $authDeptId   = $authEmployee?->department_id;
+
+        $employees = Employee::where('department_id', $authDeptId)
+            ->where('employment_status', 'Active')
+            ->get(['id', 'fname', 'lname']);
+
+        return response()->json($employees);
+    }
+
+    public function assignShift(Request $request)
+    {
+        $request->validate([
+            'employee_id'    => 'required|exists:employees,id',
+            'shift_id'       => 'required|exists:shifts,id',
+            'work_setup'     => 'required|in:office,wfh',
+            'effective_date' => 'required|date',
+            'end_date'       => 'nullable|date|after_or_equal:effective_date',
+            'days_off'       => 'nullable|array',
+        ]);
+
+        EmployeeShift::where('employee_id', $request->employee_id)
+            ->where('is_active', true)
+            ->update([
+                'is_active' => false,
+                'end_date'  => Carbon::parse($request->effective_date)->subDay()->toDateString(),
+            ]);
+
+        EmployeeShift::create([
+            'employee_id'    => $request->employee_id,
+            'shift_id'       => $request->shift_id,
+            'work_setup'     => $request->work_setup,
+            'effective_date' => $request->effective_date,
+            'end_date'       => $request->end_date ?? null,
+            'days_off'       => json_encode($request->days_off ?? ['Sat', 'Sun']),
+            'is_active'      => true,
+        ]);
+
+        return response()->json(['message' => 'Shift assigned successfully.']);
+    }
+
+    public function updateShift(Request $request)
+    {
+        $request->validate([
+            'employee_shift_id' => 'required|exists:employee_shifts,id',
+            'shift_id'          => 'required|exists:shifts,id',
+            'work_setup'        => 'required|in:office,wfh',
+            'effective_date'    => 'required|date',
+            'end_date'          => 'nullable|date|after_or_equal:effective_date',
+            'days_off'          => 'nullable|array',
+        ]);
+
+        $empShift = EmployeeShift::findOrFail($request->employee_shift_id);
+        $empShift->update([
+            'shift_id'       => $request->shift_id,
+            'work_setup'     => $request->work_setup,
+            'effective_date' => $request->effective_date,
+            'end_date'       => $request->end_date ?? null,
+            'days_off'       => json_encode($request->days_off ?? ['Sat', 'Sun']),
+        ]);
+
+        return response()->json(['message' => 'Shift updated successfully.']);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // REQUESTS & APPROVAL — added below, nothing above was changed
+    // ══════════════════════════════════════════════════════════════════════
+
+    public function pendingRequests(Request $request)
+    {
+        $authEmployee = Employee::where('user_id', Auth::id())->first();
+        $authDeptId   = $authEmployee?->department_id;
+        $departments  = Department::where('id', $authDeptId)->get();
+
+        $awaitingCount = 0;
+        $leaveCount    = 0;
+        $shiftCount    = 0;
+        $overtimeCount = 0;
+        $requests      = collect();
+
+        return view('supervisor.supervisor_pending-requests', compact(
+            'departments',
+            'awaitingCount', 'leaveCount', 'shiftCount', 'overtimeCount',
+            'requests'
+        ));
+    }
+
+    public function approvedRequests(Request $request)
+    {
+        $authEmployee = Employee::where('user_id', Auth::id())->first();
+        $authDeptId   = $authEmployee?->department_id;
+        $departments  = Department::where('id', $authDeptId)->get();
+        $requests     = collect();
+
+        return view('supervisor.supervisor_approved-requests', compact('departments', 'requests'));
+    }
+
+    public function approveRequest(Request $request, $id)
+    {
+        // TODO: implement approval logic per request type
+        return response()->json(['message' => 'Request approved.']);
+    }
+
+    public function rejectRequest(Request $request, $id)
+    {
+        $request->validate(['reason' => 'nullable|string|max:500']);
+        // TODO: implement rejection logic per request type
+        return response()->json(['message' => 'Request rejected.']);
+    }
 }

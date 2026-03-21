@@ -142,6 +142,11 @@ Route::middleware(['auth'])->group(function () {
 // ─────────────────────────────────────────────────────────────────────
     // ──────────────────────────────────────────────────────────────────────
 
+    // ── EMPLOYEE REQUESTS & APPROVAL ─────────────────────────────────────
+    Route::get('/employee/requests/pending',       [EmployeeAttendanceController::class, 'pendingRequests'])->name('employee.requests.pending');
+    Route::get('/employee/requests/approved',      [EmployeeAttendanceController::class, 'approvedRequests'])->name('employee.requests.approved');
+    Route::post('/employee/requests/{id}/cancel',  [EmployeeAttendanceController::class, 'cancelRequest'])->name('employee.requests.cancel');
+    // ──────────────────────────────────────────────────────────────────────
     // ── HR ATTENDANCE ROUTES ───────────────────────────────────────────────
     Route::get('/hr/attendance/reports', [HRAttendanceController::class, 'index'])->name('hr.attendance.reports');
     Route::get('/hr/attendance/today', [HRAttendanceController::class, 'today'])->name('hr.attendance.today');
@@ -172,6 +177,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/hr/leave/{id}/reject',         [HRAttendanceController::class, 'rejectLeave'])->name('hr.leave.reject');
     Route::post('/hr/leave/{id}/cancel',         [HRAttendanceController::class, 'cancelLeave'])->name('hr.leave.cancel');
     Route::get('/hr/leave/{id}',                 [HRAttendanceController::class, 'getLeaveRequest'])->name('hr.leave.get');
+// ── HR REQUESTS & APPROVAL ────────────────────────────────────────────
+    Route::get('/hr/requests/pending',           [HRAttendanceController::class, 'pendingRequests'])->name('hr.requests.pending');
+    Route::get('/hr/requests/approved',          [HRAttendanceController::class, 'approvedRequests'])->name('hr.requests.approved');
+    Route::post('/hr/requests/{id}/approve',     [HRAttendanceController::class, 'approveRequest'])->name('hr.requests.approve');
+    Route::post('/hr/requests/{id}/reject',      [HRAttendanceController::class, 'rejectRequest'])->name('hr.requests.reject');
 // ──────────────────────────────────────────────────────────────────────
 
 
@@ -195,6 +205,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/supervisor/shift/employees-by-dept', [SupervisorAttendanceController::class, 'employeesByDept'])->name('supervisor.shift.employees-by-dept');
     // ──────────────────────────────────────────────────────────────────────
 
+    // ── SUPERVISOR REQUESTS & APPROVAL ──────────────────────────────────
+    Route::get('/supervisor/requests/pending',           [SupervisorAttendanceController::class, 'pendingRequests'])->name('supervisor.requests.pending');
+    Route::get('/supervisor/requests/approved',          [SupervisorAttendanceController::class, 'approvedRequests'])->name('supervisor.requests.approved');
+    Route::post('/supervisor/requests/{id}/approve',     [SupervisorAttendanceController::class, 'approveRequest'])->name('supervisor.requests.approve');
+    Route::post('/supervisor/requests/{id}/reject',      [SupervisorAttendanceController::class, 'rejectRequest'])->name('supervisor.requests.reject');
+    // ──────────────────────────────────────────────────────────────────────
     // ── ADMIN ATTENDANCE ROUTES ────────────────────────────────────────────
     Route::get('/admin/attendance/reports', [AdminAttendanceController::class, 'index'])->name('admin.attendance.reports');
     Route::get('/admin/attendance/today', [AdminAttendanceController::class, 'today'])->name('admin.attendance.today');

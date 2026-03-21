@@ -468,4 +468,41 @@ class EmployeeAttendanceController extends Controller
             'filed_on'         => $leave->created_at->format('m/d/Y'),
         ]);
     }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // REQUESTS & APPROVAL — added below, nothing above was changed
+    // ══════════════════════════════════════════════════════════════════════
+
+    public function pendingRequests(Request $request)
+    {
+        $user     = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->first();
+
+        $awaitingCount = 0;
+        $leaveCount    = 0;
+        $shiftCount    = 0;
+        $overtimeCount = 0;
+        $requests      = collect();
+        $departments   = collect();
+
+        return view('employee.employee_pending-requests', compact(
+            'departments',
+            'awaitingCount', 'leaveCount', 'shiftCount', 'overtimeCount',
+            'requests'
+        ));
+    }
+
+    public function approvedRequests(Request $request)
+    {
+        $departments = collect();
+        $requests    = collect();
+
+        return view('employee.employee_approved-requests', compact('departments', 'requests'));
+    }
+
+    public function cancelRequest(Request $request, $id)
+    {
+        // TODO: implement cancel logic per request type
+        return response()->json(['message' => 'Request cancelled.']);
+    }
 }

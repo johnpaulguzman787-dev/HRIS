@@ -791,12 +791,6 @@ class HRAttendanceController extends Controller
         return response()->json(['message' => 'Holiday deleted successfully.']);
     }
 
-
-
-
-
-
-
     // ══════════════════════════════════════════════════════════════════════
     // LEAVE MANAGEMENT
     // ══════════════════════════════════════════════════════════════════════
@@ -1184,5 +1178,47 @@ class HRAttendanceController extends Controller
         ]);
 
         return response()->json(['message' => 'Leave type updated successfully.']);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // REQUESTS & APPROVAL — added below, nothing above was changed
+    // ══════════════════════════════════════════════════════════════════════
+
+    public function pendingRequests(Request $request)
+    {
+        $departments = Department::orderBy('name')->get();
+
+        $awaitingCount = 0;
+        $leaveCount    = 0;
+        $shiftCount    = 0;
+        $overtimeCount = 0;
+        $requests      = collect();
+
+        return view('hr.hr_pending-requests', compact(
+            'departments',
+            'awaitingCount', 'leaveCount', 'shiftCount', 'overtimeCount',
+            'requests'
+        ));
+    }
+
+    public function approvedRequests(Request $request)
+    {
+        $departments = Department::orderBy('name')->get();
+        $requests    = collect();
+
+        return view('hr.hr_approved-requests', compact('departments', 'requests'));
+    }
+
+    public function approveRequest(Request $request, $id)
+    {
+        // TODO: implement approval logic per request type
+        return response()->json(['message' => 'Request approved.']);
+    }
+
+    public function rejectRequest(Request $request, $id)
+    {
+        $request->validate(['reason' => 'nullable|string|max:500']);
+        // TODO: implement rejection logic per request type
+        return response()->json(['message' => 'Request rejected.']);
     }
 }

@@ -68,10 +68,10 @@ class SupervisorAttendanceController extends Controller
             ->first();
 
         if ($existing && $existing->status === 'on_leave') {
-    return response()->json(['message' => 'You are on approved leave today.'], 409);
-}
+            return response()->json(['message' => 'You are on approved leave today.'], 409);
+        }
 
-if ($existing && $existing->clock_in && $existing->break_start && !$existing->break_end && !$existing->clock_out) {
+        if ($existing && $existing->clock_in && $existing->break_start && !$existing->break_end && !$existing->clock_out) {
             $breakMinutes = (int) Carbon::parse($existing->break_start)->diffInMinutes($now);
             $existing->update([
                 'break_end'     => $now,
@@ -452,7 +452,6 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
 
         $departments = Department::where('id', $authDeptId)->get();
 
-        // ── Weekly Schedule ────────────────────────────────────────────────
         $weekStart = $request->get('week_start')
             ? Carbon::parse($request->get('week_start'))->startOfWeek(Carbon::MONDAY)
             : Carbon::now()->startOfWeek(Carbon::MONDAY);
@@ -517,7 +516,6 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
             ]);
         }
 
-        // ── Shift Types (for modals only, no tab) ─────────────────────────
         $shiftTypes = \App\Models\Shift::where('is_active', true)
             ->withCount('employeeShifts as assigned')
             ->orderBy('name')
@@ -559,7 +557,6 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
             ->orderBy('fname')
             ->get();
 
-        // ── MY LEAVE tab ──────────────────────────────────────────────
         $myLeaveStats    = [];
         $myLeaveRequests = collect();
 
@@ -584,7 +581,6 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
             }
         }
 
-        // ── LEAVE CREDITS tab — dept employees only ───────────────────
         $creditStats  = [];
         $leaveHistory = collect();
 
@@ -614,7 +610,6 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
             }
         }
 
-        // ── LEAVE CALENDAR tab — dept only ────────────────────────────
         $calendarEvents = collect();
 
         if ($activeTab === 'leave-calendar') {
@@ -841,7 +836,7 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
     }
 
     // ══════════════════════════════════════════════════════════════════════
-    // REQUESTS & APPROVAL — added below, nothing above was changed
+    // REQUESTS & APPROVAL
     // ══════════════════════════════════════════════════════════════════════
 
     public function pendingRequests(Request $request)
@@ -856,7 +851,6 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
         $filterType = $request->get('type', 'all');
         $search     = $request->get('search');
 
-        // ── Leave Requests — dept employees only, excluding supervisor's own ──
         $leaveQuery = LeaveRequest::with(['employee.department', 'employee.jobTitle', 'leaveType'])
             ->where('status', 'pending')
             ->where('employee_id', '!=', $authEmpId)
@@ -867,7 +861,6 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
             );
         }
 
-        // ── Overtime Requests — dept employees only, excluding supervisor's own ──
         $otQuery = OvertimeRequest::with(['employee.department', 'employee.jobTitle'])
             ->where('status', 'pending')
             ->where('employee_id', '!=', $authEmpId)
@@ -878,7 +871,6 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
             );
         }
 
-        // ── Shift Change Requests — dept employees only, excluding supervisor's own ──
         $shiftQuery = ShiftChangeRequest::with(['employee.department', 'employee.jobTitle', 'currentShift', 'requestedShift'])
             ->where('status', 'pending')
             ->where('employee_id', '!=', $authEmpId)
@@ -978,7 +970,6 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
         $authEmployee = Employee::where('user_id', Auth::id())->firstOrFail();
         $authDeptId   = $authEmployee->department_id;
 
-        // Determine type from query param or try all models
         $type = $request->get('type', 'leave');
 
         if ($type === 'overtime') {
@@ -1009,7 +1000,6 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
             return response()->json(['message' => 'Shift change request forwarded to HR for final approval.']);
         }
 
-        // Default: leave
         $leave = LeaveRequest::whereHas('employee', fn($q) => $q->where('department_id', $authDeptId))
             ->findOrFail($id);
         if ($leave->status !== 'pending') {
@@ -1058,7 +1048,6 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
             return response()->json(['message' => 'Shift change request rejected.']);
         }
 
-        // Default: leave
         $leave = LeaveRequest::whereHas('employee', fn($q) => $q->where('department_id', $authDeptId))
             ->findOrFail($id);
         if ($leave->status !== 'pending') {
@@ -1154,10 +1143,4 @@ if ($existing && $existing->clock_in && $existing->break_start && !$existing->br
 
         return response()->json(['message' => 'Shift change request filed successfully.', 'ref_no' => $refNo]);
     }
-
-
-
-
-
-
 }

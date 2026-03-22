@@ -66,10 +66,10 @@ class EmployeeAttendanceController extends Controller
             ->first();
 
         if ($existing && $existing->status === 'on_leave') {
-    return response()->json(['message' => 'You are on approved leave today.'], 409);
-}
+            return response()->json(['message' => 'You are on approved leave today.'], 409);
+        }
 
-if ($existing && $existing->clock_in && $existing->break_start && !$existing->break_end && !$existing->clock_out) {
+        if ($existing && $existing->clock_in && $existing->break_start && !$existing->break_end && !$existing->clock_out) {
             $breakMinutes = (int) Carbon::parse($existing->break_start)->diffInMinutes($now);
             $existing->update([
                 'break_end'     => $now,

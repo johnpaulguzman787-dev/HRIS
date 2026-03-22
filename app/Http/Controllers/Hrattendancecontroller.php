@@ -54,10 +54,10 @@ class HRAttendanceController extends Controller
             ->first() : null;
 
         $pendingRequests = \App\Models\LeaveRequest::whereIn('status', ['pending', 'supervisor_approved'])->count()
-    + \App\Models\OvertimeRequest::whereIn('status', ['pending', 'supervisor_approved'])->count()
-    + \App\Models\ShiftChangeRequest::whereIn('status', ['pending', 'supervisor_approved'])->count();
+            + \App\Models\OvertimeRequest::whereIn('status', ['pending', 'supervisor_approved'])->count()
+            + \App\Models\ShiftChangeRequest::whereIn('status', ['pending', 'supervisor_approved'])->count();
 
-return view('hr.hr_attendance-reports', compact('employeeShift', 'availableShifts', 'stats', 'todayLog', 'month', 'year', 'pendingRequests'));
+        return view('hr.hr_attendance-reports', compact('employeeShift', 'availableShifts', 'stats', 'todayLog', 'month', 'year', 'pendingRequests'));
     }
 
     public function clockIn(Request $request)
@@ -70,11 +70,11 @@ return view('hr.hr_attendance-reports', compact('employeeShift', 'availableShift
         $existing = AttendanceLog::where('employee_id', $employee->id)
             ->whereDate('attendance_date', $today)
             ->first();
-   
 
-if ($existing && $existing->status === 'on_leave') {
-    return response()->json(['message' => 'You are on approved leave today.'], 409);
-}
+        if ($existing && $existing->status === 'on_leave') {
+            return response()->json(['message' => 'You are on approved leave today.'], 409);
+        }
+
         if ($existing && $existing->clock_in && $existing->break_start && !$existing->break_end && !$existing->clock_out) {
             $breakMinutes = (int) Carbon::parse($existing->break_start)->diffInMinutes($now);
             $existing->update([
@@ -142,8 +142,6 @@ if ($existing && $existing->status === 'on_leave') {
                 'status'       => $status,
             ]
         );
-
-
 
         return response()->json([
             'message'      => 'Clocked in successfully.',
@@ -273,9 +271,9 @@ if ($existing && $existing->status === 'on_leave') {
             ->whereDate('attendance_date', $today)
             ->firstOrFail();
 
-        if (!$log->clock_in)  return response()->json(['message' => 'Not clocked in yet.'], 422);
+        if (!$log->clock_in)   return response()->json(['message' => 'Not clocked in yet.'], 422);
         if ($log->break_start) return response()->json(['message' => 'Already on break.'], 409);
-        if ($log->clock_out)  return response()->json(['message' => 'Already clocked out.'], 409);
+        if ($log->clock_out)   return response()->json(['message' => 'Already clocked out.'], 409);
 
         $log->update(['break_start' => $now]);
 
@@ -457,7 +455,6 @@ if ($existing && $existing->status === 'on_leave') {
         $activeTab   = $request->get('tab', 'weekly');
         $departments = Department::orderBy('name')->get();
 
-        // ── Weekly Schedule ────────────────────────────────────────────────
         $weekStart = $request->get('week_start')
             ? Carbon::parse($request->get('week_start'))->startOfWeek(Carbon::MONDAY)
             : Carbon::now()->startOfWeek(Carbon::MONDAY);
@@ -467,7 +464,6 @@ if ($existing && $existing->status === 'on_leave') {
             ->where('employment_status', 'Active')
             ->get();
 
-        // Fetch all active employee_shifts covering this week
         $allShifts = EmployeeShift::with('shift')
             ->whereIn('employee_id', $employees->pluck('id'))
             ->where('is_active', true)
@@ -478,14 +474,12 @@ if ($existing && $existing->status === 'on_leave') {
             ->get()
             ->keyBy('employee_id');
 
-        // Fetch on_leave attendance logs for this week
         $leaveLogs = AttendanceLog::whereIn('employee_id', $employees->pluck('id'))
             ->whereBetween('attendance_date', [$weekStart->toDateString(), $weekEnd->toDateString()])
             ->where('status', 'on_leave')
             ->get()
             ->groupBy('employee_id');
 
-        // Build schedule records
         $scheduleRecords = collect();
         foreach ($employees as $emp) {
             $empShift = $allShifts->get($emp->id);
@@ -524,7 +518,6 @@ if ($existing && $existing->status === 'on_leave') {
             ]);
         }
 
-        // ── Shift Types ────────────────────────────────────────────────────
         $shiftTypeQuery = \App\Models\Shift::where('is_active', true)
             ->withCount('employeeShifts as assigned');
 
@@ -546,15 +539,7 @@ if ($existing && $existing->status === 'on_leave') {
             return $shift;
         });
 
-
-        // ── Holiday Calendar ───────────────────────────────────────────────
         $currentYear     = (int) $request->get('year', now()->year);
-        $holidays        = collect();
-        $regularHolidays = 0;
-        $specialHolidays = 0;
-        $localHolidays   = 0;
-        $localRegion     = '—';
-
         $holidays        = \App\Models\Holiday::whereYear('date', $currentYear)->orderBy('date')->get();
         $regularHolidays = $holidays->where('type', 'regular')->count();
         $specialHolidays = $holidays->where('type', 'special')->count();
@@ -736,8 +721,7 @@ if ($existing && $existing->status === 'on_leave') {
         return response()->json(['message' => 'Shift type updated successfully.']);
     }
 
-    
-// ══════════════════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════════════════
     // HOLIDAYS
     // ══════════════════════════════════════════════════════════════════════
 
@@ -816,7 +800,6 @@ if ($existing && $existing->status === 'on_leave') {
         $user     = Auth::user();
         $employee = Employee::where('user_id', $user->id)->first();
 
-        // ── MY LEAVE tab ──────────────────────────────────────────────
         $myLeaveStats    = [];
         $myLeaveRequests = collect();
 
@@ -844,7 +827,6 @@ if ($existing && $existing->status === 'on_leave') {
             }
         }
 
-        // ── LEAVE CREDITS tab ─────────────────────────────────────────
         $creditStats  = [];
         $leaveHistory = collect();
 
@@ -872,11 +854,10 @@ if ($existing && $existing->status === 'on_leave') {
             }
         }
 
-        // ── LEAVE CALENDAR tab ────────────────────────────────────────
         $calendarEvents = collect();
 
         if ($activeTab === 'leave-calendar') {
-            $calMonth  = $request->get('month')
+            $calMonth = $request->get('month')
                 ? Carbon::parse($request->get('month') . '-01')
                 : Carbon::now()->startOfMonth();
 
@@ -967,24 +948,16 @@ if ($existing && $existing->status === 'on_leave') {
             'hr_notes'      => 'Auto-approved — HR self-request.',
         ]);
 
-        // Auto write on_leave into attendance_logs
         $cursor = Carbon::parse($request->start_date);
         $end    = Carbon::parse($request->end_date);
         while ($cursor->lte($end)) {
             AttendanceLog::updateOrCreate(
-                [
-                    'employee_id'     => $employee->id,
-                    'attendance_date' => $cursor->toDateString(),
-                ],
-                [
-                    'status'     => 'on_leave',
-                    'work_setup' => null,
-                ]
+                ['employee_id' => $employee->id, 'attendance_date' => $cursor->toDateString()],
+                ['status' => 'on_leave', 'work_setup' => null]
             );
             $cursor->addDay();
         }
 
-        // Auto deduct from leave credits
         $credit = LeaveCredit::where('employee_id', $employee->id)
             ->where('leave_type_id', $request->leave_type_id)
             ->where('year', Carbon::parse($request->start_date)->year)
@@ -1015,24 +988,16 @@ if ($existing && $existing->status === 'on_leave') {
             'hr_notes'    => $request->hr_notes ?? null,
         ]);
 
-        // Write on_leave into attendance_logs for each working day
         $cursor = Carbon::parse($leave->start_date);
         $end    = Carbon::parse($leave->end_date);
         while ($cursor->lte($end)) {
             AttendanceLog::updateOrCreate(
-                [
-                    'employee_id'     => $leave->employee_id,
-                    'attendance_date' => $cursor->toDateString(),
-                ],
-                [
-                    'status'    => 'on_leave',
-                    'work_setup' => null,
-                ]
+                ['employee_id' => $leave->employee_id, 'attendance_date' => $cursor->toDateString()],
+                ['status' => 'on_leave', 'work_setup' => null]
             );
             $cursor->addDay();
         }
 
-        // Deduct from leave credits
         $credit = LeaveCredit::where('employee_id', $leave->employee_id)
             ->where('leave_type_id', $leave->leave_type_id)
             ->where('year', Carbon::parse($leave->start_date)->year)
@@ -1049,9 +1014,7 @@ if ($existing && $existing->status === 'on_leave') {
 
     public function rejectLeave(Request $request, $id)
     {
-        $request->validate([
-            'rejection_reason' => 'required|string|max:500',
-        ]);
+        $request->validate(['rejection_reason' => 'required|string|max:500']);
 
         $leave = LeaveRequest::findOrFail($id);
 
@@ -1079,7 +1042,6 @@ if ($existing && $existing->status === 'on_leave') {
             return response()->json(['message' => 'This leave cannot be cancelled.'], 409);
         }
 
-        // If approved, reverse attendance logs and credits
         if ($leave->status === 'approved') {
             AttendanceLog::where('employee_id', $leave->employee_id)
                 ->whereBetween('attendance_date', [$leave->start_date, $leave->end_date])
@@ -1169,21 +1131,12 @@ if ($existing && $existing->status === 'on_leave') {
             'is_active'         => true,
         ]);
 
-        // Seed credits for all active employees
         if ($request->days_entitled) {
             $activeEmployees = Employee::where('employment_status', 'Active')->get();
             foreach ($activeEmployees as $emp) {
                 LeaveCredit::firstOrCreate(
-                    [
-                        'employee_id'   => $emp->id,
-                        'leave_type_id' => $leaveType->id,
-                        'year'          => now()->year,
-                    ],
-                    [
-                        'total_days'     => $request->days_entitled,
-                        'used_days'      => 0,
-                        'remaining_days' => $request->days_entitled,
-                    ]
+                    ['employee_id' => $emp->id, 'leave_type_id' => $leaveType->id, 'year' => now()->year],
+                    ['total_days' => $request->days_entitled, 'used_days' => 0, 'remaining_days' => $request->days_entitled]
                 );
             }
         }
@@ -1224,7 +1177,7 @@ if ($existing && $existing->status === 'on_leave') {
     }
 
     // ══════════════════════════════════════════════════════════════════════
-    // REQUESTS & APPROVAL — added below, nothing above was changed
+    // REQUESTS & APPROVAL
     // ══════════════════════════════════════════════════════════════════════
 
     public function pendingRequests(Request $request)
@@ -1240,7 +1193,6 @@ if ($existing && $existing->status === 'on_leave') {
         $filterDept = $request->get('department');
         $search     = $request->get('search');
 
-        // ── Leave Requests ────────────────────────────────────────────
         $leaveQuery = LeaveRequest::with(['employee.department', 'employee.jobTitle', 'leaveType'])
             ->whereIn('status', ['pending', 'supervisor_approved'])
             ->where('employee_id', '!=', $authEmpId);
@@ -1253,7 +1205,6 @@ if ($existing && $existing->status === 'on_leave') {
             );
         }
 
-        // ── Overtime Requests ─────────────────────────────────────────
         $otQuery = OvertimeRequest::with(['employee.department', 'employee.jobTitle'])
             ->whereIn('status', ['pending', 'supervisor_approved'])
             ->where('employee_id', '!=', $authEmpId);
@@ -1266,7 +1217,6 @@ if ($existing && $existing->status === 'on_leave') {
             );
         }
 
-        // ── Shift Change Requests ─────────────────────────────────────
         $shiftQuery = ShiftChangeRequest::with(['employee.department', 'employee.jobTitle', 'currentShift', 'requestedShift'])
             ->whereIn('status', ['pending', 'supervisor_approved'])
             ->where('employee_id', '!=', $authEmpId);
@@ -1284,28 +1234,27 @@ if ($existing && $existing->status === 'on_leave') {
         $shiftCount    = $shiftQuery->count();
         $awaitingCount = $leaveCount + $overtimeCount + $shiftCount;
 
-        // Merge all into one collection sorted by created_at
         $allRequests = collect();
 
         if ($filterType === 'all' || $filterType === 'leave') {
             foreach ($leaveQuery->get() as $r) {
                 $allRequests->push((object)[
-                    'type'       => 'leave',
-                    'id'         => $r->id,
-                    'ref_no'     => $r->ref_no,
-                    'status'     => $r->status,
-                    'employee'   => $r->employee,
-                    'leaveType'  => $r->leaveType,
-                    'start_date' => $r->start_date,
-                    'end_date'   => $r->end_date,
-                    'total_days' => $r->total_days,
-                    'reason'     => $r->reason,
+                    'type'          => 'leave',
+                    'id'            => $r->id,
+                    'ref_no'        => $r->ref_no,
+                    'status'        => $r->status,
+                    'employee'      => $r->employee,
+                    'leaveType'     => $r->leaveType,
+                    'start_date'    => $r->start_date,
+                    'end_date'      => $r->end_date,
+                    'total_days'    => $r->total_days,
+                    'reason'        => $r->reason,
                     'document_path' => $r->document_path,
-                    'created_at' => $r->created_at,
-                    'credit'     => LeaveCredit::where('employee_id', $r->employee_id)
-                                    ->where('leave_type_id', $r->leave_type_id)
-                                    ->where('year', \Carbon\Carbon::parse($r->start_date)->year)
-                                    ->first(),
+                    'created_at'    => $r->created_at,
+                    'credit'        => LeaveCredit::where('employee_id', $r->employee_id)
+                                        ->where('leave_type_id', $r->leave_type_id)
+                                        ->where('year', Carbon::parse($r->start_date)->year)
+                                        ->first(),
                 ]);
             }
         }
@@ -1394,8 +1343,7 @@ if ($existing && $existing->status === 'on_leave') {
         return $this->rejectLeave($request, $id);
     }
 
-
-     public function fileOvertimeRequest(Request $request)
+    public function fileOvertimeRequest(Request $request)
     {
         $request->validate([
             'ot_date'       => 'required|date',
@@ -1532,12 +1480,11 @@ if ($existing && $existing->status === 'on_leave') {
             'approved_at' => now(),
         ]);
 
-        // Apply the shift change
         EmployeeShift::where('employee_id', $scr->employee_id)
             ->where('is_active', true)
             ->update([
                 'is_active' => false,
-                'end_date'  => \Carbon\Carbon::parse($scr->effective_from)->subDay()->toDateString(),
+                'end_date'  => Carbon::parse($scr->effective_from)->subDay()->toDateString(),
             ]);
 
         EmployeeShift::create([
@@ -1568,5 +1515,4 @@ if ($existing && $existing->status === 'on_leave') {
 
         return response()->json(['message' => 'Shift change request rejected.']);
     }
-
 }

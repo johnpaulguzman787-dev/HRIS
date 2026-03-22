@@ -1,9 +1,8 @@
 @php
-    $currentRoute        = request()->route()->getName();
-    $isEmployeesSection  = in_array($currentRoute, ['employees.directory', 'employees.profile']);
-    $isAttendanceSection = in_array($currentRoute, ['admin.attendance.reports','admin.attendance.employee','admin.attendance.today','admin.attendance.records','admin.leave.management']);
-    $isPayrollSection    = in_array($currentRoute, ['admin.payroll', 'admin.payslips', 'admin.contributions']);
-    $isRequestsSection   = in_array($currentRoute, ['admin.requests.pending', 'admin.requests.approved']);
+    $currentRoute     = request()->route()->getName();
+    $attendanceRoutes = ['finance_officer.attendance.reports', 'finance_officer.attendance.shift', 'finance_officer.attendance.leave', 'finance_officer.leave.management'];
+    $payrollRoutes    = ['finance_officer.payroll', 'finance_officer.payslips', 'finance_officer.contributions'];
+    $requestRoutes    = ['finance_officer.requests.pending', 'finance_officer.requests.approved'];
 
     $sidebarUser     = auth()->user();
     $sidebarEmployee = $sidebarUser ? \App\Models\Employee::with('jobTitle')->where('user_id', $sidebarUser->id)->first() : null;
@@ -57,7 +56,7 @@
         .search-input { background:#fff; border:1.5px solid #e5e7eb; border-radius:8px; padding:8px 12px 8px 36px; font-size:13px; font-family:inherit; color:#374151; outline:none; }
         .search-input:focus { border-color:#3b82f6; }
         .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px; }
-        .modal-box { background:#fff; border-radius:18px; width:100%; max-width:540px; padding:32px; position:relative; box-shadow:0 24px 64px rgba(0,0,0,0.18); }
+        .modal-box { background:#fff; border-radius:18px; width:600px; max-width:95vw; padding:32px; position:relative; box-shadow:0 24px 64px rgba(0,0,0,0.18); max-height:90vh; overflow-y:auto; }
         .modal-field { background:#f3f4f6; border-radius:8px; padding:10px 14px; font-size:13px; color:#374151; }
         .modal-label { font-size:13px; font-weight:600; color:#111827; margin-bottom:6px; }
         .trail-item { display:flex; gap:14px; align-items:flex-start; padding:14px 16px; background:#f9fafb; border-radius:10px; border-left:3px solid #3b82f6; margin-bottom:8px; }
@@ -67,10 +66,9 @@
 <body>
 <div class="flex min-h-screen" x-data="approvedLogs()">
 
-    {{-- ═══════════ SIDEBAR ═══════════ --}}
-    @include('admin.admin_sidebar')
-
-    {{-- ═══════════ MAIN ═══════════ --}}
+   {{-- ═══════════ SIDEBAR ═══════════ --}}
+   @include('finance_officer.finance_sidebar')
+   {{-- ═══════════ MAIN ═══════════ --}}
     <div class="flex-1 flex flex-col" style="margin-left:256px;">
 
          {{-- Top bar --}}
@@ -116,20 +114,19 @@
             <div class="bg-white rounded-2xl border border-gray-200" style="box-shadow:0 2px 12px rgba(0,0,0,0.06);">
 
                 {{-- Toolbar --}}
-                <form method="GET" action="{{ route('admin.requests.approved') }}" id="filterForm"
+                <form method="GET" action="{{ route('finance_officer.requests.approved') }}" id="filterForm"
                       class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 flex-wrap">
                     <div class="relative flex-1" style="min-width:200px;max-width:320px;">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <input type="text" name="search" placeholder="Search…"
+                        <input type="text" name="search" placeholder="Search"
                                value="{{ $search ?? '' }}"
                                class="search-input w-full"
                                onchange="document.getElementById('filterForm').submit()"/>
                     </div>
                     <select name="status" class="fsel" onchange="document.getElementById('filterForm').submit()">
-                        <option value="all"                {{ ($filterStatus ?? 'all') === 'all'                ? 'selected' : '' }}>All Status</option>
-                        <option value="approved"           {{ ($filterStatus ?? '') === 'approved'              ? 'selected' : '' }}>Approved</option>
-                        <option value="rejected"           {{ ($filterStatus ?? '') === 'rejected'              ? 'selected' : '' }}>Rejected</option>
-                        <option value="supervisor_approved"{{ ($filterStatus ?? '') === 'supervisor_approved'   ? 'selected' : '' }}>Forwarded to HR</option>
+                        <option value="all"      {{ ($filterStatus ?? 'all') === 'all'      ? 'selected' : '' }}>All Status</option>
+                        <option value="approved" {{ ($filterStatus ?? '') === 'approved'    ? 'selected' : '' }}>Approved</option>
+                        <option value="rejected" {{ ($filterStatus ?? '') === 'rejected'    ? 'selected' : '' }}>Rejected</option>
                     </select>
                     <select name="type" class="fsel" onchange="document.getElementById('filterForm').submit()">
                         <option value="all"      {{ ($filterType ?? 'all') === 'all'      ? 'selected' : '' }}>All Types</option>
@@ -165,18 +162,21 @@
                                     $approver = \App\Models\Employee::find($req->approved_by);
                                     $approverName = $approver ? trim($approver->fname . ' ' . $approver->lname) : '—';
                                 }
+
                                 $duration = match($req->type) {
                                     'leave'    => \Carbon\Carbon::parse($req->start_date)->format('m/d/Y') . ' – ' . \Carbon\Carbon::parse($req->end_date)->format('m/d/Y'),
                                     'overtime' => \Carbon\Carbon::parse($req->ot_date)->format('m/d/Y'),
                                     'shift'    => \Carbon\Carbon::parse($req->effective_from)->format('m/d/Y') . ($req->effective_until ? ' – ' . \Carbon\Carbon::parse($req->effective_until)->format('m/d/Y') : ' (Ongoing)'),
                                     default    => '—',
                                 };
+
                                 $days = match($req->type) {
                                     'leave'    => $req->total_days . 'd',
                                     'overtime' => ($req->approved_hours ?? $req->requested_hours) . 'h',
                                     'shift'    => ($req->requested_shift->name ?? '—'),
                                     default    => '—',
                                 };
+
                                 $typeLabel = match($req->type) {
                                     'leave'    => 'Leave Request',
                                     'overtime' => 'Overtime',
@@ -189,12 +189,14 @@
                                     'shift'    => 'badge-shift',
                                     default    => '',
                                 };
+
                                 $subDetail = match($req->type) {
                                     'leave'    => $req->leaveType->name ?? '—',
                                     'overtime' => ($req->ot_start_time ? \Carbon\Carbon::parse($req->ot_start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($req->ot_end_time)->format('g:i A') : '—'),
                                     'shift'    => ($req->current_shift->name ?? '—') . ' → ' . ($req->requested_shift->name ?? '—'),
                                     default    => '—',
                                 };
+
                                 $jsRef        = addslashes($req->ref_no ?? '');
                                 $jsFiled      = $req->created_at ? $req->created_at->format('F j, Y') : '—';
                                 $jsReqType    = addslashes($typeLabel);
@@ -257,7 +259,7 @@
 
 {{-- ═══════════ VIEW MODAL ═══════════ --}}
 <div id="viewModal" style="display:none;" class="modal-overlay" onclick="if(event.target===this)closeViewModal()">
-    <div class="modal-box" style="width:600px;max-width:95vw;border-radius:18px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-box">
         <button onclick="closeViewModal()" style="position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:2px solid #d1d5db;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#9ca3af;">
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
@@ -330,6 +332,7 @@ function openViewModal(ref, filed, reqType, subDetail, duration, reason, rejReas
     document.getElementById('mFrom').textContent = parts[0] ? parts[0].trim() : duration;
     document.getElementById('mTo').textContent   = parts[1] ? parts[1].trim() : '—';
 
+    // status badge
     var badgeHtml = '';
     if (status === 'approved') {
         badgeHtml = '<span style="display:inline-block;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;background:#dcfce7;color:#16a34a;">Approved</span>';
@@ -342,6 +345,7 @@ function openViewModal(ref, filed, reqType, subDetail, duration, reason, rejReas
     }
     document.getElementById('mStatusBadge').innerHTML = badgeHtml;
 
+    // rejection reason
     if (rejReason && rejReason.trim() !== '') {
         document.getElementById('mRejBlock').style.display = 'block';
         document.getElementById('mRejReason').textContent  = rejReason;
@@ -349,6 +353,7 @@ function openViewModal(ref, filed, reqType, subDetail, duration, reason, rejReas
         document.getElementById('mRejBlock').style.display = 'none';
     }
 
+    // hr notes
     if (hrNotes && hrNotes.trim() !== '') {
         document.getElementById('mNotesBlock').style.display = 'block';
         document.getElementById('mHrNotes').textContent      = hrNotes;
@@ -365,6 +370,8 @@ function openViewModal(ref, filed, reqType, subDetail, duration, reason, rejReas
         : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
 
     var html = '';
+
+    // Filed step
     html += '<div class="trail-item" style="border-left-color:#6b7280;margin-bottom:8px;">';
     html += '<div style="width:30px;height:30px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
     html += '<svg width="14" height="14" fill="none" stroke="#6b7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>';
@@ -373,6 +380,7 @@ function openViewModal(ref, filed, reqType, subDetail, duration, reason, rejReas
     html += '<div style="font-size:11px;color:#9ca3af;">' + filed + '</div>';
     html += '</div></div>';
 
+    // Supervisor forwarded step
     html += '<div class="trail-item" style="border-left-color:#3b82f6;margin-bottom:8px;">';
     html += '<div style="width:30px;height:30px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
     html += '<svg width="14" height="14" fill="none" stroke="#1d4ed8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
@@ -381,6 +389,7 @@ function openViewModal(ref, filed, reqType, subDetail, duration, reason, rejReas
     html += '<div style="font-size:11px;color:#9ca3af;">Pending HR final approval</div>';
     html += '</div></div>';
 
+    // HR final step
     if (approver && approver.trim() !== '' && approver !== '—') {
         html += '<div class="trail-item" style="border-left-color:' + trailColor + ';margin-bottom:8px;">';
         html += '<div style="width:30px;height:30px;border-radius:50%;background:' + trailBg + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">';

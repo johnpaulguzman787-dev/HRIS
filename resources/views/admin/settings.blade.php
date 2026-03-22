@@ -14,76 +14,73 @@
     isEditMode: false,
     isSaving: false,
     permissions: window.permissionsData,
+    modules: ['Employee Management', 'Time & Attendance', 'Leave Management', 'Requests & Approval'],
 
     currentPerms: {
-        'Employee Management': { can_view: false, can_create: false, can_edit: false, can_archive: false, can_import: false, can_export: false }
+        'Employee Management':  { can_view: false, can_create: false, can_edit: false, can_archive: false, can_import: false, can_export: false },
+        'Time & Attendance':    { can_view: false, can_create: false, can_edit: false, can_archive: false, can_import: false, can_export: false },
+        'Leave Management':     { can_view: false, can_create: false, can_edit: false, can_archive: false, can_import: false, can_export: false },
+        'Requests & Approval':  { can_view: false, can_create: false, can_edit: false, can_archive: false, can_import: false, can_export: false },
     },
 
     get roleLabel() {
-        const map = { admin: 'Administrator', hr_manager: 'HR Manager', supervisor: 'Supervisor', employee: 'Employee' };
+        const map = { admin: 'Administrator', hr_manager: 'HR Manager', supervisor: 'Supervisor', employee: 'Employee', payroll_officer: 'Payroll Officer', finance_officer: 'Finance Officer' };
         return map[this.selectedRole] || this.selectedRole;
     },
 
     loadPerms() {
         const roleData = this.permissions[this.selectedRole] || [];
-        const emp = roleData.find(p => p.module === 'Employee Management');
-        this.currentPerms['Employee Management'] = emp ? {
-            can_view:    emp.can_view    ?? false,
-            can_create:  emp.can_create  ?? false,
-            can_edit:    emp.can_edit    ?? false,
-            can_archive: emp.can_archive ?? false,
-            can_import:  emp.can_import  ?? false,
-            can_export:  emp.can_export  ?? false,
-        } : { can_view: false, can_create: false, can_edit: false, can_archive: false, can_import: false, can_export: false };
+        this.modules.forEach(mod => {
+            const found = roleData.find(p => p.module === mod);
+            this.currentPerms[mod] = found ? {
+                can_view:    !!found.can_view,
+                can_create:  !!found.can_create,
+                can_edit:    !!found.can_edit,
+                can_archive: !!found.can_archive,
+                can_import:  !!found.can_import,
+                can_export:  !!found.can_export,
+            } : { can_view: false, can_create: false, can_edit: false, can_archive: false, can_import: false, can_export: false };
+        });
         this.isEditMode = false;
     },
 
     async savePerms() {
         this.isSaving = true;
         const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+        const url  = '{{ route('settings.permissions.update') }}';
 
         try {
-            const response = await fetch('{{ route('settings.permissions.update') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrf
-                },
-                body: JSON.stringify({
-                    role:        this.selectedRole,
-                    module:      'Employee Management',
-                    can_view:    this.currentPerms['Employee Management'].can_view,
-                    can_create:  this.currentPerms['Employee Management'].can_create,
-                    can_edit:    this.currentPerms['Employee Management'].can_edit,
-                    can_archive: this.currentPerms['Employee Management'].can_archive,
-                    can_import:  this.currentPerms['Employee Management'].can_import,
-                    can_export:  this.currentPerms['Employee Management'].can_export,
-                })
-            });
+            const results = await Promise.all(this.modules.map(mod =>
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    body: JSON.stringify({
+                        role:        this.selectedRole,
+                        module:      mod,
+                        can_view:    this.currentPerms[mod].can_view,
+                        can_create:  this.currentPerms[mod].can_create,
+                        can_edit:    this.currentPerms[mod].can_edit,
+                        can_archive: this.currentPerms[mod].can_archive,
+                        can_import:  this.currentPerms[mod].can_import,
+                        can_export:  this.currentPerms[mod].can_export,
+                    })
+                }).then(r => r.json().then(d => ({ ok: r.ok, data: d, mod })))
+            ));
 
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                // Update local permissions data
+            const failed = results.filter(r => !r.ok || !r.data.success);
+            if (failed.length === 0) {
+                // update local cache
                 if (!this.permissions[this.selectedRole]) this.permissions[this.selectedRole] = [];
-                const idx = this.permissions[this.selectedRole].findIndex(p => p.module === 'Employee Management');
-                const updated = {
-                    module:      'Employee Management',
-                    can_view:    this.currentPerms['Employee Management'].can_view,
-                    can_create:  this.currentPerms['Employee Management'].can_create,
-                    can_edit:    this.currentPerms['Employee Management'].can_edit,
-                    can_archive: this.currentPerms['Employee Management'].can_archive,
-                    can_import:  this.currentPerms['Employee Management'].can_import,
-                    can_export:  this.currentPerms['Employee Management'].can_export,
-                };
-                if (idx !== -1) this.permissions[this.selectedRole][idx] = updated;
-                else this.permissions[this.selectedRole].push(updated);
-
+                this.modules.forEach(mod => {
+                    const idx = this.permissions[this.selectedRole].findIndex(p => p.module === mod);
+                    const updated = { module: mod, ...this.currentPerms[mod] };
+                    if (idx !== -1) this.permissions[this.selectedRole][idx] = updated;
+                    else this.permissions[this.selectedRole].push(updated);
+                });
                 this.isEditMode = false;
                 this.showToast('Permissions updated successfully!', 'success');
             } else {
-                this.showToast(data.message || 'Something went wrong.', 'error');
+                this.showToast('Some permissions failed to save. Try again.', 'error');
             }
         } catch (err) {
             this.showToast('Network error. Please check your connection.', 'error');
@@ -183,6 +180,8 @@ class="flex h-screen overflow-hidden bg-gray-50">
                                 <option value="hr_manager">HR Manager</option>
                                 <option value="supervisor">Supervisor</option>
                                 <option value="employee">Employee</option>
+                                <option value="payroll_officer">Payroll Officer</option>
+                                <option value="finance_officer">Finance Officer</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -220,7 +219,7 @@ class="flex h-screen overflow-hidden bg-gray-50">
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
 
-                            <!-- Employee Management Row -->
+                            <!-- Employee Management -->
                             <tr class="hover:bg-blue-50 transition-colors duration-150">
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900">
                                     <div class="flex items-center gap-2">
@@ -232,71 +231,80 @@ class="flex h-screen overflow-hidden bg-gray-50">
                                         Employee Management
                                     </div>
                                 </td>
+                                @foreach(['can_view','can_create','can_edit','can_archive','can_import','can_export'] as $perm)
                                 <td class="px-6 py-4 text-center">
-                                    <input type="checkbox"
-                                        x-model="currentPerms['Employee Management'].can_view"
-                                        :disabled="!isEditMode"
-                                        :class="isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'"
+                                    <input type="checkbox" x-model="currentPerms['Employee Management'].{{ $perm }}"
+                                        :disabled="!isEditMode" :class="isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'"
                                         class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 transition-all duration-200">
                                 </td>
-                                <td class="px-6 py-4 text-center">
-                                    <input type="checkbox"
-                                        x-model="currentPerms['Employee Management'].can_create"
-                                        :disabled="!isEditMode"
-                                        :class="isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'"
-                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 transition-all duration-200">
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <input type="checkbox"
-                                        x-model="currentPerms['Employee Management'].can_edit"
-                                        :disabled="!isEditMode"
-                                        :class="isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'"
-                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 transition-all duration-200">
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <input type="checkbox"
-                                        x-model="currentPerms['Employee Management'].can_archive"
-                                        :disabled="!isEditMode"
-                                        :class="isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'"
-                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 transition-all duration-200">
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <input type="checkbox"
-                                        x-model="currentPerms['Employee Management'].can_import"
-                                        :disabled="!isEditMode"
-                                        :class="isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'"
-                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 transition-all duration-200">
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <input type="checkbox"
-                                        x-model="currentPerms['Employee Management'].can_export"
-                                        :disabled="!isEditMode"
-                                        :class="isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'"
-                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 transition-all duration-200">
-                                </td>
+                                @endforeach
                             </tr>
 
-                            <!-- Placeholder rows (not yet functional) -->
-                            @foreach(['Time & Attendance', 'Leave Management', 'Payroll Processing', 'Reports & Analytics', 'System Settings'] as $module)
-                            <tr class="hover:bg-gray-50 transition-colors duration-150 opacity-50">
-                                <td class="px-6 py-4 text-sm font-medium text-gray-500">
+                            <!-- Time & Attendance -->
+                            <tr class="hover:bg-blue-50 transition-colors duration-150">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">
                                     <div class="flex items-center gap-2">
-                                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
                                         </div>
-                                        {{ $module }}
-                                        <span class="text-xs text-gray-400 font-normal">(coming soon)</span>
+                                        Time &amp; Attendance
+                                        <span class="text-xs text-gray-400 font-normal">(clock-in/out, shifts, reports)</span>
                                     </div>
                                 </td>
-                                @for($i = 0; $i < 6; $i++)
+                                @foreach(['can_view','can_create','can_edit','can_archive','can_import','can_export'] as $perm)
                                 <td class="px-6 py-4 text-center">
-                                    <input type="checkbox" disabled class="w-4 h-4 text-gray-300 bg-gray-100 border-gray-200 rounded cursor-not-allowed">
+                                    <input type="checkbox" x-model="currentPerms['Time & Attendance'].{{ $perm }}"
+                                        :disabled="!isEditMode" :class="isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 transition-all duration-200">
                                 </td>
-                                @endfor
+                                @endforeach
                             </tr>
-                            @endforeach
+
+                            <!-- Leave Management -->
+                            <tr class="hover:bg-blue-50 transition-colors duration-150">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                            </svg>
+                                        </div>
+                                        Leave Management
+                                        <span class="text-xs text-gray-400 font-normal">(file, approve/reject)</span>
+                                    </div>
+                                </td>
+                                @foreach(['can_view','can_create','can_edit','can_archive','can_import','can_export'] as $perm)
+                                <td class="px-6 py-4 text-center">
+                                    <input type="checkbox" x-model="currentPerms['Leave Management'].{{ $perm }}"
+                                        :disabled="!isEditMode" :class="isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 transition-all duration-200">
+                                </td>
+                                @endforeach
+                            </tr>
+
+                            <!-- Requests & Approval -->
+                            <tr class="hover:bg-blue-50 transition-colors duration-150">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                            </svg>
+                                        </div>
+                                        Requests &amp; Approval
+                                        <span class="text-xs text-gray-400 font-normal">(overtime, shift change)</span>
+                                    </div>
+                                </td>
+                                @foreach(['can_view','can_create','can_edit','can_archive','can_import','can_export'] as $perm)
+                                <td class="px-6 py-4 text-center">
+                                    <input type="checkbox" x-model="currentPerms['Requests & Approval'].{{ $perm }}"
+                                        :disabled="!isEditMode" :class="isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 transition-all duration-200">
+                                </td>
+                                @endforeach
+                            </tr>
 
                         </tbody>
                     </table>

@@ -234,6 +234,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/leave/file',        [AdminAttendanceController::class, 'fileLeave'])->name('admin.leave.file');
     Route::post('/admin/leave/{id}/cancel', [AdminAttendanceController::class, 'cancelLeave'])->name('admin.leave.cancel');
     Route::get('/admin/leave/{id}',         [AdminAttendanceController::class, 'getLeaveRequest'])->name('admin.leave.get');
+    Route::post('/admin/requests/overtime/file', [AdminAttendanceController::class, 'fileOvertimeRequest'])->name('admin.requests.overtime.file');
+    Route::post('/admin/requests/shift/file',    [AdminAttendanceController::class, 'fileShiftChangeRequest'])->name('admin.requests.shift.file');
     // ──────────────────────────────────────────────────────────────────────
     // ── ADMIN REQUESTS & APPROVAL ─────────────────────────────────────────
     Route::get('/admin/requests/pending',        [AdminAttendanceController::class, 'pendingRequests'])->name('admin.requests.pending');
@@ -241,14 +243,51 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/requests/{id}/cancel',   [AdminAttendanceController::class, 'cancelRequest'])->name('admin.requests.cancel');
     // ──────────────────────────────────────────────────────────────────────
 
-    // Other Dashboards
-    Route::get('/payroll_officer', function () {
-        return view('payroll_officer.payroll_dashboard');
-    })->name('payroll_officer.dashboard');
+    // ── PAYROLL OFFICER ROUTES ─────────────────────────────────────────────
+    Route::get('/payroll_officer/dashboard', [\App\Http\Controllers\PayrollOfficerDashboardController::class, 'index'])->name('payroll_officer.dashboard');
+    Route::get('/payroll_officer/profile', [\App\Http\Controllers\PayrollOfficerProfileController::class, 'profile'])->name('payroll_officer.profile');
 
-    Route::get('/finance_officer', function () {
-        return view('finance_officer.finance_dashboard');
-    })->name('finance_officer.dashboard');
+    Route::get('/payroll_officer/attendance/reports', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'index'])->name('payroll_officer.attendance.reports');
+    Route::get('/payroll_officer/attendance/today', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'today'])->name('payroll_officer.attendance.today');
+    Route::get('/payroll_officer/attendance/records', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'records'])->name('payroll_officer.attendance.records');
+    Route::post('/payroll_officer/attendance/clock-in', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'clockIn'])->name('payroll_officer.attendance.clock-in');
+    Route::post('/payroll_officer/attendance/clock-out', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'clockOut'])->name('payroll_officer.attendance.clock-out');
+    Route::post('/payroll_officer/attendance/break', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'breakStart'])->name('payroll_officer.attendance.break');
+
+    Route::get('/payroll_officer/leave/management', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'leaveManagement'])->name('payroll_officer.leave.management');
+    Route::post('/payroll_officer/leave/file', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'fileLeave'])->name('payroll_officer.leave.file');
+    Route::post('/payroll_officer/leave/{id}/cancel', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'cancelLeave'])->name('payroll_officer.leave.cancel');
+    Route::get('/payroll_officer/leave/{id}', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'getLeaveRequest'])->name('payroll_officer.leave.get');
+
+    Route::get('/payroll_officer/requests/pending', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'pendingRequests'])->name('payroll_officer.requests.pending');
+    Route::get('/payroll_officer/requests/approved', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'approvedRequests'])->name('payroll_officer.requests.approved');
+    Route::post('/payroll_officer/requests/{id}/cancel', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'cancelRequest'])->name('payroll_officer.requests.cancel');
+    Route::post('/payroll_officer/requests/overtime/file', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'fileOvertimeRequest'])->name('payroll_officer.requests.overtime.file');
+    Route::post('/payroll_officer/requests/shift/file', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'fileShiftChangeRequest'])->name('payroll_officer.requests.shift.file');
+    // ──────────────────────────────────────────────────────────────────────
+
+    // ── FINANCE OFFICER ROUTES ─────────────────────────────────────────────
+    Route::get('/finance_officer/dashboard', [\App\Http\Controllers\FinanceOfficerDashboardController::class, 'index'])->name('finance_officer.dashboard');
+    Route::get('/finance_officer/profile', [\App\Http\Controllers\FinanceOfficerProfileController::class, 'profile'])->name('finance_officer.profile');
+
+    Route::get('/finance_officer/attendance/reports', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'index'])->name('finance_officer.attendance.reports');
+    Route::get('/finance_officer/attendance/today', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'today'])->name('finance_officer.attendance.today');
+    Route::get('/finance_officer/attendance/records', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'records'])->name('finance_officer.attendance.records');
+    Route::post('/finance_officer/attendance/clock-in', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'clockIn'])->name('finance_officer.attendance.clock-in');
+    Route::post('/finance_officer/attendance/clock-out', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'clockOut'])->name('finance_officer.attendance.clock-out');
+    Route::post('/finance_officer/attendance/break', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'breakStart'])->name('finance_officer.attendance.break');
+
+    Route::get('/finance_officer/leave/management', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'leaveManagement'])->name('finance_officer.leave.management');
+    Route::post('/finance_officer/leave/file', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'fileLeave'])->name('finance_officer.leave.file');
+    Route::post('/finance_officer/leave/{id}/cancel', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'cancelLeave'])->name('finance_officer.leave.cancel');
+    Route::get('/finance_officer/leave/{id}', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'getLeaveRequest'])->name('finance_officer.leave.get');
+
+    Route::get('/finance_officer/requests/pending', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'pendingRequests'])->name('finance_officer.requests.pending');
+    Route::get('/finance_officer/requests/approved', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'approvedRequests'])->name('finance_officer.requests.approved');
+    Route::post('/finance_officer/requests/{id}/cancel', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'cancelRequest'])->name('finance_officer.requests.cancel');
+    Route::post('/finance_officer/requests/overtime/file', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'fileOvertimeRequest'])->name('finance_officer.requests.overtime.file');
+    Route::post('/finance_officer/requests/shift/file', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'fileShiftChangeRequest'])->name('finance_officer.requests.shift.file');
+    // ──────────────────────────────────────────────────────────────────────
 
 
     // =========================

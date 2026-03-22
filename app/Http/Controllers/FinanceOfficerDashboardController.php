@@ -8,7 +8,7 @@ use App\Models\Employee;
 use App\Models\AttendanceLog;
 use Illuminate\Support\Facades\Auth;
 
-class EmployeeDashboardController extends Controller
+class FinanceOfficerDashboardController extends Controller
 {
     public function index()
     {
@@ -69,6 +69,6 @@ class EmployeeDashboardController extends Controller
                 ->get(),
         ];
 
-        return view('employee.employee_dashboard', $data);
+        return view('finance_officer.finance_dashboard', $data);
     }
 }

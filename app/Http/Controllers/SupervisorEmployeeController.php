@@ -180,7 +180,6 @@ class SupervisorEmployeeController extends Controller
             'contact_no'    => 'required|string|min:10|max:15',
             'department_id' => 'required|exists:departments,id',
             'job_title_id'  => 'required|exists:job_titles,id',
-            'role'          => 'required|in:admin,hr_manager,supervisor,finance_officer,payroll_officer,employee',
             'start_date'    => 'required|date',
         ]);
 
@@ -189,13 +188,23 @@ class SupervisorEmployeeController extends Controller
             return response()->json(['success' => false, 'message' => 'You cannot move employees to another department.'], 403);
         }
 
+        $jobTitle = \DB::table('job_titles')->where('id', $request->job_title_id)->value('title');
+        $role = match($jobTitle) {
+            'System Administrator' => 'admin',
+            'HR Manager'           => 'hr_manager',
+            'Finance Officer'      => 'finance_officer',
+            'Payroll Officer'      => 'payroll_officer',
+            'Supervisor'           => 'supervisor',
+            default                => 'employee',
+        };
+
         try {
-            DB::transaction(function () use ($request, $employee) {
+            DB::transaction(function () use ($request, $employee, $role) {
                 $emailChanged = $employee->user->email !== $request->email;
 
                 $employee->user->update([
                     'email' => $request->email,
-                    'role'  => $request->role,
+                    'role'  => $role,
                 ]);
 
                 if ($emailChanged) {

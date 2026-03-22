@@ -19,6 +19,7 @@
         clockInTimestamp: {{ $todayLog?->clock_in ? \Carbon\Carbon::parse($todayLog->clock_in)->valueOf() : 'null' }},
         elapsedSeconds: 0,
         assignedShiftId: {{ $employeeShift?->shift_id ?? 'null' }},
+        breakAllowed: {{ $employeeShift?->shift?->break_schedule ? 'true' : 'false' }},
         currentTime: '',
         currentDate: '',
         get elapsedDisplay() {
@@ -285,15 +286,15 @@
                     </div>
                     <div class="mt-auto flex gap-2">
                         <button @click="handleClock()"
-                                :disabled="onLeave || (clockedIn && !onBreak) || clockedOut"
+                                :disabled="onLeave || (clockedIn && !onBreak) || clockedOut || !assignedShiftId"
                                 class="clock-btn flex-1 py-3 text-white font-bold text-xs tracking-widest uppercase"
-                                :style="onLeave || (clockedIn && !onBreak) || clockedOut ? 'background:#94a3b8;' : 'background:#3b82f6;'">
+                                :style="onLeave || (clockedIn && !onBreak) || clockedOut || !assignedShiftId ? 'background:#94a3b8;' : 'background:#3b82f6;'">
                             TIME IN
                         </button>
                         <button @click="handleBreak()"
-                                :disabled="!clockedIn || onBreak || resumed || clockedOut"
+                                :disabled="!clockedIn || onBreak || resumed || clockedOut || !breakAllowed"
                                 class="clock-btn flex-1 py-3 font-bold text-xs tracking-widest uppercase"
-                                :style="!clockedIn || onBreak || resumed || clockedOut ? 'background:#94a3b8; color:white;' : 'background:#dbeafe; color:#1d4ed8;'">
+                                :style="!clockedIn || onBreak || resumed || clockedOut || !breakAllowed ? 'background:#94a3b8; color:white;' : 'background:#dbeafe; color:#1d4ed8;'">
                             BREAK
                         </button>
                         <button @click="handleClockOut()"

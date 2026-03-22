@@ -14,7 +14,7 @@ use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use App\Models\ShiftChangeRequest;
 
-class EmployeeAttendanceController extends Controller
+class FinanceOfficerAttendanceController extends Controller
 {
     public function index()
     {
@@ -51,7 +51,7 @@ class EmployeeAttendanceController extends Controller
             ->with('shift')
             ->first() : null;
 
-        return view('employee.employee_attendance-reports', compact('employeeShift', 'availableShifts', 'stats', 'todayLog', 'month', 'year'));
+        return view('finance_officer.finance_attendance-reports', compact('employeeShift', 'availableShifts', 'stats', 'todayLog', 'month', 'year'));
     }
 
     public function clockIn(Request $request)
@@ -316,9 +316,9 @@ class EmployeeAttendanceController extends Controller
         return response()->json($log);
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // LEAVE MANAGEMENT — added below, nothing above was changed
-    // ══════════════════════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // LEAVE MANAGEMENT â€” added below, nothing above was changed
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     public function leaveManagement(Request $request)
     {
@@ -329,7 +329,7 @@ class EmployeeAttendanceController extends Controller
         $user     = Auth::user();
         $employee = Employee::where('user_id', $user->id)->first();
 
-        // ── MY LEAVE tab ──────────────────────────────────────────────
+        // â”€â”€ MY LEAVE tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         $myLeaveStats    = [];
         $myLeaveRequests = collect();
 
@@ -358,7 +358,7 @@ class EmployeeAttendanceController extends Controller
             }
         }
 
-        // ── LEAVE CALENDAR tab ────────────────────────────────────────
+        // â”€â”€ LEAVE CALENDAR tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         $calendarEvents = collect();
 
         if ($activeTab === 'leave-calendar') {
@@ -395,7 +395,7 @@ class EmployeeAttendanceController extends Controller
             }
         }
 
-        return view('employee.employee_leave-management', compact(
+        return view('finance_officer.finance_leave-management', compact(
             'activeTab', 'myLeaveStats', 'myLeaveRequests',
             'calendarEvents', 'leaveTypes', 'currentYear'
         ));
@@ -514,7 +514,7 @@ class EmployeeAttendanceController extends Controller
         return response()->json([
             'id'               => $leave->id,
             'ref_no'           => $leave->ref_no,
-            'leave_type'       => $leave->leaveType->name ?? '—',
+            'leave_type'       => $leave->leaveType->name ?? 'â€”',
             'start_date'       => $leave->start_date->format('m/d/Y'),
             'end_date'         => $leave->end_date->format('m/d/Y'),
             'total_days'       => $leave->total_days,
@@ -522,15 +522,15 @@ class EmployeeAttendanceController extends Controller
             'status'           => $leave->status,
             'approver_name'    => $leave->approver
                 ? trim($leave->approver->fname . ' ' . $leave->approver->lname)
-                : '—',
+                : 'â€”',
             'rejection_reason' => $leave->rejection_reason,
             'filed_on'         => $leave->created_at->format('m/d/Y'),
         ]);
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // REQUESTS & APPROVAL — added below, nothing above was changed
-    // ══════════════════════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // REQUESTS & APPROVAL â€” added below, nothing above was changed
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     public function pendingRequests(Request $request)
     {
@@ -620,7 +620,7 @@ class EmployeeAttendanceController extends Controller
         $shiftTypes = \App\Models\Shift::where('is_active', true)->orderBy('name')->get();
         $departments = collect();
 
-        return view('employee.employee_pending-requests', compact(
+        return view('finance_officer.finance_pending-requests', compact(
             'departments', 'leaveTypes', 'shiftTypes',
             'awaitingCount', 'leaveCount', 'shiftCount', 'overtimeCount',
             'requests', 'filterType'
@@ -716,7 +716,7 @@ class EmployeeAttendanceController extends Controller
         $rejectedCount = $allRequests->where('status', 'rejected')->count();
         $departments   = collect();
 
-        return view('employee.employee_approved-requests', compact(
+        return view('finance_officer.finance_approved-requests', compact(
             'departments', 'requests',
             'approvedCount', 'rejectedCount',
             'filterType', 'filterStatus', 'search'

@@ -140,15 +140,15 @@
                 </div>
                 <div class="mt-auto flex gap-2">
                     <button @click="handleClock()"
-                            :disabled="onLeave || (clockedIn && !onBreak) || clockedOut"
+                            :disabled="onLeave || (clockedIn && !onBreak) || clockedOut || !assignedShiftId"
                             class="clock-btn flex-1 py-3 text-white font-bold text-xs tracking-widest uppercase rounded-2xl"
-                            :style="onLeave || (clockedIn && !onBreak) || clockedOut ? 'background:#94a3b8;' : 'background:#3b82f6;'">
+                            :style="onLeave || (clockedIn && !onBreak) || clockedOut || !assignedShiftId ? 'background:#94a3b8;' : 'background:#3b82f6;'">
                         TIME IN
                     </button>
                     <button @click="handleBreak()"
-                            :disabled="!clockedIn || onBreak || resumed || clockedOut"
+                            :disabled="!clockedIn || onBreak || resumed || clockedOut || !breakAllowed"
                             class="clock-btn flex-1 py-3 font-bold text-xs tracking-widest uppercase rounded-2xl"
-                            :style="!clockedIn || onBreak || resumed || clockedOut ? 'background:#94a3b8; color:white;' : 'background:#dbeafe; color:#1d4ed8;'">
+                            :style="!clockedIn || onBreak || resumed || clockedOut || !breakAllowed ? 'background:#94a3b8; color:white;' : 'background:#dbeafe; color:#1d4ed8;'">
                         BREAK
                     </button>
                     <button @click="handleClockOut()"
@@ -278,6 +278,7 @@ function attendancePage() {
     return {
         workSetup: '{{ $todayLog?->work_setup ?? ($employeeShift?->work_setup ?? "wfh") }}',
         assignedShiftId: {{ $employeeShift?->shift_id ?? 'null' }},
+        breakAllowed: {{ $employeeShift?->shift?->break_schedule ? 'true' : 'false' }},
         onLeave:     {{ $todayLog?->status === 'on_leave' ? 'true' : 'false' }},
 clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
         clockedOut:  {{ $todayLog?->clock_out   ? 'true' : 'false' }},

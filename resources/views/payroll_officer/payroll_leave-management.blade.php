@@ -15,10 +15,10 @@
         : ($sidebarUser?->email ?? 'User');
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 
-    $attendanceRoutes = ['supervisor.attendance.reports','supervisor.attendance.employee','supervisor.attendance.shift','supervisor.attendance.leave','supervisor.shift.scheduling','supervisor.leave.management'];
-    $employeeRoutes   = ['supervisor.employees.directory','supervisor.employees.profile'];
-    $payrollRoutes    = ['supervisor.payroll','supervisor.payslips','supervisor.contributions'];
-    $requestRoutes    = ['supervisor.requests.pending','supervisor.requests.approved'];
+    // ── Sidebar route groups ──────────────────────────────────────────────
+    $attendanceRoutes = ['payroll_officer.attendance.reports', 'payroll_officer.attendance.shift', 'payroll_officer.attendance.leave', 'payroll_officer.leave.management'];
+    $payrollRoutes    = ['payroll_officer.payroll', 'payroll_officer.payslips', 'payroll_officer.contributions'];
+    $requestRoutes    = ['payroll_officer.requests.pending', 'payroll_officer.requests.approved'];
 
     // ── Calendar data ──────────────────────────────────────────────────────
     $calMonth = request('month') ? \Carbon\Carbon::parse(request('month').'-01') : \Carbon\Carbon::now()->startOfMonth();
@@ -27,7 +27,6 @@
     $calStart = $calMonth->copy()->startOfMonth();
     $calEnd   = $calMonth->copy()->endOfMonth();
     $firstDow = $calStart->dayOfWeek; // 0=Sun
-    $currentYear = request('year', now()->year);
 @endphp
 
 <!DOCTYPE html>
@@ -47,202 +46,89 @@
             0%, 100% { opacity: 1; transform: scale(1); }
             50%       { opacity: .5; transform: scale(1.3); }
         }
-        :root {
-            --blue: #3b82f6; --blue-dark: #1d4ed8; --blue-light: #eff6ff;
-            --muted: #6b7280; --border: #e5e7eb;
-        }
-        .nav-item    { transition: background 0.15s, color 0.15s; }
-        .chevron-icon { transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); }
+        :root { --blue:#3b82f6; --blue-dark:#1d4ed8; --blue-light:#eff6ff; --muted:#6b7280; --border:#e5e7eb; }
+        .nav-item    { transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
+        .nav-item:hover { transform: translateX(2px); }
+        .submenu-item { transition: all 0.18s ease; }
+        .submenu-item:hover { transform: translateX(3px); }
+        .chevron-icon { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+        .settings-icon { transition: transform 0.5s ease; }
+        .nav-item:hover .settings-icon { transform: rotate(60deg); }
+        .avatar-ring { box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
 
-        /* ── TABS ── */
         .tab-nav { display:flex; border-bottom:2px solid var(--border); margin-bottom:24px; }
-        .tab-btn {
-            padding:10px 24px; font-size:14px; font-weight:500; color:var(--muted);
-            border:none; background:none; cursor:pointer; font-family:inherit;
-            border-bottom:3px solid transparent; margin-bottom:-2px;
-            transition:color .15s,border-color .15s; text-decoration:none; display:inline-block;
-        }
+        .tab-btn { padding:10px 24px; font-size:14px; font-weight:500; color:var(--muted); border:none; background:none; cursor:pointer; font-family:inherit; border-bottom:3px solid transparent; margin-bottom:-2px; transition:color .15s,border-color .15s; text-decoration:none; display:inline-block; }
         .tab-btn:hover { color:#374151; }
         .tab-btn.active { color:var(--blue); border-bottom-color:var(--blue); font-weight:600; }
 
-        /* ── LEAVE STAT CARDS ── */
         .leave-cards { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
-        .leave-card {
-            background:#fff; border:1px solid var(--border); border-radius:14px;
-            padding:20px 22px; position:relative; box-shadow:0 1px 6px rgba(0,0,0,.04);
-        }
+        .leave-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:20px 22px; position:relative; box-shadow:0 1px 6px rgba(0,0,0,.04); }
         .leave-card-label { font-size:13px; color:var(--muted); font-weight:500; margin-bottom:6px; }
         .leave-card-value { font-size:34px; font-weight:800; color:#111827; line-height:1; }
         .leave-card-sub   { font-size:11.5px; color:#9ca3af; margin-top:6px; }
-        .leave-badge {
-            position:absolute; top:18px; right:18px;
-            padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700;
-        }
+        .leave-badge { position:absolute; top:18px; right:18px; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; }
         .lb-vl   { background:#dbeafe; color:#1d4ed8; }
         .lb-sl   { background:#fce7f3; color:#be185d; }
         .lb-lwop { background:#ffedd5; color:#c2410c; }
 
-        /* ── TOOLBAR ── */
         .toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; flex-wrap:wrap; }
         .toolbar-title { font-size:16px; font-weight:700; color:#111827; }
         .toolbar-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-
-        .filter-select {
-            appearance:none; background:#f9fafb; border:1px solid var(--border);
-            border-radius:8px; padding:8px 28px 8px 12px; font-size:13px;
-            color:#374151; cursor:pointer; outline:none; font-family:inherit;
-            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-            background-repeat:no-repeat; background-position:right 10px center;
-        }
-
-        .btn-primary {
-            display:inline-flex; align-items:center; gap:6px;
-            padding:8px 18px; border-radius:8px; font-size:13px; font-weight:600;
-            font-family:inherit; cursor:pointer; border:none;
-            background:var(--blue); color:#fff; transition:background .15s;
-        }
+        .filter-select { appearance:none; background:#f9fafb; border:1px solid var(--border); border-radius:8px; padding:8px 28px 8px 12px; font-size:13px; color:#374151; cursor:pointer; outline:none; font-family:inherit; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; }
+        .btn-primary { display:inline-flex; align-items:center; gap:6px; padding:8px 18px; border-radius:8px; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; border:none; background:var(--blue); color:#fff; transition:background .15s; }
         .btn-primary:hover { background:var(--blue-dark); }
-        .btn-primary svg { width:14px; height:14px; }
-
-        .btn-outline-sm {
-            display:inline-flex; align-items:center; gap:4px;
-            padding:5px 14px; border-radius:7px; font-size:12px; font-weight:600;
-            font-family:inherit; cursor:pointer;
-            border:1.5px solid #bfdbfe; background:var(--blue-light); color:var(--blue-dark);
-            transition:all .15s;
-        }
+        .btn-outline-sm { display:inline-flex; align-items:center; padding:5px 14px; border-radius:7px; font-size:12px; font-weight:600; font-family:inherit; cursor:pointer; border:1.5px solid #bfdbfe; background:var(--blue-light); color:var(--blue-dark); }
         .btn-outline-sm:hover { background:#dbeafe; }
 
-        /* ── TABLE ── */
-        .table-card {
-            background:#fff; border-radius:14px; border:1px solid var(--border);
-            overflow:hidden; box-shadow:0 1px 8px rgba(0,0,0,.04);
-        }
+        .table-card { background:#fff; border-radius:14px; border:1px solid var(--border); overflow:hidden; box-shadow:0 1px 8px rgba(0,0,0,.04); }
         .data-table { width:100%; border-collapse:collapse; }
         .data-table thead tr { background:#f9fafb; }
-        .data-table th {
-            padding:11px 16px; font-size:11.5px; font-weight:600; color:var(--muted);
-            text-align:left; border-bottom:1px solid var(--border);
-            white-space:nowrap; letter-spacing:.4px; text-transform:uppercase;
-        }
-        .data-table td {
-            padding:14px 16px; font-size:13px; color:#111827;
-            border-bottom:1px solid #f3f4f6; vertical-align:middle;
-        }
+        .data-table th { padding:11px 16px; font-size:11.5px; font-weight:600; color:var(--muted); text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; letter-spacing:.4px; text-transform:uppercase; }
+        .data-table td { padding:14px 16px; font-size:13px; color:#111827; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
         .data-table tr:last-child td { border-bottom:none; }
-        .data-table tbody tr:hover   { background:#fafafa; }
+        .data-table tbody tr:hover { background:#fafafa; }
 
-        /* ── LEAVE TYPE PILLS ── */
         .lt-vl   { background:#dbeafe; color:#1d4ed8; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
         .lt-sl   { background:#fce7f3; color:#be185d; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
         .lt-lwop { background:#ffedd5; color:#c2410c; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
-        .lt-ml   { background:#dcfce7; color:#15803d; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
-        .lt-pl   { background:#ede9fe; color:#6d28d9; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
-        .lt-spl  { background:#fef9c3; color:#a16207; padding:3px 11px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
-
-        /* ── STATUS BADGES ── */
         .status-pending  { background:#ffedd5; color:#c2410c; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
         .status-approved { background:#dcfce7; color:#15803d; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
         .status-rejected { background:#fee2e2; color:#dc2626; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
 
-        /* ── LEAVE CREDITS SECTION ── */
-        .credits-3col { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:28px; }
-        .search-box {
-            display:flex; align-items:center; gap:7px;
-            background:#f9fafb; border:1px solid var(--border);
-            border-radius:8px; padding:7px 13px;
-        }
-        .search-box svg { color:var(--muted); width:14px; height:14px; flex-shrink:0; }
-        .search-box input {
-            border:none; background:transparent; outline:none;
-            font-size:13px; color:#111827; width:150px; font-family:inherit;
-        }
-
-        /* ── CALENDAR ── */
         .cal-nav { display:flex; align-items:center; gap:10px; }
         .cal-month-label { font-size:20px; font-weight:800; color:#111827; }
-        .cal-nav-btn {
-            display:inline-flex; align-items:center; gap:5px;
-            padding:6px 12px; border-radius:7px; font-size:12.5px;
-            font-weight:500; font-family:inherit; cursor:pointer;
-            border:1px solid var(--border); background:#fff; color:#374151;
-            transition:background .15s; text-decoration:none;
-        }
+        .cal-nav-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:7px; font-size:12.5px; font-weight:500; font-family:inherit; cursor:pointer; border:1px solid var(--border); background:#fff; color:#374151; text-decoration:none; }
         .cal-nav-btn:hover { background:#f9fafb; }
-        .cal-nav-btn svg { width:12px; height:12px; }
-
         .cal-grid { width:100%; border-collapse:collapse; background:#fff; border-radius:14px; overflow:hidden; border:1px solid var(--border); }
-        .cal-grid th {
-            padding:10px; font-size:12px; font-weight:700; color:var(--muted);
-            text-align:center; background:#f9fafb; border-bottom:1px solid var(--border);
-            letter-spacing:.5px; text-transform:uppercase;
-        }
-        .cal-grid td {
-            width:14.28%; height:100px; padding:8px; border:1px solid #f3f4f6;
-            vertical-align:top; font-size:13px; font-weight:600; color:#374151;
-        }
+        .cal-grid th { padding:10px; font-size:12px; font-weight:700; color:var(--muted); text-align:center; background:#f9fafb; border-bottom:1px solid var(--border); letter-spacing:.5px; text-transform:uppercase; }
+        .cal-grid td { width:14.28%; height:100px; padding:8px; border:1px solid #f3f4f6; vertical-align:top; font-size:13px; font-weight:600; color:#374151; }
         .cal-grid td.other-month { background:#fafafa; color:#d1d5db; }
-        .cal-event {
-            display:inline-block; padding:2px 8px; border-radius:5px;
-            font-size:11px; font-weight:600; margin-top:4px; width:100%;
-            overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-        }
+        .cal-event { display:inline-block; padding:2px 8px; border-radius:5px; font-size:11px; font-weight:600; margin-top:4px; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .cal-vl      { background:#dbeafe; color:#1d4ed8; }
         .cal-sl      { background:#fce7f3; color:#be185d; }
         .cal-lwop    { background:#ffedd5; color:#c2410c; }
         .cal-holiday { background:#fee2e2; color:#dc2626; }
-
         .cal-legend { display:flex; align-items:center; gap:20px; margin-top:16px; flex-wrap:wrap; }
         .cal-legend-item { display:flex; align-items:center; gap:6px; font-size:12px; color:#374151; }
         .cal-legend-dot  { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
 
-        /* ── LEAVE TYPES TABLE ── */
-        .lt-code-badge {
-            padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; display:inline-block;
-        }
-        .pay-paid   { background:#dcfce7; color:#15803d; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
-        .pay-unpaid { background:#fee2e2; color:#dc2626; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
-        .doc-req    { background:#ffedd5; color:#c2410c; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
-        .doc-not    { background:#f3f4f6; color:#6b7280; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
-
-        /* ── MODAL ── */
-        .modal-overlay {
-            position:fixed; inset:0; background:rgba(0,0,0,.4);
-            display:flex; align-items:center; justify-content:center; z-index:999;
-        }
-        .modal-box {
-            background:#fff; border-radius:16px; padding:28px 32px;
-            width:520px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,.15);
-        }
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; z-index:999; }
+        .modal-box { background:#fff; border-radius:16px; padding:28px 32px; width:520px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,.15); }
         .modal-title { font-size:17px; font-weight:800; color:#111827; }
         .form-label  { font-size:12px; font-weight:600; color:#374151; text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; display:block; }
-        .form-input  {
-            width:100%; border:1.5px solid var(--border); border-radius:8px;
-            padding:9px 13px; font-size:13px; font-family:inherit; outline:none;
-            color:#111827; transition:border-color .15s;
-        }
+        .form-input  { width:100%; border:1.5px solid var(--border); border-radius:8px; padding:9px 13px; font-size:13px; font-family:inherit; outline:none; color:#111827; transition:border-color .15s; }
         .form-input:focus { border-color:var(--blue); }
         .form-row    { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
         .modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:22px; }
-        .btn-cancel  {
-            padding:8px 18px; border-radius:8px; font-size:13px; font-weight:600;
-            font-family:inherit; cursor:pointer; border:1.5px solid var(--border); background:#fff; color:#374151;
-        }
-        .btn-save    {
-            padding:8px 20px; border-radius:8px; font-size:13px; font-weight:600;
-            font-family:inherit; cursor:pointer; border:none; background:var(--blue); color:#fff;
-        }
-        .close-btn {
-            width:32px; height:32px; border:2px solid #374151; border-radius:50%;
-            display:flex; align-items:center; justify-content:center;
-            background:none; cursor:pointer; flex-shrink:0;
-        }
+        .btn-cancel { padding:8px 18px; border-radius:8px; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; border:1.5px solid var(--border); background:#fff; color:#374151; }
+        .btn-save   { padding:8px 20px; border-radius:8px; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; border:none; background:var(--blue); color:#fff; }
+        .close-btn  { width:32px; height:32px; border:2px solid #374151; border-radius:50%; display:flex; align-items:center; justify-content:center; background:none; cursor:pointer; flex-shrink:0; }
     </style>
 </head>
 <body class="bg-gray-50">
 
-{{-- ══════════ HR SIDEBAR ══════════ --}}
-@include('supervisor.supervisor_sidebar')
+{{-- ══════════ EMPLOYEE SIDEBAR ══════════ --}}
+@include('payroll_officer.payroll_sidebar')
 
 {{-- ══════════ MAIN CONTENT ══════════ --}}
 <div x-data="{
@@ -255,7 +141,7 @@
          async openLeaveDetails(id) {
              this.leaveError = '';
              this.selectedLeave = {};
-             const res = await fetch(`/supervisor/leave/${id}`, {
+             const res = await fetch(`/employee/leave/${id}`, {
                  headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
              });
              const data = await res.json();
@@ -265,7 +151,7 @@
          async cancelLeave(id) {
              if (!confirm('Are you sure you want to cancel this leave request?')) return;
              this.cancelling = true;
-             const res = await fetch(`/supervisor/leave/${id}/cancel`, {
+             const res = await fetch(`/employee/leave/${id}/cancel`, {
                  method: 'POST',
                  headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
              });
@@ -278,11 +164,10 @@
      :style="collapsed ? 'margin-left:5rem' : 'margin-left:16rem'"
      style="transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1); min-height:100vh;">
 
-    {{-- Blue Header --}}
     <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-hidden">
         <div class="flex items-center justify-between px-8 py-4">
             <h1 class="text-white font-bold text-xl">Leave Management</h1>
-            <button class="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-white/20">
+            <button class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/20">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
             </button>
         </div>
@@ -292,9 +177,8 @@
 
         {{-- Tab Nav --}}
         <div class="tab-nav">
-            <a href="{{ route('supervisor.leave.management', ['tab' => 'my-leave']) }}"      class="tab-btn {{ $activeTab === 'my-leave'      ? 'active' : '' }}">My Leave</a>
-            <a href="{{ route('supervisor.leave.management', ['tab' => 'leave-credits']) }}" class="tab-btn {{ $activeTab === 'leave-credits'  ? 'active' : '' }}">Leave Credits</a>
-            <a href="{{ route('supervisor.leave.management', ['tab' => 'leave-calendar']) }}" class="tab-btn {{ $activeTab === 'leave-calendar' ? 'active' : '' }}">Leave Calendar</a>
+            <a href="{{ route('payroll_officer.leave.management', ['tab' => 'my-leave']) }}"       class="tab-btn {{ $activeTab === 'my-leave'      ? 'active' : '' }}">My Leave</a>
+            <a href="{{ route('payroll_officer.leave.management', ['tab' => 'leave-calendar']) }}" class="tab-btn {{ $activeTab === 'leave-calendar' ? 'active' : '' }}">Leave Calendar</a>
         </div>
 
         {{-- ══════════ MY LEAVE ══════════ --}}
@@ -320,12 +204,12 @@
         <div class="toolbar">
             <div class="toolbar-title">My Leave Requests</div>
             <div class="toolbar-right">
-                <select class="filter-select" onchange="window.location.href='{{ route('supervisor.leave.management') }}?tab=my-leave&status='+this.value">
-                    <option value="">All Status</option>
-                    <option value="pending"  {{ request('status')==='pending'  ? 'selected' : '' }}>Pending</option>
-                    <option value="approved" {{ request('status')==='approved' ? 'selected' : '' }}>Approved</option>
-                    <option value="rejected" {{ request('status')==='rejected' ? 'selected' : '' }}>Rejected</option>
-                </select>
+                <select class="filter-select" onchange="window.location.href='?tab=my-leave&status='+this.value">
+    <option value="">All Status</option>
+    <option value="pending" {{ request('status')==='pending' ? 'selected' : '' }}>Pending</option>
+    <option value="approved" {{ request('status')==='approved' ? 'selected' : '' }}>Approved</option>
+    <option value="rejected" {{ request('status')==='rejected' ? 'selected' : '' }}>Rejected</option>
+</select>
                 <select class="filter-select">
                     <option value="">All Types</option>
                     @foreach($leaveTypes as $lt)
@@ -333,7 +217,7 @@
                     @endforeach
                 </select>
                 <button class="btn-primary" @click="showFileLeave = true">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     File Leave
                 </button>
             </div>
@@ -372,113 +256,23 @@
             </table>
         </div>
 
-        {{-- ══════════ LEAVE CREDITS ══════════ --}}
-        @elseif($activeTab === 'leave-credits')
-
-        <div class="toolbar" style="margin-bottom:20px;">
-            <div class="toolbar-title">Employee Leave Credits</div>
-        </div>
-        <form method="GET" action="{{ route('supervisor.leave.management') }}" id="creditsFilterForm" style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-            <input type="hidden" name="tab" value="leave-credits">
-            <div style="font-size:13px;color:#6b7280;font-weight:500;">View credits for:</div>
-            <select class="filter-select" name="employee_id" style="min-width:180px;" onchange="document.getElementById('creditsFilterForm').submit()">
-                <option value="">Choose employee</option>
-                @foreach($employees as $emp)
-                    <option value="{{ $emp->id }}" {{ request('employee_id') == $emp->id ? 'selected' : '' }}>
-                        {{ trim($emp->fname.' '.$emp->lname) }}
-                    </option>
-                @endforeach
-            </select>
-            <select class="filter-select" name="year" onchange="document.getElementById('creditsFilterForm').submit()">
-                <option value="{{ now()->year }}" {{ $currentYear == now()->year ? 'selected' : '' }}>{{ now()->year }}</option>
-                <option value="{{ now()->year - 1 }}" {{ $currentYear == now()->year - 1 ? 'selected' : '' }}>{{ now()->year - 1 }}</option>
-            </select>
-        </form>
-
-        <div class="credits-3col">
-            @forelse($leaveTypes as $lt)
-            @php $key = strtolower($lt->code); @endphp
-            <div class="leave-card">
-                <span class="leave-badge" style="background:#dbeafe;color:#1d4ed8;">{{ $lt->code }}</span>
-                <div class="leave-card-label">{{ $lt->name }}</div>
-                <div class="leave-card-value">{{ $creditStats[$key.'_used'] ?? 0 }}</div>
-                <div class="leave-card-sub">{{ $creditStats[$key.'_remaining'] ?? 0 }} remaining of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
-            </div>
-            @empty
-            <div class="leave-card">
-                <div class="leave-card-label">No leave types configured yet.</div>
-            </div>
-            @endforelse
-        </div>
-
-        <div class="toolbar">
-            <div class="toolbar-title">Leave History</div>
-            <div class="toolbar-right">
-                <select class="filter-select" onchange="window.location.href='{{ route('supervisor.leave.management') }}?tab=my-leave&status='+this.value">
-                    <option value="">All Status</option>
-                    <option value="pending"  {{ request('status')==='pending'  ? 'selected' : '' }}>Pending</option>
-                    <option value="approved" {{ request('status')==='approved' ? 'selected' : '' }}>Approved</option>
-                    <option value="rejected" {{ request('status')==='rejected' ? 'selected' : '' }}>Rejected</option>
-                </select>
-                <select class="filter-select">
-                    <option value="">All Types</option>
-                    @foreach($leaveTypes as $lt)
-                        <option value="{{ $lt->id }}">{{ $lt->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-
-        <div class="table-card">
-            <table class="data-table">
-                <thead><tr>
-                    <th>Ref #</th><th>Leave Type</th><th>Filed On</th><th>Date From</th><th>Date To</th><th>Days</th><th>Reason</th><th>Approver</th><th>Status</th><th></th>
-                </tr></thead>
-                <tbody>
-                @forelse($leaveHistory as $req)
-                <tr>
-                    <td style="font-weight:600;color:#6b7280;">{{ $req->ref_no }}</td>
-                    <td><span style="background:#dbeafe;color:#1d4ed8;padding:3px 11px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;">{{ $req->leaveType->name ?? '—' }}</span></td>
-                    <td>{{ $req->created_at->format('m/d/Y') }}</td>
-                    <td>{{ $req->start_date->format('m/d/Y') }}</td>
-                    <td>{{ $req->end_date->format('m/d/Y') }}</td>
-                    <td>{{ $req->total_days }}</td>
-                    <td style="color:#6b7280;">{{ $req->reason }}</td>
-                    <td>
-                        <div style="font-weight:700;font-size:13px;">{{ $req->approver ? trim($req->approver->fname.' '.$req->approver->lname) : '—' }}</div>
-                        <div style="font-size:11px;color:#9ca3af;">{{ $req->approver?->jobTitle?->title ?? '—' }}</div>
-                    </td>
-                    <td><span class="status-{{ $req->status }}">{{ ucfirst($req->status) }}</span></td>
-                    <td><button class="btn-outline-sm" @click="openLeaveDetails({{ $req->id }})">View</button></td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="10" style="text-align:center;padding:40px 16px;color:#9ca3af;font-size:13px;">
-                        No leave history found.
-                    </td>
-                </tr>
-                @endforelse
-                </tbody>
-            </table>
-        </div>
-
         {{-- ══════════ LEAVE CALENDAR ══════════ --}}
         @elseif($activeTab === 'leave-calendar')
 
         <div class="toolbar">
             <div class="cal-nav">
-                <a href="{{ route('supervisor.leave.management', ['tab' => 'leave-calendar', 'month' => $calPrev]) }}" class="cal-nav-btn">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                <a href="{{ route('payroll_officer.leave.management', ['tab' => 'leave-calendar', 'month' => $calPrev]) }}" class="cal-nav-btn">
+                    <svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                     Previous
                 </a>
                 <span class="cal-month-label">{{ $calMonth->format('F') }}</span>
-                <a href="{{ route('supervisor.leave.management', ['tab' => 'leave-calendar', 'month' => $calNext]) }}" class="cal-nav-btn">
+                <a href="{{ route('payroll_officer.leave.management', ['tab' => 'leave-calendar', 'month' => $calNext]) }}" class="cal-nav-btn">
                     Next
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    <svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             </div>
             <div class="toolbar-right">
-                <form method="GET" action="{{ route('supervisor.leave.management') }}" id="calFilterForm" style="display:contents;">
+                <form method="GET" action="{{ route('payroll_officer.leave.management') }}" id="calFilterForm" style="display:contents;">
                     <input type="hidden" name="tab" value="leave-calendar">
                     <input type="hidden" name="month" value="{{ $calMonth->format('Y-m') }}">
                     <select class="filter-select" name="leave_type_id" onchange="document.getElementById('calFilterForm').submit()">
@@ -536,7 +330,8 @@
         @endif
 
         {{-- ══════════ MODALS ══════════ --}}
-    {{-- File Leave Modal --}}
+
+        {{-- File Leave Modal --}}
         <div x-show="showFileLeave" class="modal-overlay" x-cloak @click.self="showFileLeave = false"
              x-data="{
                  leaveTypeId: '', startDate: '', endDate: '', reason: '',
@@ -553,10 +348,10 @@
                      form.append('start_date', this.startDate);
                      form.append('end_date', this.endDate);
                      form.append('reason', this.reason);
-                     const fileInput = document.getElementById('supLeaveDocInput');
+                     const fileInput = document.getElementById('empLeaveDocInput');
                      if (fileInput.files[0]) form.append('document', fileInput.files[0]);
                      form.append('_token', document.querySelector('meta[name=csrf-token]').content);
-                     const res = await fetch('{{ route('supervisor.leave.file') }}', { method: 'POST', body: form });
+                     const res = await fetch('{{ route('payroll_officer.leave.file') }}', { method: 'POST', body: form });
                      this.saving = false;
                      const data = await res.json();
                      if (res.ok) { window.location.reload(); }
@@ -566,9 +361,7 @@
             <div class="modal-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
                     <div class="modal-title">Leave Request</div>
-                    <button @click="showFileLeave = false" class="close-btn">
-                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+                    <button @click="showFileLeave = false" class="close-btn"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
                 </div>
                 <template x-if="errorMsg">
                     <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
@@ -583,18 +376,12 @@
                     </select>
                 </div>
                 <div class="form-row" style="margin-bottom:16px;">
-                    <div>
-                        <label class="form-label">Start Date</label>
-                        <input type="date" class="form-input" x-model="startDate">
-                    </div>
-                    <div>
-                        <label class="form-label">End Date</label>
-                        <input type="date" class="form-input" x-model="endDate">
-                    </div>
+                    <div><label class="form-label">Start Date</label><input type="date" class="form-input" x-model="startDate"></div>
+                    <div><label class="form-label">End Date</label><input type="date" class="form-input" x-model="endDate"></div>
                 </div>
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Reason/Remarks</label>
-                    <input type="text" class="form-input" x-model="reason" placeholder="Enter brief description">
+                    <input type="text" class="form-input" x-model="reason" placeholder="Enter brief description of your leave reason">
                 </div>
                 <div style="margin-bottom:16px;">
                     <label class="form-label">Supporting Document</label>
@@ -602,7 +389,7 @@
                         <svg style="width:28px;height:28px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         <div style="font-size:13px;font-weight:600;color:#374151;" x-text="fileName || 'Choose a file to upload'"></div>
                         <div style="font-size:12px;color:#9ca3af;">PDF or DOCX, max 10MB</div>
-                        <input id="supLeaveDocInput" type="file" accept=".pdf,.docx" style="display:none;" @change="handleFile($event)">
+                        <input id="empLeaveDocInput" type="file" accept=".pdf,.docx" style="display:none;" @change="handleFile($event)">
                     </label>
                 </div>
                 <div class="modal-actions">
@@ -612,14 +399,12 @@
             </div>
         </div>
 
-        {{-- View Leave Details Modal --}}
+        {{-- Leave Details Modal --}}
         <div x-show="showLeaveDetails" class="modal-overlay" x-cloak @click.self="showLeaveDetails = false">
             <div class="modal-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
                     <div class="modal-title">Leave Details</div>
-                    <button @click="showLeaveDetails = false" class="close-btn">
-                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+                    <button @click="showLeaveDetails = false" class="close-btn"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
                 </div>
                 <template x-if="leaveError">
                     <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="leaveError"></div>
@@ -669,7 +454,6 @@
                 </div>
             </div>
         </div>
-        
 
     </div>
 </div>

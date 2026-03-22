@@ -355,8 +355,27 @@
             if (response.ok) {
                 this.isEditMode = false;
                 this.isSaving = false;
+
+                const empIdx = this.employees.findIndex(e => e.id === this.selectedEmployee.id);
+                if (empIdx !== -1) {
+                    const newJobTitle = this.jobTitles.find(j => j.id == this.selectedEmployee.job_title_id);
+                    const dept = this.departments.find(d => d.id == this.selectedEmployee.department_id);
+                    this.employees[empIdx].first_name    = this.selectedEmployee.first_name;
+                    this.employees[empIdx].last_name     = this.selectedEmployee.last_name;
+                    this.employees[empIdx].mi            = this.selectedEmployee.mi;
+                    this.employees[empIdx].suffix        = this.selectedEmployee.suffix;
+                    this.employees[empIdx].email         = this.selectedEmployee.email;
+                    this.employees[empIdx].contact_no    = this.selectedEmployee.contact_number;
+                    this.employees[empIdx].department_id = this.selectedEmployee.department_id;
+                    this.employees[empIdx].department    = dept ? dept.name : this.employees[empIdx].department;
+                    this.employees[empIdx].job_title_id  = this.selectedEmployee.job_title_id;
+                    this.employees[empIdx].job_title     = newJobTitle ? newJobTitle.title : this.employees[empIdx].job_title;
+                    this.employees[empIdx].start_date    = this.selectedEmployee.date_hired;
+                    this.employees[empIdx].name          = [this.selectedEmployee.first_name, this.selectedEmployee.mi ? this.selectedEmployee.mi + '.' : '', this.selectedEmployee.last_name].filter(Boolean).join(' ');
+                    this.employees[empIdx].avatar        = (this.selectedEmployee.first_name.charAt(0) + this.selectedEmployee.last_name.charAt(0)).toUpperCase();
+                }
+
                 this.showToast('Employee updated successfully!', 'success');
-                setTimeout(() => window.location.reload(), 1500);
                 return;
             }
 

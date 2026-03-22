@@ -156,17 +156,26 @@ $user = User::create([
         'contact_no'    => 'required|string|min:10|max:15',
         'department_id' => 'required|exists:departments,id',
         'job_title_id'  => 'required|exists:job_titles,id',
-        'role'          => 'required|in:admin,hr_manager,supervisor,finance_officer,payroll_officer,employee',
         'start_date'    => 'required|date',
     ]);
 
+    $jobTitle = \DB::table('job_titles')->where('id', $request->job_title_id)->value('title');
+    $role = match($jobTitle) {
+        'System Administrator' => 'admin',
+        'HR Manager'           => 'hr_manager',
+        'Finance Officer'      => 'finance_officer',
+        'Payroll Officer'      => 'payroll_officer',
+        'Supervisor'           => 'supervisor',
+        default                => 'employee',
+    };
+
     try {
-        DB::transaction(function () use ($request, $employee) {
+        DB::transaction(function () use ($request, $employee, $role) {
             $emailChanged = $employee->user->email !== $request->email;
 
             $employee->user->update([
                 'email' => $request->email,
-                'role'  => $request->role,
+                'role'  => $role,
             ]);
 
             if ($emailChanged) {
@@ -285,13 +294,44 @@ return response()->json([
         return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
 }
-    public function profile()
-{
-    $user = auth()->user();
-    $employee = \App\Models\Employee::with(['department', 'jobTitle'])
-        ->where('user_id', $user->id)
-        ->first();
+    public function updateJobTitle(Request $request, $id)
+    {
+        $request->validate([
+            'job_title_id' => 'required|exists:job_titles,id',
+        ]);
 
-    return view('admin.admin-profile', compact('user', 'employee'));
-}
+        $employee = Employee::with('user')->findOrFail($id);
+
+        $jobTitle = \DB::table('job_titles')->where('id', $request->job_title_id)->value('title');
+
+        $role = match($jobTitle) {
+            'System Administrator' => 'admin',
+            'HR Manager'           => 'hr_manager',
+            'Finance Officer'      => 'finance_officer',
+            'Payroll Officer'      => 'payroll_officer',
+            'Supervisor'           => 'supervisor',
+            default                => 'employee',
+        };
+
+        try {
+            DB::transaction(function () use ($request, $employee, $role) {
+                $employee->update(['job_title_id' => $request->job_title_id]);
+                $employee->user->update(['role' => $role]);
+            });
+
+            return response()->json(['success' => true, 'message' => 'Job title updated successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function profile()
+    {
+        $user = auth()->user();
+        $employee = \App\Models\Employee::with(['department', 'jobTitle'])
+            ->where('user_id', $user->id)
+            ->first();
+
+        return view('admin.admin-profile', compact('user', 'employee'));
+    }
 }

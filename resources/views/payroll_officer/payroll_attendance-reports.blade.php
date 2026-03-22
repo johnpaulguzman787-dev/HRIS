@@ -10,9 +10,9 @@
         : ($sidebarUser?->email ?? 'User');
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 
-    $attendanceRoutes = ['hr.attendance.reports', 'hr.attendance.shift', 'hr.attendance.leave'];
-    $payrollRoutes    = ['hr.payroll', 'hr.payslips', 'hr.contributions'];
-    $requestRoutes    = ['hr.requests.pending', 'hr.requests.approved'];
+    $attendanceRoutes = ['payroll_officer.attendance.reports', 'payroll_officer.attendance.shift', 'payroll_officer.attendance.leave'];
+    $payrollRoutes    = ['payroll_officer.payroll', 'payroll_officer.payslips', 'payroll_officer.contributions'];
+    $requestRoutes    = ['payroll_officer.requests.pending', 'payroll_officer.requests.approved'];
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -20,12 +20,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>My Attendance – MEDISOURCE HR</title>
+    <title>My Attendance – MEDISOURCE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
+
+        /* Sidebar */
         .nav-item { transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
         .nav-item:hover { transform: translateX(2px); }
         .submenu-item { transition: all 0.18s ease; }
@@ -37,38 +39,68 @@
         .nav-item:hover .settings-icon { transform: rotate(60deg); }
         .avatar-ring { box-shadow: 0 0 0 3px rgba(59,130,246,0.2); transition: box-shadow 0.3s ease; }
         .avatar-ring:hover { box-shadow: 0 0 0 5px rgba(59,130,246,0.35); }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)} }
+
+        /* Animations */
+        @keyframes fadeUp {
+            from { opacity:0; transform:translateY(14px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
         @keyframes fadeIn { from{opacity:0}to{opacity:1} }
-        @keyframes rowSlide { from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)} }
-        @keyframes pulseDot { 0%,100%{opacity:1}50%{opacity:0.3} }
+        @keyframes rowSlide {
+            from { opacity:0; transform:translateX(-8px); }
+            to   { opacity:1; transform:translateX(0); }
+        }
+        @keyframes pulseDot {
+            0%,100%{opacity:1} 50%{opacity:0.3}
+        }
+
         .anim-up   { animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) both; }
         .anim-fade { animation: fadeIn 0.35s ease both; }
-        .stat-card { animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) both; transition: transform 0.2s ease, box-shadow 0.2s ease; border-radius: 18px; }
+
+        .stat-card {
+            animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) both;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 18px;
+        }
         .stat-card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,0.10); }
-        .table-row { animation: rowSlide 0.3s cubic-bezier(0.22,1,0.36,1) both; transition: background 0.12s ease; }
+
+        .table-row {
+            animation: rowSlide 0.3s cubic-bezier(0.22,1,0.36,1) both;
+            transition: background 0.12s ease;
+        }
         .table-row:hover { background:#f8faff; }
+
         .pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
-        .export-btn { transition: all 0.2s ease; background: linear-gradient(135deg,#3b82f6,#1d4ed8); }
+
+        .export-btn {
+            transition: all 0.2s ease;
+            background: linear-gradient(135deg,#3b82f6,#1d4ed8);
+        }
         .export-btn:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(59,130,246,0.40); }
+
         .clock-btn { transition: all 0.2s cubic-bezier(0.4,0,0.2,1); border-radius: 12px; }
         .clock-btn:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 6px 20px rgba(59,130,246,0.38); }
         .clock-btn:disabled { opacity:0.6; cursor:not-allowed; }
+
         .setup-btn { transition: all 0.2s ease; }
-        ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:#f1f5f9} ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+
+        ::-webkit-scrollbar { width:4px; }
+        ::-webkit-scrollbar-track { background:#f1f5f9; }
+        ::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:99px; }
     </style>
 </head>
 <body class="bg-gray-100" x-data="attendancePage()" x-init="init()">
 
-{{-- ═══════════ HR SIDEBAR ═══════════ --}}
-@include('hr.hr_sidebar')
+{{-- ═══════════ SIDEBAR ═══════════ --}}
+@include('payroll_officer.payroll_sidebar')
 
-{{-- ═══════════ MAIN CONTENT ═══════════ --}}
+{{-- ═══════════ MAIN ═══════════ --}}
 <div id="main-content" class="min-h-screen bg-gray-100 ml-64"
      style="transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1);">
 
-    {{-- Blue Header --}}
-    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-hidden">
-    <div class="anim-fade flex items-center justify-between px-8 py-4">
+   {{-- Blue Header --}}
+<header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-hidden">
+    <div class="flex items-center justify-between px-8 py-4">
         <h1 class="text-white font-bold text-xl">My Attendance</h1>
         <button class="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-white/20">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,20 +112,27 @@
 
     <div class="p-6 space-y-5">
 
-        {{-- TOP ROW --}}
+        {{-- ── TOP ROW: Clock Panel (left) + 2-col × 3-row cards (right) ── --}}
         <div class="flex gap-5 items-stretch">
 
-            {{-- CLOCK PANEL --}}
+            {{-- ── CLOCK PANEL ── --}}
             <div class="anim-up bg-white rounded-2xl p-6 flex-shrink-0 flex flex-col"
                  style="width:450px; animation-delay:0.05s; box-shadow:0 1px 12px rgba(0,0,0,0.07);">
+
                 <p class="text-sm font-bold text-gray-700 uppercase tracking-widest mb-1">Time & Attendance</p>
                 <p class="text-xs text-gray-400 font-medium mb-2" x-text="liveDate"></p>
+
+                {{-- Big Clock --}}
                 <div class="mb-1">
-                    <p class="font-black tabular-nums leading-none" style="font-size:2.8rem; letter-spacing:-1px; color:#3b82f6;" x-text="liveTime"></p>
+                    <p class="font-black tabular-nums leading-none"
+                       style="font-size:2.8rem; letter-spacing:-1px; color:#3b82f6;"
+                       x-text="liveTime"></p>
                 </div>
+
                 <hr class="my-4 border-gray-100">
 
-                <div class="mb-3">
+                {{-- Shift Schedule --}}
+               <div class="mb-3">
                     <p class="text-xs font-semibold text-gray-500 mb-2">Shift Schedule</p>
                     @if($employeeShift)
                     <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
@@ -116,30 +155,44 @@
                     @endif
                 </div>
 
-                
+                {{-- Today's Attendance --}}
                 <div class="mb-3">
                     <p class="text-xs font-semibold text-gray-500 mb-2">Today's Attendance</p>
                     <div class="flex gap-2 mb-2">
                         <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
                             <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">TIME IN</p>
-                            <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedIn ? clockInTime : '–'"></p>
+                            <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5"
+                               x-text="clockedIn ? clockInTime : '–'"></p>
                         </div>
                         <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
                             <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">BREAK</p>
-                            <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="breakTime ? breakTime : '–'"></p>
+                            <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5"
+                               x-text="breakTime ? breakTime : '–'"></p>
                         </div>
                         <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
                             <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">TIME OUT</p>
-                            <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedOut ? clockOutTime : '–'"></p>
+                            <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5"
+                               x-text="clockedOut ? clockOutTime : '–'"></p>
                         </div>
                     </div>
-                    <p class="text-xs text-center text-gray-400 font-medium" x-show="!clockedIn"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
-                    <p class="text-xs text-center font-medium" x-show="clockedIn && !onBreak && !clockedOut" style="color:#3b82f6;"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
+
+                    {{-- Elapsed Timer --}}
+                    <p class="text-xs text-center text-gray-400 font-medium" x-show="!clockedIn">
+                        <span class="mr-1"></span>
+                        <span x-text="elapsedDisplay"></span>
+                    </p>
+                    <p class="text-xs text-center font-medium" x-show="clockedIn && !onBreak && !clockedOut" style="color:#3b82f6;">
+                        <span class="mr-1"></span>
+                        <span x-text="elapsedDisplay"></span>
+                    </p>
                     <p class="text-xs text-center font-medium" x-show="onBreak" style="color:#f59e0b;">On break · timer paused</p>
-                    <p class="text-xs text-center font-semibold" x-show="clockedOut" style="color:#22c55e;">✓ Attendance recorded · <span x-text="elapsedDisplay"></span></p>
-                    <p x-show="onLeave" class="text-xs text-center font-semibold" style="color:#6366f1;">You are on approved leave today.</p>
+                    <p class="text-xs text-center font-semibold" x-show="clockedOut" style="color:#22c55e;">
+                      Attendance recorded · <span x-text="elapsedDisplay"></span>
+                     </p>
+                    <p x-show="onLeave" class="text-xs text-center font-semibold" style="color:#6366f1;"> You are on approved leave today.</p>
                 </div>
-                
+
+                {{-- 3 Action Buttons --}}
                 <div class="mt-auto flex gap-2">
                     <button @click="handleClock()"
                             :disabled="onLeave || (clockedIn && !onBreak) || clockedOut || !assignedShiftId"
@@ -162,69 +215,102 @@
                 </div>
             </div>
 
-            {{-- 2×3 STAT CARDS --}}
+            {{-- ── 2 COLS × 3 ROWS STAT CARDS ── --}}
             <div class="flex-1 grid grid-cols-2 grid-rows-3 gap-4">
+
+                {{-- Row 1 --}}
                 <div class="stat-card p-5 flex flex-col justify-between" style="background:#c8f0d8; animation-delay:0.08s;">
                     <p class="text-xs font-bold uppercase tracking-wider" style="color:#14532d;">Total Days Present</p>
-                    <div><p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#2563eb;">{{ $stats['present'] }}</p><p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#15803d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                    <div>
+                        <p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#2563eb;">{{ $stats['present'] }}</p>
+                        <p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#15803d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p>
+                    </div>
                 </div>
+
                 <div class="stat-card p-5 flex flex-col justify-between" style="background:#fde8c8; animation-delay:0.11s;">
                     <p class="text-xs font-bold uppercase tracking-wider" style="color:#92400e;">Late</p>
-                    <div><p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['late'] }}</p><p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#b45309;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                    <div>
+                        <p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['late'] }}</p>
+                        <p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#b45309;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p>
+                    </div>
                 </div>
+
+                {{-- Row 2 --}}
                 <div class="stat-card p-5 flex flex-col justify-between" style="background:#fbc8c8; animation-delay:0.14s;">
                     <p class="text-xs font-bold uppercase tracking-wider" style="color:#991b1b;">Absent</p>
-                    <div><p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['absent'] }}</p><p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#dc2626;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                    <div>
+                        <p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['absent'] }}</p>
+                        <p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#dc2626;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p>
+                    </div>
                 </div>
+
                 <div class="stat-card p-5 flex flex-col justify-between" style="background:#f9c8e8; animation-delay:0.17s;">
                     <p class="text-xs font-bold uppercase tracking-wider" style="color:#831843;">Leave</p>
-                    <div><p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['on_leave'] }}</p><p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#be185d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                    <div>
+                        <p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['on_leave'] }}</p>
+                        <p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#be185d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p>
+                    </div>
                 </div>
+
+                {{-- Row 3 --}}
                 <div class="stat-card p-5 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.20s;">
                     <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Overtime</p>
-                    <div><p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['overtime'] }}</p><p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                    <div>
+                        <p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['overtime'] }}</p>
+                        <p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p>
+                    </div>
                 </div>
+
                 <div class="stat-card p-5 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.23s;">
                     <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Undertime</p>
-                    <div><p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['undertime'] }}</p><p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                    <div>
+                        <p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['undertime'] }}</p>
+                        <p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p>
+                    </div>
                 </div>
+
             </div>
         </div>
 
-        {{-- TABLE --}}
-        <div class="anim-up bg-white rounded-2xl overflow-hidden" style="animation-delay:0.26s; box-shadow:0 1px 12px rgba(0,0,0,0.07);">
+        {{-- ── ATTENDANCE RECORDS TABLE ── --}}
+        <div class="anim-up bg-white rounded-2xl overflow-hidden"
+             style="animation-delay:0.26s; box-shadow:0 1px 12px rgba(0,0,0,0.07);">
+
             <div class="px-6 py-4 flex items-center justify-between">
                 <h3 class="font-bold text-gray-800 text-base">Attendance Records</h3>
                 <div class="flex items-center gap-3">
                     <div class="relative">
-    <select x-model="selectedMonth" @change="changeMonth()"
-        class="appearance-none flex items-center gap-2 border border-gray-200 rounded-xl pl-8 pr-8 py-2 bg-gray-50 text-xs text-gray-600 font-medium cursor-pointer hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300">
-        <option value="1">January</option>
-        <option value="2">February</option>
-        <option value="3">March</option>
-        <option value="4">April</option>
-        <option value="5">May</option>
-        <option value="6">June</option>
-        <option value="7">July</option>
-        <option value="8">August</option>
-        <option value="9">September</option>
-        <option value="10">October</option>
-        <option value="11">November</option>
-        <option value="12">December</option>
-    </select>
-    <div class="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-gray-400">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-    </div>
-    <div class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-gray-400">
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-    </div>
-</div>
+                        <select x-model="selectedMonth" @change="changeMonth()"
+                            class="appearance-none flex items-center gap-2 border border-gray-200 rounded-xl pl-8 pr-8 py-2 bg-gray-50 text-xs text-gray-600 font-medium cursor-pointer hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300">
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-gray-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <div class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-gray-400">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+                    </div>
                     <button class="export-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
                         Export
                     </button>
                 </div>
             </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead>
@@ -243,14 +329,21 @@
                         <template x-for="(row, i) in rows" :key="row.date">
                             <tr class="table-row" :style="`animation-delay:${0.035*i}s`">
                                 <td class="px-6 py-4 text-sm font-medium text-gray-700" x-text="row.date"></td>
-                                <td class="px-6 py-4"><span class="px-3 py-1 rounded-lg text-xs font-bold" :style="row.setup==='WFH'?'background:#dbeafe;color:#1d4ed8;':'background:#f1f5f9;color:#475569;'" x-text="row.setup"></span></td>
+                                <td class="px-6 py-4">
+                                    <span class="px-3 py-1 rounded-lg text-xs font-bold"
+                                          :style="row.setup==='WFH'
+                                              ? 'background:#dbeafe;color:#1d4ed8;'
+                                              : 'background:#f1f5f9;color:#475569;'"
+                                          x-text="row.setup"></span>
+                                </td>
                                 <td class="px-6 py-4 text-sm text-gray-600" x-text="row.shift"></td>
                                 <td class="px-6 py-4 text-sm text-gray-500" x-text="row.schedule"></td>
                                 <td class="px-6 py-4 text-sm font-semibold text-gray-800" x-text="row.clockIn"></td>
                                 <td class="px-6 py-4 text-sm text-gray-500" x-text="row.clockOut"></td>
                                 <td class="px-6 py-4 text-sm text-gray-600" x-text="row.overtime"></td>
                                 <td class="px-6 py-4">
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold" :style="statusStyle(row.status)">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+                                          :style="statusStyle(row.status)">
                                         <span class="w-1.5 h-1.5 rounded-full" :style="dotStyle(row.status)"></span>
                                         <span x-text="row.status"></span>
                                     </span>
@@ -260,14 +353,15 @@
                     </tbody>
                 </table>
             </div>
+
             <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
                 <p class="text-xs text-gray-400">Showing <span class="font-semibold text-gray-600">8</span> of <span class="font-semibold text-gray-600">26</span> records</p>
                 <div class="flex items-center gap-1">
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 text-xs flex items-center justify-center hover:bg-gray-50">&lsaquo;</button>
+                    <button class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 text-xs flex items-center justify-center hover:bg-gray-50 transition-all">&lsaquo;</button>
                     <button class="w-8 h-8 rounded-lg text-xs font-bold text-white flex items-center justify-center" style="background:#3b82f6;">1</button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 text-gray-500 text-xs flex items-center justify-center hover:bg-gray-50">2</button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 text-gray-500 text-xs flex items-center justify-center hover:bg-gray-50">3</button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 text-xs flex items-center justify-center hover:bg-gray-50">&rsaquo;</button>
+                    <button class="w-8 h-8 rounded-lg border border-gray-200 text-gray-500 text-xs flex items-center justify-center hover:bg-gray-50 transition-all">2</button>
+                    <button class="w-8 h-8 rounded-lg border border-gray-200 text-gray-500 text-xs flex items-center justify-center hover:bg-gray-50 transition-all">3</button>
+                    <button class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 text-xs flex items-center justify-center hover:bg-gray-50 transition-all">&rsaquo;</button>
                 </div>
             </div>
         </div>
@@ -287,10 +381,10 @@ function attendancePage() {
         onBreak:     {{ $todayLog?->break_start && !$todayLog?->break_end ? 'true' : 'false' }},
         resumed:     {{ $todayLog?->break_end   ? 'true' : 'false' }},
         breakTime:   '{{ $todayLog?->break_start ? \Carbon\Carbon::parse($todayLog->break_start)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
+        breakMinutes: {{ $todayLog?->break_minutes ?? 0 }},
         clockInTime:  '{{ $todayLog?->clock_in  ? \Carbon\Carbon::parse($todayLog->clock_in)->setTimezone(config("app.timezone"))->format("h:i A")  : "" }}',
         clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock_out)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         clockInTimestamp: {{ $todayLog?->clock_in ? \Carbon\Carbon::parse($todayLog->clock_in)->valueOf() : 'null' }},
-        breakMinutes: {{ $todayLog?->break_minutes ?? 0 }},
         liveTime: '', liveDate: '', elapsedSeconds: 0,
         rows: [], currentPage: 1, totalRecords: 0, perPage: 10,
         currentMonth: {{ $month }}, currentYear: {{ $year }},
@@ -330,8 +424,8 @@ function attendancePage() {
             if (this.clockedOut) return;
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-            if (this.onBreak && !this.clockedIn) {
-                const res = await fetch('{{ route("hr.attendance.clock-in") }}', {
+            if (this.onBreak) {
+                const res = await fetch('{{ route("payroll_officer.attendance.clock-in") }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
                     body: JSON.stringify({ work_setup: this.workSetup, shift_id: this.assignedShiftId })
@@ -342,14 +436,12 @@ function attendancePage() {
                     this.resumed = true;
                     this.clockedIn = true;
                     this.breakMinutes = data.break_minutes;
-                } else {
-                    alert(data.message ?? 'Resume failed.');
-                }
+                } else { alert(data.message ?? 'Resume failed.'); }
                 return;
             }
 
             if (!this.clockedIn) {
-                const res = await fetch('{{ route("hr.attendance.clock-in") }}', {
+                const res = await fetch('{{ route("payroll_officer.attendance.clock-in") }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
                     body: JSON.stringify({ work_setup: this.workSetup, shift_id: this.assignedShiftId })
@@ -359,9 +451,7 @@ function attendancePage() {
                     this.clockedIn = true;
                     this.clockInTime = data.clock_in;
                     this.clockInTimestamp = Date.now();
-                } else {
-                    alert(data.message ?? 'Clock-in failed.');
-                }
+                } else { alert(data.message ?? 'Clock-in failed.'); }
                 return;
             }
         },
@@ -369,7 +459,7 @@ function attendancePage() {
         async handleBreak() {
             if (!this.clockedIn || this.clockedOut || this.onBreak || this.resumed) return;
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const res = await fetch('{{ route("hr.attendance.break") }}', {
+            const res = await fetch('{{ route("payroll_officer.attendance.break") }}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
                 body: JSON.stringify({})
@@ -378,15 +468,13 @@ function attendancePage() {
             if (res.ok) {
                 this.onBreak = true;
                 this.breakTime = data.break_start;
-            } else {
-                alert(data.message ?? 'Break failed.');
-            }
+            } else { alert(data.message ?? 'Break failed.'); }
         },
 
         async handleClockOut() {
             if (!this.clockedIn || this.clockedOut) return;
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const res = await fetch('{{ route("hr.attendance.clock-out") }}', {
+            const res = await fetch('{{ route("payroll_officer.attendance.clock-out") }}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
                 body: JSON.stringify({})
@@ -397,14 +485,12 @@ function attendancePage() {
                 this.clockOutTime = data.clock_out;
                 this.onBreak = false;
                 await this.loadRecords();
-            } else {
-                alert(data.message ?? 'Clock-out failed.');
-            }
+            } else { alert(data.message ?? 'Clock-out failed.'); }
         },
 
         async loadRecords(page = 1) {
             try {
-                const res = await fetch(`{{ route("hr.attendance.records") }}?month=${this.currentMonth}&year=${this.currentYear}&page=${page}`);
+                const res = await fetch(`{{ route("payroll_officer.attendance.records") }}?month=${this.currentMonth}&year=${this.currentYear}&page=${page}`);
                 const data = await res.json();
                 if (!data.data) { this.rows = []; this.totalRecords = 0; return; }
                 this.rows = data.data.map(log => ({
@@ -435,5 +521,6 @@ function attendancePage() {
     }
 }
 </script>
+
 </body>
 </html>

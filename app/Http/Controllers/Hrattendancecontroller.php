@@ -203,8 +203,25 @@ class HRAttendanceController extends Controller
             }
 
             if ($now->gt($shiftEnd)) {
-                $overtimeMinutes = (int) $now->diffInMinutes($shiftEnd);
-                if ($clockOutStatus !== 'late') $clockOutStatus = 'overtime';
+                // Only count overtime if there is an approved OT request for today
+                $approvedOt = OvertimeRequest::where('employee_id', $employee->id)
+                    ->where('status', 'approved')
+                    ->whereDate('ot_date', $today)
+                    ->first();
+
+                if ($approvedOt) {
+                    // Cap overtime at the approved ot_end_time, not actual clock-out
+                    $approvedEnd = Carbon::createFromTimeString(
+                        Carbon::today()->toDateString() . ' ' . $approvedOt->ot_end_time
+                    );
+                    // Handle overnight approved OT end time
+                    if ($approvedEnd->lt($shiftEnd)) {
+                        $approvedEnd->addDay();
+                    }
+                    $overtimeMinutes = (int) $shiftEnd->diffInMinutes($approvedEnd);
+                    if ($clockOutStatus !== 'late') $clockOutStatus = 'overtime';
+                }
+                // No approved OT request → status stays present or late, overtime_minutes stays 0
             } elseif ($now->lt($shiftEnd)) {
                 $undertimeMinutes = (int) $now->diffInMinutes($shiftEnd);
                 if ($clockOutStatus !== 'late') $clockOutStatus = 'undertime';
@@ -274,6 +291,25 @@ class HRAttendanceController extends Controller
         if (!$log->clock_in)   return response()->json(['message' => 'Not clocked in yet.'], 422);
         if ($log->break_start) return response()->json(['message' => 'Already on break.'], 409);
         if ($log->clock_out)   return response()->json(['message' => 'Already clocked out.'], 409);
+
+        $shift = $log->shift_id ? \App\Models\Shift::find($log->shift_id) : null;
+        if (!$shift || !$shift->break_schedule) {
+            return response()->json(['message' => 'No break schedule defined for your shift.'], 422);
+        }
+
+        $breakSchedule = json_decode($shift->break_schedule, true);
+        if (empty($breakSchedule['start']) || empty($breakSchedule['end'])) {
+            return response()->json(['message' => 'No break schedule defined for your shift.'], 422);
+        }
+
+        $breakStart = Carbon::createFromTimeString(Carbon::today()->toDateString() . ' ' . $breakSchedule['start']);
+        $breakEnd   = Carbon::createFromTimeString(Carbon::today()->toDateString() . ' ' . $breakSchedule['end']);
+
+        if ($now->lt($breakStart) || $now->gt($breakEnd)) {
+            return response()->json([
+                'message' => 'Break is only allowed between ' . $breakStart->format('g:i A') . ' and ' . $breakEnd->format('g:i A') . '.',
+            ], 422);
+        }
 
         $log->update(['break_start' => $now]);
 
@@ -923,10 +959,29 @@ class HRAttendanceController extends Controller
             $cursor->addDay();
         }
 
-        $lastRef = LeaveRequest::where('ref_no', 'like', 'REQ-%')
-            ->orderByDesc('id')->value('ref_no');
-        $nextNum = $lastRef ? (int) substr($lastRef, 4) + 1 : 1;
-        $refNo   = 'REQ-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+        do {
+            $lastRef = LeaveRequest::where('ref_no', 'like', 'REQ-%')
+                ->orderByDesc('id')->value('ref_no');
+            $nextNum = $lastRef ? (int) substr($lastRef, 4) + 1 : 1;
+            $refNo   = 'REQ-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+        } while (LeaveRequest::where('ref_no', $refNo)->exists());
+
+        $overlap = LeaveRequest::where('employee_id', $employee->id)
+            ->whereIn('status', ['pending', 'supervisor_approved', 'approved'])
+            ->where(function ($q) use ($request) {
+                $q->whereBetween('start_date', [$request->start_date, $request->end_date])
+                  ->orWhereBetween('end_date', [$request->start_date, $request->end_date])
+                  ->orWhere(function ($q2) use ($request) {
+                      $q2->where('start_date', '<=', $request->start_date)
+                         ->where('end_date', '>=', $request->end_date);
+                  });
+            })->first();
+
+        if ($overlap) {
+            return response()->json([
+                'message' => 'You already have a ' . $overlap->status . ' leave request covering those dates (' . $overlap->ref_no . ').',
+            ], 409);
+        }
 
         $docPath = null;
         if ($request->hasFile('document')) {
@@ -1309,9 +1364,106 @@ class HRAttendanceController extends Controller
     public function approvedRequests(Request $request)
     {
         $departments = Department::orderBy('name')->get();
-        $requests    = collect();
 
-        return view('hr.hr_approved-requests', compact('departments', 'requests'));
+        $filterType   = $request->get('type', 'all');
+        $filterDept   = $request->get('department');
+        $filterStatus = $request->get('status', 'all');
+        $search       = $request->get('search');
+
+        $allRequests = collect();
+
+        if ($filterType === 'all' || $filterType === 'leave') {
+            $q = LeaveRequest::with(['employee.department', 'employee.jobTitle', 'leaveType', 'approver'])
+                ->whereIn('status', ['approved', 'rejected', 'cancelled']);
+            if ($filterDept)             $q->whereHas('employee', fn($e) => $e->where('department_id', $filterDept));
+            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search)                 $q->whereHas('employee', fn($e) => $e->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%"));
+            foreach ($q->get() as $r) {
+                $allRequests->push((object)[
+                    'type'             => 'leave',
+                    'id'               => $r->id,
+                    'ref_no'           => $r->ref_no,
+                    'status'           => $r->status,
+                    'employee'         => $r->employee,
+                    'leaveType'        => $r->leaveType,
+                    'start_date'       => $r->start_date,
+                    'end_date'         => $r->end_date,
+                    'total_days'       => $r->total_days,
+                    'reason'           => $r->reason,
+                    'document_path'    => $r->document_path,
+                    'rejection_reason' => $r->rejection_reason,
+                    'hr_notes'         => $r->hr_notes,
+                    'approver'         => $r->approver,
+                    'approved_at'      => $r->approved_at,
+                    'created_at'       => $r->created_at,
+                ]);
+            }
+        }
+
+        if ($filterType === 'all' || $filterType === 'overtime') {
+            $q = OvertimeRequest::with(['employee.department', 'employee.jobTitle'])
+                ->whereIn('status', ['approved', 'rejected']);
+            if ($filterDept)             $q->whereHas('employee', fn($e) => $e->where('department_id', $filterDept));
+            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search)                 $q->whereHas('employee', fn($e) => $e->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%"));
+            foreach ($q->get() as $r) {
+                $allRequests->push((object)[
+                    'type'             => 'overtime',
+                    'id'               => $r->id,
+                    'ref_no'           => $r->ref_no,
+                    'status'           => $r->status,
+                    'employee'         => $r->employee,
+                    'ot_date'          => $r->ot_date,
+                    'ot_start_time'    => $r->ot_start_time,
+                    'ot_end_time'      => $r->ot_end_time,
+                    'requested_hours'  => $r->requested_hours,
+                    'approved_hours'   => $r->approved_hours,
+                    'reason'           => $r->reason,
+                    'document_path'    => $r->document_path,
+                    'rejection_reason' => $r->rejection_reason,
+                    'approved_by'      => $r->approved_by,
+                    'approved_at'      => $r->approved_at,
+                    'created_at'       => $r->created_at,
+                ]);
+            }
+        }
+
+        if ($filterType === 'all' || $filterType === 'shift') {
+            $q = ShiftChangeRequest::with(['employee.department', 'employee.jobTitle', 'currentShift', 'requestedShift'])
+                ->whereIn('status', ['approved', 'rejected']);
+            if ($filterDept)             $q->whereHas('employee', fn($e) => $e->where('department_id', $filterDept));
+            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search)                 $q->whereHas('employee', fn($e) => $e->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%"));
+            foreach ($q->get() as $r) {
+                $allRequests->push((object)[
+                    'type'             => 'shift',
+                    'id'               => $r->id,
+                    'ref_no'           => $r->ref_no,
+                    'status'           => $r->status,
+                    'employee'         => $r->employee,
+                    'current_shift'    => $r->currentShift,
+                    'requested_shift'  => $r->requestedShift,
+                    'effective_from'   => $r->effective_from,
+                    'effective_until'  => $r->effective_until,
+                    'reason'           => $r->reason,
+                    'document_path'    => $r->document_path,
+                    'rejection_reason' => $r->rejection_reason,
+                    'approved_by'      => $r->approved_by,
+                    'approved_at'      => $r->approved_at,
+                    'created_at'       => $r->created_at,
+                ]);
+            }
+        }
+
+        $requests      = $allRequests->sortByDesc('created_at')->values();
+        $approvedCount = $allRequests->where('status', 'approved')->count();
+        $rejectedCount = $allRequests->where('status', 'rejected')->count();
+
+        return view('hr.hr_approved-requests', compact(
+            'departments', 'requests',
+            'approvedCount', 'rejectedCount',
+            'filterType', 'filterStatus', 'search', 'filterDept'
+        ));
     }
 
     public function approveRequest(Request $request, $id)
@@ -1348,22 +1500,31 @@ class HRAttendanceController extends Controller
         $request->validate([
             'ot_date'       => 'required|date',
             'ot_start_time' => 'required',
-            'ot_end_time'   => 'required|after:ot_start_time',
+            'ot_end_time'   => 'required',
             'reason'        => 'required|string|max:500',
             'document'      => 'nullable|file|mimes:pdf,docx|max:10240',
         ]);
 
+        $otStart = Carbon::parse($request->ot_date . ' ' . $request->ot_start_time);
+        $otEnd   = Carbon::parse($request->ot_date . ' ' . $request->ot_end_time);
+        if ($otEnd->lte($otStart)) {
+            $otEnd->addDay();
+        }
+        if ($otEnd->lte($otStart)) {
+            return response()->json(['message' => 'OT end time must be after start time.'], 422);
+        }
+
         $user     = Auth::user();
         $employee = Employee::where('user_id', $user->id)->firstOrFail();
 
-        $start          = \Carbon\Carbon::parse($request->ot_date . ' ' . $request->ot_start_time);
-        $end            = \Carbon\Carbon::parse($request->ot_date . ' ' . $request->ot_end_time);
-        $requestedHours = round($start->diffInMinutes($end) / 60, 2);
+        $requestedHours = round($otStart->diffInMinutes($otEnd) / 60, 2);
 
-        $lastRef = OvertimeRequest::where('ref_no', 'like', 'OT-%')
-            ->orderByDesc('id')->value('ref_no');
-        $nextNum = $lastRef ? (int) substr($lastRef, 3) + 1 : 1;
-        $refNo   = 'OT-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+        do {
+            $lastRef = OvertimeRequest::where('ref_no', 'like', 'OT-%')
+                ->orderByDesc('id')->value('ref_no');
+            $nextNum = $lastRef ? (int) substr($lastRef, 3) + 1 : 1;
+            $refNo   = 'OT-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+        } while (OvertimeRequest::where('ref_no', $refNo)->exists());
 
         $docPath = null;
         if ($request->hasFile('document')) {
@@ -1404,10 +1565,12 @@ class HRAttendanceController extends Controller
             ->latest('effective_date')
             ->first();
 
-        $lastRef = ShiftChangeRequest::where('ref_no', 'like', 'SCR-%')
-            ->orderByDesc('id')->value('ref_no');
-        $nextNum = $lastRef ? (int) substr($lastRef, 4) + 1 : 1;
-        $refNo   = 'SCR-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+        do {
+            $lastRef = ShiftChangeRequest::where('ref_no', 'like', 'SCR-%')
+                ->orderByDesc('id')->value('ref_no');
+            $nextNum = $lastRef ? (int) substr($lastRef, 4) + 1 : 1;
+            $refNo   = 'SCR-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+        } while (ShiftChangeRequest::where('ref_no', $refNo)->exists());
 
         $docPath = null;
         if ($request->hasFile('document')) {
@@ -1480,21 +1643,42 @@ class HRAttendanceController extends Controller
             'approved_at' => now(),
         ]);
 
-        EmployeeShift::where('employee_id', $scr->employee_id)
+        $oldShift = EmployeeShift::where('employee_id', $scr->employee_id)
             ->where('is_active', true)
-            ->update([
+            ->latest('effective_date')
+            ->first();
+
+        // Deactivate current shift, ending it the day before the new one starts
+        if ($oldShift) {
+            $oldShift->update([
                 'is_active' => false,
                 'end_date'  => Carbon::parse($scr->effective_from)->subDay()->toDateString(),
             ]);
+        }
 
+        // Create the new shift assignment, carrying over work_setup and days_off
         EmployeeShift::create([
             'employee_id'    => $scr->employee_id,
             'shift_id'       => $scr->requested_shift_id,
+            'work_setup'     => $oldShift?->work_setup ?? 'office',
             'effective_date' => $scr->effective_from,
             'end_date'       => $scr->effective_until ?? null,
             'is_active'      => true,
-            'days_off'       => json_encode(['Sat', 'Sun']),
+            'days_off'       => $oldShift?->days_off ?? json_encode(['Sat', 'Sun']),
         ]);
+
+        // If temporary, restore the old shift automatically after effective_until
+        if ($scr->effective_until && $oldShift) {
+            EmployeeShift::create([
+                'employee_id'    => $scr->employee_id,
+                'shift_id'       => $oldShift->shift_id,
+                'work_setup'     => $oldShift->work_setup,
+                'effective_date' => Carbon::parse($scr->effective_until)->addDay()->toDateString(),
+                'end_date'       => null,
+                'is_active'      => true,
+                'days_off'       => $oldShift->days_off,
+            ]);
+        }
 
         return response()->json(['message' => 'Shift change request approved.']);
     }

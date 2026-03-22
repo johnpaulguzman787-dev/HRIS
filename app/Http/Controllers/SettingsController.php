@@ -7,8 +7,43 @@ use App\Models\Permission;
 
 class SettingsController extends Controller
 {
-    private array $roles   = ['admin', 'hr_manager', 'supervisor', 'employee'];
-    private array $modules = ['Employee Management'];
+    private array $roles   = ['admin', 'hr_manager', 'supervisor', 'employee', 'payroll_officer', 'finance_officer'];
+    private array $modules = ['Employee Management', 'Time & Attendance', 'Leave Management', 'Requests & Approval'];
+
+    private array $defaults = [
+        'Employee Management' => [
+            'admin'           => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>true,  'can_archive'=>true,  'can_import'=>true,  'can_export'=>true],
+            'hr_manager'      => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>true,  'can_archive'=>false, 'can_import'=>true,  'can_export'=>true],
+            'supervisor'      => ['can_view'=>true,  'can_create'=>false, 'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'employee'        => ['can_view'=>false, 'can_create'=>false, 'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'payroll_officer' => ['can_view'=>true,  'can_create'=>false, 'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'finance_officer' => ['can_view'=>true,  'can_create'=>false, 'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+        ],
+        'Time & Attendance' => [
+            'admin'           => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>true,  'can_archive'=>false, 'can_import'=>true,  'can_export'=>true],
+            'hr_manager'      => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>true,  'can_archive'=>false, 'can_import'=>true,  'can_export'=>true],
+            'supervisor'      => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>true,  'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'employee'        => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'payroll_officer' => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>true],
+            'finance_officer' => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>true],
+        ],
+        'Leave Management' => [
+            'admin'           => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>true,  'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'hr_manager'      => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>true,  'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'supervisor'      => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>true,  'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'employee'        => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'payroll_officer' => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'finance_officer' => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+        ],
+        'Requests & Approval' => [
+            'admin'           => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>true,  'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'hr_manager'      => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>true,  'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'supervisor'      => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>true,  'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'employee'        => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'payroll_officer' => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+            'finance_officer' => ['can_view'=>true,  'can_create'=>true,  'can_edit'=>false, 'can_archive'=>false, 'can_import'=>false, 'can_export'=>false],
+        ],
+    ];
 
     public function index()
     {
@@ -18,16 +53,13 @@ class SettingsController extends Controller
         // Seed default permissions if not yet in DB
         foreach ($this->roles as $role) {
             foreach ($this->modules as $module) {
+                $def = $this->defaults[$module][$role] ?? [
+                    'can_view'=>false, 'can_create'=>false, 'can_edit'=>false,
+                    'can_archive'=>false, 'can_import'=>false, 'can_export'=>false,
+                ];
                 Permission::firstOrCreate(
                     ['role' => $role, 'module' => $module],
-                    [
-                        'can_view'    => $role === 'admin',
-                        'can_create'  => $role === 'admin',
-                        'can_edit'    => $role === 'admin',
-                        'can_archive' => false,
-                        'can_import'  => $role === 'admin',
-                        'can_export'  => $role === 'admin',
-                    ]
+                    $def
                 );
             }
         }
@@ -43,7 +75,7 @@ class SettingsController extends Controller
     public function updatePermissions(Request $request)
     {
         $request->validate([
-            'role'   => 'required|in:admin,hr_manager,supervisor,employee',
+            'role'   => 'required|in:admin,hr_manager,supervisor,employee,payroll_officer,finance_officer',
             'module' => 'required|string',
         ]);
 

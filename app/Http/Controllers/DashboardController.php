@@ -143,6 +143,15 @@ $availableShifts = \App\Models\Shift::where('is_active', true)->get();
     + \App\Models\ShiftChangeRequest::whereIn('status', ['pending', 'supervisor_approved'])->count(),
 'todayLog'        => $todayLog,
 'availableShifts' => $availableShifts,
+'employeeShift'   => $authEmployee ? \App\Models\EmployeeShift::with('shift')
+    ->where('employee_id', $authEmployee->id)
+    ->where('is_active', true)
+    ->whereDate('effective_date', '<=', $today)
+    ->where(function ($q) use ($today) {
+        $q->whereNull('end_date')->orWhereDate('end_date', '>=', $today);
+    })
+    ->latest('effective_date')
+    ->first() : null,
        'attendanceSummary' => [
             'present'  => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['present', 'undertime', 'overtime'])->count(),
             'late'     => AttendanceLog::whereDate('attendance_date', $today)->where('status', 'late')->count(),

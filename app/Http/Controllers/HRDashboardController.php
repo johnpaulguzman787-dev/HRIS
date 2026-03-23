@@ -10,7 +10,7 @@ use App\Models\AttendanceLog;
 use App\Models\Department;
 use App\Models\EmployeeShift;
 
-class HrDashboardController extends Controller
+class HRDashboardController extends Controller
 {
     public function index()
     {

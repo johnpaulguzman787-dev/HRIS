@@ -467,6 +467,7 @@ a:hover .settings-icon { animation: spinOnce 0.45s ease forwards; }
     transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
     position:relative; overflow:hidden;
     border:none; cursor:pointer;
+    border-radius: 12px;
 }
 .clock-btn::after { content:''; position:absolute; inset:0; background:rgba(255,255,255,0.12); opacity:0; transition:opacity 0.2s ease; }
 .clock-btn:hover::after { opacity:1; }

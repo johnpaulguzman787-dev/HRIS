@@ -59,7 +59,7 @@ employee: {
         <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-bold">Employee Profile</h1>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white">Employee Profile</h1>
                     <p class="text-xs sm:text-sm text-blue-100 mt-0.5">View and manage employee information</p>
                 </div>
                 <div class="flex items-center space-x-4">

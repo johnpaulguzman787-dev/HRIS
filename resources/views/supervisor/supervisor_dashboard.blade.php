@@ -440,7 +440,7 @@ a:hover .settings-icon { animation: spinOnce 0.45s ease forwards; }
 .time-box { transition: border-color 0.2s ease, transform 0.18s ease; }
 .time-box:hover { border-color:#93c5fd; transform:translateY(-1px); }
 
-.clock-btn { transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1); position:relative; overflow:hidden; border:none; cursor:pointer; }
+.clock-btn { transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1); position:relative; overflow:hidden; border:none; cursor:pointer; border-radius: 12px; }
 .clock-btn::after { content:''; position:absolute; inset:0; background:rgba(255,255,255,0.12); opacity:0; transition:opacity 0.2s ease; }
 .clock-btn:hover::after { opacity:1; }
 .clock-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(59,130,246,0.35); }

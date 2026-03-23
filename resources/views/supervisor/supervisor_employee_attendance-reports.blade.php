@@ -393,7 +393,7 @@
    <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
     <div class="flex items-center justify-between px-8 py-5">
         <div>
-            <h1 class="text-[22px] font-bold tracking-[0.3px] m-0">Employee Attendance</h1>
+            <h1 class="text-[22px] font-bold tracking-[0.3px] m-0 text-white">Employee Attendance</h1>
             <p class="text-white/65 text-[13px] mt-1 mb-0">Track and manage workforce attendance records</p>
         </div>
         <div class="flex items-center gap-2.5">

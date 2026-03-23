@@ -410,8 +410,8 @@
         <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-bold">Employees</h1>
-                    <p class="text-xs sm:text-sm text-blue-100 mt-1">{{ $departments->first()['name'] ?? '' }} — Employee Directory</p>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white">Employees</h1>
+                    <p class="text-xs sm:text-sm text-blue-100 mt-1">Employee Directory</p>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-4">
                     <button class="relative p-2 hover:bg-blue-500 rounded-lg transition-all duration-200">

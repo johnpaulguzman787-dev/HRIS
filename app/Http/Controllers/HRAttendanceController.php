@@ -63,7 +63,10 @@ class HRAttendanceController extends Controller
     public function clockIn(Request $request)
     {
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
         $today    = Carbon::today();
         $now      = Carbon::now();
 
@@ -155,7 +158,10 @@ class HRAttendanceController extends Controller
     public function clockOut(Request $request)
     {
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
         $today    = Carbon::today();
         $now      = Carbon::now();
 
@@ -249,7 +255,10 @@ class HRAttendanceController extends Controller
     public function records(Request $request)
     {
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
 
         $month = $request->get('month', Carbon::now()->month);
         $year  = $request->get('year', Carbon::now()->year);
@@ -267,7 +276,10 @@ class HRAttendanceController extends Controller
     public function today()
     {
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
 
         $log = AttendanceLog::with('shift')
             ->where('employee_id', $employee->id)
@@ -280,7 +292,10 @@ class HRAttendanceController extends Controller
     public function breakStart(Request $request)
     {
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
         $today    = Carbon::today();
         $now      = Carbon::now();
 
@@ -948,7 +963,10 @@ class HRAttendanceController extends Controller
         ]);
 
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
 
         $start     = Carbon::parse($request->start_date);
         $end       = Carbon::parse($request->end_date);
@@ -1030,7 +1048,10 @@ class HRAttendanceController extends Controller
     public function approveLeave(Request $request, $id)
     {
         $leave    = LeaveRequest::with('leaveType')->findOrFail($id);
-        $approver = Employee::where('user_id', Auth::id())->firstOrFail();
+        $approver = Employee::where('user_id', Auth::id())->first();
+        if (!$approver) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
 
         if (!in_array($leave->status, ['pending', 'supervisor_approved'])) {
             return response()->json(['message' => 'Leave is no longer pending.'], 409);
@@ -1088,7 +1109,10 @@ class HRAttendanceController extends Controller
     public function cancelLeave(Request $request, $id)
     {
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
         $leave    = LeaveRequest::where('id', $id)
             ->where('employee_id', $employee->id)
             ->firstOrFail();
@@ -1517,7 +1541,10 @@ class HRAttendanceController extends Controller
         }
 
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
 
         $requestedHours = round($otStart->diffInMinutes($otEnd) / 60, 2);
 
@@ -1560,7 +1587,10 @@ class HRAttendanceController extends Controller
         ]);
 
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
 
         $currentShift = EmployeeShift::where('employee_id', $employee->id)
             ->where('is_active', true)
@@ -1597,7 +1627,10 @@ class HRAttendanceController extends Controller
     public function approveOvertimeRequest(Request $request, $id)
     {
         $ot       = OvertimeRequest::findOrFail($id);
-        $approver = Employee::where('user_id', Auth::id())->firstOrFail();
+        $approver = Employee::where('user_id', Auth::id())->first();
+        if (!$approver) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
 
         if (!in_array($ot->status, ['pending', 'supervisor_approved'])) {
             return response()->json(['message' => 'Request is no longer pending.'], 409);
@@ -1633,7 +1666,10 @@ class HRAttendanceController extends Controller
     public function approveShiftChangeRequest(Request $request, $id)
     {
         $scr      = ShiftChangeRequest::findOrFail($id);
-        $approver = Employee::where('user_id', Auth::id())->firstOrFail();
+        $approver = Employee::where('user_id', Auth::id())->first();
+        if (!$approver) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
 
         if (!in_array($scr->status, ['pending', 'supervisor_approved'])) {
             return response()->json(['message' => 'Request is no longer pending.'], 409);

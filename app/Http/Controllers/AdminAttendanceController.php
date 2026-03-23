@@ -68,7 +68,10 @@ class AdminAttendanceController extends Controller
     public function clockIn(Request $request)
 {
     $user     = Auth::user();
-    $employee = Employee::where('user_id', $user->id)->firstOrFail();
+    $employee = Employee::where('user_id', $user->id)->first();
+    if (!$employee) {
+        return response()->json(['message' => 'Employee record not found.'], 422);
+    }
     $today    = Carbon::today();
     $now      = Carbon::now();
 
@@ -164,7 +167,10 @@ class AdminAttendanceController extends Controller
     public function clockOut(Request $request)
     {
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
         $today    = Carbon::today();
         $now      = Carbon::now();
 
@@ -265,7 +271,10 @@ class AdminAttendanceController extends Controller
     public function records(Request $request)
     {
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
 
         $month = $request->get('month', Carbon::now()->month);
         $year  = $request->get('year', Carbon::now()->year);
@@ -286,7 +295,10 @@ class AdminAttendanceController extends Controller
     public function today()
     {
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
 
         $log = AttendanceLog::with('shift')
             ->where('employee_id', $employee->id)
@@ -300,7 +312,10 @@ class AdminAttendanceController extends Controller
     public function breakStart(Request $request)
 {
     $user     = Auth::user();
-    $employee = Employee::where('user_id', $user->id)->firstOrFail();
+    $employee = Employee::where('user_id', $user->id)->first();
+    if (!$employee) {
+        return response()->json(['message' => 'Employee record not found.'], 422);
+    }
     $today    = Carbon::today();
     $now      = Carbon::now();
 
@@ -648,7 +663,10 @@ public function fileLeave(Request $request)
     ]);
 
     $user     = Auth::user();
-    $employee = Employee::where('user_id', $user->id)->firstOrFail();
+    $employee = Employee::where('user_id', $user->id)->first();
+    if (!$employee) {
+        return response()->json(['message' => 'Employee record not found.'], 422);
+    }
 
     $start     = Carbon::parse($request->start_date);
     $end       = Carbon::parse($request->end_date);
@@ -706,7 +724,10 @@ public function fileLeave(Request $request)
 public function cancelLeave(Request $request, $id)
 {
     $user     = Auth::user();
-    $employee = Employee::where('user_id', $user->id)->firstOrFail();
+    $employee = Employee::where('user_id', $user->id)->first();
+    if (!$employee) {
+        return response()->json(['message' => 'Employee record not found.'], 422);
+    }
     $leave    = LeaveRequest::where('id', $id)
         ->where('employee_id', $employee->id)
         ->firstOrFail();
@@ -741,7 +762,10 @@ public function cancelLeave(Request $request, $id)
 public function getLeaveRequest($id)
 {
     $user     = Auth::user();
-    $employee = Employee::where('user_id', $user->id)->firstOrFail();
+    $employee = Employee::where('user_id', $user->id)->first();
+    if (!$employee) {
+        return response()->json(['message' => 'Employee record not found.'], 422);
+    }
     $leave    = LeaveRequest::with(['leaveType', 'approver'])
         ->where('id', $id)
         ->where('employee_id', $employee->id)
@@ -1014,7 +1038,10 @@ public function getLeaveRequest($id)
         ]);
 
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
 
         $otStart = Carbon::parse($request->ot_date . ' ' . $request->ot_start_time);
         $otEnd   = Carbon::parse($request->ot_date . ' ' . $request->ot_end_time);
@@ -1064,7 +1091,10 @@ public function getLeaveRequest($id)
         ]);
 
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
 
         $currentShift = EmployeeShift::where('employee_id', $employee->id)
             ->where('is_active', true)

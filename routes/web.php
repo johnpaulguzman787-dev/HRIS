@@ -97,12 +97,12 @@ Route::middleware(['auth'])->group(function () {
 
     // ── HR EMPLOYEE ROUTES ─────────────────────────────────────────────────
     Route::prefix('hr/employees')->name('hr.employees.')->group(function () {
-        Route::get('/directory', [App\Http\Controllers\HrEmployeeController::class, 'directory'])->name('directory');
-        Route::post('/store', [App\Http\Controllers\HrEmployeeController::class, 'store'])->name('store');
-        Route::post('/departments', [App\Http\Controllers\HrEmployeeController::class, 'storeDepartment'])->name('departments.store');
-        Route::match(['POST', 'PUT'], '/departments/{id}', [App\Http\Controllers\HrEmployeeController::class, 'updateDepartment'])->name('departments.update');
-        Route::put('/{id}', [App\Http\Controllers\HrEmployeeController::class, 'update'])->name('update');
-        Route::get('/profile', [App\Http\Controllers\HrEmployeeController::class, 'profile'])->name('profile');
+        Route::get('/directory', [App\Http\Controllers\HREmployeeController::class, 'directory'])->name('directory');
+        Route::post('/store', [App\Http\Controllers\HREmployeeController::class, 'store'])->name('store');
+        Route::post('/departments', [App\Http\Controllers\HREmployeeController::class, 'storeDepartment'])->name('departments.store');
+        Route::match(['POST', 'PUT'], '/departments/{id}', [App\Http\Controllers\HREmployeeController::class, 'updateDepartment'])->name('departments.update');
+        Route::put('/{id}', [App\Http\Controllers\HREmployeeController::class, 'update'])->name('update');
+        Route::get('/profile', [App\Http\Controllers\HREmployeeController::class, 'profile'])->name('profile');
     });
     // ──────────────────────────────────────────────────────────────────────
 
@@ -119,7 +119,7 @@ Route::middleware(['auth'])->group(function () {
     // Admin Dashboard
     Route::get('/admin', [DashboardController::class, 'admin_dashboard'])->name('admin.dashboard');
     // HR Dashboard
-    Route::get('/hr', [HrDashboardController::class, 'index'])->name('hr.dashboard');
+    Route::get('/hr', [HRDashboardController::class, 'index'])->name('hr.dashboard');
     // Supervisor Dashboard
     Route::get('/supervisor', [SupervisorDashboardController::class, 'index'])->name('supervisor.dashboard');
 

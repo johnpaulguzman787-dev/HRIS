@@ -67,6 +67,9 @@ class EmployeeDashboardController extends Controller
                 ->whereDate('date', '<=', Carbon::today()->endOfMonth())
                 ->orderBy('date')
                 ->get(),
+            'calendarHolidays' => \App\Models\Holiday::whereYear('date', Carbon::today()->year)
+                ->whereMonth('date', Carbon::today()->month)
+                ->get(),
         ];
 
         return view('employee.employee_dashboard', $data);

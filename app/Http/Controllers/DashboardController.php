@@ -191,6 +191,9 @@ $availableShifts = \App\Models\Shift::where('is_active', true)->get();
             ->whereDate('date', '<=', Carbon::today()->endOfMonth())
             ->orderBy('date')
             ->get(),
+        'calendarHolidays' => \App\Models\Holiday::whereYear('date', Carbon::today()->year)
+            ->whereMonth('date', Carbon::today()->month)
+            ->get(),
         'totalDepartments' => 7,
         'newHires' => 5,
         'birthdaysThisMonth' => 3,

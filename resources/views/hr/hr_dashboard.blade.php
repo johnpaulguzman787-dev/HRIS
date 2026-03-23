@@ -331,12 +331,22 @@
                         $today    = (int)date('j');
                         $total    = (int)date('t');
                         $firstDay = (int)date('w', strtotime(date('Y-m-01')));
+                        $holidayMap = [];
+                        foreach($calendarHolidays as $h) {
+                            $holidayMap[$h->date->day] = $h->name;
+                        }
                     @endphp
                     <div class="grid grid-cols-7 gap-0.5 mb-5">
                         @for($i = 0; $i < $firstDay; $i++)<div></div>@endfor
                         @for($i = 1; $i <= $total; $i++)
-                        <button class="cal-day text-center text-xs py-2 rounded-full {{ $i == $today ? 'today-pill text-white font-bold' : 'text-gray-600 hover:bg-gray-100' }}"
-                            style="{{ $i == $today ? 'background:#3b82f6;' : '' }}">{{ $i }}</button>
+                        <div class="cal-cell">
+                            <button class="cal-day w-full text-center text-xs py-2 rounded-full {{ $i == $today ? 'today-pill text-white font-bold' : 'text-gray-600 hover:bg-gray-100' }}"
+                                style="{{ $i == $today ? 'background:#3b82f6;' : '' }}">{{ $i }}</button>
+                            @if(isset($holidayMap[$i]))
+                            <span class="holiday-dot"></span>
+                            <div class="holiday-tooltip">{{ $holidayMap[$i] }}</div>
+                            @endif
+                        </div>
                         @endfor
                     </div>
 
@@ -477,6 +487,11 @@ a:hover .settings-icon { animation: spinOnce 0.45s ease forwards; }
 .cal-nav-btn:active { transform:scale(0.9); }
 .cal-day { transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease; }
 .cal-day:hover:not(.today-pill) { transform:scale(1.18); background:#eff6ff; }
+.cal-cell { position: relative; display: flex; flex-direction: column; align-items: center; }
+.holiday-dot { width: 5px; height: 5px; border-radius: 50%; background: #f59e0b; margin-top: 2px; }
+.holiday-tooltip { visibility: hidden; position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; font-size: 9px; padding: 3px 8px; border-radius: 5px; white-space: nowrap; z-index: 50; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+.holiday-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: #1e293b; }
+.cal-cell:hover .holiday-tooltip { visibility: visible; }
 .today-pill { animation: todayGlow 2.5s ease-in-out infinite; }
 @keyframes todayGlow {
     0%,100% { box-shadow:0 2px 8px rgba(59,130,246,0.4); }

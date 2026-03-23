@@ -91,6 +91,9 @@ class HrDashboardController extends Controller
             'departmentProgress' => $departmentProgress,
             'currentDate'      => Carbon::today()->format('l, F j, Y'),
             'upcomingHolidays' => $upcomingHolidays,
+            'calendarHolidays' => \App\Models\Holiday::whereYear('date', Carbon::today()->year)
+                ->whereMonth('date', Carbon::today()->month)
+                ->get(),
         ];
 
         return view('hr.hr_dashboard', $data);

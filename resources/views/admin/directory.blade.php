@@ -802,18 +802,23 @@
                             <div class="flex gap-2">
                                 <div class="flex-1 min-w-0">
                                     <input type="text" x-model="newEmployeeForm.first_name" placeholder="First Name"
+                                        @input="newEmployeeForm.first_name = $event.target.value.replace(/[^a-zA-Z\s\-']/g, '')"
+                                        minlength="2" maxlength="50"
                                         :class="hasError('first_name') ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-blue-400'"
                                         class="w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-transparent text-gray-700 placeholder-gray-400">
                                     <p x-show="hasError('first_name')" x-text="fieldError('first_name')" class="text-xs text-red-500 mt-1"></p>
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <input type="text" x-model="newEmployeeForm.last_name" placeholder="Last Name"
+                                        @input="newEmployeeForm.last_name = $event.target.value.replace(/[^a-zA-Z\s\-']/g, '')"
+                                        minlength="2" maxlength="50"
                                         :class="hasError('last_name') ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-blue-400'"
                                         class="w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-transparent text-gray-700 placeholder-gray-400">
                                     <p x-show="hasError('last_name')" x-text="fieldError('last_name')" class="text-xs text-red-500 mt-1"></p>
                                 </div>
                                 <div class="w-14">
-                                    <input type="text" x-model="newEmployeeForm.mi" placeholder="MI" maxlength="2"
+                                    <input type="text" x-model="newEmployeeForm.mi" placeholder="MI" minlength="1" maxlength="2"
+                                        @input="newEmployeeForm.mi = $event.target.value.replace(/[^a-zA-Z]/g, '')"
                                         class="w-full px-2 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 text-center uppercase text-gray-700 placeholder-gray-400">
                                 </div>
                                 <div class="relative w-36">
@@ -1134,17 +1139,21 @@
                                 <div class="col-span-5">
                                     <input type="text" x-model="selectedEmployee.first_name" placeholder="First Name"
                                         :readonly="!isEditMode"
+                                        @input="if(isEditMode) selectedEmployee.first_name = $event.target.value.replace(/[^a-zA-Z\s\-']/g, '')"
+                                        minlength="2" maxlength="50"
                                         :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
                                         class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
                                 </div>
                                 <div class="col-span-5">
                                     <input type="text" x-model="selectedEmployee.last_name" placeholder="Last Name"
                                         :readonly="!isEditMode"
+                                        @input="if(isEditMode) selectedEmployee.last_name = $event.target.value.replace(/[^a-zA-Z\s\-']/g, '')"
+                                        minlength="2" maxlength="50"
                                         :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
                                         class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
                                 </div>
                                 <div class="col-span-2">
-                                    <input type="text" x-model="selectedEmployee.mi" placeholder="MI" maxlength="3"
+                                    <input type="text" x-model="selectedEmployee.mi" placeholder="MI" minlength="1" maxlength="2"
                                         :readonly="!isEditMode"
                                         @input="if(isEditMode) selectedEmployee.mi = selectedEmployee.mi.replace(/[^a-zA-Z]/g, '')"
                                         :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
@@ -1345,26 +1354,12 @@
                                 <div>
                                     <p class="text-xs font-medium text-gray-400 mb-2">By Department</p>
                                     <div class="space-y-1">
-                                        <label class="flex items-center gap-3 py-1 cursor-pointer">
-                                            <input type="checkbox" value="Information Technology" x-model="selectedDepartments" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 focus:ring-offset-0">
-                                            <span class="text-sm text-gray-700">Information Technology</span>
-                                        </label>
-                                        <label class="flex items-center gap-3 py-1 cursor-pointer">
-                                            <input type="checkbox" value="Healthcare" x-model="selectedDepartments" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 focus:ring-offset-0">
-                                            <span class="text-sm text-gray-700">Healthcare</span>
-                                        </label>
-                                        <label class="flex items-center gap-3 py-1 cursor-pointer">
-                                            <input type="checkbox" value="Finance & Accounting" x-model="selectedDepartments" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 focus:ring-offset-0">
-                                            <span class="text-sm text-gray-700">Finance &amp; Accounting</span>
-                                        </label>
-                                        <label class="flex items-center gap-3 py-1 cursor-pointer">
-                                            <input type="checkbox" value="Human Resources" x-model="selectedDepartments" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 focus:ring-offset-0">
-                                            <span class="text-sm text-gray-700">Human Resource</span>
-                                        </label>
-                                        <label class="flex items-center gap-3 py-1 cursor-pointer">
-                                            <input type="checkbox" value="Operations" x-model="selectedDepartments" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 focus:ring-offset-0">
-                                            <span class="text-sm text-gray-700">Operations</span>
-                                        </label>
+                                        <template x-for="dept in departments" :key="dept.id">
+                                            <label class="flex items-center gap-3 py-1 cursor-pointer">
+                                                <input type="checkbox" :value="dept.name" x-model="selectedDepartments" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 focus:ring-offset-0">
+                                                <span class="text-sm text-gray-700" x-text="dept.name"></span>
+                                            </label>
+                                        </template>
                                     </div>
                                 </div>
 

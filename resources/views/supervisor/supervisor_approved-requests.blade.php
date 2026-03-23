@@ -398,6 +398,7 @@ function openViewModal(ref, dept, name, filed, reqType, subDetail, duration, rea
     html += '<div style="width:30px;height:30px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
     html += '<svg width="14" height="14" fill="none" stroke="#1d4ed8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
     html += '</div><div>';
+    
     html += '<div style="font-size:13px;font-weight:700;color:#111827;">Supervisor Forwarded to HR</div>';
     html += '<div style="font-size:11px;color:#9ca3af;">Pending HR final approval</div>';
     html += '</div></div>';

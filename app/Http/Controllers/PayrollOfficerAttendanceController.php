@@ -630,7 +630,19 @@ class PayrollOfficerAttendanceController extends Controller
     public function approvedRequests(Request $request)
     {
         $user     = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)->first();
+
+        if (!$employee) {
+            return view('payroll_officer.payroll_approved-requests', [
+                'departments'   => collect(),
+                'requests'      => collect(),
+                'approvedCount' => 0,
+                'rejectedCount' => 0,
+                'filterType'    => $request->get('type', 'all'),
+                'filterStatus'  => $request->get('status', 'all'),
+                'search'        => $request->get('search'),
+            ]);
+        }
 
         $filterType   = $request->get('type', 'all');
         $filterStatus = $request->get('status', 'all');

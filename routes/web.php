@@ -7,7 +7,7 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminEmployeeController;
 use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\HrDashboardController;
+use App\Http\Controllers\HRDashboardController;
 use App\Http\Controllers\SupervisorDashboardController;
 use App\Http\Controllers\EmployeeDashboardController;
 use App\Http\Controllers\EmployeeAttendanceController;
@@ -15,7 +15,7 @@ use App\Http\Controllers\HRAttendanceController;
 use App\Http\Controllers\SupervisorAttendanceController;
 use App\Http\Controllers\AdminAttendanceController;
 
-use App\Http\Controllers\HrEmployeeController;
+use App\Http\Controllers\HREmployeeController;
 use App\Http\Controllers\SupervisorEmployeeController;
 
 /*

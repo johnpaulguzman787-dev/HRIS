@@ -14,6 +14,7 @@ use App\Http\Controllers\EmployeeAttendanceController;
 use App\Http\Controllers\HRAttendanceController;
 use App\Http\Controllers\SupervisorAttendanceController;
 use App\Http\Controllers\AdminAttendanceController;
+use App\Http\Controllers\NotificationController; // ← DAGDAG
 
 use App\Http\Controllers\HREmployeeController;
 use App\Http\Controllers\SupervisorEmployeeController;
@@ -83,6 +84,14 @@ Route::post('/email/verification-notification', function (Illuminate\Http\Reques
 // =========================
 
 Route::middleware(['auth'])->group(function () {
+
+    // ── NOTIFICATION ROUTES ────────────────────────────────────────────────
+    Route::get('/admin/notifications',            [NotificationController::class, 'index'])->name('admin.notifications.index');
+    Route::post('/admin/notifications/read-all',  [NotificationController::class, 'markAllRead'])->name('admin.notifications.read-all');
+    Route::post('/admin/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('admin.notifications.read');
+    Route::delete('/admin/notifications/clear',   [NotificationController::class, 'clearAll'])->name('admin.notifications.clear');
+    Route::delete('/admin/notifications/{id}',    [NotificationController::class, 'destroy'])->name('admin.notifications.destroy');
+    // ──────────────────────────────────────────────────────────────────────
 
     // Employee Routes
     Route::prefix('employees')->name('employees.')->group(function () {

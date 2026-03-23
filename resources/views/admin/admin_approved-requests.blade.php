@@ -62,6 +62,8 @@
         .modal-label { font-size:13px; font-weight:600; color:#111827; margin-bottom:6px; }
         .trail-item { display:flex; gap:14px; align-items:flex-start; padding:14px 16px; background:#f9fafb; border-radius:10px; border-left:3px solid #3b82f6; margin-bottom:8px; }
         .trail-check { width:30px; height:30px; border-radius:50%; background:#3b82f6; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .anim-fade { animation: fadeSlideDown 0.4s ease both; }
+        @keyframes fadeSlideDown { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
     </style>
 </head>
 <body>
@@ -73,18 +75,13 @@
     {{-- ═══════════ MAIN ═══════════ --}}
     <div class="flex-1 flex flex-col" style="margin-left:256px;">
 
-         {{-- Top bar --}}
-<header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-hidden">
-    <div class="flex items-center justify-between px-8 py-4">
-        <h1 class="text-white font-bold text-xl">Approved Logs</h1>
-        <button class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/20 relative">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-            @if(!empty($totalPending))
-            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold">{{ $totalPending }}</span>
-            @endif
-        </button>
-    </div>
-</header>
+        {{-- ✅ UPDATED Top bar --}}
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
+            <div class="flex items-center justify-between px-8 py-4">
+                <h1 class="text-white font-bold text-xl">Approved Logs</h1>
+                <x-notification-bell />
+            </div>
+        </header>
 
         <div class="p-8 space-y-6">
 

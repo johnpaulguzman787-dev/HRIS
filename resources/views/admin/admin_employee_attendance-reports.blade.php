@@ -385,25 +385,21 @@
      :style="collapsed ? 'margin-left:5rem' : 'margin-left:16rem'"
      style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1); min-height:100vh;">
 
-    <!-- Blue Header -->
-<header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-hidden">
-    <div class="flex items-center justify-between px-8 py-[22px]">
-        <div>
-            <h1 class="text-white text-[22px] font-bold tracking-[0.3px] m-0">Employee Attendance</h1>
-            <p class="text-white/65 text-[13px] mt-[3px] mb-0">Track and manage workforce attendance records</p>
-        </div>
-        <div class="flex items-center gap-2.5">
-            <div class="text-[12.5px] text-white/80 bg-white/15 rounded-lg px-[13px] py-[6px] font-medium">
-                {{ now()->format('l, F j, Y') }}
+    {{-- ✅ FIXED: Removed overflow-hidden so notification dropdown is not clipped --}}
+    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
+        <div class="flex items-center justify-between px-8 py-[22px]">
+            <div>
+                <h1 class="text-white text-[22px] font-bold tracking-[0.3px] m-0">Employee Attendance</h1>
+                <p class="text-white/65 text-[13px] mt-[3px] mb-0">Track and manage workforce attendance records</p>
             </div>
-            <div class="w-9 h-9 bg-white/15 rounded-full flex items-center justify-center cursor-pointer">
-                <svg class="w-[18px] h-[18px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                </svg>
+            <div class="flex items-center gap-2.5">
+                <div class="text-[12.5px] text-white/80 bg-white/15 rounded-lg px-[13px] py-[6px] font-medium">
+                    {{ now()->format('l, F j, Y') }}
+                </div>
+                <x-notification-bell />
             </div>
         </div>
-    </div>
-</header>
+    </header>
 
     <div style="padding:24px 32px;">
 

@@ -888,7 +888,7 @@ public function getLeaveRequest($id)
             $q = LeaveRequest::with(['leaveType', 'approver'])
                 ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'cancelled', 'supervisor_approved']);
-            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search) $q->where('ref_no', 'like', "%$search%");
             foreach ($q->get() as $r) {
                 $allRequests->push((object)[
                     'type'             => 'leave',
@@ -912,7 +912,7 @@ public function getLeaveRequest($id)
         if ($filterType === 'all' || $filterType === 'overtime') {
             $q = OvertimeRequest::where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'supervisor_approved']);
-            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search) $q->where('ref_no', 'like', "%$search%");
             foreach ($q->get() as $r) {
                 $allRequests->push((object)[
                     'type'             => 'overtime',
@@ -937,7 +937,7 @@ public function getLeaveRequest($id)
             $q = ShiftChangeRequest::with(['currentShift', 'requestedShift'])
                 ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'supervisor_approved']);
-            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search) $q->where('ref_no', 'like', "%$search%");
             foreach ($q->get() as $r) {
                 $allRequests->push((object)[
                     'type'             => 'shift',
@@ -957,9 +957,11 @@ public function getLeaveRequest($id)
             }
         }
 
-        $requests      = $allRequests->sortByDesc('created_at')->values();
         $approvedCount = $allRequests->where('status', 'approved')->count();
         $rejectedCount = $allRequests->where('status', 'rejected')->count();
+        $requests      = $filterStatus !== 'all'
+            ? $allRequests->where('status', $filterStatus)->sortByDesc('created_at')->values()
+            : $allRequests->sortByDesc('created_at')->values();
         $departments   = collect();
 
         return view('admin.admin_approved-requests', compact(

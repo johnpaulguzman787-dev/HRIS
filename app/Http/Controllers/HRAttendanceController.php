@@ -1455,9 +1455,11 @@ class HRAttendanceController extends Controller
             }
         }
 
-        $requests      = $allRequests->sortByDesc('created_at')->values();
         $approvedCount = $allRequests->where('status', 'approved')->count();
         $rejectedCount = $allRequests->where('status', 'rejected')->count();
+        $requests      = $filterStatus !== 'all'
+            ? $allRequests->where('status', $filterStatus)->sortByDesc('created_at')->values()
+            : $allRequests->sortByDesc('created_at')->values();
 
         return view('hr.hr_approved-requests', compact(
             'departments', 'requests',

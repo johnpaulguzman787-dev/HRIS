@@ -3,7 +3,6 @@
 
     $currentView = request('view', 'daily');
 
-    // Detail view: active when employee_id is set in monthly mode
     $viewingDetail  = $currentView === 'monthly' && request()->filled('employee_id');
     $detailEmployee = null;
     $empName        = '';
@@ -73,7 +72,6 @@
             --border: #e5e7eb;
         }
 
-        /* ── STAT CARDS ── */
         .stat-cards-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -126,7 +124,6 @@
         .stat-card.undertime .sc-value { color: #6d28d9; }
         .stat-card.undertime .sc-sub   { color: #5b21b6; }
 
-        /* ── TABLE CARD ── */
         .table-card {
             background: #fff; border-radius: 14px;
             border: 1px solid var(--border); overflow: hidden;
@@ -179,7 +176,6 @@
         }
         .toggle-btn.active { background: var(--blue); color: #fff; }
 
-        /* ── DAILY TABLE ── */
         .att-table { width: 100%; border-collapse: collapse; }
         .att-table thead tr { background: #f9fafb; }
         .att-table th {
@@ -194,7 +190,6 @@
         .att-table tr:last-child td { border-bottom: none; }
         .att-table tbody tr:hover { background: #fafafa; }
 
-        /* ── MONTHLY TABLE ── */
         .monthly-table { width: 100%; border-collapse: collapse; }
         .monthly-table thead tr { background: #f9fafb; }
         .monthly-table th {
@@ -237,7 +232,6 @@
         .view-monthly-btn:hover { background: #dbeafe; border-color: #93c5fd; }
         .view-monthly-btn svg { width: 12px; height: 12px; }
 
-        /* ── EMPLOYEE CELL ── */
         .emp-avatar {
             width: 33px; height: 33px; border-radius: 50%;
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
@@ -247,7 +241,6 @@
         .emp-name { font-weight: 600; font-size: 13px; color: #111827; line-height: 1.3; }
         .emp-dept { font-size: 11.5px; color: var(--muted); }
 
-        /* ── SHIFT BADGE ── */
         .shift-badge {
             display: inline-flex; flex-direction: column; align-items: center;
             background: #eff6ff; color: #1d4ed8; border-radius: 6px;
@@ -255,7 +248,6 @@
         }
         .shift-badge .shift-sub { font-size: 10px; font-weight: 500; opacity: .7; }
 
-        /* ── STATUS BADGE ── */
         .status-badge {
             display: inline-block; padding: 4px 12px;
             border-radius: 20px; font-size: 12px; font-weight: 600;
@@ -267,7 +259,6 @@
         .badge-rest    { background: #f3f4f6; color: #6b7280; }
         .badge-holiday { background: #ede9fe; color: #7c3aed; }
 
-        /* ── PAGINATION ── */
         .att-pagination {
             display: flex; align-items: center; justify-content: flex-end;
             gap: 5px; padding: 14px 20px; border-top: 1px solid var(--border);
@@ -282,7 +273,6 @@
         .page-btn:hover  { background: #eff6ff; color: var(--blue); }
         .page-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
 
-        /* ── DETAIL VIEW ── */
         .breadcrumb {
             display: flex; align-items: center; gap: 6px;
             font-size: 13px; color: var(--muted); margin-bottom: 20px;
@@ -362,8 +352,6 @@
 </head>
 <body class="bg-gray-50">
 
-
-{{-- ══════════ SIDEBAR ══════════ --}}
 @php
     $sidebarUser = auth()->user();
     $sidebarEmployee = $sidebarUser ? \App\Models\Employee::with('jobTitle')->where('user_id', $sidebarUser->id)->first() : null;
@@ -380,40 +368,34 @@
     $requestRoutes    = ['supervisor.requests.pending', 'supervisor.requests.approved'];
 @endphp
 
-{{-- ═══════════ SUPERVISOR SIDEBAR ═══════════ --}}
 @include('supervisor.supervisor_sidebar')
 
-{{-- ══════════ MAIN CONTENT ══════════ --}}
 <div x-data="{ collapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
      x-init="window.addEventListener('storage', e => { if(e.key==='sidebarCollapsed') collapsed = e.newValue==='true' })"
      :style="collapsed ? 'margin-left:5rem' : 'margin-left:16rem'"
      style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1); min-height:100vh;">
 
-    <!-- Blue Header -->
-   <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
-    <div class="flex items-center justify-between px-8 py-5">
-        <div>
-            <h1 class="text-[22px] font-bold tracking-[0.3px] m-0 text-white">Employee Attendance</h1>
-            <p class="text-white/65 text-[13px] mt-1 mb-0">Track and manage workforce attendance records</p>
-        </div>
-        <div class="flex items-center gap-2.5">
-            <div class="text-[12.5px] text-white/80 bg-white/15 rounded-lg px-3.5 py-1.5 font-medium">
-                {{ now()->format('l, F j, Y') }}
+    {{-- ✅ FIXED: overflow-visible so notif dropdown is never clipped --}}
+    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-white leading-tight">Employee Attendance</h1>
+                <p class="text-xs sm:text-sm text-blue-100 mt-0.5">Track and manage workforce attendance records</p>
             </div>
-            <div class="w-9 h-9 bg-white/15 rounded-full flex items-center justify-center cursor-pointer">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                </svg>
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:block text-xs text-white/80 bg-white/15 rounded-lg px-3 py-1.5 font-medium">
+                    {{ now()->format('l, F j, Y') }}
+                </div>
+                {{-- ✅ x-supervisor-notif component --}}
+                <x-supervisor-notif />
             </div>
         </div>
-    </div>
-</header>
+    </header>
 
     <div style="padding:24px 32px;">
 
         @if($viewingDetail)
-        {{-- ══════════ EMPLOYEE DETAIL VIEW ══════════ --}}
-
+        {{-- ══ EMPLOYEE DETAIL VIEW ══ --}}
         <div class="breadcrumb">
             <a href="{{ route('supervisor.attendance.employee', ['view' => 'monthly', 'month' => $selectedMonth]) }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -443,13 +425,11 @@
                     <form method="GET" action="{{ route('supervisor.attendance.employee') }}" id="detailForm" style="display:contents;">
                         <input type="hidden" name="view" value="monthly">
                         <input type="hidden" name="employee_id" value="{{ request('employee_id') }}">
-
                         <div class="period-btns">
                             <button type="button" class="period-btn {{ $selectedPeriod == '1' ? 'active' : '' }}" onclick="setPeriod('1')">Period 1</button>
                             <button type="button" class="period-btn {{ $selectedPeriod == '2' ? 'active' : '' }}" onclick="setPeriod('2')">Period 2</button>
                         </div>
                         <input type="hidden" name="period" id="periodInput" value="{{ $selectedPeriod }}">
-
                         <div class="date-picker">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -458,7 +438,6 @@
                                 onchange="document.getElementById('detailForm').submit()">
                         </div>
                     </form>
-
                     <a href="{{ route('supervisor.attendance.employee', ['view' => 'monthly', 'employee_id' => request('employee_id'), 'month' => $selectedMonth, 'period' => $selectedPeriod, 'export' => 1]) }}"
                        class="export-btn">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -485,11 +464,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @php
-                            $start = $selectedPeriod == '1' ? $period1Start : $period2Start;
-                            $end   = $selectedPeriod == '1' ? $period1End   : $period2End;
-                        @endphp
-
                         @forelse($dailyRecords ?? [] as $rec)
                         @php
                             $st     = strtolower($rec->status ?? 'present');
@@ -543,8 +517,7 @@
         </div>
 
         @else
-        {{-- ══════════ STAT CARDS + LIST VIEW ══════════ --}}
-
+        {{-- ══ STAT CARDS + LIST VIEW ══ --}}
         <div class="stat-cards-grid">
             <div class="stat-card present">
                 <div class="sc-icon">
@@ -556,7 +529,6 @@
                 <div class="sc-value">{{ $presentCount ?? 0 }}</div>
                 <div class="sc-sub">{{ $presentRate ?? '0%' }} attendance rate</div>
             </div>
-
             <div class="stat-card late">
                 <div class="sc-icon">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -567,7 +539,6 @@
                 <div class="sc-value">{{ $lateCount ?? 0 }}</div>
                 <div class="sc-sub">{{ $lateRate ?? '0%' }} of workforce</div>
             </div>
-
             <div class="stat-card absent">
                 <div class="sc-icon">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -578,7 +549,6 @@
                 <div class="sc-value">{{ $absentCount ?? 0 }}</div>
                 <div class="sc-sub">{{ $absentRate ?? '0%' }} absent today</div>
             </div>
-
             <div class="stat-card overtime">
                 <div class="sc-icon">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -589,7 +559,6 @@
                 <div class="sc-value">{{ $overtimeHours ?? '0 hrs' }}</div>
                 <div class="sc-sub">Across {{ $overtimeEmployees ?? 0 }} employees</div>
             </div>
-
             <div class="stat-card undertime">
                 <div class="sc-icon">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -607,7 +576,6 @@
                 <h2>Attendance Records</h2>
                 <div class="toolbar-right">
                     <form method="GET" action="{{ route('supervisor.attendance.employee') }}" id="filterForm" style="display:contents">
-
                         @if($currentView === 'daily')
                         <div class="search-box">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -635,9 +603,6 @@
                                 onchange="document.getElementById('filterForm').submit()">
                         </div>
                         @endif
-
-                        {{-- Supervisor is scoped to their own department --}}
-
                         <div class="toggle-btns">
                             <button type="button" class="toggle-btn {{ $currentView === 'daily' ? 'active' : '' }}"
                                 onclick="setView('daily')">Daily</button>
@@ -645,15 +610,12 @@
                                 onclick="setView('monthly')">Monthly</button>
                         </div>
                         <input type="hidden" name="view" id="viewInput" value="{{ $currentView }}">
-
                     </form>
                 </div>
             </div>
 
             <div style="overflow-x:auto;">
-
                 @if($currentView === 'daily')
-                {{-- ── DAILY TABLE ── --}}
                 <table class="att-table">
                     <thead>
                         <tr>
@@ -707,7 +669,6 @@
                 </table>
 
                 @else
-                {{-- ── MONTHLY TABLE ── --}}
                 <table class="monthly-table">
                     <thead>
                         <tr>
@@ -762,10 +723,8 @@
                     </tbody>
                 </table>
                 @endif
-
             </div>
 
-            {{-- Pagination --}}
             @if(isset($records) && $records instanceof \Illuminate\Pagination\LengthAwarePaginator)
             <div class="att-pagination">
                 @for($p = 1; $p <= $records->lastPage(); $p++)
@@ -779,9 +738,8 @@
                 @endfor
             </div>
             @endif
-
         </div>
-        @endif {{-- end @if($viewingDetail) --}}
+        @endif
 
     </div>
 </div>

@@ -21,6 +21,62 @@
         elapsedSeconds: 0,
         currentTime: '',
         currentDate: '',
+
+        // ── Announcement Modal ──
+        showAnnouncement: false,
+        annType: '',
+        annTypeOpen: false,
+        annTitle: '',
+        annMessage: '',
+        annSaving: false,
+        annError: '',
+        annTypeOptions: [
+            { value: 'notice',       label: 'Notice',       icon: 'info',    bg: 'bg-blue-100',   color: 'text-blue-600'  },
+            { value: 'process_done', label: 'Process Done', icon: 'check',   bg: 'bg-green-100',  color: 'text-green-600' },
+            { value: 'caution',      label: 'Caution',      icon: 'caution', bg: 'bg-orange-100', color: 'text-orange-500'},
+            { value: 'warning',      label: 'Warning',      icon: 'warning', bg: 'bg-red-100',    color: 'text-red-500'   },
+        ],
+        get selectedTypeObj() {
+            return this.annTypeOptions.find(t => t.value === this.annType) || null;
+        },
+        openAnnouncement() {
+            this.showAnnouncement = true;
+            this.annType = '';
+            this.annTypeOpen = false;
+            this.annTitle = '';
+            this.annMessage = '';
+            this.annError = '';
+            document.body.style.overflow = 'hidden';
+        },
+        closeAnnouncement() {
+            this.showAnnouncement = false;
+            document.body.style.overflow = '';
+        },
+        async submitAnnouncement() {
+            this.annError = '';
+            if (!this.annType || !this.annTitle || !this.annMessage) {
+                this.annError = 'Please fill in all required fields.'; return;
+            }
+            this.annSaving = true;
+            const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+            try {
+                const res = await fetch('{{ route('admin.announcements.store') }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    body: JSON.stringify({
+                        type: this.annType,
+                        title: this.annTitle,
+                        message: this.annMessage,
+                        audience: 'everyone',
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) { this.closeAnnouncement(); window.location.reload(); }
+                else { this.annError = data.message ?? 'Something went wrong.'; }
+            } catch(e) { this.annError = 'An error occurred. Please try again.'; }
+            this.annSaving = false;
+        },
+
         get elapsedDisplay() {
             const h = String(Math.floor(this.elapsedSeconds/3600)).padStart(2,'0');
             const m = String(Math.floor((this.elapsedSeconds%3600)/60)).padStart(2,'0');
@@ -57,9 +113,7 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    this.onBreak = false;
-                    this.resumed = true;
-                    this.clockedIn = true;
+                    this.onBreak = false; this.resumed = true; this.clockedIn = true;
                     this.breakMinutes = data.break_minutes;
                 } else { alert(data.message ?? 'Resume failed.'); }
                 return;
@@ -72,9 +126,7 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    this.clockedIn = true;
-                    this.clockInTime = data.clock_in;
-                    this.clockInTimestamp = Date.now();
+                    this.clockedIn = true; this.clockInTime = data.clock_in; this.clockInTimestamp = Date.now();
                 } else { alert(data.message ?? 'Clock-in failed.'); }
                 return;
             }
@@ -89,9 +141,7 @@
             });
             const data = await res.json();
             if (res.ok) {
-                this.onBreak = true;
-                this.breakTime = data.break_start;
-                this.breakStartTimestamp = Date.now();
+                this.onBreak = true; this.breakTime = data.break_start; this.breakStartTimestamp = Date.now();
             } else { alert(data.message ?? 'Break failed.'); }
         },
         async handleClockOut() {
@@ -104,34 +154,24 @@
             });
             const data = await res.json();
             if (res.ok) {
-                this.clockedOut = true;
-                this.clockOutTime = data.clock_out;
-                this.onBreak = false;
+                this.clockedOut = true; this.clockOutTime = data.clock_out; this.onBreak = false;
             } else { alert(data.message ?? 'Clock-out failed.'); }
         }
     }"
     x-init="initClock()"
     class="flex h-screen overflow-hidden" style="background:#eef2f7;">
 
-    <!-- ===================== SIDEBAR ===================== -->
     @include('supervisor.supervisor_sidebar')
 
-    <!-- ===================== MAIN CONTENT ===================== -->
-<main class="flex-1 overflow-y-auto min-h-screen"
-    :class="sidebarCollapsed ? 'ml-20' : 'ml-72'"
-    style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
+    <main class="flex-1 overflow-y-auto min-h-screen"
+        :class="sidebarCollapsed ? 'ml-20' : 'ml-72'"
+        style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
-        <!-- Header -->
         <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
             <div class="px-8 py-5 flex items-center justify-between">
                 <h1 class="text-2xl font-bold text-white header-title">Dashboard</h1>
                 <div class="flex items-center space-x-3">
-                    <button class="bell-btn p-2 rounded-lg relative">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                        </svg>
-                        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-white rounded-full bell-dot"></span>
-                    </button>
+                    <x-supervisor-notif />
                     <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:scale-110 transition-all duration-300">
                         {{ $dashInitials }}
                     </div>
@@ -139,26 +179,21 @@
             </div>
         </header>
 
-        <!-- Body -->
         <div class="p-6">
 
-            <!-- ROW 1: 3 Stat Cards -->
             <div class="grid grid-cols-3 gap-5 mb-5">
-                <!-- Total Team Size -->
                 <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.05s; border:1px solid #e5e7eb;">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Total Team Size</p>
                     <p class="text-5xl font-bold" style="color:#3b82f6;">{{ $totalEmployees }}</p>
                     <p class="text-xs text-gray-400 mt-3 uppercase tracking-wider font-medium">My Department</p>
                     <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:100%; background:#3b82f6;"></div></div>
                 </div>
-                <!-- Present Today -->
                 <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.15s; border:1px solid #e5e7eb;">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Present Today</p>
                     <p class="text-5xl font-bold text-gray-900">{{ $presentToday }}</p>
                     <p class="text-xs text-gray-400 mt-3 uppercase tracking-wider font-medium">My Department</p>
                     <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:90%; background:#22c55e;"></div></div>
                 </div>
-                <!-- Pending Requests -->
                 <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.25s; border:1px solid #e5e7eb;">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Pending Requests</p>
                     <p class="text-5xl font-bold text-gray-900">{{ $pendingRequests }}</p>
@@ -167,18 +202,12 @@
                 </div>
             </div>
 
-            <!-- ROW 2: Three columns -->
             <div class="grid grid-cols-3 gap-5">
 
-                <!-- COL 1: Attendance Summary + Quick Actions -->
                 <div class="space-y-5">
-
-                    <!-- Attendance Summary -->
                     <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.3s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Today's Attendance Summary</h2>
                         <p class="text-xs text-gray-400 mt-1 mb-3">{{ date('F d, Y') }}</p>
-
-                        <!-- Stat Boxes -->
                         <div class="grid grid-cols-4 gap-2 mb-5">
                             <div class="stat-box rounded-xl p-2 text-center" style="background:#dcfce7;">
                                 <p class="text-base font-bold" style="color:#16a34a;">{{ $attendanceSummary['present'] }}</p>
@@ -197,8 +226,6 @@
                                 <p class="text-xs font-semibold uppercase" style="color:#db2777;">On Leave</p>
                             </div>
                         </div>
-
-                        <!-- Overview Bar -->
                         <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Overview</p>
                         <div class="space-y-3">
                             @foreach($departmentProgress as $dept)
@@ -216,17 +243,18 @@
                         </div>
                     </div>
 
-                    <!-- Quick Actions -->
                     <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.42s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4">Quick Actions</h2>
                         <div class="grid grid-cols-2 gap-3">
                             <button class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">Manage Schedule</button>
-                            <button class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">Create Announcement</button>
+                            <button @click="openAnnouncement()"
+                                class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">
+                                Create Announcement
+                            </button>
                         </div>
                     </div>
                 </div>
 
-               <!-- COL 2: Time & Attendance -->
                 <div class="bg-white rounded-xl p-6 card-anim flex flex-col" style="animation-delay:0.35s; border:1px solid #e5e7eb;">
                     <p class="text-sm font-bold text-gray-700 uppercase tracking-widest mb-1">Time & Attendance</p>
                     <div class="mb-1">
@@ -300,7 +328,6 @@
                     </div>
                 </div>
 
-                <!-- COL 3: Calendar + Upcoming Events -->
                 <div class="space-y-5">
                     <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.4s; border:1px solid #e5e7eb;">
                         <div class="flex items-center justify-between mb-4">
@@ -326,9 +353,7 @@
                             $total    = (int)date('t');
                             $firstDay = (int)date('w', strtotime(date('Y-m-01')));
                             $holidayMap = [];
-                            foreach($calendarHolidays as $h) {
-                                $holidayMap[$h->date->day] = $h->name;
-                            }
+                            foreach($calendarHolidays as $h) { $holidayMap[$h->date->day] = $h->name; }
                         @endphp
                         <div class="grid grid-cols-7 gap-0.5">
                             @for($i = 0; $i < $firstDay; $i++)<div></div>@endfor
@@ -366,95 +391,200 @@
             </div>
         </div>
     </main>
+
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- ✅ CREATE ANNOUNCEMENT MODAL            --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div x-show="showAnnouncement"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[999] flex items-center justify-center p-4"
+         style="display:none;">
+
+        <div class="absolute inset-0 bg-black/40" @click="closeAnnouncement()"></div>
+
+        <div x-show="showAnnouncement"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-3"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-3"
+             class="relative bg-white rounded-2xl w-full max-w-lg shadow-2xl"
+             style="padding: 32px 32px 28px;">
+
+            <button @click="closeAnnouncement()"
+                class="absolute top-5 right-5 w-9 h-9 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Create Announcement</h2>
+
+            <template x-if="annError">
+                <div class="mb-4 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600" x-text="annError"></div>
+            </template>
+
+            {{-- Announcement Type --}}
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-800 mb-2">Announcement Type</label>
+                <div class="relative" @click.outside="annTypeOpen = false">
+                    <button type="button"
+                        @click="annTypeOpen = !annTypeOpen"
+                        class="w-full flex items-center justify-between px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white hover:border-gray-300 transition-colors focus:outline-none"
+                        :class="annTypeOpen ? 'border-blue-400 ring-2 ring-blue-100' : ''">
+                        <div class="flex items-center gap-2.5">
+                            <template x-if="!selectedTypeObj">
+                                <span class="text-gray-400">Choose announcement type</span>
+                            </template>
+                            <template x-if="selectedTypeObj">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" :class="selectedTypeObj.bg">
+                                        <template x-if="selectedTypeObj.icon === 'info'">
+                                            <svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        </template>
+                                        <template x-if="selectedTypeObj.icon === 'check'">
+                                            <svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        </template>
+                                        <template x-if="selectedTypeObj.icon === 'caution'">
+                                            <svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        </template>
+                                        <template x-if="selectedTypeObj.icon === 'warning'">
+                                            <svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                        </template>
+                                    </div>
+                                    <span class="text-gray-800 font-medium" x-text="selectedTypeObj.label"></span>
+                                </div>
+                            </template>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="annTypeOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="annTypeOpen"
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-100"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1.5">
+                        <template x-for="opt in annTypeOptions" :key="opt.value">
+                            <button type="button"
+                                @click="annType = opt.value; annTypeOpen = false"
+                                class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left"
+                                :class="annType === opt.value ? 'bg-blue-50/60' : ''">
+                                <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" :class="opt.bg">
+                                    <template x-if="opt.icon === 'info'">
+                                        <svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </template>
+                                    <template x-if="opt.icon === 'check'">
+                                        <svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </template>
+                                    <template x-if="opt.icon === 'caution'">
+                                        <svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </template>
+                                    <template x-if="opt.icon === 'warning'">
+                                        <svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    </template>
+                                </div>
+                                <span class="text-sm text-gray-700 font-medium" x-text="opt.label"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Title --}}
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-800 mb-2">Title</label>
+                <input type="text" x-model="annTitle" placeholder="Enter title"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all">
+            </div>
+
+            {{-- Message --}}
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-800 mb-2">Message</label>
+                <textarea x-model="annMessage" placeholder="Write your announcement"
+                    rows="4"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all resize-none"></textarea>
+            </div>
+
+            {{-- Actions --}}
+            <div class="flex items-center justify-end gap-3">
+                <button @click="closeAnnouncement()"
+                    class="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all">
+                    Cancel
+                </button>
+                <button @click="submitAnnouncement()"
+                    :disabled="annSaving"
+                    class="px-7 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+                    x-text="annSaving ? 'Submitting…' : 'Submit'">
+                </button>
+            </div>
+
+        </div>
+    </div>
+
 </div>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
 [x-cloak] { display: none !important; }
-
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: #f8fafc; }
 ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-
 .chevron-icon { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
-
 .nav-item { transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease; }
 .nav-item:hover { transform: translateX(2px); }
 .nav-item:active { transform: scale(0.98); }
-
 .submenu-item { transition: background 0.15s ease, color 0.15s ease, padding-left 0.2s ease; }
 .submenu-item:hover { padding-left: 18px; }
-
 a:hover .settings-icon { animation: spinOnce 0.45s ease forwards; }
 @keyframes spinOnce { to { transform: rotate(90deg); } }
-
 .logout-btn { transition: background 0.2s ease, color 0.2s ease, transform 0.18s ease; }
 .logout-btn:hover { transform: translateX(3px); }
-
 .collapse-btn { transition: background 0.18s ease, transform 0.2s ease; }
 .collapse-btn:hover { transform: scale(1.12); }
 .collapse-btn:active { transform: scale(0.93); }
-
 .avatar-ring { transition: box-shadow 0.2s ease; }
 .avatar-ring:hover { box-shadow: 0 0 0 3px #dbeafe; }
-
 .profile-card { transition: background 0.2s ease; }
 .profile-card:hover { background: #f9fafb; }
-
 .header-title { animation: slideDown 0.5s cubic-bezier(0.22,1,0.36,1) both; }
 @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
-
 .bell-btn { transition: background 0.18s ease, transform 0.18s ease; }
 .bell-btn:hover { transform: scale(1.08); }
 .bell-btn:hover svg { animation: shake 0.4s ease; }
 @keyframes shake { 0%,100% { transform:rotate(0); } 25% { transform:rotate(-18deg); } 75% { transform:rotate(18deg); } }
 .bell-dot { animation: blink 2.2s ease-in-out infinite; }
 @keyframes blink { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.4); } }
-
 .card-anim { opacity: 0; animation: cardUp 0.55s cubic-bezier(0.22,1,0.36,1) forwards; }
 @keyframes cardUp { from { opacity:0; transform:translateY(24px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
-
 .stat-card { transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease; }
 .stat-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 20px 45px rgba(59,130,246,0.13); }
-
 .stat-bar { height:3px; background:#f1f5f9; border-radius:99px; overflow:hidden; }
 .stat-bar-fill { height:100%; border-radius:99px; transform:scaleX(0); transform-origin:left; animation:growBar 1.3s cubic-bezier(0.22,1,0.36,1) 0.4s forwards; }
 @keyframes growBar { to { transform:scaleX(1); } }
-
 .overview-segment { width: 0; animation: segGrow 1.4s cubic-bezier(0.22,1,0.36,1) 0.6s forwards; }
 @keyframes segGrow { to { width: var(--seg-w); } }
-
 .stat-box { transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease; }
 .stat-box:hover { transform: translateY(-3px) scale(1.06); box-shadow:0 6px 18px rgba(0,0,0,0.1); }
-
-.clock-display { letter-spacing:0.05em; animation: clockIn 0.5s ease; }
-@keyframes clockIn { from{opacity:0;transform:scale(0.94);} to{opacity:1;transform:scale(1);} }
-
-.shift-card { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
-.shift-card:hover { border-color:#93c5fd; box-shadow:0 2px 10px rgba(59,130,246,0.1); }
-
-.toggle-btn { transition: background 0.25s ease, color 0.25s ease; }
-
-.time-box { transition: border-color 0.2s ease, transform 0.18s ease; }
-.time-box:hover { border-color:#93c5fd; transform:translateY(-1px); }
-
 .clock-btn { transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1); position:relative; overflow:hidden; border:none; cursor:pointer; border-radius: 12px; }
 .clock-btn::after { content:''; position:absolute; inset:0; background:rgba(255,255,255,0.12); opacity:0; transition:opacity 0.2s ease; }
 .clock-btn:hover::after { opacity:1; }
 .clock-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(59,130,246,0.35); }
 .clock-btn:active { transform:translateY(0) scale(0.97); }
-
-.dropdown-btn { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
-.dropdown-btn:hover { border-color:#93c5fd; }
-.dropdown-item { transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease; border-radius:6px; }
-.dropdown-item:hover { transform:translateX(2px); color:#3b82f6 !important; }
-
 .action-btn { transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease; }
 .action-btn:hover { background:#eff6ff; border-color:#93c5fd; color:#3b82f6; transform:translateY(-3px); box-shadow:0 6px 18px rgba(59,130,246,0.15); }
 .action-btn:active { transform:translateY(0) scale(0.97); }
-
 .cal-nav-btn { transition: background 0.15s ease, transform 0.15s ease; }
 .cal-nav-btn:hover { transform:scale(1.12); }
 .cal-nav-btn:active { transform:scale(0.9); }
@@ -467,8 +597,9 @@ a:hover .settings-icon { animation: spinOnce 0.45s ease forwards; }
 .cal-cell:hover .holiday-tooltip { visibility: visible; }
 .today-pill { animation: todayGlow 2.5s ease-in-out infinite; }
 @keyframes todayGlow { 0%,100% { box-shadow:0 2px 8px rgba(59,130,246,0.4); } 50% { box-shadow:0 2px 18px rgba(59,130,246,0.7); } }
-
 .shimmer { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.8s infinite linear; }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.progress-fill { width:0; animation:pfill 1.5s cubic-bezier(0.22,1,0.36,1) 0.7s forwards; }
+@keyframes pfill { to { width: var(--tw); } }
 </style>
 @endsection

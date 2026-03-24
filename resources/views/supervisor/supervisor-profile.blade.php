@@ -54,20 +54,14 @@
           style="transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
 
         <!-- Header -->
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
+        <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div>
                     <h1 class="text-xl sm:text-2xl font-bold text-white">Employee Profile</h1>
                     <p class="text-xs sm:text-sm text-blue-100 mt-0.5">View and manage your information</p>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <button class="relative p-2 hover:bg-blue-500 rounded-lg transition-all duration-200">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
-                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-400 rounded-full animate-ping"></span>
-                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-400 rounded-full"></span>
-                    </button>
+                    <x-supervisor-notif />
                     <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center font-semibold cursor-pointer hover:bg-white/30 transition-all duration-200">
                         {{ $employee ? strtoupper(substr($employee->fname, 0, 1) . substr($employee->lname, 0, 1)) : strtoupper(substr($user->email, 0, 2)) }}
                     </div>

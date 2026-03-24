@@ -10,7 +10,7 @@
         'admin.attendance.records',
         'admin.leave.management',
     ]);
-    $isPayrollSection  = in_array($currentRoute, ['admin.payroll', 'admin.payslips', 'admin.contributions']);
+    $isPayrollSection  = in_array($currentRoute, ['admin.payroll', 'admin.payslips', 'admin.govpay']);
     $isRequestsSection = in_array($currentRoute, ['admin.requests.pending', 'admin.requests.approved']);
 
     $sidebarUser     = auth()->user();
@@ -228,8 +228,9 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Payslips</a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Govt. Contributions</a>
+                <a href="{{ route('admin.payroll') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'admin.payroll' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Payroll</a>
+                <a href="{{ route('admin.payslips') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'admin.payslips' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Payslips</a>
+                <a href="{{ route('admin.govpay') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'admin.govpay' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Govt. Contributions</a>
             </div>
         </div>
 

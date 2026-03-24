@@ -12,7 +12,7 @@
 
     $attendanceRoutes = ['supervisor.attendance.reports', 'supervisor.attendance.employee', 'supervisor.attendance.shift', 'supervisor.attendance.leave', 'supervisor.shift.scheduling', 'supervisor.leave.management'];
     $employeeRoutes   = ['supervisor.employees.directory'];
-    $payrollRoutes    = ['supervisor.payroll', 'supervisor.payslips', 'supervisor.contributions'];
+    $payrollRoutes    = ['supervisor.payslips', 'supervisor.govpay'];
     $requestRoutes    = ['supervisor.requests.pending', 'supervisor.requests.approved'];
 @endphp
 
@@ -183,9 +183,8 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Payroll</a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Payslips</a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Govt. Contributions</a>
+                <a href="{{ route('supervisor.payslips') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'supervisor.payslips' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Payslips</a>
+                <a href="{{ route('supervisor.govpay') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'supervisor.govpay' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Govt. Contributions</a>
             </div>
         </div>
 

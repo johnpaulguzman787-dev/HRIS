@@ -252,7 +252,32 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/requests/{id}/cancel',   [AdminAttendanceController::class, 'cancelRequest'])->name('admin.requests.cancel');
     // ──────────────────────────────────────────────────────────────────────
 
+    // ── ADMIN PAYROLL ROUTES ───────────────────────────────────────────────
+    Route::get('/admin/payroll',  fn() => view('admin.admin_payroll'))->name('admin.payroll');
+    Route::get('/admin/payslips', fn() => view('admin.admin_payslips'))->name('admin.payslips');
+    Route::get('/admin/govpay',   fn() => view('admin.admin_govpay'))->name('admin.govpay');
+    // ──────────────────────────────────────────────────────────────────────
+
+    // ── HR PAYROLL ROUTES ──────────────────────────────────────────────────
+    Route::get('/hr/payslips', fn() => view('hr.hr_payslips'))->name('hr.payslips');
+    Route::get('/hr/govpay',   fn() => view('hr.hr_govpay'))->name('hr.govpay');
+    // ──────────────────────────────────────────────────────────────────────
+
+    // ── SUPERVISOR PAYROLL ROUTES ──────────────────────────────────────────
+    Route::get('/supervisor/payslips', fn() => view('supervisor.supervisor_payslips'))->name('supervisor.payslips');
+    Route::get('/supervisor/govpay',   fn() => view('supervisor.supervisor_govpay'))->name('supervisor.govpay');
+    // ──────────────────────────────────────────────────────────────────────
+
+    // ── EMPLOYEE PAYROLL ROUTES ────────────────────────────────────────────
+    Route::get('/employee/payslips', fn() => view('employee.employee_payslips'))->name('employee.payslips');
+    Route::get('/employee/govpay',   fn() => view('employee.employee_govpay'))->name('employee.govpay');
+    // ──────────────────────────────────────────────────────────────────────
+
     // ── PAYROLL OFFICER ROUTES ─────────────────────────────────────────────
+    Route::get('/payroll_officer/payroll',  fn() => view('payroll_officer.payroll-officer_payroll'))->name('payroll_officer.payroll');
+    Route::get('/payroll_officer/payslips', fn() => view('payroll_officer.payroll-officer_payslips'))->name('payroll_officer.payslips');
+    Route::get('/payroll_officer/govpay',   fn() => view('payroll_officer.payroll-officer_govpay'))->name('payroll_officer.govpay');
+
     Route::get('/payroll_officer/dashboard', [\App\Http\Controllers\PayrollOfficerDashboardController::class, 'index'])->name('payroll_officer.dashboard');
     Route::get('/payroll_officer/profile', [\App\Http\Controllers\PayrollOfficerProfileController::class, 'profile'])->name('payroll_officer.profile');
 
@@ -276,6 +301,10 @@ Route::middleware(['auth'])->group(function () {
     // ──────────────────────────────────────────────────────────────────────
 
     // ── FINANCE OFFICER ROUTES ─────────────────────────────────────────────
+    Route::get('/finance_officer/payroll',  fn() => view('finance_officer.finance-officer_payroll'))->name('finance_officer.payroll');
+    Route::get('/finance_officer/payslips', fn() => view('finance_officer.finance-officer_payslips'))->name('finance_officer.payslips');
+    Route::get('/finance_officer/govpay',   fn() => view('finance_officer.finance-officer_govpay'))->name('finance_officer.govpay');
+
     Route::get('/finance_officer/dashboard', [\App\Http\Controllers\FinanceOfficerDashboardController::class, 'index'])->name('finance_officer.dashboard');
     Route::get('/finance_officer/profile', [\App\Http\Controllers\FinanceOfficerProfileController::class, 'profile'])->name('finance_officer.profile');
 

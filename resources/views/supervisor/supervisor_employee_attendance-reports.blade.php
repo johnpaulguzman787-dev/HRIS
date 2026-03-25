@@ -383,9 +383,6 @@
                 <p class="text-xs sm:text-sm text-blue-100 mt-0.5">Track and manage workforce attendance records</p>
             </div>
             <div class="flex items-center gap-3">
-                <div class="hidden sm:block text-xs text-white/80 bg-white/15 rounded-lg px-3 py-1.5 font-medium">
-                    {{ now()->format('l, F j, Y') }}
-                </div>
                 {{-- ✅ x-supervisor-notif component --}}
                 <x-supervisor-notif />
             </div>

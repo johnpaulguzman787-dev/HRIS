@@ -9,6 +9,7 @@
         'admin.attendance.today',
         'admin.attendance.records',
         'admin.leave.management',
+        'admin.shift.scheduling',
     ]);
     $isPayrollSection  = in_array($currentRoute, ['admin.payroll', 'admin.payslips', 'admin.govpay']);
     $isRequestsSection = in_array($currentRoute, ['admin.requests.pending', 'admin.requests.approved']);
@@ -196,6 +197,11 @@
                     Employee Attendance
                 </a>
              
+                </a>
+                <a href="{{ route('admin.shift.scheduling') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'admin.shift.scheduling' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                    Shift Scheduling
                 </a>
                 <a href="{{ route('admin.leave.management') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'admin.leave.management' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Leave Management

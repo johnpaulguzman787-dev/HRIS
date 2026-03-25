@@ -76,112 +76,31 @@
 
     <div class="p-6 space-y-5">
 
-        {{-- TOP ROW --}}
-        <div class="flex gap-5 items-stretch">
-
-            {{-- CLOCK PANEL --}}
-            <div class="anim-up bg-white rounded-2xl p-6 flex-shrink-0 flex flex-col"
-                 style="width:450px; animation-delay:0.05s; box-shadow:0 1px 12px rgba(0,0,0,0.07);">
-                <p class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-3">Time & Attendance</p>
-                <div class="mb-1">
-                    <p class="text-xs text-gray-400 font-medium mb-2" x-text="liveDate"></p>
-                    <p class="font-black tabular-nums leading-none" style="font-size:2.8rem; letter-spacing:-1px; color:#3b82f6;" x-text="liveTime"></p>
-                </div>
-                <hr class="my-4 border-gray-100">
-
-                <div class="mb-3">
-                    <p class="text-xs font-semibold text-gray-500 mb-2">Shift Schedule</p>
-                    @if($employeeShift)
-                    <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
-                        <div class="flex items-center justify-between px-3 py-2">
-                            <span class="text-xs font-semibold text-gray-600">{{ $employeeShift->shift->name ?? '—' }}</span>
-                            <span class="text-xs text-gray-400">
-                                {{ $employeeShift->shift ? \Carbon\Carbon::parse($employeeShift->shift->start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($employeeShift->shift->end_time)->format('g:i A') : '—' }}
-                            </span>
-                        </div>
-                        <div class="flex items-center justify-between px-3 py-2 border-t border-gray-100">
-                            <span class="text-xs text-gray-400">Work Setup</span>
-                            <span class="text-xs font-semibold" style="color:#1d4ed8;">{{ strtoupper($employeeShift->work_setup ?? '—') }}</span>
-                        </div>
-                    </div>
-                    @else
-                    <div class="border border-dashed border-gray-200 rounded-xl px-3 py-4 bg-gray-50 text-center">
-                        <p class="text-xs text-gray-400 font-medium">No shift assigned yet.</p>
-                        <p class="text-xs text-gray-300 mt-1">Contact your HR to assign a shift.</p>
-                    </div>
-                    @endif
-                </div>
-
-                <div class="mb-3">
-                    <p class="text-xs font-semibold text-gray-500 mb-2">Today's Attendance</p>
-                    <div class="flex gap-2 mb-2">
-                        <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
-                            <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">TIME IN</p>
-                            <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedIn ? clockInTime : '–'"></p>
-                        </div>
-                        <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
-                            <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">BREAK</p>
-                            <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="breakTime ? breakTime : '–'"></p>
-                        </div>
-                        <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
-                            <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">TIME OUT</p>
-                            <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedOut ? clockOutTime : '–'"></p>
-                        </div>
-                    </div>
-                    <p class="text-xs text-center text-gray-400 font-medium" x-show="!clockedIn"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
-                    <p class="text-xs text-center font-medium" x-show="clockedIn && !onBreak && !clockedOut" style="color:#3b82f6;"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
-                    <p class="text-xs text-center font-medium" x-show="onBreak" style="color:#f59e0b;">On break · timer paused</p>
-                    <p class="text-xs text-center font-semibold" x-show="clockedOut" style="color:#22c55e;">✓ Attendance recorded · <span x-text="elapsedDisplay"></span></p>
-                    <p x-show="onLeave" class="text-xs text-center font-semibold" style="color:#6366f1;">You are on approved leave today.</p>
-                </div>
-                <div class="mt-auto flex gap-2">
-                    <button @click="handleClock()"
-                            :disabled="onLeave || (clockedIn && !onBreak) || clockedOut || !assignedShiftId"
-                            class="clock-btn flex-1 py-3 text-white font-bold text-xs tracking-widest uppercase rounded-2xl"
-                            :style="onLeave || (clockedIn && !onBreak) || clockedOut || !assignedShiftId ? 'background:#94a3b8;' : 'background:#3b82f6;'">
-                        TIME IN
-                    </button>
-                    <button @click="handleBreak()"
-                            :disabled="!clockedIn || onBreak || resumed || clockedOut || !breakAllowed"
-                            class="clock-btn flex-1 py-3 font-bold text-xs tracking-widest uppercase rounded-2xl"
-                            :style="!clockedIn || onBreak || resumed || clockedOut || !breakAllowed ? 'background:#94a3b8; color:white;' : 'background:#dbeafe; color:#1d4ed8;'">
-                        BREAK
-                    </button>
-                    <button @click="handleClockOut()"
-                            :disabled="!clockedIn || clockedOut"
-                            class="clock-btn flex-1 py-3 text-white font-bold text-xs tracking-widest uppercase rounded-2xl"
-                            :style="!clockedIn || clockedOut ? 'background:#94a3b8;' : 'background:#3b82f6;'">
-                        TIME OUT
-                    </button>
-                </div>
+        {{-- STAT CARDS --}}
+        <div class="grid grid-cols-6 gap-3 mb-6">
+            <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8f0d8; animation-delay:0.08s;">
+                <p class="text-xs font-bold uppercase tracking-wider" style="color:#14532d;">Total Days Present</p>
+                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#2563eb;">{{ $stats['present'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#15803d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
             </div>
-
-            {{-- 2×3 STAT CARDS --}}
-            <div class="flex-1 grid grid-cols-2 grid-rows-3 gap-4">
-                <div class="stat-card p-5 flex flex-col justify-between" style="background:#c8f0d8; animation-delay:0.08s;">
-                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#14532d;">Total Days Present</p>
-                    <div><p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#2563eb;">{{ $stats['present'] }}</p><p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#15803d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-                </div>
-                <div class="stat-card p-5 flex flex-col justify-between" style="background:#fde8c8; animation-delay:0.11s;">
-                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#92400e;">Late</p>
-                    <div><p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['late'] }}</p><p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#b45309;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-                </div>
-                <div class="stat-card p-5 flex flex-col justify-between" style="background:#fbc8c8; animation-delay:0.14s;">
-                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#991b1b;">Absent</p>
-                    <div><p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['absent'] }}</p><p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#dc2626;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-                </div>
-                <div class="stat-card p-5 flex flex-col justify-between" style="background:#f9c8e8; animation-delay:0.17s;">
-                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#831843;">Leave</p>
-                    <div><p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['on_leave'] }}</p><p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#be185d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-                </div>
-                <div class="stat-card p-5 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.20s;">
-                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Overtime</p>
-                    <div><p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['overtime'] }}</p><p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-                </div>
-                <div class="stat-card p-5 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.23s;">
-                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Undertime</p>
-                    <div><p class="font-black leading-none mt-2" style="font-size:3.2rem; color:#1f2937;">{{ $stats['undertime'] }}</p><p class="text-xs font-semibold mt-2 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-                </div>
+            <div class="stat-card p-4 flex flex-col justify-between" style="background:#fde8c8; animation-delay:0.11s;">
+                <p class="text-xs font-bold uppercase tracking-wider" style="color:#92400e;">Late</p>
+                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['late'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#b45309;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+            </div>
+            <div class="stat-card p-4 flex flex-col justify-between" style="background:#fbc8c8; animation-delay:0.14s;">
+                <p class="text-xs font-bold uppercase tracking-wider" style="color:#991b1b;">Absent</p>
+                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['absent'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#dc2626;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+            </div>
+            <div class="stat-card p-4 flex flex-col justify-between" style="background:#f9c8e8; animation-delay:0.17s;">
+                <p class="text-xs font-bold uppercase tracking-wider" style="color:#831843;">Leave</p>
+                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['on_leave'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#be185d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+            </div>
+            <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.20s;">
+                <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Overtime</p>
+                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['overtime'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+            </div>
+            <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.23s;">
+                <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Undertime</p>
+                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['undertime'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
             </div>
         </div>
 

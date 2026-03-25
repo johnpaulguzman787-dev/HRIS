@@ -23,6 +23,9 @@
         currentTime: '',
         currentDate: '',
 
+        // ── Attendance Popup ──
+        showAttendancePopup: {{ ($employeeShift && !in_array($todayLog?->status ?? '', ['on_leave', 'holiday']) && !$todayLog?->clock_in) ? 'true' : 'false' }},
+
         // ── Announcement Modal ──
         showAnnouncement: false,
         annType: '',
@@ -68,7 +71,7 @@
             this.annSaving = true;
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             try {
-                const res = await fetch('{{ route('admin.announcements.store') }}', {
+                const res = await fetch('{{ route('hr.announcements.store') }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
                     body: JSON.stringify({
@@ -608,6 +611,7 @@
         </div>
     </div>
 
+    @include('partials.attendance-popup')
 </div>
 
 <style>

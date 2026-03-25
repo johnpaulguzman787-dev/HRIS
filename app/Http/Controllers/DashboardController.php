@@ -186,6 +186,7 @@ $availableShifts = \App\Models\Shift::where('is_active', true)->get();
             (object)['title' => 'Health & Safety Workshop', 'date' => Carbon::today()->addDays(6)->format('M d, Y'), 'time' => '9:30 AM', 'department' => 'Nursing', 'color' => 'purple'],
             (object)['title' => 'Monthly Review', 'date' => Carbon::today()->addDays(9)->format('M d, Y'), 'time' => '3:00 PM', 'department' => 'Management', 'color' => 'red'],
         ],
+        'departments'      => Department::orderBy('name')->get(),
         'currentDate'      => Carbon::today()->format('l, F j, Y'),
         'upcomingHolidays' => \App\Models\Holiday::whereDate('date', '>=', $today)
             ->whereDate('date', '<=', Carbon::today()->endOfMonth())

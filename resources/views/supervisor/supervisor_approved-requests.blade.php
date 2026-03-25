@@ -112,25 +112,27 @@
 
                 {{-- Toolbar --}}
                 <form method="GET" action="{{ route('supervisor.requests.approved') }}" id="filterForm"
-                      class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 flex-wrap">
-                    <div class="relative flex-1" style="min-width:200px;max-width:320px;">
+                      class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                    <div class="relative" style="min-width:220px;">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         <input type="text" name="search" placeholder="Search employee…"
                                value="{{ $search ?? '' }}"
                                class="search-input w-full"
                                onchange="document.getElementById('filterForm').submit()"/>
                     </div>
-                    <select name="status" class="fsel" onchange="document.getElementById('filterForm').submit()">
-                        <option value="all"      {{ ($filterStatus ?? 'all') === 'all'      ? 'selected' : '' }}>All Status</option>
-                        <option value="approved" {{ ($filterStatus ?? '') === 'approved'    ? 'selected' : '' }}>Approved</option>
-                        <option value="rejected" {{ ($filterStatus ?? '') === 'rejected'    ? 'selected' : '' }}>Rejected</option>
-                    </select>
-                    <select name="type" class="fsel" onchange="document.getElementById('filterForm').submit()">
-                        <option value="all"      {{ ($filterType ?? 'all') === 'all'      ? 'selected' : '' }}>All Types</option>
-                        <option value="leave"    {{ ($filterType ?? '') === 'leave'       ? 'selected' : '' }}>Leave Request</option>
-                        <option value="overtime" {{ ($filterType ?? '') === 'overtime'    ? 'selected' : '' }}>Overtime</option>
-                        <option value="shift"    {{ ($filterType ?? '') === 'shift'       ? 'selected' : '' }}>Shift Arrangement</option>
-                    </select>
+                    <div class="flex items-center gap-3 ml-auto">
+                        <select name="status" class="fsel" onchange="document.getElementById('filterForm').submit()">
+                            <option value="all"      {{ ($filterStatus ?? 'all') === 'all'      ? 'selected' : '' }}>All Status</option>
+                            <option value="approved" {{ ($filterStatus ?? '') === 'approved'    ? 'selected' : '' }}>Approved</option>
+                            <option value="rejected" {{ ($filterStatus ?? '') === 'rejected'    ? 'selected' : '' }}>Rejected</option>
+                        </select>
+                        <select name="type" class="fsel" onchange="document.getElementById('filterForm').submit()">
+                            <option value="all"      {{ ($filterType ?? 'all') === 'all'      ? 'selected' : '' }}>All Types</option>
+                            <option value="leave"    {{ ($filterType ?? '') === 'leave'       ? 'selected' : '' }}>Leave Request</option>
+                            <option value="overtime" {{ ($filterType ?? '') === 'overtime'    ? 'selected' : '' }}>Overtime</option>
+                            <option value="shift"    {{ ($filterType ?? '') === 'shift'       ? 'selected' : '' }}>Shift Arrangement</option>
+                        </select>
+                    </div>
                 </form>
 
                 {{-- Table --}}

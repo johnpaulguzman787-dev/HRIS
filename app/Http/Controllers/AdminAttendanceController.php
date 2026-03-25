@@ -1127,4 +1127,335 @@ public function getLeaveRequest($id)
         return response()->json(['message' => 'Shift change request filed successfully.', 'ref_no' => $refNo]);
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // SHIFT SCHEDULING
+    // ══════════════════════════════════════════════════════════════════════
+
+    public function shiftScheduling(Request $request)
+    {
+        $activeTab   = $request->get('tab', 'weekly');
+        $departments = Department::orderBy('name')->get();
+
+        $weekStart = $request->get('week_start')
+            ? Carbon::parse($request->get('week_start'))->startOfWeek(Carbon::MONDAY)
+            : Carbon::now()->startOfWeek(Carbon::MONDAY);
+        $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
+
+        $employees = Employee::with('department')
+            ->where('employment_status', 'Active')
+            ->get();
+
+        $allShifts = EmployeeShift::with('shift')
+            ->whereIn('employee_id', $employees->pluck('id'))
+            ->where('is_active', true)
+            ->whereDate('effective_date', '<=', $weekEnd)
+            ->where(function ($q) use ($weekStart) {
+                $q->whereNull('end_date')->orWhereDate('end_date', '>=', $weekStart);
+            })
+            ->get()
+            ->keyBy('employee_id');
+
+        $leaveLogs = AttendanceLog::whereIn('employee_id', $employees->pluck('id'))
+            ->whereBetween('attendance_date', [$weekStart->toDateString(), $weekEnd->toDateString()])
+            ->where('status', 'on_leave')
+            ->get()
+            ->groupBy('employee_id');
+
+        $scheduleRecords = collect();
+        foreach ($employees as $emp) {
+            $empShift = $allShifts->get($emp->id);
+            $daysOff  = $empShift && $empShift->days_off
+                ? json_decode($empShift->days_off, true)
+                : ['Sat', 'Sun'];
+
+            $days = [];
+            for ($i = 0; $i < 7; $i++) {
+                $day     = $weekStart->copy()->addDays($i);
+                $dayAbbr = $day->format('D');
+                $dayKey  = $day->toDateString();
+
+                $isOnLeave = isset($leaveLogs[$emp->id]) &&
+                    $leaveLogs[$emp->id]->contains('attendance_date', $dayKey);
+
+                if (in_array($dayAbbr, $daysOff)) {
+                    $days[$dayKey] = ['type' => 'day_off'];
+                } elseif ($isOnLeave) {
+                    $days[$dayKey] = ['type' => 'leave'];
+                } elseif ($empShift) {
+                    $days[$dayKey] = [
+                        'type'       => 'shift',
+                        'shift_name' => $empShift->shift->name ?? '—',
+                        'work_setup' => $empShift->work_setup ?? 'wfh',
+                    ];
+                } else {
+                    $days[$dayKey] = ['type' => 'none'];
+                }
+            }
+
+            $scheduleRecords->push((object) [
+                'employee'       => $emp,
+                'employee_shift' => $empShift,
+                'days'           => $days,
+            ]);
+        }
+
+        $shiftTypeQuery = \App\Models\Shift::where('is_active', true)
+            ->withCount('employeeShifts as assigned');
+
+        if ($request->filled('department') && $activeTab === 'shift-types') {
+            $shiftTypeQuery->whereHas('employeeShifts', function ($q) use ($request) {
+                $q->whereHas('employee', function ($eq) use ($request) {
+                    $eq->where('department_id', $request->department);
+                });
+            });
+        }
+
+        $shiftTypes = $shiftTypeQuery->orderBy('name')->get()->map(function ($shift) {
+            $startMins = Carbon::parse($shift->start_time)->diffInMinutes(Carbon::parse('00:00:00'));
+            $endMins   = Carbon::parse($shift->end_time)->diffInMinutes(Carbon::parse('00:00:00'));
+            $totalMins = $endMins >= $startMins
+                ? $endMins - $startMins
+                : (1440 - $startMins) + $endMins;
+            $shift->work_hours = round($totalMins / 60, 1);
+            return $shift;
+        });
+
+        $currentYear     = (int) $request->get('year', now()->year);
+        $holidays        = \App\Models\Holiday::whereYear('date', $currentYear)->orderBy('date')->get();
+        $regularHolidays = $holidays->where('type', 'regular')->count();
+        $specialHolidays = $holidays->where('type', 'special')->count();
+        $localHolidays   = $holidays->where('type', 'local')->count();
+        $localRegion     = $holidays->where('type', 'local')->first()?->region ?? '—';
+
+        return view('admin.admin_shift_scheduling', compact(
+            'activeTab', 'departments', 'weekStart', 'weekEnd',
+            'scheduleRecords', 'employees', 'shiftTypes',
+            'currentYear', 'holidays',
+            'regularHolidays', 'specialHolidays', 'localHolidays', 'localRegion'
+        ));
+    }
+
+    public function employeesByDeptShift(Request $request)
+    {
+        if ($request->filled('employee_id')) {
+            $empShift = EmployeeShift::with('shift')
+                ->where('employee_id', $request->employee_id)
+                ->where('is_active', true)
+                ->latest('effective_date')
+                ->first();
+
+            return response()->json([
+                'shift' => $empShift ? [
+                    'id'             => $empShift->id,
+                    'shift_id'       => $empShift->shift_id,
+                    'shift_name'     => $empShift->shift?->name,
+                    'schedule'       => $empShift->shift
+                        ? Carbon::parse($empShift->shift->start_time)->format('g:i A') . ' – ' . Carbon::parse($empShift->shift->end_time)->format('g:i A')
+                        : null,
+                    'work_setup'     => $empShift->work_setup,
+                    'effective_date' => $empShift->effective_date,
+                    'end_date'       => $empShift->end_date,
+                    'days_off'       => $empShift->days_off,
+                ] : null
+            ]);
+        }
+
+        $employees = Employee::where('department_id', $request->department_id)
+            ->where('employment_status', 'Active')
+            ->get(['id', 'fname', 'lname']);
+
+        return response()->json($employees);
+    }
+
+    public function assignShiftAdmin(Request $request)
+    {
+        $request->validate([
+            'employee_id'    => 'required|exists:employees,id',
+            'shift_id'       => 'required|exists:shifts,id',
+            'work_setup'     => 'required|in:office,wfh',
+            'effective_date' => 'required|date',
+            'end_date'       => 'nullable|date|after_or_equal:effective_date',
+            'days_off'       => 'nullable|array',
+        ]);
+
+        EmployeeShift::where('employee_id', $request->employee_id)
+            ->where('is_active', true)
+            ->update([
+                'is_active' => false,
+                'end_date'  => Carbon::parse($request->effective_date)->subDay()->toDateString(),
+            ]);
+
+        EmployeeShift::create([
+            'employee_id'    => $request->employee_id,
+            'shift_id'       => $request->shift_id,
+            'work_setup'     => $request->work_setup,
+            'effective_date' => $request->effective_date,
+            'end_date'       => $request->end_date ?? null,
+            'days_off'       => json_encode($request->days_off ?? ['Sat', 'Sun']),
+            'is_active'      => true,
+        ]);
+
+        return response()->json(['message' => 'Shift assigned successfully.']);
+    }
+
+    public function updateShiftAdmin(Request $request)
+    {
+        $request->validate([
+            'employee_shift_id' => 'required|exists:employee_shifts,id',
+            'shift_id'          => 'required|exists:shifts,id',
+            'work_setup'        => 'required|in:office,wfh',
+            'effective_date'    => 'required|date',
+            'end_date'          => 'nullable|date|after_or_equal:effective_date',
+            'days_off'          => 'nullable|array',
+        ]);
+
+        $empShift = EmployeeShift::findOrFail($request->employee_shift_id);
+        $empShift->update([
+            'shift_id'       => $request->shift_id,
+            'work_setup'     => $request->work_setup,
+            'effective_date' => $request->effective_date,
+            'end_date'       => $request->end_date ?? null,
+            'days_off'       => json_encode($request->days_off ?? ['Sat', 'Sun']),
+        ]);
+
+        return response()->json(['message' => 'Shift updated successfully.']);
+    }
+
+    public function storeShiftTypeAdmin(Request $request)
+    {
+        $request->validate([
+            'name'        => 'required|string|max:100',
+            'code'        => 'required|string|max:20|unique:shifts,code',
+            'start_time'  => 'required|date_format:H:i',
+            'end_time'    => 'required|date_format:H:i',
+            'break_start' => 'nullable|date_format:H:i',
+            'break_end'   => 'nullable|date_format:H:i',
+        ]);
+
+        $breakSchedule = null;
+        if ($request->filled('break_start') && $request->filled('break_end')) {
+            $breakSchedule = json_encode([
+                'start' => $request->break_start,
+                'end'   => $request->break_end,
+            ]);
+        }
+
+        \App\Models\Shift::create([
+            'name'           => $request->name,
+            'code'           => $request->code,
+            'start_time'     => $request->start_time,
+            'end_time'       => $request->end_time,
+            'break_schedule' => $breakSchedule,
+            'is_active'      => true,
+        ]);
+
+        return response()->json(['message' => 'Shift type created successfully.']);
+    }
+
+    public function getShiftTypeAdmin($id)
+    {
+        $shift = \App\Models\Shift::findOrFail($id);
+        return response()->json([
+            'id'             => $shift->id,
+            'name'           => $shift->name,
+            'code'           => $shift->code,
+            'start_time'     => $shift->start_time,
+            'end_time'       => $shift->end_time,
+            'break_schedule' => $shift->break_schedule,
+            'is_active'      => $shift->is_active,
+        ]);
+    }
+
+    public function updateShiftTypeAdmin(Request $request, $id)
+    {
+        $request->validate([
+            'name'        => 'required|string|max:100',
+            'code'        => 'required|string|max:20|unique:shifts,code,' . $id,
+            'start_time'  => 'required|date_format:H:i',
+            'end_time'    => 'required|date_format:H:i',
+            'break_start' => 'nullable|date_format:H:i',
+            'break_end'   => 'nullable|date_format:H:i',
+        ]);
+
+        $shift = \App\Models\Shift::findOrFail($id);
+
+        $breakSchedule = null;
+        if ($request->filled('break_start') && $request->filled('break_end')) {
+            $breakSchedule = json_encode([
+                'start' => $request->break_start,
+                'end'   => $request->break_end,
+            ]);
+        }
+
+        $shift->update([
+            'name'           => $request->name,
+            'code'           => $request->code,
+            'start_time'     => $request->start_time,
+            'end_time'       => $request->end_time,
+            'break_schedule' => $breakSchedule,
+        ]);
+
+        return response()->json(['message' => 'Shift type updated successfully.']);
+    }
+
+    public function getHolidayAdmin($id)
+    {
+        $holiday = \App\Models\Holiday::findOrFail($id);
+        return response()->json($holiday);
+    }
+
+    public function storeHolidayAdmin(Request $request)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'date'     => 'required|date',
+            'type'     => 'required|in:regular,special,local',
+            'pay_rate' => 'required|string|max:10',
+            'region'   => 'nullable|string|max:100',
+            'yearly'   => 'boolean',
+        ]);
+
+        \App\Models\Holiday::create([
+            'name'     => $request->name,
+            'date'     => $request->date,
+            'type'     => $request->type,
+            'pay_rate' => $request->pay_rate,
+            'region'   => $request->region,
+            'yearly'   => $request->boolean('yearly'),
+        ]);
+
+        return response()->json(['message' => 'Holiday added successfully.']);
+    }
+
+    public function updateHolidayAdmin(Request $request, $id)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'date'     => 'required|date',
+            'type'     => 'required|in:regular,special,local',
+            'pay_rate' => 'required|string|max:10',
+            'region'   => 'nullable|string|max:100',
+            'yearly'   => 'boolean',
+        ]);
+
+        $holiday = \App\Models\Holiday::findOrFail($id);
+        $holiday->update([
+            'name'     => $request->name,
+            'date'     => $request->date,
+            'type'     => $request->type,
+            'pay_rate' => $request->pay_rate,
+            'region'   => $request->region,
+            'yearly'   => $request->boolean('yearly'),
+        ]);
+
+        return response()->json(['message' => 'Holiday updated successfully.']);
+    }
+
+    public function destroyHolidayAdmin($id)
+    {
+        $holiday = \App\Models\Holiday::findOrFail($id);
+        $holiday->delete();
+        return response()->json(['message' => 'Holiday deleted successfully.']);
+    }
+
 }

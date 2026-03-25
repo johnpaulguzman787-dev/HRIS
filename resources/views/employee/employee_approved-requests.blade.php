@@ -12,7 +12,7 @@
     $sidebarName = $sidebarEmployee
         ? trim($sidebarEmployee->fname . ' ' . $sidebarEmployee->lname)
         : ($sidebarUser?->email ?? 'User');
-    $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? 'Admin');
+    $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? 'Employee');
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -66,341 +66,186 @@
     </style>
 </head>
 <body>
-<div class="flex min-h-screen" x-data="approvedLogs()">
 
-    {{-- ═══════════ SIDEBAR ═══════════ --}}
-    <aside
-    class="bg-white border-r border-gray-200 h-screen fixed left-0 top-0 overflow-y-auto z-50 flex flex-col"
-    x-data="{
-        sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
-        attendanceOpen: {{ in_array($currentRoute, $attendanceRoutes) ? 'true' : 'false' }},
-        payrollOpen: {{ in_array($currentRoute, $payrollRoutes) ? 'true' : 'false' }},
-        requestsOpen: {{ in_array($currentRoute, $requestRoutes) ? 'true' : 'false' }}
-    }"
-    x-init="$watch('sidebarCollapsed', value => localStorage.setItem('sidebarCollapsed', value))"
-    :class="sidebarCollapsed ? 'w-20' : 'w-64'"
-    style="transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 2px 0 20px rgba(0,0,0,0.06);">
+{{-- ═══════════ SIDEBAR ═══════════ --}}
+@include('employee.employee_sidebar')
 
-    <!-- Logo -->
-    <div class="px-6 py-5 border-b border-gray-100">
-        <div class="flex items-center space-x-3" :class="sidebarCollapsed ? 'justify-center' : ''">
-            <div class="w-9 h-9 border-2 border-gray-800 flex items-center justify-center flex-shrink-0" style="border-radius:6px;">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
+{{-- ═══════════ MAIN ═══════════ --}}
+<div x-data="{collapsed:localStorage.getItem('sidebarCollapsed')==='true'}"
+     x-init="window.addEventListener('storage',e=>{if(e.key==='sidebarCollapsed')collapsed=e.newValue==='true'})"
+     :style="collapsed?'margin-left:5rem':'margin-left:16rem'"
+     style="transition:margin-left .35s cubic-bezier(.4,0,.2,1);min-height:100vh;">
+
+    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
+        <div class="flex items-center justify-between px-8 py-4">
+            <h1 class="text-white font-bold text-xl">Approved Logs</h1>
+            <x-employee-notif />
+        </div>
+    </header>
+
+    <div class="p-8 space-y-6">
+
+        {{-- Stat Cards --}}
+        <div class="grid grid-cols-4 gap-4">
+            <div class="stat-card" style="background:#dcfce7;border-color:#bbf7d0;">
+                <div style="font-size:12px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Approved</div>
+                <div style="font-size:34px;font-weight:800;color:#15803d;line-height:1;">{{ $approvedCount }}</div>
+                <div style="font-size:12px;color:#166534;margin-top:6px;">{{ now()->format('F Y') }}</div>
             </div>
-            <h1 x-show="!sidebarCollapsed"
-                x-transition:enter="transition ease-out duration-300 delay-100"
-                x-transition:enter-start="opacity-0 -translate-x-4"
-                x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-100"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0"
-                class="font-bold text-gray-900 text-lg tracking-widest whitespace-nowrap">MEDISOURCE</h1>
+            <div class="stat-card" style="background:#fee2e2;border-color:#fecaca;">
+                <div style="font-size:12px;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Rejected</div>
+                <div style="font-size:34px;font-weight:800;color:#b91c1c;line-height:1;">{{ $rejectedCount }}</div>
+                <div style="font-size:12px;color:#991b1b;margin-top:6px;">With written reason</div>
+            </div>
+            <div class="stat-card" style="background:#dbeafe;border-color:#bfdbfe;">
+                <div style="font-size:12px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Leave Requests</div>
+                <div style="font-size:34px;font-weight:800;color:#1d4ed8;line-height:1;">{{ $requests->where('type','leave')->count() }}</div>
+                <div style="font-size:12px;color:#1e40af;margin-top:6px;">{{ now()->format('F Y') }}</div>
+            </div>
+            <div class="stat-card" style="background:#ede9fe;border-color:#ddd6fe;">
+                <div style="font-size:12px;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">OT & Shift Requests</div>
+                <div style="font-size:34px;font-weight:800;color:#6d28d9;line-height:1;">{{ $requests->whereIn('type',['overtime','shift'])->count() }}</div>
+                <div style="font-size:12px;color:#5b21b6;margin-top:6px;">{{ now()->format('F Y') }}</div>
+            </div>
         </div>
-    </div>
 
-    <!-- User Profile -->
-    <div class="px-4 py-4 border-b border-gray-100 profile-card" :class="sidebarCollapsed ? 'flex justify-center' : 'flex items-center space-x-3'">
-        <div class="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm avatar-ring"
-             style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
-            {{ $sidebarInitials }}
-        </div>
-        <div x-show="!sidebarCollapsed"
-            x-transition:enter="transition ease-out duration-300 delay-100"
-            x-transition:enter-start="opacity-0 -translate-x-3"
-            x-transition:enter-end="opacity-100 translate-x-0"
-            x-transition:leave="transition ease-in duration-100"
-            x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0"
-            class="overflow-hidden">
-            <p class="font-semibold text-gray-800 text-sm leading-tight">{{ $sidebarName }}</p>
-            <p class="text-xs mt-0.5 font-semibold" style="color:#3b82f6;">{{ $sidebarRole }}</p>
-        </div>
-    </div>
+        {{-- Table Card --}}
+        <div class="bg-white rounded-2xl border border-gray-200" style="box-shadow:0 2px 12px rgba(0,0,0,0.06);">
 
-    <!-- Navigation -->
-    <nav class="p-3 space-y-0.5 flex-1 overflow-y-auto">
-        <p x-show="!sidebarCollapsed"
-           class="text-xs text-gray-400 font-semibold px-3 py-2 uppercase tracking-widest">Main Menu</p>
-
-        <!-- Dashboard -->
-        <a href="{{ route('employee.dashboard') }}"
-            class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg group
-                {{ $currentRoute === 'employee.dashboard' ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}"
-            style="{{ $currentRoute === 'employee.dashboard' ? 'background:#3b82f6;' : '' }}">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-            </svg>
-            <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Dashboard</span>
-        </a>
-
-        <!-- Employee Profile -->
-        <a href="{{ route('employee.profile') }}"
-            class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg
-                {{ $currentRoute === 'employee.profile' ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}"
-            style="{{ $currentRoute === 'employee.profile' ? 'background:#3b82f6;' : '' }}">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-            </svg>
-            <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Employee Profile</span>
-        </a>
-
-        <!-- Time & Attendance -->
-        <div>
-            <button @click="attendanceOpen = !attendanceOpen"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg
-                    {{ in_array($currentRoute, $attendanceRoutes) ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Time & Attendance</span>
+            {{-- Toolbar --}}
+            <form method="GET" action="{{ route('employee.requests.approved') }}" class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                <div class="relative" style="min-width:220px;">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="Search by ref #..." class="search-input w-full" onchange="this.form.submit()"/>
                 </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180': attendanceOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div x-show="attendanceOpen && !sidebarCollapsed"
-                 x-transition:enter="transition ease-out duration-250"
-                 x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
-                 class="ml-8 mt-1 space-y-0.5 origin-top">
-
-                <a href="{{ route('employee.attendance.reports') }}"
-                   class="submenu-item flex items-center px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'employee.attendance.reports'
-                           ? 'font-semibold bg-blue-50'
-                           : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
-                   style="{{ $currentRoute === 'employee.attendance.reports' ? 'color:#3b82f6;' : '' }}">
-                    @if($currentRoute === 'employee.attendance.reports')
-                        <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0" style="background:#3b82f6;"></span>
-                    @endif
-                    My Attendance
-                </a>
-
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Shift Scheduling</a>
-
-                <a href="{{ route('employee.leave.management') }}"
-                   class="submenu-item block px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'employee.leave.management' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
-                    Leave Management
-                </a>
-            </div>
-        </div>
-
-        <!-- Payroll -->
-        <div>
-            <button @click="payrollOpen = !payrollOpen"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Payroll</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180': payrollOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div x-show="payrollOpen && !sidebarCollapsed"
-                 x-transition:enter="transition ease-out duration-250"
-                 x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
-                 class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Payroll</a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Payslips</a>
-                <a href="#" class="submenu-item block px-3 py-2 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg">Govt. Contributions</a>
-            </div>
-        </div>
-
-        <!-- Requests & Approval -->
-        <div>
-            <button @click="requestsOpen = !requestsOpen"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                    </svg>
-                    <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Requests & Approval</span>
-                </div>
-                <svg x-show="!sidebarCollapsed" class="w-4 h-4 chevron-icon" :class="{'rotate-180': requestsOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div x-show="requestsOpen && !sidebarCollapsed"
-                 x-transition:enter="transition ease-out duration-250"
-                 x-transition:enter-start="opacity-0 -translate-y-3 scale-y-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
-                 x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
-                 class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('employee.requests.pending') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'employee.requests.pending' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Pending Requests</a>
-                <a href="{{ route('employee.requests.approved') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'employee.requests.approved' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Approved Logs</a>
-            </div>
-        </div>
-
-        <!-- Others -->
-        <div class="pt-3 mt-2 border-t border-gray-100">
-            <p x-show="!sidebarCollapsed"
-               class="text-xs text-gray-400 font-semibold px-3 py-2 uppercase tracking-widest">Others</p>
-
-            <a href="#" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 group">
-                <svg class="w-5 h-5 flex-shrink-0 settings-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Settings</span>
-            </a>
-
-            <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('employee-logout-form').submit();"
-                class="nav-item logout-btn flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-500">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Logout</span>
-            </a>
-            <form id="employee-logout-form" action="{{ route('logout') }}" method="POST" class="hidden">@csrf</form>
-        </div>
-    </nav>
-
-    <!-- Collapse Button -->
-    <button @click="sidebarCollapsed = !sidebarCollapsed"
-        class="m-3 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-200 self-end collapse-btn">
-        <svg class="w-4 h-4 chevron-icon" :class="{'rotate-180': sidebarCollapsed}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-        </svg>
-    </button>
-</aside>
-
-    {{-- ═══════════ MAIN ═══════════ --}}
-    <div class="flex-1 flex flex-col" style="margin-left:256px;">
-
-        {{-- ✅ UPDATED Top bar --}}
-        <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
-            <div class="flex items-center justify-between px-8 py-4">
-                <h1 class="text-white font-bold text-xl">Approved Logs</h1>
-                <x-employee-notif />
-            </div>
-        </header>
-
-        <div class="p-8 space-y-6">
-
-            {{-- Stat Cards --}}
-            <div class="grid grid-cols-2 gap-5" style="max-width:680px;">
-                <div class="stat-card">
-                    <div class="text-sm text-gray-500 font-medium">Approved</div>
-                    <div class="text-4xl font-extrabold text-gray-900 mt-2">{{ $approvedCount ?? 3 }}</div>
-                    <div class="text-xs text-gray-400 mt-4">{{ now()->format('F Y') }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="text-sm text-gray-500 font-medium">Rejected</div>
-                    <div class="text-4xl font-extrabold text-gray-900 mt-2">{{ $rejectedCount ?? 1 }}</div>
-                    <div class="text-xs text-gray-400 mt-4">With written reason</div>
-                </div>
-            </div>
-
-            {{-- Table Card --}}
-            <div class="bg-white rounded-2xl border border-gray-200" style="box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-
-                {{-- Toolbar --}}
-                <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 flex-wrap">
-                    <div class="relative flex-1" style="min-width:200px;max-width:320px;">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <input type="text" placeholder="Search" class="search-input w-full"/>
-                    </div>
-                    <select class="fsel">
-                        <option>Status</option>
-                        <option>Approved</option>
-                        <option>Rejected</option>
+                <div class="flex items-center gap-3 ml-auto">
+                    <select name="status" class="fsel" onchange="this.form.submit()">
+                        <option value="all" {{ ($filterStatus ?? 'all') === 'all' ? 'selected' : '' }}>All Status</option>
+                        <option value="approved" {{ ($filterStatus ?? '') === 'approved' ? 'selected' : '' }}>Approved</option>
+                        <option value="rejected" {{ ($filterStatus ?? '') === 'rejected' ? 'selected' : '' }}>Rejected</option>
                     </select>
-                    <select class="fsel">
-                        <option>All Types</option>
-                        <option>Leave Request</option>
-                        <option>Overtime</option>
-                        <option>Shift Arrangement</option>
-                    </select>
-                    <select class="fsel">
-                        <option>All Departments</option>
-                        @foreach($departments ?? [] as $d)
-                            <option>{{ $d->name }}</option>
-                        @endforeach
+                    <select name="type" class="fsel" onchange="this.form.submit()">
+                        <option value="all" {{ ($filterType ?? 'all') === 'all' ? 'selected' : '' }}>All Types</option>
+                        <option value="leave" {{ ($filterType ?? '') === 'leave' ? 'selected' : '' }}>Leave Request</option>
+                        <option value="overtime" {{ ($filterType ?? '') === 'overtime' ? 'selected' : '' }}>Overtime</option>
+                        <option value="shift" {{ ($filterType ?? '') === 'shift' ? 'selected' : '' }}>Shift Arrangement</option>
                     </select>
                 </div>
+            </form>
 
-                {{-- Table --}}
-                <div class="overflow-x-auto">
-                    <table class="tbl">
-                        <thead>
-                            <tr>
-                                <th>Ref #</th>
-                                <th>Employee</th>
-                                <th>Type</th>
-                                <th>Date Filed</th>
-                                <th>Duration</th>
-                                <th>Days</th>
-                                <th>Approvers</th>
-                                <th>Processed On</th>
-                                <th>Status</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="font-semibold text-gray-700">REQ-0002</td>
-                                <td>Juan Dela Cruz</td>
-                                <td><span class="badge badge-leave">Leave Request</span></td>
-                                <td>03/06/2026</td>
-                                <td class="text-gray-500 text-xs">03-10-2026 &ndash;<br>03-12-2026</td>
-                                <td class="font-semibold">3</td>
-                                <td><span class="approver-chip">John Dee</span><br><span class="approver-chip">Jan Dy</span></td>
-                                <td>03/10/2026</td>
-                                <td><span class="badge badge-approved">Approved</span></td>
-                                <td><button class="btn-view" onclick="openViewModal('REQ-002','IT Department','Juan Dela Cruz','March 6, 2026','Leave Request','Vacation Leave (VL)','03/10/2026','03/12/2026','Family trip','sup')">View</button></td>
-                            </tr>
-                            <tr>
-                                <td class="font-semibold text-gray-700">REQ-0003</td>
-                                <td>Lisa Valdez</td>
-                                <td><span class="badge badge-leave">Leave Request</span></td>
-                                <td>03/10/2026</td>
-                                <td class="text-gray-500 text-xs">03-10-2026 &ndash;<br>03-12-2026</td>
-                                <td class="font-semibold">3</td>
-                                <td><span class="approver-chip">John Dee</span><br><span class="approver-chip">Jan Dy</span></td>
-                                <td>03/10/2026</td>
-                                <td><span class="badge badge-rejected">Rejected</span></td>
-                                <td><button class="btn-view" onclick="openViewModal('REQ-003','IT Department','Lisa Valdez','March 10, 2026','Leave Request','Vacation Leave (VL)','03/10/2026','03/12/2026','Personal reasons','rej')">View</button></td>
-                            </tr>
-                            @forelse($requests ?? [] as $req)
-                            <tr>
-                                <td class="font-semibold text-gray-700">{{ $req->ref_no ?? '' }}</td>
-                                <td>{{ optional($req->employee)->fname }} {{ optional($req->employee)->lname }}</td>
-                                <td><span class="badge badge-leave">Leave Request</span></td>
-                                <td>{{ optional($req->created_at)->format('m/d/Y') }}</td>
-                                <td class="text-gray-500 text-xs">{{ optional($req->start_date)->format('m-d-Y') }} &ndash;<br>{{ optional($req->end_date)->format('m-d-Y') }}</td>
-                                <td class="font-semibold">{{ $req->total_days }}</td>
-                                <td><span class="approver-chip">{{ optional($req->approver)->fname }}</span></td>
-                                <td>{{ optional($req->approved_at)->format('m/d/Y') }}</td>
-                                <td>
-                                    @if($req->status === 'approved')
-                                        <span class="badge badge-approved">Approved</span>
-                                    @elseif($req->status === 'rejected')
-                                        <span class="badge badge-rejected">Rejected</span>
-                                    @endif
-                                </td>
-                                <td><button class="btn-view">View</button></td>
-                            </tr>
-                            @empty
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+            {{-- Table --}}
+            <div class="overflow-x-auto">
+                <table class="tbl">
+                    <thead>
+                        <tr>
+                            <th>Ref #</th>
+                            <th>Type</th>
+                            <th>Date Filed</th>
+                            <th>Duration</th>
+                            <th>Days/Hrs</th>
+                            <th>Approver</th>
+                            <th>Processed On</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($requests as $req)
+                        @php
+                            $typeLabel   = $req->type === 'leave' ? 'Leave Request' : ($req->type === 'overtime' ? 'Overtime' : 'Shift Arrangement');
+                            $subType     = $req->type === 'leave'
+                                ? (optional($req->leaveType)->name ?? '—')
+                                : ($req->type === 'overtime'
+                                    ? (($req->requested_hours ?? '?') . 'h OT')
+                                    : (optional($req->current_shift)->name . ' → ' . optional($req->requested_shift)->name));
+                            $fromDate    = $req->type === 'leave'
+                                ? optional($req->start_date)->format('m/d/Y')
+                                : ($req->type === 'overtime'
+                                    ? optional($req->ot_date)->format('m/d/Y')
+                                    : optional($req->effective_from)->format('m/d/Y'));
+                            $toDate      = $req->type === 'leave'
+                                ? optional($req->end_date)->format('m/d/Y')
+                                : ($req->type === 'overtime'
+                                    ? optional($req->ot_date)->format('m/d/Y')
+                                    : optional($req->effective_until)->format('m/d/Y'));
+                            $approverName = $req->type === 'leave'
+                                ? trim(optional($req->approver)->fname . ' ' . optional($req->approver)->lname)
+                                : ($req->approved_by ?? '');
+                            $rejReason   = $req->rejection_reason ?? '';
+                            $processedOn = optional($req->approved_at)->format('m/d/Y') ?? '';
+                        @endphp
+                        <tr>
+                            <td class="font-semibold text-gray-700">{{ $req->ref_no ?? '—' }}</td>
+                            <td>
+                                @if($req->type === 'leave')
+                                    <span class="badge badge-leave">Leave Request</span>
+                                @elseif($req->type === 'overtime')
+                                    <span class="badge badge-ot">Overtime</span>
+                                @else
+                                    <span class="badge badge-shift">Shift Arrangement</span>
+                                @endif
+                            </td>
+                            <td>{{ optional($req->created_at)->format('m/d/Y') }}</td>
+                            <td class="text-gray-500 text-xs">
+                                @if($req->type === 'leave')
+                                    {{ optional($req->start_date)->format('m-d-Y') }} &ndash;<br>{{ optional($req->end_date)->format('m-d-Y') }}
+                                @elseif($req->type === 'overtime')
+                                    {{ optional($req->ot_date)->format('m-d-Y') }}
+                                @else
+                                    {{ optional($req->effective_from)->format('m-d-Y') }} &ndash;<br>{{ optional($req->effective_until)->format('m-d-Y') }}
+                                @endif
+                            </td>
+                            <td class="font-semibold">
+                                @if($req->type === 'leave')
+                                    {{ $req->total_days ?? '—' }}d
+                                @elseif($req->type === 'overtime')
+                                    {{ $req->requested_hours ?? '—' }}h
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td>
+                                @if($approverName)
+                                    <span class="approver-chip">{{ $approverName }}</span>
+                                @else
+                                    <span class="text-gray-400 text-xs">—</span>
+                                @endif
+                            </td>
+                            <td>{{ $processedOn ?: '—' }}</td>
+                            <td>
+                                @if($req->status === 'approved')
+                                    <span class="badge badge-approved">Approved</span>
+                                @elseif($req->status === 'rejected')
+                                    <span class="badge badge-rejected">Rejected</span>
+                                @elseif($req->status === 'cancelled')
+                                    <span class="badge" style="background:#f3f4f6;color:#6b7280;">Cancelled</span>
+                                @elseif($req->status === 'supervisor_approved')
+                                    <span class="badge" style="background:#dbeafe;color:#1d4ed8;">Sup. Approved</span>
+                                @endif
+                            </td>
+                            <td>
+                                <button class="btn-view"
+                                    data-ref="{{ e($req->ref_no ?? '') }}"
+                                    data-filed="{{ optional($req->created_at)->format('M d, Y') }}"
+                                    data-type="{{ e($typeLabel) }}"
+                                    data-subtype="{{ e($subType) }}"
+                                    data-from="{{ $fromDate }}"
+                                    data-to="{{ $toDate }}"
+                                    data-reason="{{ e($req->reason ?? '') }}"
+                                    data-status="{{ $req->status }}"
+                                    data-approver="{{ e($approverName) }}"
+                                    data-processed="{{ $processedOn }}"
+                                    data-rejreason="{{ e($rejReason) }}"
+                                    onclick="openViewModalFromBtn(this)">View</button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="9" class="text-center text-gray-400 py-10">No approved or rejected requests found.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -415,8 +260,7 @@
 
         <div class="mb-5">
             <div id="mRef" style="font-size:26px;font-weight:900;color:#111827;line-height:1.1;"></div>
-            <div id="mSub" style="font-size:13px;color:#374151;margin-top:4px;"></div>
-            <div id="mFiled" style="font-size:12px;color:#9ca3af;margin-top:2px;"></div>
+            <div id="mFiled" style="font-size:12px;color:#9ca3af;margin-top:4px;"></div>
         </div>
 
         <div class="grid grid-cols-2 gap-4 mb-4">
@@ -425,7 +269,7 @@
                 <div id="mReqType" class="modal-field"></div>
             </div>
             <div>
-                <div class="modal-label">Leave Type</div>
+                <div class="modal-label">Details</div>
                 <div id="mLeaveType" class="modal-field"></div>
             </div>
         </div>
@@ -450,55 +294,64 @@
         </div>
 
         <div class="flex justify-end">
-            <button onclick="closeViewModal()" style="background:#3b82f6;color:#fff;border:none;border-radius:10px;padding:10px 30px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">Confirm</button>
+            <button onclick="closeViewModal()" style="background:#3b82f6;color:#fff;border:none;border-radius:10px;padding:10px 30px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">Close</button>
         </div>
     </div>
 </div>
 
 <script>
-function openViewModal(ref, dept, name, filed, reqType, leaveType, from, to, reason, trailType) {
-    document.getElementById('mRef').textContent      = ref;
-    document.getElementById('mSub').textContent      = dept + ' - ' + name;
-    document.getElementById('mFiled').textContent    = 'Filed on ' + filed;
-    document.getElementById('mReqType').textContent  = reqType;
-    document.getElementById('mLeaveType').textContent = leaveType;
-    document.getElementById('mFrom').textContent     = from;
-    document.getElementById('mTo').textContent       = to;
-    document.getElementById('mReason').textContent   = reason;
+function openViewModalFromBtn(btn) {
+    var d = btn.dataset;
+    openViewModal(d.ref, d.filed, d.type, d.subtype, d.from, d.to, d.reason, d.status, d.approver, d.processed, d.rejreason);
+}
 
-    var trails = [];
-    if (trailType === 'sup') {
-        trails = [
-            { label: 'Supervisor Approved', person: 'IT Supervisor - Jan Dy',   date: 'Approved on March 6, 2026' },
-            { label: 'HR Manager Approved', person: 'HR Manager - John Dee',    date: 'Approved on March 6, 2026' }
-        ];
-    } else {
-        trails = [
-            { label: 'Supervisor Approved', person: 'IT Supervisor - Jan Dy',   date: 'Approved on March 10, 2026' },
-            { label: 'HR Manager Rejected', person: 'HR Manager - John Dee',    date: 'Rejected on March 10, 2026' }
-        ];
-    }
+function openViewModal(ref, filed, reqType, subType, from, to, reason, status, approver, processedOn, rejReason) {
+    document.getElementById('mRef').textContent       = ref || '—';
+    document.getElementById('mFiled').textContent     = 'Filed on ' + (filed || '—');
+    document.getElementById('mReqType').textContent   = reqType || '—';
+    document.getElementById('mLeaveType').textContent = subType || '—';
+    document.getElementById('mFrom').textContent      = from || '—';
+    document.getElementById('mTo').textContent        = to || '—';
+    document.getElementById('mReason').textContent    = reason || '—';
 
     var html = '';
-    trails.forEach(function(t) {
+    if (status === 'approved') {
         html += '<div class="trail-item">';
         html += '<div class="trail-check"><svg width="14" height="14" fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div>';
         html += '<div>';
-        html += '<div style="font-size:13px;font-weight:700;color:#111827;">' + t.label + '</div>';
-        html += '<div style="font-size:12px;color:#6b7280;margin-top:2px;">' + t.person + '</div>';
-        html += '<div style="font-size:11px;color:#9ca3af;">' + t.date + '</div>';
+        html += '<div style="font-size:13px;font-weight:700;color:#111827;">Request Approved</div>';
+        if (approver) html += '<div style="font-size:12px;color:#6b7280;margin-top:2px;">By: ' + approver + '</div>';
+        if (processedOn) html += '<div style="font-size:11px;color:#9ca3af;">Processed on ' + processedOn + '</div>';
         html += '</div></div>';
-    });
+    } else if (status === 'rejected') {
+        html += '<div class="trail-item" style="border-left-color:#ef4444;">';
+        html += '<div class="trail-check" style="background:#ef4444;"><svg width="14" height="14" fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></div>';
+        html += '<div>';
+        html += '<div style="font-size:13px;font-weight:700;color:#111827;">Request Rejected</div>';
+        if (approver) html += '<div style="font-size:12px;color:#6b7280;margin-top:2px;">By: ' + approver + '</div>';
+        if (processedOn) html += '<div style="font-size:11px;color:#9ca3af;">Processed on ' + processedOn + '</div>';
+        if (rejReason) html += '<div style="font-size:12px;color:#dc2626;margin-top:4px;">Reason: ' + rejReason + '</div>';
+        html += '</div></div>';
+    } else if (status === 'cancelled') {
+        html += '<div style="font-size:13px;color:#6b7280;padding:12px;">This request was cancelled.</div>';
+    } else if (status === 'supervisor_approved') {
+        html += '<div class="trail-item">';
+        html += '<div class="trail-check"><svg width="14" height="14" fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div>';
+        html += '<div><div style="font-size:13px;font-weight:700;color:#111827;">Supervisor Approved — Awaiting HR</div>';
+        if (approver) html += '<div style="font-size:12px;color:#6b7280;margin-top:2px;">By: ' + approver + '</div>';
+        html += '</div></div>';
+    } else {
+        html += '<div style="font-size:13px;color:#6b7280;padding:12px;">Status: ' + status + '</div>';
+    }
     document.getElementById('mTrail').innerHTML = html;
     document.getElementById('viewModal').style.display = 'flex';
 }
+
 function closeViewModal() {
     document.getElementById('viewModal').style.display = 'none';
 }
 
-function approvedLogs() {
-    return {};
-}
+function approvedLogs() { return {}; }
 </script>
 </body>
 </html>

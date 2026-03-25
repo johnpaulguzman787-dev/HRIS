@@ -117,9 +117,6 @@ class="flex h-screen overflow-hidden bg-gray-50">
                 </div>
                 <div class="flex items-center space-x-4">
                     <x-notification-bell />
-                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                        <span class="text-sm sm:text-base font-semibold">{{ $authEmployee ? strtoupper(substr($authEmployee->fname, 0, 1) . substr($authEmployee->lname, 0, 1)) : strtoupper(substr($authUser->email, 0, 2)) }}</span>
-                    </div>
                 </div>
             </div>
         </header>

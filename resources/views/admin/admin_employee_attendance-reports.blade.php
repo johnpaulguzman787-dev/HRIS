@@ -393,9 +393,6 @@
                 <p class="text-white/65 text-[13px] mt-[3px] mb-0">Track and manage workforce attendance records</p>
             </div>
             <div class="flex items-center gap-2.5">
-                <div class="text-[12.5px] text-white/80 bg-white/15 rounded-lg px-[13px] py-[6px] font-medium">
-                    {{ now()->format('l, F j, Y') }}
-                </div>
                 <x-notification-bell />
             </div>
         </div>

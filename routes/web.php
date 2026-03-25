@@ -15,7 +15,7 @@ use App\Http\Controllers\HRAttendanceController;
 use App\Http\Controllers\SupervisorAttendanceController;
 use App\Http\Controllers\AdminAttendanceController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\AdminAnnouncementController; // ← DAGDAG
+use App\Http\Controllers\AnnouncementController;
 
 use App\Http\Controllers\HREmployeeController;
 use App\Http\Controllers\SupervisorEmployeeController;
@@ -86,16 +86,18 @@ Route::post('/email/verification-notification', function (Illuminate\Http\Reques
 
 Route::middleware(['auth'])->group(function () {
 
-    // ── NOTIFICATION ROUTES ────────────────────────────────────────────────
-    Route::get('/admin/notifications',            [NotificationController::class, 'index'])->name('admin.notifications.index');
-    Route::post('/admin/notifications/read-all',  [NotificationController::class, 'markAllRead'])->name('admin.notifications.read-all');
-    Route::post('/admin/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('admin.notifications.read');
-    Route::delete('/admin/notifications/clear',   [NotificationController::class, 'clearAll'])->name('admin.notifications.clear');
-    Route::delete('/admin/notifications/{id}',    [NotificationController::class, 'destroy'])->name('admin.notifications.destroy');
+    // ── NOTIFICATION ROUTES (all roles) ───────────────────────────────────
+    Route::get('/notifications',            [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all',  [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::delete('/notifications/clear',   [NotificationController::class, 'clearAll'])->name('notifications.clear');
+    Route::delete('/notifications/{id}',    [NotificationController::class, 'destroy'])->name('notifications.destroy');
     // ──────────────────────────────────────────────────────────────────────
 
-    // ── ADMIN ANNOUNCEMENT ROUTES ──────────────────────────────────────────
-    Route::post('/admin/announcements', [AdminAnnouncementController::class, 'store'])->name('admin.announcements.store');
+    // ── ANNOUNCEMENT ROUTES ────────────────────────────────────────────────
+    Route::post('/admin/announcements',      [AnnouncementController::class, 'store'])->name('admin.announcements.store');
+    Route::post('/hr/announcements',         [AnnouncementController::class, 'store'])->name('hr.announcements.store');
+    Route::post('/supervisor/announcements', [AnnouncementController::class, 'store'])->name('supervisor.announcements.store');
     // ──────────────────────────────────────────────────────────────────────
 
     // Employee Routes
@@ -251,6 +253,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/leave/{id}',         [AdminAttendanceController::class, 'getLeaveRequest'])->name('admin.leave.get');
     Route::post('/admin/requests/overtime/file', [AdminAttendanceController::class, 'fileOvertimeRequest'])->name('admin.requests.overtime.file');
     Route::post('/admin/requests/shift/file',    [AdminAttendanceController::class, 'fileShiftChangeRequest'])->name('admin.requests.shift.file');
+    // ── ADMIN SHIFT SCHEDULING ────────────────────────────────────────────
+    Route::get('/admin/shift/scheduling',            [AdminAttendanceController::class, 'shiftScheduling'])->name('admin.shift.scheduling');
+    Route::post('/admin/shift/assign',               [AdminAttendanceController::class, 'assignShiftAdmin'])->name('admin.shift.assign');
+    Route::post('/admin/shift/update',               [AdminAttendanceController::class, 'updateShiftAdmin'])->name('admin.shift.update');
+    Route::get('/admin/shift/employees-by-dept',     [AdminAttendanceController::class, 'employeesByDeptShift'])->name('admin.shift.employees-by-dept');
+    Route::get('/admin/shift/type/{id}',             [AdminAttendanceController::class, 'getShiftTypeAdmin'])->name('admin.shift.type.get');
+    Route::post('/admin/shift/type/{id}/update',     [AdminAttendanceController::class, 'updateShiftTypeAdmin'])->name('admin.shift.type.update');
+    Route::post('/admin/shift/type/store',           [AdminAttendanceController::class, 'storeShiftTypeAdmin'])->name('admin.shift.type.store');
+    Route::post('/admin/holidays',                   [AdminAttendanceController::class, 'storeHolidayAdmin'])->name('admin.holidays.store');
+    Route::post('/admin/holidays/{id}/update',       [AdminAttendanceController::class, 'updateHolidayAdmin'])->name('admin.holidays.update');
+    Route::delete('/admin/holidays/{id}',            [AdminAttendanceController::class, 'destroyHolidayAdmin'])->name('admin.holidays.destroy');
+    Route::get('/admin/holidays/{id}',               [AdminAttendanceController::class, 'getHolidayAdmin'])->name('admin.holidays.get');
     // ──────────────────────────────────────────────────────────────────────
     // ── ADMIN REQUESTS & APPROVAL ─────────────────────────────────────────
     Route::get('/admin/requests/pending',        [AdminAttendanceController::class, 'pendingRequests'])->name('admin.requests.pending');

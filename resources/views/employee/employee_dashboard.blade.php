@@ -21,6 +21,7 @@
         elapsedSeconds: 0,
         currentTime: '',
         currentDate: '',
+        showAttendancePopup: {{ ($employeeShift && !in_array($todayLog?->status ?? '', ['on_leave', 'holiday']) && !$todayLog?->clock_in) ? 'true' : 'false' }},
         get elapsedDisplay() {
             const h = String(Math.floor(this.elapsedSeconds/3600)).padStart(2,'0');
             const m = String(Math.floor((this.elapsedSeconds%3600)/60)).padStart(2,'0');
@@ -132,9 +133,6 @@
                 <h1 class="text-2xl font-bold text-white header-title">Dashboard</h1>
                 <div class="flex items-center space-x-3">
                     <x-employee-notif />
-                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:scale-110 transition-all duration-300">
-                        {{ $dashInitials }}
-                    </div>
                 </div>
             </div>
         </header>
@@ -373,6 +371,8 @@
             </div>
         </div>
     </main>
+
+    @include('partials.attendance-popup')
 </div>
 
 <style>

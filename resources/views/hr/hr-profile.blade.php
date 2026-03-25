@@ -62,9 +62,6 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     <x-hr-notif />
-                    <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center font-semibold cursor-pointer hover:bg-white/30 transition-all duration-200">
-                        {{ $employee ? strtoupper(substr($employee->fname, 0, 1) . substr($employee->lname, 0, 1)) : strtoupper(substr($user->email, 0, 2)) }}
-                    </div>
                 </div>
             </div>
         </header>

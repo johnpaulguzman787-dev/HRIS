@@ -11,6 +11,9 @@
     $sidebarName = $sidebarEmployee
         ? trim($sidebarEmployee->fname . ' ' . $sidebarEmployee->lname)
         : ($sidebarUser?->email ?? 'User');
+
+
+        
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 
     $attendanceRoutes = ['payroll_officer.attendance.reports', 'payroll_officer.attendance.shift', 'payroll_officer.attendance.leave', 'payroll_officer.leave.management'];

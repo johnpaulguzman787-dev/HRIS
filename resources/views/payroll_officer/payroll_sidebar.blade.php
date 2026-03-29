@@ -10,7 +10,6 @@
         : ($sidebarUser?->email ?? 'User');
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 
-    // Auto-open submenus based on current route
     $attendanceRoutes = ['payroll_officer.attendance.reports', 'payroll_officer.attendance.shift', 'payroll_officer.attendance.leave', 'payroll_officer.leave.management'];
     $payrollRoutes    = ['payroll_officer.payroll', 'payroll_officer.payslips', 'payroll_officer.govpay'];
     $requestRoutes    = ['payroll_officer.requests.pending', 'payroll_officer.requests.approved'];
@@ -132,22 +131,15 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-
                 <a href="{{ route('payroll_officer.attendance.reports') }}"
                    class="submenu-item flex items-center px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'payroll_officer.attendance.reports'
-                           ? 'font-semibold bg-blue-50'
-                           : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
+                       {{ $currentRoute === 'payroll_officer.attendance.reports' ? 'font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
                    style="{{ $currentRoute === 'payroll_officer.attendance.reports' ? 'color:#3b82f6;' : '' }}">
                     @if($currentRoute === 'payroll_officer.attendance.reports')
                         <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0" style="background:#3b82f6;"></span>
                     @endif
                     My Attendance
                 </a>
-
-                
-
-                {{--  UPDATED: Leave Management — may actual route na --}}
                 <a href="{{ route('payroll_officer.leave.management') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'payroll_officer.leave.management' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
@@ -159,7 +151,8 @@
         <!-- Payroll -->
         <div>
             <button @click="payrollOpen = !payrollOpen"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg
+                    {{ in_array($currentRoute, $payrollRoutes) ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
                 <div class="flex items-center space-x-3">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -178,16 +171,33 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('payroll_officer.payroll') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'payroll_officer.payroll' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Payroll</a>
-                <a href="{{ route('payroll_officer.payslips') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'payroll_officer.payslips' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Payslips</a>
-                <a href="{{ route('payroll_officer.govpay') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'payroll_officer.govpay' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Govt. Contributions</a>
+                <a href="{{ route('payroll_officer.payroll') }}"
+                   class="submenu-item flex items-center px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'payroll_officer.payroll' ? 'font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
+                   style="{{ $currentRoute === 'payroll_officer.payroll' ? 'color:#3b82f6;' : '' }}">
+                    @if($currentRoute === 'payroll_officer.payroll')
+                        <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0" style="background:#3b82f6;"></span>
+                    @endif
+                    Payroll
+                </a>
+                <a href="{{ route('payroll_officer.payslips') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'payroll_officer.payslips' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                    Payslips
+                </a>
+                <a href="{{ route('payroll_officer.govpay') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'payroll_officer.govpay' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                    Govt. Contributions
+                </a>
             </div>
         </div>
 
         <!-- Requests & Approval -->
         <div>
             <button @click="requestsOpen = !requestsOpen"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg
+                    {{ in_array($currentRoute, $requestRoutes) ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
                 <div class="flex items-center space-x-3">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -206,8 +216,16 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('payroll_officer.requests.pending') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'payroll_officer.requests.pending' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Pending Requests</a>
-                <a href="{{ route('payroll_officer.requests.approved') }}" class="submenu-item block px-3 py-2 text-sm rounded-lg {{ $currentRoute === 'payroll_officer.requests.approved' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">Approved Logs</a>
+                <a href="{{ route('payroll_officer.requests.pending') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'payroll_officer.requests.pending' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                    Pending Requests
+                </a>
+                <a href="{{ route('payroll_officer.requests.approved') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'payroll_officer.requests.approved' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                    Approved Logs
+                </a>
             </div>
         </div>
 

@@ -29,6 +29,7 @@ class Employee extends Model
         'end_date',
         'department_id',
         'job_title_id',
+        'salary_grade_id',
     ];
 
     protected $casts = [
@@ -73,6 +74,16 @@ class Employee extends Model
     public function shifts()
     {
         return $this->hasMany(EmployeeShift::class);
+    }
+
+    public function salaryGrade()
+    {
+        return $this->belongsTo(SalaryGrade::class);
+    }
+
+    public function payslips()
+    {
+        return $this->hasMany(Payslip::class);
     }
 
     // ── Accessors ──────────────────────────────────

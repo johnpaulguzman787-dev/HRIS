@@ -17,7 +17,7 @@
 @endphp
 
 <aside 
-    class="bg-white border-r border-gray-200 h-screen fixed left-0 top-0 overflow-y-auto z-50 flex flex-col"
+    class="bg-white border-r border-gray-200 h-screen fixed left-0 top-0 overflow-hidden z-50 flex flex-col"
     x-data="{
         sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
         employeesOpen: {{ in_array($currentRoute, $employeeRoutes) ? 'true' : 'false' }},
@@ -68,7 +68,7 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="p-3 space-y-0.5 flex-1 overflow-y-auto">
+    <nav class="p-3 space-y-0.5 flex-1 overflow-hidden">
         <p x-show="!sidebarCollapsed"
            class="text-xs text-gray-400 font-semibold px-3 py-2 uppercase tracking-widest">Main Menu</p>
 

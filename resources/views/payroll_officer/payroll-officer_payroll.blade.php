@@ -162,6 +162,12 @@
             cursor: pointer; transition: all 0.15s;
         }
         .btn-view:hover { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+        .btn-delete {
+            border: 1px solid #fee2e2; border-radius: 7px; padding: 5px 14px;
+            font-size: 0.8rem; font-weight: 500; color: #ef4444; background: #fff;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .btn-delete:hover { background: #fef2f2; border-color: #fca5a5; }
         .btn-outline {
             border: 1px solid #e2e8f0; border-radius: 8px; padding: 9px 18px;
             font-size: 0.875rem; font-weight: 500; color: #374151; background: #fff;
@@ -197,28 +203,35 @@
          :style="'margin-left: ' + (sidebarCollapsed ? '80px' : '256px')">
 
         {{-- ── Header ── --}}
-        <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-hidden">
+        <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-40 shadow-lg mt-4 mx-4 rounded-2xl">
             <div class="flex items-center justify-between px-8 py-4">
                 <h1 class="text-white font-bold text-xl">Payroll</h1>
-                <div class="relative">
-                    <button class="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-white/20">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-5-5.917V5a1 1 0 10-2 0v.083A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                        </svg>
-                        <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-400 rounded-full text-white text-xs flex items-center justify-center font-bold">4</span>
-                    </button>
-                </div>
+                <x-notification-bell />
             </div>
         </header>
 
         {{-- Flash --}}
         @if(session('success'))
-        <div class="mx-8 mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            <span>{{ session('success') }}</span>
+        <div x-data="{ show: true }"
+             x-show="show"
+             x-init="setTimeout(() => show = false, 3000)"
+             @click="show = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 -translate-y-4 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+             x-transition:leave-end="opacity-0 -translate-y-4 scale-95"
+             class="fixed top-6 right-6 z-[9999] cursor-pointer select-none" style="width:max-content;max-width:90vw">
+            <div class="bg-white border border-green-200 shadow-2xl rounded-2xl px-5 py-3.5 flex items-center gap-3">
+                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+                <span class="text-sm font-semibold text-gray-800">{{ session('success') }}</span>
+                <span class="text-xs text-gray-400 ml-1">· click to dismiss</span>
+            </div>
         </div>
         @endif
 
@@ -335,31 +348,7 @@
                                 </td>
                             </tr>
                             @empty
-                            {{-- Sample fallback rows --}}
-                            @foreach([
-                                ['February Payroll Period 2','02/16/2026','02/28/2026','Pending',1],
-                                ['February Payroll Period 1','02/01/2026','02/15/2026','Completed',2],
-                                ['January Payroll Period 2','01/16/2026','01/31/2026','Completed',3],
-                                ['January Payroll Period 1','01/01/2026','01/15/2026','Completed',4],
-                            ] as [$pname,$pstart,$pend,$pstatus,$pid])
-                            <tr>
-                                <td class="font-medium text-gray-700">{{ $pname }}</td>
-                                <td class="text-gray-500">{{ $pstart }}</td>
-                                <td class="text-gray-500">{{ $pend }}</td>
-                                <td>
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium
-                                        {{ $pstatus==='Pending' ? 'badge-pending' : 'badge-completed' }}">
-                                        {{ $pstatus }}
-                                    </span>
-                                </td>
-                                <td class="text-right">
-                                    <button class="btn-view"
-                                        @click="openPeriodView({{ $pid }}, '{{ $pname }}', '2026-02-16', '2026-02-28', '{{ $pstatus }}')">
-                                        View
-                                    </button>
-                                </td>
-                            </tr>
-                            @endforeach
+                            <tr><td colspan="5" class="text-center py-12 text-gray-400 text-sm">No payroll periods found.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -368,54 +357,99 @@
 
 
             {{-- ── TAB 2: SALARY STRUCTURE ── --}}
-            <div x-show="activeTab==='salary-structure'" x-cloak class="p-8 tab-content">
-                <div class="flex items-center justify-between gap-3 mb-4">
-                    <div class="search-wrap flex-1 max-w-xs">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>
-                        <input type="text" placeholder="Search" class="ctrl w-full">
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <select class="ctrl"><option value="">All Status</option><option>Active</option><option>Inactive</option></select>
-                        <select class="ctrl"><option value="">All Types</option><option>Addition</option><option>Deduction</option></select>
-                        <button class="btn-primary" @click="showAddItemModal=true">
+            <div x-show="activeTab==='salary-structure'" x-cloak class="p-8 tab-content space-y-8">
+
+                {{-- ── Salary Grade ── --}}
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base font-bold text-gray-800">Salary Grade</h3>
+                        <button class="btn-primary" @click="openAddGrade()">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Add Payroll Item
+                            Add Salary Grade
                         </button>
                     </div>
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Grade Code</th><th>Level Name</th><th>Monthly Basic Salary</th><th>Semi-Monthly Pay</th><th>Assigned Employees</th><th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($salaryGrades ?? [] as $grade)
+                                <tr>
+                                    <td><span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-600">{{ $grade->grade_code }}</span></td>
+                                    <td class="text-gray-600">{{ $grade->level_name }}</td>
+                                    <td class="font-medium text-gray-700">₱{{ number_format($grade->monthly_basic_salary, 2) }}</td>
+                                    <td class="text-gray-600">₱{{ number_format($grade->monthly_basic_salary / 2, 2) }}</td>
+                                    <td><span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">{{ $grade->employees_count ?? 0 }} employee{{ ($grade->employees_count ?? 0) !== 1 ? 's' : '' }}</span></td>
+                                    <td class="text-right">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <button class="btn-view"
+                                                data-emps="{{ json_encode($grade->employees->map(fn($e) => ['id' => $e->id, 'name' => $e->fname.' '.$e->lname])->values()) }}"
+                                                @click="openEditGrade({{ $grade->id }}, '{{ addslashes($grade->grade_code) }}', '{{ addslashes($grade->level_name) }}', {{ $grade->monthly_basic_salary }}, JSON.parse($el.getAttribute('data-emps')))">Edit</button>
+                                            <button class="btn-delete" @click="deleteGrade({{ $grade->id }})">Delete</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr><td colspan="6" class="text-center py-12 text-gray-400 text-sm">No salary grades found.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Payroll Item</th><th>Multiplier</th><th>Type</th><th>Basis</th><th>Status</th><th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($payrollItems as $item)
-                            <tr>
-                                <td class="font-medium text-gray-700">{{ $item->name }}</td>
-                                <td><span class="multiplier-badge">x{{ $item->multiplier }}</span></td>
-                                <td>
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium {{ strtolower($item->type)==='addition' ? 'badge-addition' : 'badge-deduction' }}">
-                                        {{ $item->type }}
-                                    </span>
-                                </td>
-                                <td class="text-gray-500">{{ $item->basis }}</td>
-                                <td>
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium {{ $item->status==='Active' ? 'badge-active' : 'badge-inactive' }}">
-                                        {{ $item->status }}
-                                    </span>
-                                </td>
-                                <td class="text-right">
-                                    <button class="btn-view" @click="openEditItem({{ $item->id }}, '{{ addslashes($item->name) }}', {{ $item->multiplier }}, '{{ $item->type }}', '{{ $item->basis }}')">Edit</button>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr><td colspan="6" class="text-center py-12 text-gray-400 text-sm">No payroll items found.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+
+                {{-- ── Payroll Items ── --}}
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base font-bold text-gray-800">Payroll Items</h3>
+                        <div class="flex items-center gap-3">
+                            <select class="ctrl" x-model="itemStatusFilter"><option value="">Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+                            <button class="btn-primary" @click="showAddItemModal=true">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Add Payroll Item
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Payroll Item</th><th>Multiplier</th><th>Type</th><th>Basis</th><th>Status</th><th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($payrollItems as $item)
+                                <tr x-show="!itemStatusFilter || itemStatusFilter === '{{ $item->status }}'">
+                                    <td class="font-medium text-gray-700">{{ $item->name }}</td>
+                                    <td><span class="multiplier-badge">x{{ $item->multiplier }}</span></td>
+                                    <td>
+                                        <span class="px-3 py-1 rounded-full text-xs font-medium {{ strtolower($item->type)==='addition' ? 'badge-addition' : 'badge-deduction' }}">
+                                            {{ $item->type }}
+                                        </span>
+                                    </td>
+                                    <td class="text-gray-500">{{ $item->basis }}</td>
+                                    <td>
+                                        <span class="px-3 py-1 rounded-full text-xs font-medium {{ $item->status==='Active' ? 'badge-active' : 'badge-inactive' }}">
+                                            {{ $item->status }}
+                                        </span>
+                                    </td>
+                                    <td class="text-right">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <button class="btn-view" @click="openEditItem({{ $item->id }}, '{{ addslashes($item->name) }}', {{ $item->multiplier }}, '{{ $item->type }}', '{{ $item->basis }}', '{{ $item->status }}')">Edit</button>
+                                            <button class="btn-delete" @click="deleteItem({{ $item->id }})">Delete</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr><td colspan="6" class="text-center py-12 text-gray-400 text-sm">No payroll items found.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
             </div>
 
 
@@ -427,7 +461,7 @@
                         <input type="text" placeholder="Search" class="ctrl w-full">
                     </div>
                     <div class="flex items-center gap-3">
-                        <select class="ctrl"><option value="">Status</option><option>Active</option><option>Inactive</option></select>
+                        <select class="ctrl" x-model="benefitStatusFilter"><option value="">Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
                         <button class="btn-primary" @click="showAddBenefitModal=true">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Add Benefit
@@ -443,7 +477,7 @@
                         </thead>
                         <tbody>
                             @forelse($benefits as $benefit)
-                            <tr>
+                            <tr x-show="!benefitStatusFilter || benefitStatusFilter === '{{ $benefit->status }}'">
                                 <td class="font-medium text-gray-700">{{ $benefit->name }}</td>
                                 <td><span class="px-3 py-1 rounded-full text-xs font-medium badge-allowance">{{ $benefit->type }}</span></td>
                                 <td class="text-gray-600">₱{{ number_format($benefit->amount, 2) }}</td>
@@ -460,7 +494,10 @@
                                     </span>
                                 </td>
                                 <td class="text-right">
-                                    <button class="btn-view" @click="openEditBenefit({{ $benefit->id }}, '{{ addslashes($benefit->name) }}', '{{ $benefit->type }}', {{ $benefit->amount }}, '{{ $benefit->tax }}', '{{ $benefit->frequency }}', '{{ addslashes($benefit->eligibility) }}')">Edit</button>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button class="btn-view" @click="openEditBenefit({{ $benefit->id }}, '{{ addslashes($benefit->name) }}', '{{ $benefit->type }}', {{ $benefit->amount }}, '{{ $benefit->tax }}', '{{ $benefit->frequency }}', '{{ addslashes($benefit->eligibility) }}', '{{ $benefit->status }}')">Edit</button>
+                                        <button class="btn-delete" @click="deleteBenefit({{ $benefit->id }})">Delete</button>
+                                    </div>
                                 </td>
                             </tr>
                             @empty
@@ -473,13 +510,162 @@
 
 
             {{-- ── TAB 4: CONTRIBUTIONS ── --}}
-            <div x-show="activeTab==='contributions'" x-cloak class="p-8 tab-content">
-                <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
-                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
-                    </svg>
-                    <p class="text-gray-400 text-sm">Government contributions will appear here.</p>
+            <div x-show="activeTab==='contributions'" x-cloak class="p-8 tab-content space-y-8">
+
+                {{-- Rate Cards --}}
+                <div class="grid grid-cols-4 gap-4">
+
+                    {{-- SSS --}}
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-sm font-bold text-gray-700">SSS Rates</h4>
+                            <button @click="openEditContrib('sss')" class="text-gray-400 hover:text-blue-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </button>
+                        </div>
+                        <div class="space-y-2.5 text-sm">
+                            <div class="flex justify-between"><span class="text-gray-500">Employee Share</span><span class="font-medium text-gray-700">{{ $contrib['sss_employee_rate'] }}%</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Employer Share</span><span class="font-medium text-gray-700">{{ $contrib['sss_employer_rate'] }}%</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Total Rate</span><span class="font-medium text-gray-700">{{ $contrib['sss_employee_rate'] + $contrib['sss_employer_rate'] }}%</span></div>
+                            <div class="flex justify-between pt-2.5 border-t border-gray-100">
+                                <span class="text-gray-500 text-xs leading-tight">Max Monthly<br>Salary Credit Range</span>
+                                <span class="font-medium text-gray-700">₱{{ number_format($contrib['sss_max_msc']) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- PhilHealth --}}
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-sm font-bold text-gray-700">PhilHealth Rates</h4>
+                            <button @click="openEditContrib('philhealth')" class="text-gray-400 hover:text-blue-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </button>
+                        </div>
+                        <div class="space-y-2.5 text-sm">
+                            <div class="flex justify-between"><span class="text-gray-500">Premium</span><span class="font-medium text-gray-700">{{ $contrib['philhealth_rate'] }}%</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Employee Share</span><span class="font-medium text-gray-700">{{ $contrib['philhealth_rate'] / 2 }}%</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Employer Share</span><span class="font-medium text-gray-700">{{ $contrib['philhealth_rate'] / 2 }}%</span></div>
+                            <div class="flex justify-between pt-2.5 border-t border-gray-100">
+                                <span class="text-gray-500">Salary Floor</span><span class="font-medium text-gray-700">₱{{ number_format($contrib['philhealth_floor']) }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">Salary Ceiling</span><span class="font-medium text-gray-700">₱{{ number_format($contrib['philhealth_ceiling']) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Pag-IBIG --}}
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-sm font-bold text-gray-700">Pag-IBIG</h4>
+                            <button @click="openEditContrib('pagibig')" class="text-gray-400 hover:text-blue-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </button>
+                        </div>
+                        <div class="space-y-2.5 text-sm">
+                            <div class="flex justify-between items-start">
+                                <span class="text-gray-500 text-xs leading-tight">Employee<br>(salary ≤ ₱1,500)</span>
+                                <span class="font-medium text-gray-700">{{ $contrib['pagibig_low_rate'] }}%</span>
+                            </div>
+                            <div class="flex justify-between items-start">
+                                <span class="text-gray-500 text-xs leading-tight">Employee<br>(salary &gt; ₱1,500)</span>
+                                <span class="font-medium text-gray-700 text-right text-xs leading-tight">{{ $contrib['pagibig_high_rate'] }}%, max<br>₱{{ number_format($contrib['pagibig_max']) }}/mo</span>
+                            </div>
+                            <div class="flex justify-between items-start pt-2.5 border-t border-gray-100">
+                                <span class="text-gray-500">Employer match</span>
+                                <span class="font-medium text-gray-700 text-right text-xs leading-tight">{{ $contrib['pagibig_high_rate'] }}%, max<br>₱{{ number_format($contrib['pagibig_max']) }}/mo</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- W/Tax --}}
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-sm font-bold text-gray-700">W/Tax</h4>
+                            <button @click="openEditContrib('wtax')" class="text-gray-400 hover:text-blue-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </button>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-gray-500">Up to ₱{{ number_format($contrib['wtax_bracket_1']) }}/Year</span><span class="font-medium text-gray-700">0%</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_1']) }} – ₱{{ number_format($contrib['wtax_bracket_2']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_1'] }}%</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_2']) }} – ₱{{ number_format($contrib['wtax_bracket_3']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_2'] }}%</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_3']) }} – ₱{{ number_format($contrib['wtax_bracket_4']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_3'] }}%</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_4']) }}+</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_4'] }}%</span></div>
+                        </div>
+                    </div>
+
                 </div>
+
+                {{-- Contribution Rates by Salary Grade Table --}}
+                <div>
+                    <h3 class="text-base font-bold text-gray-800 mb-4">Contribution Rates by Salary Grade</h3>
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+                        <table class="data-table" style="min-width:900px">
+                            <thead>
+                                <tr>
+                                    <th>Grade Code</th>
+                                    <th>Level Name</th>
+                                    <th>Monthly Basic Salary</th>
+                                    <th>SSS (Employee)</th>
+                                    <th>SSS (Employer)</th>
+                                    <th>PhilHealth</th>
+                                    <th>Pag-IBIG</th>
+                                    <th>Monthly W/Tax</th>
+                                    <th>Total Deduction / Month</th>
+                                    <th>Total Deduction / Cut-off</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($salaryGrades as $grade)
+                                @php
+                                    $sal       = (float) $grade->monthly_basic_salary;
+                                    $msc       = min($sal, (float) $contrib['sss_max_msc']);
+                                    $sssEmp    = round($msc * ((float) $contrib['sss_employee_rate'] / 100), 2);
+                                    $sssEmr    = round($msc * ((float) $contrib['sss_employer_rate'] / 100), 2);
+                                    $phBase    = max((float) $contrib['philhealth_floor'], min($sal, (float) $contrib['philhealth_ceiling']));
+                                    $ph        = round($phBase * ((float) $contrib['philhealth_rate'] / 100 / 2), 2);
+                                    $pagRate   = $sal <= 1500 ? (float) $contrib['pagibig_low_rate'] / 100 : (float) $contrib['pagibig_high_rate'] / 100;
+                                    $pi        = round(min($sal * $pagRate, (float) $contrib['pagibig_max']), 2);
+                                    $b1 = (float) $contrib['wtax_bracket_1'];
+                                    $b2 = (float) $contrib['wtax_bracket_2'];
+                                    $b3 = (float) $contrib['wtax_bracket_3'];
+                                    $b4 = (float) $contrib['wtax_bracket_4'];
+                                    $r1 = (float) $contrib['wtax_rate_1'] / 100;
+                                    $r2 = (float) $contrib['wtax_rate_2'] / 100;
+                                    $r3 = (float) $contrib['wtax_rate_3'] / 100;
+                                    $r4 = (float) $contrib['wtax_rate_4'] / 100;
+                                    $annualDeductions = ($sssEmp + $ph + $pi) * 24;
+                                    $annualTaxable    = max(0, ($sal * 12) - $annualDeductions);
+                                    if ($annualTaxable <= $b1)      $wt = 0;
+                                    elseif ($annualTaxable <= $b2)  $wt = ($annualTaxable - $b1) * $r1;
+                                    elseif ($annualTaxable <= $b3)  $wt = ($b2 - $b1) * $r1 + ($annualTaxable - $b2) * $r2;
+                                    elseif ($annualTaxable <= $b4)  $wt = ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($annualTaxable - $b3) * $r3;
+                                    else                            $wt = ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($b4 - $b3) * $r3 + ($annualTaxable - $b4) * $r4;
+                                    $wt         = round($wt / 12, 2);
+                                    $totalMonth = $sssEmp + $ph + $pi + $wt;
+                                @endphp
+                                <tr>
+                                    <td><span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-600">{{ $grade->grade_code }}</span></td>
+                                    <td class="text-gray-600">{{ $grade->level_name }}</td>
+                                    <td class="font-medium text-gray-700">₱{{ number_format($sal, 2) }}</td>
+                                    <td class="text-gray-600">₱{{ number_format($sssEmp, 2) }}</td>
+                                    <td class="text-gray-600">₱{{ number_format($sssEmr, 2) }}</td>
+                                    <td class="text-gray-600">₱{{ number_format($ph, 2) }}</td>
+                                    <td class="text-gray-600">₱{{ number_format($pi, 2) }}</td>
+                                    <td class="text-gray-600">₱{{ number_format($wt, 2) }}</td>
+                                    <td class="font-medium text-gray-700">₱{{ number_format($totalMonth, 2) }}</td>
+                                    <td class="font-medium text-gray-700">₱{{ number_format($totalMonth / 2, 2) }}</td>
+                                </tr>
+                                @empty
+                                <tr><td colspan="10" class="text-center py-12 text-gray-400 text-sm">No salary grades found. Add grades in Salary Structure first.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
 
         </div>{{-- /page list --}}
@@ -512,16 +698,16 @@
                 {{-- Title + Submit Button --}}
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-800" x-text="viewPeriod.name"></h2>
-                    <template x-if="viewPeriod.status !== 'Submitted' && viewPeriod.status !== 'Completed'">
+                    <template x-if="viewPeriod.status === 'Pending'">
                         <button class="btn-primary" @click="showSubmitConfirm=true">
                             Submit for Approval
                         </button>
                     </template>
-                    <template x-if="viewPeriod.status === 'Submitted' || viewPeriod.status === 'Completed'">
-                        <span class="px-4 py-2 rounded-lg text-sm font-medium"
-                            :class="viewPeriod.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'"
-                            x-text="viewPeriod.status">
-                        </span>
+                    <template x-if="viewPeriod.status === 'Submitted'">
+                        <span class="px-4 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-700">Submitted</span>
+                    </template>
+                    <template x-if="viewPeriod.status === 'Released'">
+                        <span class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed">Released</span>
                     </template>
                 </div>
             </div>
@@ -549,27 +735,27 @@
                                 <div class="flex justify-between mb-1">
                                     <span class="text-sm text-gray-500">Payroll Submitted for Approval</span>
                                     <span class="text-sm font-medium text-gray-700"
-                                        x-text="(viewPeriod.status === 'Submitted' || viewPeriod.status === 'Completed') ? '1/1' : '0/1'">
+                                        x-text="(viewPeriod.status === 'Submitted' || viewPeriod.status === 'Released') ? '1/1' : '0/1'">
                                     </span>
                                 </div>
                                 <div class="progress-track">
-                                    <div class="progress-fill" :style="'width:' + ((viewPeriod.status === 'Submitted' || viewPeriod.status === 'Completed') ? 100 : 0) + '%'"></div>
+                                    <div class="progress-fill" :style="'width:' + ((viewPeriod.status === 'Submitted' || viewPeriod.status === 'Released') ? 100 : 0) + '%'"></div>
                                 </div>
                             </div>
                             <div>
                                 <div class="flex justify-between mb-1">
                                     <span class="text-sm text-gray-500">Finance Approval</span>
                                     <span class="text-sm font-medium text-gray-700"
-                                        x-text="viewPeriod.status === 'Completed' ? '1/1' : '0/1'">
+                                        x-text="viewPeriod.status === 'Released' ? '1/1' : '0/1'">
                                     </span>
                                 </div>
                                 <div class="progress-track">
-                                    <div class="progress-fill" :style="'width:' + (viewPeriod.status === 'Completed' ? 100 : 0) + '%'"></div>
+                                    <div class="progress-fill" :style="'width:' + (viewPeriod.status === 'Released' ? 100 : 0) + '%'"></div>
                                 </div>
                             </div>
                             <div>
                                 <div class="flex justify-between mb-1">
-                                    <span class="text-sm text-gray-500">Disbursement</span>
+                                    <span class="text-sm text-gray-500">Payroll Release</span>
                                     <span class="text-sm font-medium text-gray-700">0/1</span>
                                 </div>
                                 <div class="progress-track">
@@ -691,11 +877,16 @@
 
                                 {{-- Actions --}}
                                 <div class="flex gap-2 mt-5">
-                                    <button class="btn-outline flex-1" @click="pvEditPayslip()">Edit</button>
-                                    <template x-if="pvActive.status !== 'Submitted'">
+                                    <button class="btn-outline flex-1" @click="pvEditPayslip()" x-show="viewPeriod.status !== 'Released'">Edit</button>
+                                    <template x-if="viewPeriod.status === 'Released'">
+                                        <span class="flex-1 text-center py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed">
+                                            Released
+                                        </span>
+                                    </template>
+                                    <template x-if="viewPeriod.status !== 'Released' && pvActive.status !== 'Submitted'">
                                         <button class="btn-primary flex-1 justify-center" @click="pvSubmitPayslip()">Submit</button>
                                     </template>
-                                    <template x-if="pvActive.status === 'Submitted'">
+                                    <template x-if="viewPeriod.status !== 'Released' && pvActive.status === 'Submitted'">
                                         <span class="flex-1 text-center py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg border border-green-100">
                                             Submitted ✓
                                         </span>
@@ -834,7 +1025,7 @@
                     <input type="text" name="basis" x-model="editItem.basis" required class="ctrl w-full">
                 </div>
                 <div class="flex items-center justify-between pt-2">
-                    <button type="button" @click="deactivateItem()" class="text-blue-500 border border-blue-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition">Deactivate</button>
+                    <button type="button" @click="deactivateItem()" class="text-blue-500 border border-blue-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition" x-text="editItem.status === 'Active' ? 'Deactivate' : 'Activate'"></button>
                     <div class="flex gap-3">
                         <button type="button" @click="showEditItemModal=false" class="btn-outline">Cancel</button>
                         <button type="submit" class="btn-primary">Save</button>
@@ -949,7 +1140,7 @@
                     <input type="text" name="eligibility" x-model="editBenefit.eligibility" required class="ctrl w-full">
                 </div>
                 <div class="flex items-center justify-between pt-2">
-                    <button type="button" @click="deactivateBenefit()" class="text-blue-500 border border-blue-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition">Deactivate</button>
+                    <button type="button" @click="deactivateBenefit()" class="text-blue-500 border border-blue-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition" x-text="editBenefit.status === 'Active' ? 'Deactivate' : 'Activate'"></button>
                     <div class="flex gap-3">
                         <button type="button" @click="showEditBenefitModal=false" class="btn-outline">Cancel</button>
                         <button type="submit" class="btn-primary">Submit</button>
@@ -1075,6 +1266,217 @@
         </div>
     </div>
 
+    {{-- Add Salary Grade --}}
+    <div x-show="showAddGradeModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showAddGradeModal=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-7"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"  x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold text-gray-800">Add Salary Grade</h2>
+                <button @click="showAddGradeModal=false" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form action="{{ route('payroll_officer.payroll.grade.store') }}" method="POST" class="space-y-4">
+                @csrf
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Grade Code</label>
+                        <input type="text" name="grade_code" required placeholder="e.g. Grade 1" class="ctrl w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Monthly Basic Salary (₱)</label>
+                        <input type="number" name="monthly_basic_salary" step="0.01" required placeholder="₱22,000.00" class="ctrl w-full">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Level Name</label>
+                    <input type="text" name="level_name" required placeholder="e.g. Entry Level" class="ctrl w-full">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Assign Employees</label>
+                    {{-- Selected tags — shown ABOVE the search input --}}
+                    <div class="flex flex-wrap gap-1.5 mb-2" x-show="gradeSelectedEmps.length > 0">
+                        <template x-for="s in gradeSelectedEmps" :key="s.id">
+                            <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                                <span x-text="s.name"></span>
+                                <button type="button" @click="gradeRemoveEmp(s.id)" class="hover:text-blue-900 leading-none font-bold ml-0.5">×</button>
+                                <input type="hidden" name="employee_ids[]" :value="s.id">
+                            </span>
+                        </template>
+                    </div>
+                    {{-- Clean search input --}}
+                    <div class="relative">
+                        <input type="text" x-ref="empInput" x-model="gradeEmpSearch"
+                               @focus="gradeShowDrop=true" @blur="setTimeout(()=>{gradeShowDrop=false},200)"
+                               placeholder="Search and add employees…"
+                               class="ctrl w-full">
+                        <div x-show="gradeShowDrop && gradeFiltered.length > 0"
+                             class="absolute top-full left-0 right-0 mt-1 border border-gray-200 rounded-lg bg-white shadow-md max-h-44 overflow-y-auto z-20">
+                            <template x-for="opt in gradeFiltered" :key="opt.id">
+                                <div class="px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer" @mousedown.prevent="gradeAddEmp(opt)" x-text="opt.name"></div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" @click="showAddGradeModal=false" class="btn-outline">Cancel</button>
+                    <button type="submit" class="btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Edit Salary Grade --}}
+    <div x-show="showEditGradeModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showEditGradeModal=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-7"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"  x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold text-gray-800">Edit Salary Grade</h2>
+                <button @click="showEditGradeModal=false" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form :action="`/payroll_officer/payroll/grade/${editGrade.id}/update`" method="POST" class="space-y-4">
+                @csrf
+                @method('PUT')
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Grade Code</label>
+                        <input type="text" name="grade_code" x-model="editGrade.gradeCode" required class="ctrl w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Monthly Basic Salary (₱)</label>
+                        <input type="number" name="monthly_basic_salary" step="0.01" x-model="editGrade.monthlySalary" required class="ctrl w-full">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Level Name</label>
+                    <input type="text" name="level_name" x-model="editGrade.levelName" required class="ctrl w-full">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Assign Employees</label>
+                    {{-- Selected tags — shown ABOVE the search input --}}
+                    <div class="flex flex-wrap gap-1.5 mb-2" x-show="gradeSelectedEmps.length > 0">
+                        <template x-for="s in gradeSelectedEmps" :key="s.id">
+                            <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                                <span x-text="s.name"></span>
+                                <button type="button" @click="gradeRemoveEmp(s.id)" class="hover:text-blue-900 leading-none font-bold ml-0.5">×</button>
+                                <input type="hidden" name="employee_ids[]" :value="s.id">
+                            </span>
+                        </template>
+                    </div>
+                    {{-- Clean search input --}}
+                    <div class="relative">
+                        <input type="text" x-ref="empInputEdit" x-model="gradeEmpSearch"
+                               @focus="gradeShowDrop=true" @blur="setTimeout(()=>{gradeShowDrop=false},200)"
+                               placeholder="Search and add employees…"
+                               class="ctrl w-full">
+                        <div x-show="gradeShowDrop && gradeFiltered.length > 0"
+                             class="absolute top-full left-0 right-0 mt-1 border border-gray-200 rounded-lg bg-white shadow-md max-h-44 overflow-y-auto z-20">
+                            <template x-for="opt in gradeFiltered" :key="opt.id">
+                                <div class="px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer" @mousedown.prevent="gradeAddEmp(opt)" x-text="opt.name"></div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" @click="showEditGradeModal=false" class="btn-outline">Cancel</button>
+                    <button type="submit" class="btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Edit Contribution Rate --}}
+    <div x-show="showEditContribModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showEditContribModal=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-7"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"  x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold text-gray-800"
+                    x-text="{ sss:'Edit SSS Rates', philhealth:'Edit PhilHealth Rates', pagibig:'Edit Pag-IBIG Rates', wtax:'Edit W/Tax Brackets' }[editContribType]">
+                </h2>
+                <button @click="showEditContribModal=false" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            {{-- SSS Fields --}}
+            <div x-show="editContribType==='sss'" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employee Share (%)</label><input type="number" step="0.01" x-model="contrib.sss_employee_rate" class="ctrl w-full"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employer Share (%)</label><input type="number" step="0.01" x-model="contrib.sss_employer_rate" class="ctrl w-full"></div>
+                </div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Max Monthly Salary Credit (₱)</label><input type="number" step="0.01" x-model="contrib.sss_max_msc" class="ctrl w-full"></div>
+            </div>
+
+            {{-- PhilHealth Fields --}}
+            <div x-show="editContribType==='philhealth'" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employee Share (%)</label><input type="number" step="0.01" x-model="contrib.philhealth_rate" class="ctrl w-full"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employer Share (%)</label><input type="number" step="0.01" value="2.5" class="ctrl w-full"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Floor (₱)</label><input type="number" step="0.01" x-model="contrib.philhealth_floor" class="ctrl w-full"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Ceiling (₱)</label><input type="number" step="0.01" x-model="contrib.philhealth_ceiling" class="ctrl w-full"></div>
+                </div>
+            </div>
+
+            {{-- Pag-IBIG Fields --}}
+            <div x-show="editContribType==='pagibig'" class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employee Rate — Salary ≤ ₱1,500 (%)</label><input type="number" step="0.01" x-model="contrib.pagibig_low_rate" class="ctrl w-full"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employee Rate — Salary &gt; ₱1,500 (%)</label><input type="number" step="0.01" x-model="contrib.pagibig_high_rate" class="ctrl w-full"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employer Match Rate (%)</label><input type="number" step="0.01" value="2" class="ctrl w-full"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Max Contribution (₱)</label><input type="number" step="0.01" x-model="contrib.pagibig_max" class="ctrl w-full"></div>
+                </div>
+            </div>
+
+            {{-- W/Tax Fields --}}
+            <div x-show="editContribType==='wtax'" class="space-y-3">
+                <p class="text-xs text-gray-400 uppercase font-semibold tracking-wider">Annual Income Brackets</p>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">Up to ₱250K</span><input type="number" step="0.01" value="0" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">₱250K – ₱400K</span><input type="number" step="0.01" x-model="contrib.wtax_rate_1" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">₱400K – ₱800K</span><input type="number" step="0.01" x-model="contrib.wtax_rate_2" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">₱800K – ₱2M</span><input type="number" step="0.01" x-model="contrib.wtax_rate_3" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">₱2M+</span><input type="number" step="0.01" x-model="contrib.wtax_rate_4" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-5">
+                <button type="button" @click="showEditContribModal=false" class="btn-outline">Cancel</button>
+                <button type="button" class="btn-primary" @click="saveContrib()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Custom Confirm Modal --}}
+    <div x-show="confirmModal.show" x-cloak class="fixed inset-0 z-[999] flex items-center justify-center modal-overlay">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-7"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"  x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+            <div class="flex items-start gap-4 mb-6">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                     :class="confirmModal.danger ? 'bg-red-50' : 'bg-orange-50'">
+                    <svg class="w-5 h-5" :class="confirmModal.danger ? 'text-red-500' : 'text-orange-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    </svg>
+                </div>
+                <div class="pt-0.5">
+                    <p class="font-semibold text-gray-800 text-base leading-snug" x-text="confirmModal.title"></p>
+                    <p class="text-sm text-gray-500 mt-1" x-text="confirmModal.message"></p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button class="btn-outline" @click="confirmModal.show = false">Cancel</button>
+                <button class="px-5 py-2 rounded-lg text-sm font-semibold text-white transition"
+                        :class="confirmModal.danger ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'"
+                        @click="confirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     {{-- ════════════════════════════════════════
          ALPINE JS
     ════════════════════════════════════════ --}}
@@ -1084,14 +1486,16 @@
             // ── Sidebar ──
             sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
 
-            // ── Page routing (list | view) ──
+            // ── Page routing ──
             page: 'list',
 
             // ── List page state ──
-            activeTab:          '{{ request("tab", "payroll-period") }}',
-            periodSearch:       '',
-            periodStatusFilter: '',
-            periodYearFilter:   '{{ $year }}',
+            activeTab:           location.hash.replace('#','') || new URLSearchParams(location.search).get('tab') || 'payroll-period',
+            periodSearch:        '',
+            periodStatusFilter:  '',
+            benefitStatusFilter: '',
+            itemStatusFilter:    '',
+            periodYearFilter:    '{{ $year }}',
 
             // ── Modals ──
             showAddPeriodModal:   false,
@@ -1101,12 +1505,26 @@
             showEditBenefitModal: false,
             showSubmitConfirm:    false,
             showEditPayslipModal: false,
+            showAddGradeModal:    false,
+            showEditGradeModal:   false,
+            showEditContribModal: false,
+            editContribType: '',
+            contrib: @json($contrib),
 
+            // ── Custom confirm modal ──
+            confirmModal: { show: false, title: '', message: '', action: null, danger: true },
+
+            // ── Edit forms ──
             editPayslip: { id: null, employeeName: '', basicPay: 0, otPay: 0, benefits: 0, grossPay: 0, sss: 0, philhealth: 0, pagibig: 0, withholdingTax: 0, totalDeductions: 0, netPay: 0 },
+            editItem:    { id: null, name: '', multiplier: '', type: '', basis: '', status: '' },
+            editBenefit: { id: null, name: '', type: '', amount: '', tax: '', frequency: '', eligibility: '', status: '' },
+            editGrade:   { id: null, gradeCode: '', levelName: '', monthlySalary: 0 },
 
-            // ── Edit item/benefit forms ──
-            editItem:    { id: null, name: '', multiplier: '', type: '', basis: '' },
-            editBenefit: { id: null, name: '', type: '', amount: '', tax: '', frequency: '', eligibility: '' },
+            // ── Grade employee multi-select (shared: add + edit modals) ──
+            gradeSelectedEmps: [],
+            gradeEmpSearch:    '',
+            gradeShowDrop:     false,
+            allEmps: @json($employees->map(fn($e) => ['id' => $e->id, 'name' => $e->fname.' '.$e->lname])->values()),
 
             // ── Period View state ──
             viewPeriod:        { id: null, name: '', startDate: '', endDate: '', status: 'Pending' },
@@ -1119,55 +1537,79 @@
             pvSubmittedCount:  0,
             pvTotalCount:      0,
             pvPeriodSubtitle:  '',
+            defaultPayslips:   [],
 
-            samplePayslips: @json($payslipsJson ?? null),
-
-            defaultPayslips: [
-                {id:1,employeeName:'Juan Dela Cruz',jobTitle:'Senior Programmer',department:'IT',basicPay:23655,otPay:1425,benefits:3000,grossPay:28090,sss:1125,philhealth:500,pagibig:200,withholdingTax:2995,totalDeductions:4820,netPay:23680,status:'Submitted'},
-                {id:2,employeeName:'Maria Santos',jobTitle:'Nurse',department:'Medical',basicPay:23655,otPay:845,benefits:2000,grossPay:26500,sss:1125,philhealth:500,pagibig:200,withholdingTax:2500,totalDeductions:4325,netPay:22175,status:'Pending'},
-                {id:3,employeeName:'Pedro Reyes',jobTitle:'Accountant',department:'Finance',basicPay:23655,otPay:0,benefits:2000,grossPay:25655,sss:1125,philhealth:500,pagibig:200,withholdingTax:2200,totalDeductions:4025,netPay:21630,status:'Pending'},
-                {id:4,employeeName:'Ana Ramos',jobTitle:'HR Officer',department:'HR',basicPay:20000,otPay:500,benefits:1500,grossPay:22000,sss:900,philhealth:440,pagibig:200,withholdingTax:1800,totalDeductions:3340,netPay:18660,status:'Pending'},
-                {id:5,employeeName:'Carlo Mendoza',jobTitle:'Sales Rep',department:'Sales',basicPay:18000,otPay:1200,benefits:1000,grossPay:20200,sss:810,philhealth:404,pagibig:200,withholdingTax:1600,totalDeductions:3014,netPay:17186,status:'Pending'},
-                {id:6,employeeName:'Liza Cruz',jobTitle:'Pharmacist',department:'Pharmacy',basicPay:25000,otPay:0,benefits:2500,grossPay:27500,sss:1125,philhealth:500,pagibig:200,withholdingTax:2800,totalDeductions:4625,netPay:22875,status:'Pending'},
-                {id:7,employeeName:'Rico Torres',jobTitle:'Driver',department:'Logistics',basicPay:15000,otPay:750,benefits:500,grossPay:16250,sss:675,philhealth:325,pagibig:200,withholdingTax:900,totalDeductions:2100,netPay:14150,status:'Pending'},
-            ],
+            // ── Computed: filtered employee list for grade selector ──
+            get gradeFiltered() {
+                return this.allEmps.filter(e =>
+                    !this.gradeSelectedEmps.find(s => s.id === e.id) &&
+                    e.name.toLowerCase().includes(this.gradeEmpSearch.toLowerCase())
+                );
+            },
 
             init() {
                 window.addEventListener('storage', () => {
                     this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
                 });
+                this.$watch('activeTab', val => { location.hash = val; });
+            },
+
+            // ── Grade employee selector helpers ──
+            gradeAddEmp(emp) {
+                this.gradeSelectedEmps.push(emp);
+                this.gradeEmpSearch = '';
+                this.gradeShowDrop  = false;
+            },
+            gradeRemoveEmp(id) {
+                this.gradeSelectedEmps = this.gradeSelectedEmps.filter(e => e.id !== id);
+            },
+            openAddGrade() {
+                this.gradeSelectedEmps = [];
+                this.gradeEmpSearch    = '';
+                this.showAddGradeModal = true;
+            },
+
+            // ── Custom confirm modal ──
+            askConfirm(title, message, action, danger = true) {
+                this.confirmModal = { show: true, title, message, action, danger };
+            },
+            confirmAction() {
+                if (this.confirmModal.action) this.confirmModal.action();
+                this.confirmModal.show = false;
             },
 
             // ── Open period view ──
-            openPeriodView(id, name, startDate, endDate, status) {
-                this.viewPeriod = { id, name, startDate, endDate, status };
+            async openPeriodView(id, name, startDate, endDate, status) {
+                this.viewPeriod   = { id, name, startDate, endDate, status };
+                this.pvPayslips   = [];
+                this.pvSelectedId = null;
+                this.pvActive     = {};
+                this.page         = 'view';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
 
-                // Use server-injected payslips if available, else fallback to defaults
-                this.pvPayslips = (this.samplePayslips && this.samplePayslips.length > 0)
-                    ? this.samplePayslips
-                    : this.defaultPayslips;
+                try {
+                    const res  = await fetch(`/payroll_officer/payroll/period/${id}/payslips`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const data = await res.json();
+                    this.pvPayslips = data.payslips;
+                } catch (e) {
+                    this.pvPayslips = this.defaultPayslips;
+                }
 
-                // Compute summary totals
                 this.pvTotalCount      = this.pvPayslips.length;
                 this.pvSubmittedCount  = this.pvPayslips.filter(p => p.status === 'Submitted').length;
                 this.pvGrossPayroll    = this.pvPayslips.reduce((s, p) => s + p.grossPay, 0);
                 this.pvTotalDeductions = this.pvPayslips.reduce((s, p) => s + p.totalDeductions, 0);
                 this.pvNetPayroll      = this.pvPayslips.reduce((s, p) => s + p.netPay, 0);
 
-                // Period subtitle for payslip header
                 const start = new Date(startDate);
                 const end   = new Date(endDate);
                 const month = start.toLocaleString('en-US', { month: 'long' });
                 const year  = start.getFullYear();
                 this.pvPeriodSubtitle = `${month} ${year} · ${name} · ${start.toLocaleString('en-US',{month:'short'})} ${start.getDate()}–${end.getDate()}`;
 
-                // Auto-select first row
-                if (this.pvPayslips.length > 0) {
-                    this.pvSelectPayslip(this.pvPayslips[0]);
-                }
-
-                this.page = 'view';
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (this.pvPayslips.length > 0) this.pvSelectPayslip(this.pvPayslips[0]);
             },
 
             closePeriodView() {
@@ -1188,28 +1630,35 @@
             },
 
             recalcPayslip() {
-                const bp  = parseFloat(this.editPayslip.basicPay)       || 0;
-                const ot  = parseFloat(this.editPayslip.otPay)          || 0;
-                const ben = parseFloat(this.editPayslip.benefits)        || 0;
-                const sss = parseFloat(this.editPayslip.sss)            || 0;
-                const ph  = parseFloat(this.editPayslip.philhealth)      || 0;
-                const pi  = parseFloat(this.editPayslip.pagibig)         || 0;
-                const wt  = parseFloat(this.editPayslip.withholdingTax)  || 0;
+                const bp  = parseFloat(this.editPayslip.basicPay)      || 0;
+                const ot  = parseFloat(this.editPayslip.otPay)         || 0;
+                const ben = parseFloat(this.editPayslip.benefits)       || 0;
+                const sss = parseFloat(this.editPayslip.sss)           || 0;
+                const ph  = parseFloat(this.editPayslip.philhealth)     || 0;
+                const pi  = parseFloat(this.editPayslip.pagibig)        || 0;
+                const wt  = parseFloat(this.editPayslip.withholdingTax) || 0;
 
-                this.editPayslip.grossPay       = bp + ot + ben;
+                this.editPayslip.grossPay        = bp + ot + ben;
                 this.editPayslip.totalDeductions = sss + ph + pi + wt;
                 this.editPayslip.netPay          = this.editPayslip.grossPay - this.editPayslip.totalDeductions;
             },
 
-            saveEditPayslip() {
-                // Update the payslips array
+            async saveEditPayslip() {
+                const csrf = document.querySelector('meta[name="csrf-token"]').content;
+                await fetch(`/payroll_officer/payroll/payslip/${this.editPayslip.id}/save`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify(this.editPayslip),
+                });
+
                 const idx = this.pvPayslips.findIndex(p => p.id === this.editPayslip.id);
-                if (idx !== -1) {
-                    this.pvPayslips[idx] = { ...this.pvPayslips[idx], ...this.editPayslip };
-                }
-                // Update the active panel
+                if (idx !== -1) this.pvPayslips[idx] = { ...this.pvPayslips[idx], ...this.editPayslip };
                 this.pvActive = { ...this.editPayslip };
-                // Recompute summary totals
+
                 this.pvGrossPayroll    = this.pvPayslips.reduce((s, p) => s + p.grossPay, 0);
                 this.pvTotalDeductions = this.pvPayslips.reduce((s, p) => s + p.totalDeductions, 0);
                 this.pvNetPayroll      = this.pvPayslips.reduce((s, p) => s + p.netPay, 0);
@@ -1217,42 +1666,135 @@
             },
 
             pvSubmitPayslip() {
-                if (!confirm('Submit payslip for ' + this.pvActive.employeeName + '?')) return;
-                fetch(`/payroll_officer/payroll/payslip/${this.pvActive.id}/submit`, {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-                })
-                .then(r => r.json())
-                .then(() => {
-                    const ps = this.pvPayslips.find(p => p.id === this.pvActive.id);
-                    if (ps) ps.status = 'Submitted';
-                    this.pvActive.status  = 'Submitted';
-                    this.pvSubmittedCount = this.pvPayslips.filter(p => p.status === 'Submitted').length;
-                });
+                this.askConfirm(
+                    'Submit Payslip',
+                    `Submit payslip for ${this.pvActive.employeeName}?`,
+                    () => {
+                        const csrf = document.querySelector('meta[name="csrf-token"]').content;
+                        fetch(`/payroll_officer/payroll/payslip/${this.pvActive.id}/submit`, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrf }
+                        })
+                        .then(r => r.json())
+                        .then(() => {
+                            const ps = this.pvPayslips.find(p => p.id === this.pvActive.id);
+                            if (ps) ps.status = 'Submitted';
+                            this.pvActive.status  = 'Submitted';
+                            this.pvSubmittedCount = this.pvPayslips.filter(p => p.status === 'Submitted').length;
+                        });
+                    },
+                    false
+                );
             },
 
-            // ── Edit item/benefit helpers ──
-            openEditItem(id, name, multiplier, type, basis) {
-                this.editItem = { id, name, multiplier, type, basis };
+            // ── Salary Grade helpers ──
+            openEditGrade(id, gradeCode, levelName, monthlySalary, assignedEmps) {
+                this.editGrade         = { id, gradeCode, levelName, monthlySalary };
+                this.gradeSelectedEmps = Array.isArray(assignedEmps) ? assignedEmps : [];
+                this.gradeEmpSearch    = '';
+                this.showEditGradeModal = true;
+            },
+            deleteGrade(id) {
+                this.askConfirm(
+                    'Delete Salary Grade',
+                    'Assigned employees will be unassigned. This cannot be undone.',
+                    () => {
+                        fetch(`/payroll_officer/payroll/grade/${id}/delete`, {
+                            method: 'DELETE',
+                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                        }).then(() => this.reloadTab());
+                    }
+                );
+            },
+
+            // ── Payroll Item helpers ──
+            openEditItem(id, name, multiplier, type, basis, status) {
+                this.editItem = { id, name, multiplier, type, basis, status: status || '' };
                 this.showEditItemModal = true;
             },
-            openEditBenefit(id, name, type, amount, tax, frequency, eligibility) {
-                this.editBenefit = { id, name, type, amount, tax, frequency, eligibility };
-                this.showEditBenefitModal = true;
+            deleteItem(id) {
+                this.askConfirm(
+                    'Delete Payroll Item',
+                    'This will permanently remove this payroll item.',
+                    () => {
+                        fetch(`/payroll_officer/payroll/item/${id}/delete`, {
+                            method: 'DELETE',
+                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                        }).then(() => this.reloadTab());
+                    }
+                );
             },
             deactivateItem() {
-                if (!confirm('Deactivate this payroll item?')) return;
-                fetch(`/payroll_officer/payroll/item/${this.editItem.id}/deactivate`, {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-                }).then(() => location.reload());
+                const label = this.editItem.status === 'Active' ? 'Deactivate' : 'Activate';
+                this.askConfirm(
+                    `${label} Payroll Item`,
+                    `This will ${label.toLowerCase()} "${this.editItem.name}".`,
+                    () => {
+                        fetch(`/payroll_officer/payroll/item/${this.editItem.id}/deactivate`, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                        }).then(() => this.reloadTab());
+                    },
+                    this.editItem.status === 'Active'
+                );
+            },
+
+            // ── Benefit helpers ──
+            openEditBenefit(id, name, type, amount, tax, frequency, eligibility, status) {
+                this.editBenefit = { id, name, type, amount, tax, frequency, eligibility, status: status || '' };
+                this.showEditBenefitModal = true;
+            },
+            deleteBenefit(id) {
+                this.askConfirm(
+                    'Delete Benefit',
+                    'This will permanently remove this benefit.',
+                    () => {
+                        fetch(`/payroll_officer/payroll/benefit/${id}/delete`, {
+                            method: 'DELETE',
+                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                        }).then(() => this.reloadTab());
+                    }
+                );
             },
             deactivateBenefit() {
-                if (!confirm('Deactivate this benefit?')) return;
-                fetch(`/payroll_officer/payroll/benefit/${this.editBenefit.id}/deactivate`, {
+                const label = this.editBenefit.status === 'Active' ? 'Deactivate' : 'Activate';
+                this.askConfirm(
+                    `${label} Benefit`,
+                    `This will ${label.toLowerCase()} "${this.editBenefit.name}".`,
+                    () => {
+                        fetch(`/payroll_officer/payroll/benefit/${this.editBenefit.id}/deactivate`, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                        }).then(() => this.reloadTab());
+                    },
+                    this.editBenefit.status === 'Active'
+                );
+            },
+
+            // ── Contribution rate helpers ──
+            openEditContrib(type) {
+                this.editContribType = type;
+                this.showEditContribModal = true;
+            },
+            async saveContrib() {
+                const csrf   = document.querySelector('meta[name="csrf-token"]').content;
+                const keys   = Object.keys(this.contrib);
+                const values = Object.values(this.contrib);
+                await fetch('/payroll_officer/payroll/contrib/update', {
                     method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-                }).then(() => location.reload());
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ keys, values }),
+                });
+                this.reloadTab();
+            },
+
+            reloadTab() {
+                location.hash = this.activeTab;
+                location.reload();
             },
 
             fmt(n) {
@@ -1264,3 +1806,6 @@
 
 </body>
 </html>
+
+
+

@@ -3,199 +3,543 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\SalaryGrade;
+use App\Models\PayrollItem;
+use App\Models\Benefit;
+use App\Models\PayrollPeriod;
+use App\Models\Payslip;
+use App\Models\Employee;
+use App\Models\OvertimeRequest;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class PayrollOfficerPayrollController extends Controller
 {
+    // ── Index ────────────────────────────────────────────────────────────────
+
     public function index(Request $request)
     {
-        $year            = $request->get('year', now()->year);
-        $grossPayroll    = 263082;
-        $netPay          = 200000;
-        $totalDeductions = 63082;
-        $daysToCutoff    = 12;
-        $latestPeriod    = null;
-        $periods         = collect();
-        $payrollItems    = collect();
-        $benefits        = collect();
+        $year   = $request->input('year', now()->year);
+
+        $periods      = PayrollPeriod::orderByDesc('start_date')->get();
+        $payrollItems = PayrollItem::orderBy('name')->get();
+        $salaryGrades = SalaryGrade::withCount('employees')->with('employees')->orderBy('grade_code')->get();
+        $benefits     = Benefit::orderBy('name')->get();
+
+        // Summary from the latest period's payslips
+        $latestPeriod    = $periods->first();
+        $grossPayroll    = 0;
+        $netPay          = 0;
+        $totalDeductions = 0;
+
+        if ($latestPeriod) {
+            $latestSlips     = $latestPeriod->payslips;
+            $grossPayroll    = $latestSlips->sum('gross_pay');
+            $netPay          = $latestSlips->sum('net_pay');
+            $totalDeductions = $latestSlips->sum('total_deductions');
+        }
+
+        // Days to cutoff of the latest pending period
+        $daysToCutoff = 0;
+        $pendingPeriod = $periods->firstWhere('status', 'Pending');
+        if ($pendingPeriod) {
+            $daysToCutoff = max(0, now()->diffInDays($pendingPeriod->end_date, false));
+        }
+
+        $employees = Employee::whereNull('deleted_at')->orderBy('fname')->get();
+
+        $contrib = DB::table('contribution_settings')->pluck('value', 'key');
 
         return view('payroll_officer.payroll-officer_payroll', compact(
             'periods', 'grossPayroll', 'netPay', 'totalDeductions',
-            'daysToCutoff', 'latestPeriod', 'year', 'payrollItems', 'benefits'
+            'daysToCutoff', 'latestPeriod', 'year',
+            'payrollItems', 'benefits', 'salaryGrades', 'employees', 'contrib'
         ));
     }
+
+    // ── Payroll Period ───────────────────────────────────────────────────────
 
     public function storePeriod(Request $request)
     {
-        return redirect()->route('payroll_officer.payroll')
-            ->with('success', 'Payroll period added successfully.');
-    }
-
-    public function viewPeriod($id)
-    {
-        // Sample period object using stdClass for demo (replace with DB model later)
-        $period                = new \stdClass();
-        $period->id            = $id;
-        $period->name          = 'February Payroll Period 2';
-        $period->start_date    = '2026-02-16';
-        $period->end_date      = '2026-02-28';
-        $period->payout_date   = '2026-03-05';
-        $period->status        = 'Pending';
-
-        // Sample payslips collection (replace with DB query later)
-        // e.g. $payslips = Payslip::with('employee')->where('payroll_period_id', $id)->get();
-        $payslips = collect([
-            (object)[
-                'id'               => 1,
-                'gross_pay'        => 28500.00,
-                'net_pay'          => 23600.00,
-                'status'           => 'Submitted',
-                'basic_pay'        => 23655.00,
-                'ot_pay'           => 1425.00,
-                'benefits'         => 3000.00,
-                'sss'              => 1125.00,
-                'philhealth'       => 500.00,
-                'pagibig'          => 200.00,
-                'withholding_tax'  => 2995.00,
-                'total_deductions' => 4820.00,
-                'employee'         => (object)[
-                    'full_name'  => 'Juan Dela Cruz',
-                    'job_title'  => 'Senior Programmer',
-                    'department' => (object)['name' => 'IT'],
-                ],
-            ],
-            (object)[
-                'id'               => 2,
-                'gross_pay'        => 28500.00,
-                'net_pay'          => 23600.00,
-                'status'           => 'Pending',
-                'basic_pay'        => 23655.00,
-                'ot_pay'           => 1425.00,
-                'benefits'         => 3000.00,
-                'sss'              => 1125.00,
-                'philhealth'       => 500.00,
-                'pagibig'          => 200.00,
-                'withholding_tax'  => 2995.00,
-                'total_deductions' => 4820.00,
-                'employee'         => (object)[
-                    'full_name'  => 'Maria Santos',
-                    'job_title'  => 'Nurse',
-                    'department' => (object)['name' => 'Medical'],
-                ],
-            ],
-            (object)[
-                'id'               => 3,
-                'gross_pay'        => 28500.00,
-                'net_pay'          => 23600.00,
-                'status'           => 'Pending',
-                'basic_pay'        => 23655.00,
-                'ot_pay'           => 1425.00,
-                'benefits'         => 3000.00,
-                'sss'              => 1125.00,
-                'philhealth'       => 500.00,
-                'pagibig'          => 200.00,
-                'withholding_tax'  => 2995.00,
-                'total_deductions' => 4820.00,
-                'employee'         => (object)[
-                    'full_name'  => 'Pedro Reyes',
-                    'job_title'  => 'Accountant',
-                    'department' => (object)['name' => 'Finance'],
-                ],
-            ],
+        $request->validate([
+            'name'        => 'required|string|max:255',
+            'start_date'  => 'required|date',
+            'end_date'    => 'required|date|after_or_equal:start_date',
+            'payout_date' => 'required|date',
         ]);
 
-        // Counts for processing status progress bars
-        $totalCount     = $payslips->count();
-        $submittedCount = $payslips->where('status', 'Submitted')->count();
+        $period = PayrollPeriod::create([
+            'name'        => $request->name,
+            'start_date'  => $request->start_date,
+            'end_date'    => $request->end_date,
+            'payout_date' => $request->payout_date,
+            'status'      => 'Pending',
+        ]);
 
-        // Payroll summary totals
-        $grossPayroll    = $payslips->sum('gross_pay');
-        $totalDeductions = $payslips->sum('total_deductions');
-        $netPayroll      = $payslips->sum('net_pay');
+        $this->generatePayslips($period);
 
-        // JSON for Alpine.js payslip panel
-        $payslipsJson = $payslips->map(fn($p) => [
-            'id'               => $p->id,
-            'employeeName'     => $p->employee->full_name,
-            'jobTitle'         => $p->employee->job_title,
-            'department'       => $p->employee->department->name,
-            'basicPay'         => $p->basic_pay,
-            'otPay'            => $p->ot_pay,
-            'benefits'         => $p->benefits,
-            'grossPay'         => $p->gross_pay,
-            'sss'              => $p->sss,
-            'philhealth'       => $p->philhealth,
-            'pagibig'          => $p->pagibig,
-            'withholdingTax'   => $p->withholding_tax,
-            'totalDeductions'  => $p->total_deductions,
-            'netPay'           => $p->net_pay,
-            'status'           => $p->status,
-        ])->values();
-
-        return view('payroll_officer.payroll_period_view', compact(
-            'period',
-            'payslips',
-            'payslipsJson',
-            'totalCount',
-            'submittedCount',
-            'grossPayroll',
-            'totalDeductions',
-            'netPayroll'
-        ));
+        return redirect()->route('payroll_officer.payroll')
+            ->with('success', 'Payroll period created and payslips generated.');
     }
 
     public function submitForApproval($id)
     {
-        return redirect()->back()->with('success', 'Payroll submitted for approval.');
+        $period = PayrollPeriod::findOrFail($id);
+        $period->update(['status' => 'Submitted']);
+
+        return redirect()->back()->with('success', 'Payroll period submitted for approval.');
     }
+
+    // ── Payslips Page ────────────────────────────────────────────────────────
+
+    public function payslips()
+    {
+        $user         = auth()->user();
+        $authEmployee = $user->employee ?? null;
+
+        // Only periods whose payslips have been Released appear here
+        $periods      = PayrollPeriod::where('status', 'Released')->orderByDesc('start_date')->get();
+        $latestPeriod = $periods->first();
+
+        // ── All Payslips (latest released period, excluding own) ──
+        $allPayslips      = collect();
+        $allGrossPayroll  = 0;
+        $allNetPay        = 0;
+        $allTotalDeductions = 0;
+
+        if ($latestPeriod) {
+            $query = Payslip::with('employee.department', 'employee.jobTitle')
+                ->where('payroll_period_id', $latestPeriod->id)
+                ->where('status', 'Released');
+            if ($authEmployee) {
+                $query->where('employee_id', '!=', $authEmployee->id);
+            }
+            $slips = $query->get();
+            $allGrossPayroll    = $slips->sum('gross_pay');
+            $allNetPay          = $slips->sum('net_pay');
+            $allTotalDeductions = $slips->sum('total_deductions');
+            $allPayslips = $slips->map(fn($p) => [
+                'id'             => $p->id,
+                'employeeId'     => $p->employee_id,
+                'employeeName'   => $p->employee->full_name,
+                'jobTitle'       => $p->employee->jobTitle->title ?? '—',
+                'department'     => $p->employee->department->name ?? '—',
+                'basicPay'       => (float) $p->basic_pay,
+                'otPay'          => (float) $p->ot_pay,
+                'benefits'       => (float) $p->benefits_total,
+                'grossPay'       => (float) $p->gross_pay,
+                'sss'            => (float) $p->sss,
+                'philhealth'     => (float) $p->philhealth,
+                'pagibig'        => (float) $p->pagibig,
+                'withholdingTax' => (float) $p->withholding_tax,
+                'totalDeductions'=> (float) $p->total_deductions,
+                'netPay'         => (float) $p->net_pay,
+                'status'         => $p->status,
+                'period'         => $latestPeriod->name,
+            ])->values();
+        }
+
+        // ── My Payslips (own, all periods) ──
+        $myPayslips       = collect();
+        $myGrossPayroll   = 0;
+        $myNetPay         = 0;
+        $myTotalDeductions = 0;
+
+        if ($authEmployee) {
+            $authEmployee->load('jobTitle', 'department', 'salaryGrade');
+            $mySlips = Payslip::with('period')
+                ->where('employee_id', $authEmployee->id)
+                ->where('status', 'Released')
+                ->orderByDesc('created_at')
+                ->get();
+            $myGrossPayroll    = $mySlips->sum('gross_pay');
+            $myNetPay          = $mySlips->sum('net_pay');
+            $myTotalDeductions = $mySlips->sum('total_deductions');
+            $myPayslips = $mySlips->map(fn($p) => [
+                'id'             => $p->id,
+                'periodId'       => $p->payroll_period_id,
+                'periodName'     => $p->period->name,
+                'startDate'      => $p->period->start_date->format('m/d/Y'),
+                'endDate'        => $p->period->end_date->format('m/d/Y'),
+                'year'           => $p->period->start_date->year,
+                'basicPay'       => (float) $p->basic_pay,
+                'otPay'          => (float) $p->ot_pay,
+                'benefits'       => (float) $p->benefits_total,
+                'grossPay'       => (float) $p->gross_pay,
+                'sss'            => (float) $p->sss,
+                'philhealth'     => (float) $p->philhealth,
+                'pagibig'        => (float) $p->pagibig,
+                'withholdingTax' => (float) $p->withholding_tax,
+                'totalDeductions'=> (float) $p->total_deductions,
+                'netPay'         => (float) $p->net_pay,
+                'status'         => $p->status,
+            ])->values();
+        }
+
+        $periodsForJs = $periods->map(fn($p) => [
+            'id'   => $p->id,
+            'name' => $p->name,
+            'year' => $p->start_date->year,
+        ])->values();
+
+        return view('payroll_officer.payroll-officer_payslips', compact(
+            'latestPeriod', 'periodsForJs',
+            'allPayslips', 'allGrossPayroll', 'allNetPay', 'allTotalDeductions',
+            'myPayslips', 'myGrossPayroll', 'myNetPay', 'myTotalDeductions',
+            'authEmployee'
+        ));
+    }
+
+    // ── Period Payslips (AJAX) ───────────────────────────────────────────────
+
+    public function periodPayslips($id)
+    {
+        $period   = PayrollPeriod::findOrFail($id);
+        $payslips = Payslip::with('employee.department', 'employee.jobTitle')
+            ->where('payroll_period_id', $id)
+            ->where('status', 'Released')
+            ->get();
+
+        $data = $payslips->map(fn($p) => [
+            'id'             => $p->id,
+            'employeeId'     => $p->employee_id,
+            'employeeName'   => $p->employee->full_name,
+            'jobTitle'       => $p->employee->jobTitle->title ?? '—',
+            'department'     => $p->employee->department->name ?? '—',
+            'basicPay'       => (float) $p->basic_pay,
+            'otPay'          => (float) $p->ot_pay,
+            'benefits'       => (float) $p->benefits_total,
+            'grossPay'       => (float) $p->gross_pay,
+            'sss'            => (float) $p->sss,
+            'philhealth'     => (float) $p->philhealth,
+            'pagibig'        => (float) $p->pagibig,
+            'withholdingTax' => (float) $p->withholding_tax,
+            'totalDeductions'=> (float) $p->total_deductions,
+            'netPay'         => (float) $p->net_pay,
+            'status'         => $p->status,
+            'period'         => $period->name,
+        ])->values();
+
+        return response()->json(['payslips' => $data]);
+    }
+
+    // ── Payslip ──────────────────────────────────────────────────────────────
+
+    public function savePayslip(Request $request, $id)
+    {
+        $request->validate([
+            'basicPay'       => 'required|numeric|min:0',
+            'otPay'          => 'required|numeric|min:0',
+            'benefits'       => 'required|numeric|min:0',
+            'sss'            => 'required|numeric|min:0',
+            'philhealth'     => 'required|numeric|min:0',
+            'pagibig'        => 'required|numeric|min:0',
+            'withholdingTax' => 'required|numeric|min:0',
+        ]);
+
+        $payslip = Payslip::findOrFail($id);
+
+        $grossPay        = $request->basicPay + $request->otPay + $request->benefits;
+        $totalDeductions = $request->sss + $request->philhealth + $request->pagibig + $request->withholdingTax;
+
+        $payslip->update([
+            'basic_pay'        => $request->basicPay,
+            'ot_pay'           => $request->otPay,
+            'benefits_total'   => $request->benefits,
+            'gross_pay'        => $grossPay,
+            'sss'              => $request->sss,
+            'philhealth'       => $request->philhealth,
+            'pagibig'          => $request->pagibig,
+            'withholding_tax'  => $request->withholdingTax,
+            'total_deductions' => $totalDeductions,
+            'net_pay'          => $grossPay - $totalDeductions,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function submitPayslip($id)
+    {
+        $payslip = Payslip::findOrFail($id);
+        $payslip->update(['status' => 'Submitted']);
+
+        return response()->json(['success' => true]);
+    }
+
+    // ── Salary Grades ────────────────────────────────────────────────────────
+
+    public function storeGrade(Request $request)
+    {
+        $request->validate([
+            'grade_code'           => 'required|string|unique:salary_grades,grade_code',
+            'level_name'           => 'required|string',
+            'monthly_basic_salary' => 'required|numeric|min:0',
+        ]);
+
+        $grade = SalaryGrade::create($request->only('grade_code', 'level_name', 'monthly_basic_salary'));
+
+        if ($request->filled('employee_ids')) {
+            Employee::whereIn('id', $request->employee_ids)
+                ->update(['salary_grade_id' => $grade->id]);
+        }
+
+        return redirect()->route('payroll_officer.payroll', ['tab' => 'salary-structure'])
+            ->with('success', 'Salary grade added.');
+    }
+
+    public function updateGrade(Request $request, $id)
+    {
+        $request->validate([
+            'grade_code'           => "required|string|unique:salary_grades,grade_code,{$id}",
+            'level_name'           => 'required|string',
+            'monthly_basic_salary' => 'required|numeric|min:0',
+        ]);
+
+        $grade = SalaryGrade::findOrFail($id);
+        $grade->update($request->only('grade_code', 'level_name', 'monthly_basic_salary'));
+
+        // Clear all employees from this grade then re-assign submitted ones
+        Employee::where('salary_grade_id', $id)->update(['salary_grade_id' => null]);
+        if ($request->filled('employee_ids')) {
+            Employee::whereIn('id', $request->employee_ids)
+                ->update(['salary_grade_id' => $id]);
+        }
+
+        return redirect()->route('payroll_officer.payroll', ['tab' => 'salary-structure'])
+            ->with('success', 'Salary grade updated.');
+    }
+
+    public function deleteGrade($id)
+    {
+        $grade = SalaryGrade::findOrFail($id);
+        Employee::where('salary_grade_id', $id)->update(['salary_grade_id' => null]);
+        $grade->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    // ── Payroll Items ────────────────────────────────────────────────────────
 
     public function storePayrollItem(Request $request)
     {
-        return redirect()->route('payroll_officer.payroll')
+        $request->validate([
+            'name'       => 'required|string|max:255',
+            'multiplier' => 'required|numeric|min:0',
+            'type'       => 'required|in:Addition,Deduction',
+            'basis'      => 'required|string|max:255',
+        ]);
+
+        PayrollItem::create([
+            'name'       => $request->name,
+            'multiplier' => $request->multiplier,
+            'type'       => $request->type,
+            'basis'      => $request->basis,
+            'status'     => 'Active',
+        ]);
+
+        return redirect()->route('payroll_officer.payroll', ['tab' => 'salary-structure'])
             ->with('success', 'Payroll item added.');
     }
 
     public function updatePayrollItem(Request $request, $id)
     {
-        return redirect()->route('payroll_officer.payroll')
+        $request->validate([
+            'name'       => 'required|string|max:255',
+            'multiplier' => 'required|numeric|min:0',
+            'type'       => 'required|in:Addition,Deduction',
+            'basis'      => 'required|string|max:255',
+        ]);
+
+        PayrollItem::findOrFail($id)->update($request->only('name', 'multiplier', 'type', 'basis'));
+
+        return redirect()->route('payroll_officer.payroll', ['tab' => 'salary-structure'])
             ->with('success', 'Payroll item updated.');
     }
 
     public function deactivatePayrollItem($id)
     {
+        $item = PayrollItem::findOrFail($id);
+        $item->update(['status' => $item->status === 'Active' ? 'Inactive' : 'Active']);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function deletePayrollItem($id)
+    {
+        PayrollItem::findOrFail($id)->delete();
+
         return response()->json(['success' => true]);
     }
 
     public function getPayrollItem($id)
     {
-        return response()->json([]);
+        return response()->json(PayrollItem::findOrFail($id));
     }
+
+    // ── Benefits ─────────────────────────────────────────────────────────────
 
     public function storeBenefit(Request $request)
     {
-        return redirect()->route('payroll_officer.payroll')
+        $request->validate([
+            'name'        => 'required|string|max:255',
+            'type'        => 'required|in:Allowance,Bonus,Incentive',
+            'amount'      => 'required|numeric|min:0',
+            'tax'         => 'required|in:Taxable,Non-taxable',
+            'frequency'   => 'required|string|max:255',
+            'eligibility' => 'required|string|max:255',
+        ]);
+
+        Benefit::create([
+            'name'        => $request->name,
+            'type'        => $request->type,
+            'amount'      => $request->amount,
+            'tax'         => $request->tax,
+            'frequency'   => $request->frequency,
+            'eligibility' => $request->eligibility,
+            'status'      => 'Active',
+        ]);
+
+        return redirect()->route('payroll_officer.payroll', ['tab' => 'benefits'])
             ->with('success', 'Benefit added.');
     }
 
     public function updateBenefit(Request $request, $id)
     {
-        return redirect()->route('payroll_officer.payroll')
+        $request->validate([
+            'name'        => 'required|string|max:255',
+            'type'        => 'required|in:Allowance,Bonus,Incentive',
+            'amount'      => 'required|numeric|min:0',
+            'tax'         => 'required|in:Taxable,Non-taxable',
+            'frequency'   => 'required|string|max:255',
+            'eligibility' => 'required|string|max:255',
+        ]);
+
+        Benefit::findOrFail($id)->update(
+            $request->only('name', 'type', 'amount', 'tax', 'frequency', 'eligibility')
+        );
+
+        return redirect()->route('payroll_officer.payroll', ['tab' => 'benefits'])
             ->with('success', 'Benefit updated.');
     }
 
     public function deactivateBenefit($id)
     {
+        $benefit = Benefit::findOrFail($id);
+        $benefit->update(['status' => $benefit->status === 'Active' ? 'Inactive' : 'Active']);
+
         return response()->json(['success' => true]);
     }
 
     public function getBenefit($id)
     {
-        return response()->json([]);
+        return response()->json(Benefit::findOrFail($id));
     }
 
-    public function submitPayslip($id)
+    public function deleteBenefit($id)
     {
-        // Update payslip status to Submitted
-        // Payslip::findOrFail($id)->update(['status' => 'Submitted']);
+        Benefit::findOrFail($id)->delete();
+
         return response()->json(['success' => true]);
+    }
+
+    // ── Contribution Settings ─────────────────────────────────────────────────
+
+    public function updateContrib(Request $request)
+    {
+        $data = $request->validate([
+            'keys'   => 'required|array',
+            'values' => 'required|array',
+        ]);
+
+        foreach ($data['keys'] as $i => $key) {
+            DB::table('contribution_settings')
+                ->where('key', $key)
+                ->update(['value' => $data['values'][$i]]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    // ── Payslip Generation ───────────────────────────────────────────────────
+
+    private function generatePayslips(PayrollPeriod $period): void
+    {
+        $employees    = Employee::with('salaryGrade')->whereNull('deleted_at')->get();
+        $benefitsTotal = Benefit::where('status', 'Active')->sum('amount');
+
+        $c = DB::table('contribution_settings')->pluck('value', 'key');
+
+        foreach ($employees as $emp) {
+            $grade         = $emp->salaryGrade;
+            $monthlySalary = $grade ? (float) $grade->monthly_basic_salary : 0;
+            $basicPay      = $monthlySalary / 2;
+
+            // OT pay: approved OT hours in this period × hourly rate × 1.25 (Regular OT)
+            $hourlyRate = $monthlySalary > 0 ? ($monthlySalary * 12 / 261 / 8) : 0;
+            $otHours    = OvertimeRequest::where('employee_id', $emp->id)
+                ->where('status', 'approved')
+                ->whereBetween('ot_date', [$period->start_date, $period->end_date])
+                ->sum('approved_hours');
+            $otPay = round($otHours * $hourlyRate * 1.25, 2);
+
+            $grossPay = $basicPay + $otPay + $benefitsTotal;
+
+            // SSS: employee share from DB, MSC capped from DB
+            $msc = min($monthlySalary, (float) $c['sss_max_msc']);
+            $sss = round($msc * ((float) $c['sss_employee_rate'] / 100) / 2, 2);
+
+            // PhilHealth: employee share from DB, floor/ceiling from DB
+            $phBase     = max((float) $c['philhealth_floor'], min($monthlySalary, (float) $c['philhealth_ceiling']));
+            $philhealth = round($phBase * ((float) $c['philhealth_rate'] / 100 / 2) / 2, 2);
+
+            // Pag-IBIG: rate and max from DB
+            $pagibigRate = $monthlySalary <= 1500
+                ? (float) $c['pagibig_low_rate'] / 100
+                : (float) $c['pagibig_high_rate'] / 100;
+            $pagibig = round(min($monthlySalary * $pagibigRate, (float) $c['pagibig_max']) / 2, 2);
+
+            // Withholding tax based on estimated annual taxable income
+            $annualDeductions  = ($sss + $philhealth + $pagibig) * 24;
+            $annualTaxable     = max(0, ($grossPay * 24) - $annualDeductions);
+            $withholdingTax    = round($this->computeWithholdingTax($annualTaxable, $c) / 24, 2);
+
+            $totalDeductions = $sss + $philhealth + $pagibig + $withholdingTax;
+            $netPay          = $grossPay - $totalDeductions;
+
+            Payslip::create([
+                'payroll_period_id' => $period->id,
+                'employee_id'       => $emp->id,
+                'basic_pay'         => $basicPay,
+                'ot_pay'            => $otPay,
+                'benefits_total'    => $benefitsTotal,
+                'gross_pay'         => $grossPay,
+                'sss'               => $sss,
+                'philhealth'        => $philhealth,
+                'pagibig'           => $pagibig,
+                'withholding_tax'   => $withholdingTax,
+                'total_deductions'  => $totalDeductions,
+                'net_pay'           => $netPay,
+                'status'            => 'Pending',
+            ]);
+        }
+    }
+
+    private function computeWithholdingTax(float $annual, $c = null): float
+    {
+        $b1 = $c ? (float) $c['wtax_bracket_1'] : 250000;
+        $b2 = $c ? (float) $c['wtax_bracket_2'] : 400000;
+        $b3 = $c ? (float) $c['wtax_bracket_3'] : 800000;
+        $b4 = $c ? (float) $c['wtax_bracket_4'] : 2000000;
+        $r1 = $c ? (float) $c['wtax_rate_1'] / 100 : 0.15;
+        $r2 = $c ? (float) $c['wtax_rate_2'] / 100 : 0.20;
+        $r3 = $c ? (float) $c['wtax_rate_3'] / 100 : 0.25;
+        $r4 = $c ? (float) $c['wtax_rate_4'] / 100 : 0.35;
+
+        if ($annual <= $b1) return 0;
+        if ($annual <= $b2) return ($annual - $b1) * $r1;
+        if ($annual <= $b3) return ($b2 - $b1) * $r1 + ($annual - $b2) * $r2;
+        if ($annual <= $b4) return ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($annual - $b3) * $r3;
+
+        return ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($b4 - $b3) * $r3 + ($annual - $b4) * $r4;
     }
 }

@@ -307,24 +307,34 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Payroll Officer Payroll (FIXED — now uses controller) ─────────────
     Route::get('/payroll_officer/payroll',  [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'index'])->name('payroll_officer.payroll');
-    Route::get('/payroll_officer/payslips', fn() => view('payroll_officer.payroll-officer_payslips'))->name('payroll_officer.payslips');
+    Route::get('/payroll_officer/payslips', [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'payslips'])->name('payroll_officer.payslips');
     Route::get('/payroll_officer/govpay',   fn() => view('payroll_officer.payroll-officer_govpay'))->name('payroll_officer.govpay');
 
     // ── Payroll Period ─────────────────────────────────────────────────────
     Route::post('/payroll_officer/payroll/period/store',            [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'storePeriod'])->name('payroll_officer.payroll.period.store');
-    Route::get('/payroll_officer/payroll/period/{id}',              [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'viewPeriod'])->name('payroll_officer.payroll.period.view');
+    Route::get('/payroll_officer/payroll/period/{id}/payslips',     [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'periodPayslips'])->name('payroll_officer.payroll.period.payslips');
     Route::post('/payroll_officer/payroll/period/{id}/submit',      [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'submitForApproval'])->name('payroll_officer.payroll.period.submit');
+    Route::put('/payroll_officer/payroll/payslip/{id}/save',        [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'savePayslip'])->name('payroll_officer.payroll.payslip.save');
+    Route::post('/payroll_officer/payroll/payslip/{id}/submit',     [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'submitPayslip'])->name('payroll_officer.payroll.payslip.submit');
 
     // ── Payroll Items (Salary Structure) ───────────────────────────────────
     Route::post('/payroll_officer/payroll/item/store',              [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'storePayrollItem'])->name('payroll_officer.payroll.item.store');
     Route::put('/payroll_officer/payroll/item/{id}/update',         [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'updatePayrollItem'])->name('payroll_officer.payroll.item.update');
     Route::post('/payroll_officer/payroll/item/{id}/deactivate',    [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'deactivatePayrollItem'])->name('payroll_officer.payroll.item.deactivate');
+    Route::delete('/payroll_officer/payroll/item/{id}/delete',      [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'deletePayrollItem'])->name('payroll_officer.payroll.item.delete');
     Route::get('/payroll_officer/payroll/item/{id}',                [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'getPayrollItem'])->name('payroll_officer.payroll.item.get');
+
+    // ── Salary Grades ──────────────────────────────────────────────────────
+    Route::post('/payroll_officer/payroll/grade/store',             [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'storeGrade'])->name('payroll_officer.payroll.grade.store');
+    Route::put('/payroll_officer/payroll/grade/{id}/update',        [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'updateGrade'])->name('payroll_officer.payroll.grade.update');
+    Route::delete('/payroll_officer/payroll/grade/{id}/delete',     [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'deleteGrade'])->name('payroll_officer.payroll.grade.delete');
+    Route::post('/payroll_officer/payroll/contrib/update',          [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'updateContrib'])->name('payroll_officer.payroll.contrib.update');
 
     // ── Benefits ───────────────────────────────────────────────────────────
     Route::post('/payroll_officer/payroll/benefit/store',           [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'storeBenefit'])->name('payroll_officer.payroll.benefit.store');
     Route::put('/payroll_officer/payroll/benefit/{id}/update',      [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'updateBenefit'])->name('payroll_officer.payroll.benefit.update');
     Route::post('/payroll_officer/payroll/benefit/{id}/deactivate', [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'deactivateBenefit'])->name('payroll_officer.payroll.benefit.deactivate');
+    Route::delete('/payroll_officer/payroll/benefit/{id}/delete',   [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'deleteBenefit'])->name('payroll_officer.payroll.benefit.delete');
     Route::get('/payroll_officer/payroll/benefit/{id}',             [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'getBenefit'])->name('payroll_officer.payroll.benefit.get');
 
     // ══════════════════════════════════════════════════════════════════════

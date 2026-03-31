@@ -89,6 +89,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::delete('/notifications/clear',   [NotificationController::class, 'clearAll'])->name('notifications.clear');
     Route::delete('/notifications/{id}',    [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::post('/notifications/check-shift', [NotificationController::class, 'checkShift'])->name('notifications.check-shift');
 
     // ── ANNOUNCEMENT ROUTES ────────────────────────────────────────────────
     Route::post('/admin/announcements',      [AnnouncementController::class, 'store'])->name('admin.announcements.store');

@@ -400,18 +400,19 @@
         this.isSaving = true;
 
         const payload = {
-            first_name:    this.selectedEmployee.first_name,
-            last_name:     this.selectedEmployee.last_name,
-            mi:            this.selectedEmployee.mi,
-            suffix:        this.selectedEmployee.suffix,
-            email:         this.selectedEmployee.email,
-            contact_no:    this.selectedEmployee.contact_number,
-            department_id: this.selectedEmployee.department_id,
-            job_title_id:  this.selectedEmployee.job_title_id,
-            role:          this.selectedEmployee.role,
-            start_date:    this.selectedEmployee.date_hired,
-            _method:       'PUT',
-            _token:        document.querySelector('meta[name=csrf-token]').getAttribute('content')
+            first_name:      this.selectedEmployee.first_name,
+            last_name:       this.selectedEmployee.last_name,
+            mi:              this.selectedEmployee.mi,
+            suffix:          this.selectedEmployee.suffix,
+            email:           this.selectedEmployee.email,
+            contact_no:      this.selectedEmployee.contact_number,
+            department_id:   this.selectedEmployee.department_id,
+            job_title_id:    this.selectedEmployee.job_title_id,
+            role:            this.selectedEmployee.role,
+            start_date:      this.selectedEmployee.date_hired,
+            employment_type: this.selectedEmployee.employment_type,
+            _method:         'PUT',
+            _token:          document.querySelector('meta[name=csrf-token]').getAttribute('content')
         };
 
         try {
@@ -1264,7 +1265,7 @@
                         </template>
 
                         <!-- Tab Bar -->
-                        <div class="flex border-b border-gray-200">
+                        <div class="flex justify-center border-b border-gray-200">
                             <button @click="empTab = 'basic'; isEditMode = false"
                                 class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200"
                                 :class="empTab === 'basic' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
@@ -1455,8 +1456,20 @@
                                         </div>
                                         <div>
                                             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Employment Type</label>
-                                            <input type="text" x-model="selectedEmployee.employment_type" readonly
-                                                class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed capitalize">
+                                            <div class="relative">
+                                                <select x-model="selectedEmployee.employment_type"
+                                                    :disabled="!isEditMode"
+                                                    :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all">
+                                                    <option value="Full-time">Full-time</option>
+                                                    <option value="Part-time">Part-time</option>
+                                                    <option value="Contractual">Contractual</option>
+                                                    <option value="Internship">Internship</option>
+                                                </select>
+                                                <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 

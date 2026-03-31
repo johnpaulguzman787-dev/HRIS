@@ -183,9 +183,10 @@ class SupervisorEmployeeController extends Controller
             'suffix'        => 'nullable|string|max:20',
             'email'         => 'required|email|unique:users,email,' . $employee->user->id,
             'contact_no'    => 'required|string|min:10|max:15',
-            'department_id' => 'required|exists:departments,id',
-            'job_title_id'  => 'required|exists:job_titles,id',
-            'start_date'    => 'required|date',
+            'department_id'   => 'required|exists:departments,id',
+            'job_title_id'    => 'required|exists:job_titles,id',
+            'start_date'      => 'required|date',
+            'employment_type' => 'required|string',
         ]);
 
         // Prevent supervisor from moving employee to another department
@@ -218,14 +219,15 @@ class SupervisorEmployeeController extends Controller
                 }
 
                 $employee->update([
-                    'fname'         => $request->first_name,
-                    'lname'         => $request->last_name,
-                    'mi'            => $request->mi,
-                    'suffix'        => $request->suffix,
-                    'contact_no'    => $request->contact_no,
-                    'department_id' => $request->department_id,
-                    'job_title_id'  => $request->job_title_id,
-                    'start_date'    => $request->start_date,
+                    'fname'           => $request->first_name,
+                    'lname'           => $request->last_name,
+                    'mi'              => $request->mi,
+                    'suffix'          => $request->suffix,
+                    'contact_no'      => $request->contact_no,
+                    'department_id'   => $request->department_id,
+                    'job_title_id'    => $request->job_title_id,
+                    'start_date'      => $request->start_date,
+                    'employment_type' => $request->employment_type,
                 ]);
             });
 

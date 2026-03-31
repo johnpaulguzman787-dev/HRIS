@@ -2,6 +2,32 @@
 
 <div x-data="notificationBell()" x-init="init()" @click.away="open = false" class="relative">
 
+    {{-- Notification Popup Modal --}}
+    <div x-show="popup.show" x-cloak
+        class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+        style="background: rgba(0,0,0,0.45); backdrop-filter: blur(6px);">
+        <div
+            x-transition:enter="transition-all duration-250 ease-out"
+            x-transition:enter-start="opacity-0 scale-90"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition-all duration-150 ease-in"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-90"
+            class="bg-white rounded-2xl shadow-2xl flex flex-col items-center justify-center text-center p-10"
+            style="width: 460px; min-height: 320px;">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 shadow-sm"
+                :class="popup.icon === 'warning' ? 'bg-red-50' : popup.icon === 'caution' ? 'bg-orange-50' : popup.icon === 'process_done' ? 'bg-green-50' : 'bg-blue-50'">
+                <svg class="w-8 h-8" :class="popup.icon === 'warning' ? 'text-red-500' : popup.icon === 'caution' ? 'text-orange-500' : popup.icon === 'process_done' ? 'text-green-500' : 'text-blue-500'"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+            </div>
+            <p class="text-sm font-semibold text-gray-800 mb-1" x-text="popup.title"></p>
+            <p class="text-sm text-gray-500 mb-7 leading-snug" x-text="popup.message"></p>
+            <button @click="popup.show = false" class="px-8 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-150 shadow-md hover:shadow-lg">OK</button>
+        </div>
+    </div>
+
     {{-- Bell Button --}}
     <button @click="toggle()"
         class="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/20 transition-all focus:outline-none">
@@ -156,10 +182,34 @@ function notificationBell() {
         unreadCount: 0,
         loading: false,
         csrf: '',
+        popup: { show: false, title: '', message: '', icon: 'notice' },
 
         init() {
             this.csrf = document.querySelector('meta[name=csrf-token]')?.content ?? '';
             this.fetchNotifications();
+            setInterval(() => this.poll(), 30000);
+        },
+
+        async poll() {
+            try {
+                await fetch('/notifications/check-shift', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': this.csrf, 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const res  = await fetch('/notifications', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const data = await res.json();
+                const prevCount = this.unreadCount;
+                this.unreadCount = data.unread_count;
+                if (data.unread_count > prevCount && !this.open && !this.popup.show) {
+                    const newest = data.notifications.find(n => !n.is_read);
+                    if (newest) {
+                        this.popup = { show: true, title: newest.title, message: newest.message, icon: newest.icon };
+                    }
+                }
+                if (this.open) {
+                    this.notifications = data.notifications;
+                }
+            } catch(e) {}
         },
 
         async fetchNotifications() {

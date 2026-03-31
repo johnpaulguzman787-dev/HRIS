@@ -102,6 +102,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/store', [AdminEmployeeController::class, 'store'])->name('store');
         Route::post('/departments', [AdminEmployeeController::class, 'storeDepartment'])->name('departments.store');
         Route::match(['POST', 'PUT'], '/departments/{id}', [AdminEmployeeController::class, 'updateDepartment'])->name('departments.update');
+        Route::delete('/departments/{id}', [AdminEmployeeController::class, 'destroyDepartment'])->name('departments.destroy');
+        Route::get('/{id}/documents', [AdminEmployeeController::class, 'getDocuments'])->name('documents.index')->whereNumber('id');
+        Route::post('/{id}/documents', [AdminEmployeeController::class, 'uploadDocument'])->name('documents.store')->whereNumber('id');
+        Route::get('/documents/{docId}/download', [AdminEmployeeController::class, 'downloadDocument'])->name('documents.download');
         Route::put('/{id}', [AdminEmployeeController::class, 'update'])->name('update');
         Route::put('/job-title/{id}', [AdminEmployeeController::class, 'updateJobTitle'])->name('job_title.update');
     });
@@ -112,6 +116,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/store', [App\Http\Controllers\HREmployeeController::class, 'store'])->name('store');
         Route::post('/departments', [App\Http\Controllers\HREmployeeController::class, 'storeDepartment'])->name('departments.store');
         Route::match(['POST', 'PUT'], '/departments/{id}', [App\Http\Controllers\HREmployeeController::class, 'updateDepartment'])->name('departments.update');
+        Route::delete('/departments/{id}', [App\Http\Controllers\HREmployeeController::class, 'destroyDepartment'])->name('departments.destroy');
+        Route::get('/{id}/documents', [App\Http\Controllers\HREmployeeController::class, 'getDocuments'])->name('documents.index')->whereNumber('id');
+        Route::post('/{id}/documents', [App\Http\Controllers\HREmployeeController::class, 'uploadDocument'])->name('documents.store')->whereNumber('id');
+        Route::get('/documents/{docId}/download', [App\Http\Controllers\HREmployeeController::class, 'downloadDocument'])->name('documents.download');
         Route::put('/{id}', [App\Http\Controllers\HREmployeeController::class, 'update'])->name('update');
         Route::get('/profile', [App\Http\Controllers\HREmployeeController::class, 'profile'])->name('profile');
     });
@@ -122,6 +130,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/profile', [SupervisorEmployeeController::class, 'profile'])->name('profile');
         Route::post('/store', [SupervisorEmployeeController::class, 'store'])->name('store');
         Route::match(['POST', 'PUT'], '/departments/{id}', [SupervisorEmployeeController::class, 'updateDepartment'])->name('departments.update');
+        Route::get('/{id}/documents', [SupervisorEmployeeController::class, 'getDocuments'])->name('documents.index')->whereNumber('id');
+        Route::post('/{id}/documents', [SupervisorEmployeeController::class, 'uploadDocument'])->name('documents.store')->whereNumber('id');
+        Route::get('/documents/{docId}/download', [SupervisorEmployeeController::class, 'downloadDocument'])->name('documents.download');
         Route::put('/{id}', [SupervisorEmployeeController::class, 'update'])->name('update');
     });
 

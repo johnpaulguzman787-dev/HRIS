@@ -19,6 +19,10 @@
     showFilters: false,
     selectedEmployee: null,
     isEditMode: false,
+    empTab: 'basic',
+    employeeDocuments: [],
+    isLoadingDocs: false,
+    isUploadingDoc: false,
     searchQuery: '',
     selectedDepartments: [],
     selectedSort: '',
@@ -358,22 +362,30 @@
 
     viewEmployee(employee) {
         this.selectedEmployee = {
-            id:             employee.id,
-            first_name:     employee.first_name || '',
-            last_name:      employee.last_name || '',
-            mi:             employee.mi || '',
-            email:          employee.email || '',
-            department:     employee.department || '',
-            position:       employee.job_title || '',
-            date_hired:     employee.start_date || '',
-            contact_number: employee.contact_no || '',
-            role:           employee.role || '',
-            suffix:         employee.suffix || '',
-            department_id:  employee.department_id,
-            job_title_id:   employee.job_title_id,
+            id:                employee.id,
+            first_name:        employee.first_name || '',
+            last_name:         employee.last_name || '',
+            mi:                employee.mi || '',
+            email:             employee.email || '',
+            department:        employee.department || '',
+            position:          employee.job_title || '',
+            date_hired:        employee.start_date || '',
+            contact_number:    employee.contact_no || '',
+            role:              employee.role || '',
+            suffix:            employee.suffix || '',
+            department_id:     employee.department_id,
+            job_title_id:      employee.job_title_id,
+            gender:            employee.gender || '',
+            date_of_birth:     employee.date_of_birth || '',
+            address:           employee.address || '',
+            employment_type:   employee.employment_type || '',
+            employment_status: employee.employment_status || '',
         };
         this.isEditMode = false;
+        this.empTab = 'basic';
+        this.employeeDocuments = [];
         this.showEmployeeDetails = true;
+        this.loadDocuments(employee.id);
         setTimeout(() => { document.body.style.overflow = 'hidden'; }, 100);
     },
 
@@ -453,6 +465,71 @@
     },
 
     closeModal() { this.showEmployeeDetails = false; this.isEditMode = false; document.body.style.overflow = 'auto'; },
+
+    async loadDocuments(employeeId) {
+        this.isLoadingDocs = true;
+        try {
+            const res = await fetch(`/employees/${employeeId}/documents`, {
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') }
+            });
+            const data = await res.json();
+            this.employeeDocuments = data.documents || [];
+        } catch (e) { console.error('Failed to load documents', e); }
+        this.isLoadingDocs = false;
+    },
+
+    async handleDocUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!['pdf', 'doc', 'docx'].includes(ext)) {
+            this.showToast('Only PDF and Word documents (doc/docx) are allowed.', 'error');
+            event.target.value = '';
+            return;
+        }
+        this.isUploadingDoc = true;
+        const formData = new FormData();
+        formData.append('document', file);
+        try {
+            const res = await fetch(`/employees/${this.selectedEmployee.id}/documents`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'), 'Accept': 'application/json' },
+                body: formData
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                this.employeeDocuments.push(data.document);
+                this.showToast('Document uploaded!', 'success');
+            } else {
+                this.showToast(data.message || 'Upload failed.', 'error');
+            }
+        } catch (e) { this.showToast('Network error during upload.', 'error'); }
+        this.isUploadingDoc = false;
+        event.target.value = '';
+    },
+
+    async deleteDepartment(dept) {
+        if (dept.employees_count > 0) {
+            this.showAlert('Employees still exist in this department. Reassign their department and job titles first before deleting this department.', 'error');
+            return;
+        }
+        if (!confirm('Delete department: ' + dept.name + '?')) return;
+        try {
+            const res = await fetch(`/employees/departments/${dept.id}`, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'), 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                this.departments = this.departments.filter(d => d.id !== dept.id);
+                this.jobTitles   = this.jobTitles.filter(j => !dept.job_titles.some(jt => jt.id === j.id));
+                this.showAlert('Department deleted successfully.', 'success');
+            } else {
+                this.showAlert(data.message || 'Could not delete department.', 'error');
+            }
+        } catch (e) { this.showAlert('Network error. Please try again.', 'error'); }
+    },
+
     clearSearch() { this.searchQuery = ''; },
     clearFilters() { this.selectedDepartments = []; this.selectedSort = ''; },
     applyFilters() { this.showFilters = false; },
@@ -461,7 +538,10 @@
     showToast(message, type = 'success') {
         this.toast = { show: true, message, type };
         setTimeout(() => { this.toast.show = false; }, 3000);
-    }
+    },
+
+    alertModal: { show: false, message: '', type: 'error' },
+    showAlert(message, type = 'error') { this.alertModal = { show: true, message, type }; }
 }" class="flex h-screen overflow-hidden bg-gray-50" @keydown.escape.window="closeModal(); closeAddEmployee()">
 
     @include('admin.admin_sidebar', ['activeMenu' => 'employees'])
@@ -510,6 +590,49 @@
                 <button @click="toast.show = false" class="ml-2 text-gray-400 hover:text-gray-600 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
+            </div>
+
+            <!-- ===================== ALERT MODAL ===================== -->
+            <div x-show="alertModal.show" x-cloak
+                class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+                style="background: rgba(0,0,0,0.45); backdrop-filter: blur(6px);"
+                @click.self="alertModal.show = false">
+                <div x-show="alertModal.show"
+                    x-transition:enter="transition-all duration-250 ease-out"
+                    x-transition:enter-start="opacity-0 scale-90"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition-all duration-150 ease-in"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-90"
+                    class="bg-white rounded-2xl shadow-2xl flex flex-col items-center justify-center text-center p-10"
+                    style="width: 460px; min-height: 320px;"
+                    @click.stop>
+
+                    <!-- Icon: success = green check, error = red warning -->
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 shadow-sm"
+                        :class="alertModal.type === 'success' ? 'bg-green-50' : 'bg-red-50'">
+                        <template x-if="alertModal.type === 'success'">
+                            <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </template>
+                        <template x-if="alertModal.type === 'error'">
+                            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            </svg>
+                        </template>
+                    </div>
+
+                    <p class="text-sm font-semibold text-gray-800 mb-1"
+                        x-text="alertModal.type === 'success' ? 'Success' : 'Action Failed'"></p>
+                    <p class="text-sm text-gray-500 mb-7 leading-snug" x-text="alertModal.message"></p>
+
+                    <button @click="alertModal.show = false"
+                        class="px-8 py-2.5 text-white text-sm font-semibold rounded-xl active:scale-95 transition-all duration-150 shadow-md hover:shadow-lg"
+                        :class="alertModal.type === 'success' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'">
+                        OK
+                    </button>
+                </div>
             </div>
 
             <!-- ===================== MANAGE DEPARTMENTS MODAL ===================== -->
@@ -567,8 +690,12 @@
                                             <span x-text="dept.job_titles.map(j => j.title).join(', ')"></span>
                                         </td>
                                         <td class="px-5 py-4 text-center align-middle w-36">
-                                            <button @click="viewDepartmentDetails(dept)"
-                                                class="whitespace-nowrap px-5 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">View Details</button>
+                                            <div class="flex items-center justify-center gap-2">
+                                                <button @click="viewDepartmentDetails(dept)"
+                                                    class="whitespace-nowrap px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">Edit</button>
+                                                <button @click="deleteDepartment(dept)"
+                                                    class="whitespace-nowrap px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-xl hover:bg-red-600 transition-all duration-200 shadow-md hover:shadow-lg">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                 </template>
@@ -1110,167 +1237,312 @@
                     x-transition:leave="transition-all duration-200 ease-in"
                     x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                     x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-                    class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden relative"
+                    class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden relative flex flex-col"
+                    style="max-height: 92vh;"
                     @click.stop x-show="selectedEmployee">
+
+                    <!-- Close button -->
                     <button @click="closeModal"
-                        class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full border-2 border-gray-300 text-gray-500 hover:border-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200 z-10 bg-white">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        class="absolute top-5 right-5 w-9 h-9 flex items-center justify-center rounded-full border-2 border-gray-200 text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all duration-200 z-10 bg-white">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
-                    <div class="px-8 pt-8 pb-2">
-                        <h2 class="text-2xl font-bold text-gray-900">Employee Details</h2>
+
+                    <!-- Header: Avatar + Name -->
+                    <div class="px-8 pt-7 pb-0 flex-shrink-0">
+                        <template x-if="selectedEmployee">
+                            <div class="flex items-center gap-4 mb-5">
+                                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-md flex-shrink-0"
+                                    x-text="(selectedEmployee.first_name.charAt(0) + selectedEmployee.last_name.charAt(0)).toUpperCase()"></div>
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-900 leading-tight"
+                                        x-text="selectedEmployee.first_name + ' ' + (selectedEmployee.mi ? selectedEmployee.mi + '. ' : '') + selectedEmployee.last_name + (selectedEmployee.suffix ? ' ' + selectedEmployee.suffix : '')"></h2>
+                                    <p class="text-sm text-gray-500 mt-0.5" x-text="selectedEmployee.position"></p>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Tab Bar -->
+                        <div class="flex border-b border-gray-200">
+                            <button @click="empTab = 'basic'; isEditMode = false"
+                                class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200"
+                                :class="empTab === 'basic' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
+                                Basic Details
+                                <span x-show="empTab === 'basic'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full"></span>
+                            </button>
+                            <button @click="empTab = 'job'; isEditMode = false"
+                                class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200"
+                                :class="empTab === 'job' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
+                                Job Information
+                                <span x-show="empTab === 'job'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full"></span>
+                            </button>
+                            <button @click="empTab = 'docs'; isEditMode = false"
+                                class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200"
+                                :class="empTab === 'docs' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
+                                Documents
+                                <span x-show="empTab === 'docs'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full"></span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="px-8 pb-6 space-y-5 overflow-y-auto" style="max-height: calc(90vh - 200px);">
 
-                        <!-- Full Name -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                            <div class="grid grid-cols-12 gap-3">
-                                <div class="col-span-5">
-                                    <input type="text" x-model="selectedEmployee.first_name" placeholder="First Name"
-                                        :readonly="!isEditMode"
-                                        @input="if(isEditMode) selectedEmployee.first_name = $event.target.value.replace(/[^a-zA-Z\s\-']/g, '')"
-                                        minlength="2" maxlength="50"
-                                        :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
-                                        class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
-                                </div>
-                                <div class="col-span-5">
-                                    <input type="text" x-model="selectedEmployee.last_name" placeholder="Last Name"
-                                        :readonly="!isEditMode"
-                                        @input="if(isEditMode) selectedEmployee.last_name = $event.target.value.replace(/[^a-zA-Z\s\-']/g, '')"
-                                        minlength="2" maxlength="50"
-                                        :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
-                                        class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
-                                </div>
-                                <div class="col-span-2">
-                                    <input type="text" x-model="selectedEmployee.mi" placeholder="MI" minlength="1" maxlength="2"
-                                        :readonly="!isEditMode"
-                                        @input="if(isEditMode) selectedEmployee.mi = selectedEmployee.mi.replace(/[^a-zA-Z]/g, '')"
-                                        :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
-                                        class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center uppercase transition-all duration-200">
-                                </div>
-                            </div>
-                            <div class="mt-2 relative">
-                                <select x-model="selectedEmployee.suffix" :disabled="!isEditMode"
-                                    :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
-                                    class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all duration-200">
-                                    <option value="">None</option>
-                                    <option value="Sr.">Sr.</option>
-                                    <option value="Jr.">Jr.</option>
-                                    <option value="II">II</option>
-                                    <option value="III">III</option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Email -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                            <input type="email" x-model="selectedEmployee.email"
-                                :readonly="!isEditMode"
-                                :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
-                                class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
-                            <p x-show="isEditMode" class="text-xs text-yellow-600 mt-1">⚠ Changing email will send a new verification link.</p>
-                        </div>
-
-                        <!-- Department + Job Title -->
-                        <div class="grid grid-cols-2 gap-3">
+                    <!-- Tab Contents (scrollable) -->
+                    <div class="flex-1 overflow-y-auto">
+                        <template x-if="selectedEmployee">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                                <div class="relative">
-                                    <select x-model="selectedEmployee.department_id"
-                                        @change="selectedEmployee.job_title_id = ''"
-                                        :disabled="!isEditMode"
-                                        :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
-                                        class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all duration-200">
-                                        <option value="" disabled>Choose department</option>
-                                        <template x-for="dept in departments" :key="dept.id">
-                                            <option :value="dept.id" x-text="dept.name"></option>
+
+                                <!-- BASIC DETAILS TAB -->
+                                <div x-show="empTab === 'basic'" class="px-8 py-5 space-y-4">
+
+                                    <!-- Full Name -->
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Full Name</label>
+                                        <div class="grid grid-cols-12 gap-2">
+                                            <div class="col-span-5">
+                                                <input type="text" x-model="selectedEmployee.first_name" placeholder="First Name"
+                                                    :readonly="!isEditMode"
+                                                    @input="if(isEditMode) selectedEmployee.first_name = $event.target.value.replace(/[^a-zA-Z\s\-']/g, '')"
+                                                    minlength="2" maxlength="50"
+                                                    :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                                            </div>
+                                            <div class="col-span-5">
+                                                <input type="text" x-model="selectedEmployee.last_name" placeholder="Last Name"
+                                                    :readonly="!isEditMode"
+                                                    @input="if(isEditMode) selectedEmployee.last_name = $event.target.value.replace(/[^a-zA-Z\s\-']/g, '')"
+                                                    minlength="2" maxlength="50"
+                                                    :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                                            </div>
+                                            <div class="col-span-2">
+                                                <input type="text" x-model="selectedEmployee.mi" placeholder="MI" maxlength="2"
+                                                    :readonly="!isEditMode"
+                                                    :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                                    class="w-full px-2 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center uppercase transition-all">
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 relative">
+                                            <select x-model="selectedEmployee.suffix" :disabled="!isEditMode"
+                                                :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                                class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all">
+                                                <option value="">None</option>
+                                                <option value="Sr.">Sr.</option>
+                                                <option value="Jr.">Jr.</option>
+                                                <option value="II">II</option>
+                                                <option value="III">III</option>
+                                            </select>
+                                            <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Email Address</label>
+                                        <input type="email" x-model="selectedEmployee.email"
+                                            :readonly="!isEditMode"
+                                            :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                                        <p x-show="isEditMode" class="text-xs text-yellow-600 mt-1">⚠ Changing email will send a new verification link.</p>
+                                    </div>
+
+                                    <!-- Contact Number -->
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Contact Number</label>
+                                        <input type="text" x-model="selectedEmployee.contact_number"
+                                            :readonly="!isEditMode"
+                                            maxlength="15"
+                                            @input="if(isEditMode) selectedEmployee.contact_number = selectedEmployee.contact_number.replace(/[^0-9]/g, '')"
+                                            :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                                    </div>
+
+                                    <!-- Date of Birth + Gender -->
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Date of Birth</label>
+                                            <input type="date" x-model="selectedEmployee.date_of_birth" readonly
+                                                class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Gender</label>
+                                            <input type="text" x-model="selectedEmployee.gender" readonly
+                                                class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed capitalize">
+                                        </div>
+                                    </div>
+
+                                    <!-- Address -->
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Address</label>
+                                        <textarea x-model="selectedEmployee.address" readonly rows="2"
+                                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed resize-none"></textarea>
+                                    </div>
+
+                                </div>
+
+                                <!-- JOB INFORMATION TAB -->
+                                <div x-show="empTab === 'job'" class="px-8 py-5 space-y-4">
+
+                                    <!-- Department + Job Title -->
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Department</label>
+                                            <div class="relative">
+                                                <select x-model="selectedEmployee.department_id"
+                                                    @change="selectedEmployee.job_title_id = ''"
+                                                    :disabled="!isEditMode"
+                                                    :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all">
+                                                    <option value="" disabled>Choose department</option>
+                                                    <template x-for="dept in departments" :key="dept.id">
+                                                        <option :value="dept.id" x-text="dept.name"></option>
+                                                    </template>
+                                                </select>
+                                                <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Job Title</label>
+                                            <div class="relative">
+                                                <select x-model="selectedEmployee.job_title_id"
+                                                    :disabled="!isEditMode || !selectedEmployee.department_id"
+                                                    :class="{'bg-gray-50 cursor-not-allowed': !isEditMode || !selectedEmployee.department_id, 'bg-white': isEditMode && selectedEmployee.department_id}"
+                                                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all">
+                                                    <option value="" disabled x-text="!selectedEmployee.department_id ? 'Choose department first' : 'Choose job title'"></option>
+                                                    <template x-for="jt in jobTitles.filter(j => j.department_id == selectedEmployee.department_id)" :key="jt.id">
+                                                        <option :value="jt.id" x-text="jt.title"></option>
+                                                    </template>
+                                                </select>
+                                                <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Role -->
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Role</label>
+                                        <div class="relative">
+                                            <select x-model="selectedEmployee.role"
+                                                :disabled="!isEditMode"
+                                                :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                                class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all">
+                                                <option value="admin">Admin</option>
+                                                <option value="hr_manager">HR Manager</option>
+                                                <option value="supervisor">Supervisor</option>
+                                                <option value="finance_officer">Finance Officer</option>
+                                                <option value="payroll_officer">Payroll Officer</option>
+                                                <option value="employee">Employee</option>
+                                            </select>
+                                            <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Date Hired + Employment Type -->
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Date Hired</label>
+                                            <input type="date" x-model="selectedEmployee.date_hired"
+                                                :readonly="!isEditMode"
+                                                :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                                class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Employment Type</label>
+                                            <input type="text" x-model="selectedEmployee.employment_type" readonly
+                                                class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed capitalize">
+                                        </div>
+                                    </div>
+
+                                    <!-- Employment Status -->
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Employment Status</label>
+                                        <input type="text" x-model="selectedEmployee.employment_status" readonly
+                                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed">
+                                    </div>
+
+                                </div>
+
+                                <!-- DOCUMENTS TAB -->
+                                <div x-show="empTab === 'docs'" class="px-8 py-5">
+
+                                    <!-- Upload Button -->
+                                    <div class="flex items-center justify-between mb-4">
+                                        <p class="text-sm text-gray-500">PDF and Word documents only (max 10 MB)</p>
+                                        <label class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all"
+                                            :class="isUploadingDoc ? 'opacity-60 pointer-events-none' : ''">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                            <span x-show="!isUploadingDoc">Upload</span>
+                                            <span x-show="isUploadingDoc">Uploading...</span>
+                                            <input type="file" class="hidden" accept=".pdf,.doc,.docx" @change="handleDocUpload($event)" :disabled="isUploadingDoc">
+                                        </label>
+                                    </div>
+
+                                    <!-- Loading state -->
+                                    <div x-show="isLoadingDocs" class="flex items-center justify-center py-8">
+                                        <svg class="animate-spin w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+                                    </div>
+
+                                    <!-- Document List -->
+                                    <div x-show="!isLoadingDocs">
+                                        <template x-if="employeeDocuments.length === 0">
+                                            <div class="text-center py-10 text-gray-400">
+                                                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                </svg>
+                                                <p class="text-sm">No documents attached yet.</p>
+                                            </div>
                                         </template>
-                                    </select>
-                                    <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                        <div class="space-y-2">
+                                            <template x-for="doc in employeeDocuments" :key="doc.id">
+                                                <a :href="`/employees/documents/${doc.id}/download`" target="_blank"
+                                                    class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all group">
+                                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                        :class="doc.file_type === 'pdf' ? 'bg-red-100' : 'bg-blue-100'">
+                                                        <svg class="w-5 h-5" :class="doc.file_type === 'pdf' ? 'text-red-500' : 'text-blue-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                        </svg>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm font-medium text-gray-800 truncate group-hover:text-blue-600" x-text="doc.file_name"></p>
+                                                        <p class="text-xs text-gray-400" x-text="doc.file_size + ' · ' + doc.created_at"></p>
+                                                    </div>
+                                                    <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                    </svg>
+                                                </a>
+                                            </template>
+                                        </div>
                                     </div>
                                 </div>
+
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Job Title</label>
-                                <div class="relative">
-                                    <select x-model="selectedEmployee.job_title_id"
-                                        :disabled="!isEditMode || !selectedEmployee.department_id"
-                                        :class="{'bg-gray-50 cursor-not-allowed': !isEditMode || !selectedEmployee.department_id, 'bg-white': isEditMode && selectedEmployee.department_id}"
-                                        class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all duration-200">
-                                        <option value="" disabled x-text="!selectedEmployee.department_id ? 'Choose department first' : 'Choose job title'"></option>
-                                        <template x-for="jt in jobTitles.filter(j => j.department_id == selectedEmployee.department_id)" :key="jt.id">
-                                            <option :value="jt.id" x-text="jt.title"></option>
-                                        </template>
-                                    </select>
-                                    <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Role -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
-                            <div class="relative">
-                                <select x-model="selectedEmployee.role"
-                                    :disabled="!isEditMode"
-                                    :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
-                                    class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all duration-200">
-                                    <option value="admin">Admin</option>
-                                    <option value="hr_manager">HR Manager</option>
-                                    <option value="supervisor">Supervisor</option>
-                                    <option value="finance_officer">Finance Officer</option>
-                                    <option value="payroll_officer">Payroll Officer</option>
-                                    <option value="employee">Employee</option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Date Hired -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Date Hired</label>
-                            <input type="date" x-model="selectedEmployee.date_hired"
-                                :readonly="!isEditMode"
-                                :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
-                                class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
-                        </div>
-
-                        <!-- Contact Number -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
-                            <input type="text" x-model="selectedEmployee.contact_number"
-                                :readonly="!isEditMode"
-                                maxlength="15"
-                                @input="if(isEditMode) selectedEmployee.contact_number = selectedEmployee.contact_number.replace(/[^0-9]/g, '')"
-                                :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
-                                class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
-                        </div>
-
+                        </template>
                     </div>
-                    <div class="px-8 py-5 bg-white border-t border-gray-100 flex justify-end space-x-3">
+
+                    <!-- Footer Buttons (only for basic/job tabs) -->
+                    <div x-show="empTab !== 'docs'" class="px-8 py-4 bg-white border-t border-gray-100 flex justify-end gap-3 flex-shrink-0">
                         <button x-show="!isEditMode" @click="enableEditMode"
-                            class="px-8 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-all duration-200">
+                            class="px-7 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-all">
                             Edit
                         </button>
                         <button x-show="isEditMode" @click="isEditMode = false"
-                            class="px-8 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-all duration-200">
+                            class="px-7 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-all">
                             Cancel
                         </button>
                         <button x-show="isEditMode" @click="saveChanges()" :disabled="isSaving"
                             :class="isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 cursor-pointer'"
-                            class="px-8 py-2.5 text-white text-sm font-medium rounded-xl transition-all duration-200">
-                            <span x-show="!isSaving">Save</span>
+                            class="px-7 py-2.5 text-white text-sm font-medium rounded-xl transition-all">
+                            <span x-show="!isSaving">Save Changes</span>
                             <span x-show="isSaving" class="flex items-center gap-2">
                                 <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

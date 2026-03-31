@@ -43,8 +43,13 @@ $jobTitles = \App\Models\JobTitle::all();
 'start_date'     => $e->start_date ? \Carbon\Carbon::parse($e->start_date)->format('Y-m-d') : '',
 'department_id'  => $e->department_id,
 'job_title_id'   => $e->job_title_id,
-'role'           => $e->user->role ?? '',
-'suffix'         => $e->suffix ?? '',
+'role'              => $e->user->role ?? '',
+'suffix'            => $e->suffix ?? '',
+'gender'            => $e->gender ?? '',
+'date_of_birth'     => $e->date_of_birth ? \Carbon\Carbon::parse($e->date_of_birth)->format('Y-m-d') : '',
+'address'           => $e->address ?? '',
+'employment_type'   => $e->employment_type ?? '',
+'employment_status' => $e->employment_status ?? '',
 ];
         });
 
@@ -333,5 +338,84 @@ return response()->json([
             ->first();
 
         return view('admin.admin-profile', compact('user', 'employee'));
+    }
+
+    public function destroyDepartment($id)
+    {
+        try {
+            $message = null;
+            DB::transaction(function () use ($id, &$message) {
+                $department = \App\Models\Department::lockForUpdate()->findOrFail($id);
+                if ($department->employees()->count() > 0) {
+                    $message = 'Cannot delete a department that has employees.';
+                    return;
+                }
+                \App\Models\JobTitle::where('department_id', $department->id)->delete();
+                $department->delete();
+            });
+            if ($message) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+            return response()->json(['success' => true, 'message' => 'Department deleted successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getDocuments($id)
+    {
+        $employee  = Employee::findOrFail($id);
+        $documents = $employee->documents()->orderByDesc('created_at')->get()->map(fn($d) => [
+            'id'         => $d->id,
+            'file_name'  => $d->file_name,
+            'file_type'  => strtolower($d->file_type),
+            'file_size'  => $d->formatted_size,
+            'created_at' => $d->created_at->format('M j, Y'),
+        ]);
+        return response()->json(['documents' => $documents]);
+    }
+
+    public function uploadDocument(Request $request, $id)
+    {
+        $request->validate([
+            'document' => 'required|file|mimes:pdf,doc,docx|max:10240',
+        ]);
+        $employee = Employee::findOrFail($id);
+        $file     = $request->file('document');
+        $path     = $file->store('employee_documents', 'public');
+        $doc = \App\Models\Document::create([
+            'employee_id' => $employee->id,
+            'file_name'   => $file->getClientOriginalName(),
+            'file_path'   => $path,
+            'file_type'   => strtolower($file->getClientOriginalExtension()),
+            'file_size'   => $file->getSize(),
+            'uploaded_by' => auth()->id(),
+        ]);
+        return response()->json([
+            'success'  => true,
+            'document' => [
+                'id'         => $doc->id,
+                'file_name'  => $doc->file_name,
+                'file_type'  => $doc->file_type,
+                'file_size'  => $doc->formatted_size,
+                'created_at' => $doc->created_at->format('M j, Y'),
+            ],
+        ]);
+    }
+
+    public function downloadDocument($docId)
+    {
+        $doc  = \App\Models\Document::findOrFail($docId);
+        $path = storage_path('app/public/' . $doc->file_path);
+        if (!file_exists($path)) {
+            abort(404, 'File not found.');
+        }
+        if ($doc->file_type === 'pdf') {
+            return response()->file($path, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $doc->file_name . '"',
+            ]);
+        }
+        return response()->download($path, $doc->file_name);
     }
 }

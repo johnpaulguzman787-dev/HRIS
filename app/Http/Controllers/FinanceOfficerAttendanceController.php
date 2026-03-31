@@ -13,9 +13,11 @@ use App\Models\LeaveCredit;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use App\Models\ShiftChangeRequest;
+use App\Traits\NotifiesReviewers;
 
 class FinanceOfficerAttendanceController extends Controller
 {
+    use NotifiesReviewers;
     public function index()
     {
         $user     = Auth::user();
@@ -482,6 +484,12 @@ class FinanceOfficerAttendanceController extends Controller
             'status'        => 'pending',
         ]);
 
+        $this->notifyReviewers(
+            $employee,
+            'New Leave Request',
+            "{$employee->full_name} filed a leave request ({$refNo}) from {$request->start_date} to {$request->end_date}."
+        );
+
         return response()->json(['message' => 'Leave request filed successfully.', 'ref_no' => $refNo]);
     }
 
@@ -815,6 +823,12 @@ class FinanceOfficerAttendanceController extends Controller
             'status'          => 'pending',
         ]);
 
+        $this->notifyReviewers(
+            $employee,
+            'New Overtime Request',
+            "{$employee->full_name} filed an overtime request ({$refNo}) on {$request->ot_date} ({$requestedHours} hrs)."
+        );
+
         return response()->json(['message' => 'Overtime request filed successfully.', 'ref_no' => $refNo]);
     }
 
@@ -862,6 +876,12 @@ class FinanceOfficerAttendanceController extends Controller
             'document_path'      => $docPath,
             'status'             => 'pending',
         ]);
+
+        $this->notifyReviewers(
+            $employee,
+            'New Shift Change Request',
+            "{$employee->full_name} filed a shift change request ({$refNo}) effective {$request->effective_from}."
+        );
 
         return response()->json(['message' => 'Shift change request filed successfully.', 'ref_no' => $refNo]);
     }

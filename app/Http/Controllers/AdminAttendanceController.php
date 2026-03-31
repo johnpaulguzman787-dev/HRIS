@@ -14,9 +14,11 @@ use App\Models\LeaveCredit;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use App\Models\ShiftChangeRequest;
+use App\Traits\NotifiesReviewers;
 
 class AdminAttendanceController extends Controller
 {
+    use NotifiesReviewers;
     /**
      * Display the admin attendance reports page.
      */
@@ -718,6 +720,11 @@ public function fileLeave(Request $request)
         'status'        => 'pending',
     ]);
 
+    $this->notifyHR(
+        'New Leave Request',
+        "{$employee->full_name} (Admin) filed a leave request ({$refNo}) from {$request->start_date} to {$request->end_date}."
+    );
+
     return response()->json(['message' => 'Leave request filed successfully.', 'ref_no' => $refNo]);
 }
 
@@ -1077,6 +1084,11 @@ public function getLeaveRequest($id)
             'status'          => 'pending',
         ]);
 
+        $this->notifyHR(
+            'New Overtime Request',
+            "{$employee->full_name} (Admin) filed an overtime request ({$refNo}) on {$request->ot_date} ({$requestedHours} hrs)."
+        );
+
         return response()->json(['message' => 'Overtime request filed successfully.', 'ref_no' => $refNo]);
     }
 
@@ -1123,6 +1135,11 @@ public function getLeaveRequest($id)
             'document_path'      => $docPath,
             'status'             => 'pending',
         ]);
+
+        $this->notifyHR(
+            'New Shift Change Request',
+            "{$employee->full_name} (Admin) filed a shift change request ({$refNo}) effective {$request->effective_from}."
+        );
 
         return response()->json(['message' => 'Shift change request filed successfully.', 'ref_no' => $refNo]);
     }

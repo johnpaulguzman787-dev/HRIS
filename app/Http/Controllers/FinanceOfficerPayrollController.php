@@ -35,9 +35,12 @@ class FinanceOfficerPayrollController extends Controller
         }
 
         $daysToCutoff  = 0;
-        $pendingPeriod = PayrollPeriod::where('status', 'Submitted')->orderByDesc('start_date')->first();
-        if ($pendingPeriod) {
-            $daysToCutoff = max(0, now()->diffInDays($pendingPeriod->end_date, false));
+        $activePeriod  = PayrollPeriod::whereIn('status', ['Pending', 'Submitted'])
+            ->where('end_date', '>=', now()->toDateString())
+            ->orderBy('end_date')
+            ->first();
+        if ($activePeriod) {
+            $daysToCutoff = max(0, (int) ceil(now()->floatDiffInDays($activePeriod->end_date, false)));
         }
 
         $payrollItems = PayrollItem::orderBy('name')->get();
@@ -48,7 +51,7 @@ class FinanceOfficerPayrollController extends Controller
 
         return view('finance_officer.finance-officer_payroll', compact(
             'periods', 'grossPayroll', 'netPay', 'totalDeductions',
-            'latestPeriod', 'year', 'daysToCutoff',
+            'latestPeriod', 'activePeriod', 'year', 'daysToCutoff',
             'payrollItems', 'salaryGrades', 'benefits', 'employees', 'contrib'
         ));
     }

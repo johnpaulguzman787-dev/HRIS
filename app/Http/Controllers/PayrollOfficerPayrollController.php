@@ -39,11 +39,14 @@ class PayrollOfficerPayrollController extends Controller
             $totalDeductions = $latestSlips->sum('total_deductions');
         }
 
-        // Days to cutoff of the latest pending period
+        // Days to cutoff — nearest active period (Pending or Submitted) with a future end date
         $daysToCutoff = 0;
-        $pendingPeriod = $periods->firstWhere('status', 'Pending');
-        if ($pendingPeriod) {
-            $daysToCutoff = max(0, now()->diffInDays($pendingPeriod->end_date, false));
+        $activePeriod = $periods->whereIn('status', ['Pending', 'Submitted'])
+            ->where('end_date', '>=', now()->toDateString())
+            ->sortBy('end_date')
+            ->first();
+        if ($activePeriod) {
+            $daysToCutoff = max(0, (int) ceil(now()->floatDiffInDays($activePeriod->end_date, false)));
         }
 
         $employees = Employee::whereNull('deleted_at')->orderBy('fname')->get();
@@ -52,7 +55,7 @@ class PayrollOfficerPayrollController extends Controller
 
         return view('payroll_officer.payroll-officer_payroll', compact(
             'periods', 'grossPayroll', 'netPay', 'totalDeductions',
-            'daysToCutoff', 'latestPeriod', 'year',
+            'daysToCutoff', 'activePeriod', 'latestPeriod', 'year',
             'payrollItems', 'benefits', 'salaryGrades', 'employees', 'contrib'
         ));
     }
@@ -313,7 +316,7 @@ class PayrollOfficerPayrollController extends Controller
 
         // Guard: can only submit payslips in a Pending period
         if ($payslip->period->status !== 'Pending') {
-            return response()->json(['error' => 'Payslip cannot be submitted after the period is no longer pending.'], 403);
+            return response()->json(['success' => false, 'message' => 'Payslip cannot be submitted after the period is no longer pending.']);
         }
 
         $payslip->update(['status' => 'Submitted']);

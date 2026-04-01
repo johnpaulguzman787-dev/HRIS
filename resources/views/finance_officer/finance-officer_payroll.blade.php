@@ -151,10 +151,12 @@
                     <div class="summary-card">
                         <div class="label">Days to Cutoff</div>
                         <div class="value">{{ $daysToCutoff }}</div>
-                        @if($latestPeriod)
+                        @if($activePeriod)
+                        <div class="sub">Cutoff: {{ \Carbon\Carbon::parse($activePeriod->start_date)->format('m/d/Y') }} – {{ \Carbon\Carbon::parse($activePeriod->end_date)->format('m/d/Y') }}</div>
+                        @elseif($latestPeriod)
                         <div class="sub">Cutoff: {{ \Carbon\Carbon::parse($latestPeriod->start_date)->format('m/d/Y') }} – {{ \Carbon\Carbon::parse($latestPeriod->end_date)->format('m/d/Y') }}</div>
                         @else
-                        <div class="sub">No pending period</div>
+                        <div class="sub">No active period</div>
                         @endif
                     </div>
                 </div>
@@ -184,7 +186,7 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Period Name</th><th>Start Date</th><th>End Date</th><th>Status</th><th></th>
+                                <th>Period Name</th><th>Start Date</th><th>End Date</th><th>Status</th><th style="text-align:center">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -204,7 +206,7 @@
                                         {{ $period->status }}
                                     </span>
                                 </td>
-                                <td class="text-right">
+                                <td style="text-align:center">
                                     <button class="btn-view"
                                         @click="openPeriodView(
                                             {{ $period->id }},
@@ -835,10 +837,17 @@
                 <h2 class="text-lg font-bold text-gray-800">Add Salary Grade</h2>
                 <button @click="showAddGradeModal=false" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
             </div>
-            <form action="{{ route('finance_officer.payroll.grade.store') }}" method="POST" class="space-y-4">
+            <form action="{{ route('finance_officer.payroll.grade.store') }}" method="POST" class="space-y-4"
+                  @submit.prevent="if(!addGradeCodeDuplicate) $el.submit()">
                 @csrf
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Grade Code</label><input type="text" name="grade_code" required placeholder="e.g. Grade 1" class="ctrl w-full"></div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Grade Code</label>
+                        <input type="text" name="grade_code" required placeholder="e.g. Grade 1" class="ctrl w-full"
+                               x-model="addGradeCode"
+                               :class="addGradeCodeDuplicate ? 'border-red-400 focus:border-red-400 focus:shadow-none' : ''">
+                        <p x-show="addGradeCodeDuplicate" class="text-red-500 text-xs mt-1">Grade code already exists.</p>
+                    </div>
                     <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Monthly Basic Salary (₱)</label><input type="number" name="monthly_basic_salary" step="0.01" required placeholder="₱22,000.00" class="ctrl w-full"></div>
                 </div>
                 <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Level Name</label><input type="text" name="level_name" required placeholder="e.g. Entry Level" class="ctrl w-full"></div>
@@ -1026,6 +1035,11 @@
 
             gradeSelectedEmps: [], gradeEmpSearch: '', gradeShowDrop: false,
             allEmps: @json($employees->map(fn($e) => ['id' => $e->id, 'name' => $e->fname.' '.$e->lname])->values()),
+            existingGradeCodes: @json($salaryGrades->pluck('grade_code')->map(fn($c) => strtolower($c))->values()),
+            assignedEmpMap: @json($salaryGrades->mapWithKeys(fn($g) => [$g->id => $g->employees->pluck('id')->toArray()])),
+            addGradeCode: '',
+            addGradeCodeError: '',
+            editingGradeId: null,
 
             viewPeriod:        { id: null, name: '', startDate: '', endDate: '', status: '' },
             pvPayslips:        [], pvSelectedId: null, pvActive: {},
@@ -1033,10 +1047,19 @@
             pvSubmittedCount: 0, pvTotalCount: 0, pvPeriodSubtitle: '',
 
             get gradeFiltered() {
+                const takenIds = Object.entries(this.assignedEmpMap)
+                    .filter(([gId]) => String(gId) !== String(this.editingGradeId))
+                    .flatMap(([, ids]) => ids);
                 return this.allEmps.filter(e =>
                     !this.gradeSelectedEmps.find(s => s.id === e.id) &&
+                    !takenIds.includes(e.id) &&
                     e.name.toLowerCase().includes(this.gradeEmpSearch.toLowerCase())
                 );
+            },
+
+            get addGradeCodeDuplicate() {
+                return this.addGradeCode.trim() !== '' &&
+                       this.existingGradeCodes.includes(this.addGradeCode.trim().toLowerCase());
             },
 
             init() {
@@ -1088,11 +1111,16 @@
             // ── Grade helpers ──
             gradeAddEmp(emp) { this.gradeSelectedEmps.push(emp); this.gradeEmpSearch = ''; this.gradeShowDrop = false; },
             gradeRemoveEmp(id) { this.gradeSelectedEmps = this.gradeSelectedEmps.filter(e => e.id !== id); },
-            openAddGrade() { this.gradeSelectedEmps = []; this.gradeEmpSearch = ''; this.showAddGradeModal = true; },
+            openAddGrade() {
+                this.gradeSelectedEmps = []; this.gradeEmpSearch = '';
+                this.addGradeCode = ''; this.addGradeCodeError = '';
+                this.editingGradeId = null;
+                this.showAddGradeModal = true;
+            },
             openEditGrade(id, gradeCode, levelName, monthlySalary, assignedEmps) {
                 this.editGrade = { id, gradeCode, levelName, monthlySalary };
                 this.gradeSelectedEmps = Array.isArray(assignedEmps) ? assignedEmps : [];
-                this.gradeEmpSearch = ''; this.showEditGradeModal = true;
+                this.gradeEmpSearch = ''; this.editingGradeId = id; this.showEditGradeModal = true;
             },
             deleteGrade(id) {
                 this.askConfirm('Delete Salary Grade', 'Assigned employees will be unassigned. This cannot be undone.', () => {

@@ -321,6 +321,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payroll_officer/payroll',  [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'index'])->name('payroll_officer.payroll');
     Route::get('/payroll_officer/payslips', [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'payslips'])->name('payroll_officer.payslips');
     Route::get('/payroll_officer/govpay',   fn() => view('payroll_officer.payroll-officer_govpay'))->name('payroll_officer.govpay');
+    Route::get('/payroll_officer/govpay/{id}', fn() => view('payroll_officer.payroll-officer_govpay', [
+        'isView'   => true,
+        'periodId' => request()->route('id'),
+    ]))->name('payroll_officer.govpay.view');
 
     // ── Payroll Period ─────────────────────────────────────────────────────
     Route::post('/payroll_officer/payroll/period/store',                 [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'storePeriod'])->name('payroll_officer.payroll.period.store');

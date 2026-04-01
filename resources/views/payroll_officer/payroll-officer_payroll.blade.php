@@ -210,7 +210,7 @@
             </div>
         </header>
 
-        {{-- Flash --}}
+        {{-- Flash success --}}
         @if(session('success'))
         <div x-data="{ show: true }"
              x-show="show"
@@ -230,6 +230,31 @@
                     </svg>
                 </div>
                 <span class="text-sm font-semibold text-gray-800">{{ session('success') }}</span>
+                <span class="text-xs text-gray-400 ml-1">· click to dismiss</span>
+            </div>
+        </div>
+        @endif
+
+        {{-- Flash error --}}
+        @if(session('error'))
+        <div x-data="{ show: true }"
+             x-show="show"
+             x-init="setTimeout(() => show = false, 5000)"
+             @click="show = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 -translate-y-4 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+             x-transition:leave-end="opacity-0 -translate-y-4 scale-95"
+             class="fixed top-6 right-6 z-[9999] cursor-pointer select-none" style="width:max-content;max-width:90vw">
+            <div class="bg-white border border-red-200 shadow-2xl rounded-2xl px-5 py-3.5 flex items-center gap-3">
+                <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </div>
+                <span class="text-sm font-semibold text-gray-800">{{ session('error') }}</span>
                 <span class="text-xs text-gray-400 ml-1">· click to dismiss</span>
             </div>
         </div>
@@ -1588,7 +1613,7 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
                 try {
-                    const res  = await fetch(`/payroll_officer/payroll/period/${id}/payslips`, {
+                    const res  = await fetch(`/payroll_officer/payroll/period/${id}/all-payslips`, {
                         headers: { 'X-Requested-With': 'XMLHttpRequest' }
                     });
                     const data = await res.json();

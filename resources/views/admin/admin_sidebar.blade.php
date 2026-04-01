@@ -11,7 +11,7 @@
         'admin.leave.management',
         'admin.shift.scheduling',
     ]);
-    $isPayrollSection  = in_array($currentRoute, ['admin.payroll', 'admin.payslips', 'admin.govpay']);
+    $isPayrollSection  = in_array($currentRoute, ['admin.payroll', 'admin.payslips', 'admin.govpay', 'admin.govpay.view']);
     $isRequestsSection = in_array($currentRoute, ['admin.requests.pending', 'admin.requests.approved']);
 
     $sidebarUser     = auth()->user();

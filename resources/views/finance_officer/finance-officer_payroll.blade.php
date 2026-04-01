@@ -517,13 +517,9 @@
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-800" x-text="viewPeriod.name"></h2>
                     <template x-if="viewPeriod.status === 'Submitted'">
-                        <button class="btn-green" @click="showReleaseConfirm=true">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <button class="btn-primary" @click="showReleaseConfirm=true">
                             Release Payroll
                         </button>
-                    </template>
-                    <template x-if="viewPeriod.status === 'Released'">
-                        <span class="px-4 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-700">Released ✓</span>
                     </template>
                 </div>
             </div>
@@ -713,7 +709,7 @@
                 <button @click="showReleaseConfirm=false" class="btn-outline px-8">Cancel</button>
                 <form :action="`/finance_officer/payroll/period/${viewPeriod.id}/release`" method="POST">
                     @csrf
-                    <button type="submit" class="btn-green px-8">Confirm Release</button>
+                    <button type="submit" class="btn-primary px-8">Confirm Release</button>
                 </form>
             </div>
         </div>

@@ -736,7 +736,7 @@
                         <span class="px-4 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-700">Submitted</span>
                     </template>
                     <template x-if="viewPeriod.status === 'Released'">
-                        <span class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed">Released</span>
+                        <span class="px-4 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-700">Released</span>
                     </template>
                 </div>
             </div>

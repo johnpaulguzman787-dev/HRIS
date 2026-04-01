@@ -12,7 +12,7 @@
 
     // Auto-open submenus based on current route
     $attendanceRoutes = ['finance_officer.attendance.reports', 'finance_officer.attendance.shift', 'finance_officer.attendance.leave', 'finance_officer.leave.management'];
-    $payrollRoutes    = ['finance_officer.payroll', 'finance_officer.payslips', 'finance_officer.govpay'];
+    $payrollRoutes    = ['finance_officer.payroll', 'finance_officer.payslips', 'finance_officer.govpay', 'finance_officer.govpay.view'];
     $requestRoutes    = ['finance_officer.requests.pending', 'finance_officer.requests.approved'];
 @endphp
 

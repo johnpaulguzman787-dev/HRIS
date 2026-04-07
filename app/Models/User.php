@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\WelcomeSetPasswordNotification;
 
 class User extends Authenticatable
 {
@@ -77,5 +78,11 @@ class User extends Authenticatable
     public function hasRole(string|array $roles): bool
     {
         return in_array($this->role, (array) $roles);
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $token = app('auth.password.broker')->createToken($this);
+        $this->notify(new WelcomeSetPasswordNotification($token));
     }
 }

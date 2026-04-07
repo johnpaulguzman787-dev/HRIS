@@ -78,6 +78,7 @@
 
     nextStep() { if (this.addStep < 3) this.addStep++; },
     saveAndContinue() { this.nextStep(); },
+    validEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); },
 
     handleFileUpload(event) {
         const files = Array.from(event.target.files);
@@ -1190,20 +1191,20 @@
                             </button>
                             <button x-show="addStep < 3"
                                 @click="
-                                    addStep === 1 ? (step1Attempted = true, (newEmployeeForm.first_name && newEmployeeForm.last_name && newEmployeeForm.email && newEmployeeForm.contact_no.length >= 10) ? saveAndContinue() : null) :
+                                    addStep === 1 ? (step1Attempted = true, (newEmployeeForm.first_name && newEmployeeForm.last_name && validEmail(newEmployeeForm.email) && newEmployeeForm.contact_no.length >= 10) ? saveAndContinue() : null) :
                                     addStep === 2 ? (step2Attempted = true, (newEmployeeForm.department_id && newEmployeeForm.job_title_id && newEmployeeForm.employment_type && newEmployeeForm.employment_status) ? saveAndContinue() : null) : null
                                 "
                                 :disabled="
-                                    (addStep === 1 && !(newEmployeeForm.first_name && newEmployeeForm.last_name && newEmployeeForm.email && newEmployeeForm.contact_no.length >= 10)) ||
+                                    (addStep === 1 && !(newEmployeeForm.first_name && newEmployeeForm.last_name && validEmail(newEmployeeForm.email) && newEmployeeForm.contact_no.length >= 10)) ||
                                     (addStep === 2 && !(newEmployeeForm.department_id && newEmployeeForm.job_title_id && newEmployeeForm.employment_type && newEmployeeForm.employment_status))
                                 "
                                 class="px-7 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200"
                                 :class="{
                                     'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer':
-                                        (addStep === 1 && newEmployeeForm.first_name && newEmployeeForm.last_name && newEmployeeForm.email && newEmployeeForm.contact_no.length >= 10) ||
+                                        (addStep === 1 && newEmployeeForm.first_name && newEmployeeForm.last_name && validEmail(newEmployeeForm.email) && newEmployeeForm.contact_no.length >= 10) ||
                                         (addStep === 2 && newEmployeeForm.department_id && newEmployeeForm.job_title_id && newEmployeeForm.employment_type && newEmployeeForm.employment_status),
                                     'bg-gray-200 text-gray-400 cursor-not-allowed':
-                                        (addStep === 1 && !(newEmployeeForm.first_name && newEmployeeForm.last_name && newEmployeeForm.email && newEmployeeForm.contact_no.length >= 10)) ||
+                                        (addStep === 1 && !(newEmployeeForm.first_name && newEmployeeForm.last_name && validEmail(newEmployeeForm.email) && newEmployeeForm.contact_no.length >= 10)) ||
                                         (addStep === 2 && !(newEmployeeForm.department_id && newEmployeeForm.job_title_id && newEmployeeForm.employment_type && newEmployeeForm.employment_status))
                                 }">
                                 Save &amp; Continue

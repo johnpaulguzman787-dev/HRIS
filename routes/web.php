@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\SetPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminEmployeeController;
 use App\Http\Controllers\SettingsController;
@@ -45,6 +46,10 @@ Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink
 // Reset Password
 Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showForm'])->name('password.reset');
 Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
+
+// Set Password (new account activation)
+Route::get('/set-password/{token}', [SetPasswordController::class, 'showForm'])->name('set-password.show');
+Route::post('/set-password', [SetPasswordController::class, 'setPassword'])->name('set-password.submit');
 
 // Email Verification
 use Illuminate\Foundation\Auth\EmailVerificationRequest;

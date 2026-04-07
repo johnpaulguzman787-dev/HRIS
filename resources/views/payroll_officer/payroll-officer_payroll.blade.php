@@ -81,6 +81,7 @@
         .badge-pending    { background: #fff3e0; color: #e65100; }
         .badge-completed  { background: #e8f5e9; color: #2e7d32; }
         .badge-submitted  { background: #e3f2fd; color: #1565c0; }
+        .badge-released   { background: #e8f5e9; color: #2e7d32; }
         .badge-active     { background: #e8f5e9; color: #2e7d32; }
         .badge-inactive   { background: #fce4ec; color: #c62828; }
         .badge-addition   { background: #fce4ec; color: #ad1457; }
@@ -237,25 +238,21 @@
 
         {{-- Flash error --}}
         @if(session('error'))
-        <div x-data="{ show: true }"
-             x-show="show"
-             x-init="setTimeout(() => show = false, 5000)"
-             @click="show = false"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 -translate-y-4 scale-95"
-             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-             x-transition:leave-end="opacity-0 -translate-y-4 scale-95"
-             class="fixed top-6 right-6 z-[9999] cursor-pointer select-none" style="width:max-content;max-width:90vw">
-            <div class="bg-white border border-red-200 shadow-2xl rounded-2xl px-5 py-3.5 flex items-center gap-3">
-                <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+        <div x-data="{ show: true }" x-show="show" x-cloak
+             class="fixed inset-0 z-[999] flex items-center justify-center modal-overlay"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-8 text-center"
+                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100">
+                <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                     </svg>
                 </div>
-                <span class="text-sm font-semibold text-gray-800">{{ session('error') }}</span>
-                <span class="text-xs text-gray-400 ml-1">· click to dismiss</span>
+                <p class="text-gray-800 font-semibold text-base mb-2">Action Not Allowed</p>
+                <p class="text-gray-500 text-sm mb-6">{{ session('error') }}</p>
+                <button @click="show=false" class="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition">OK</button>
             </div>
         </div>
         @endif
@@ -302,10 +299,12 @@
                     <div class="summary-card">
                         <div class="label">Days to Cutoff</div>
                         <div class="value">{{ $daysToCutoff }}</div>
-                        @if($latestPeriod)
+                        @if($activePeriod)
+                        <div class="sub">Cutoff: {{ \Carbon\Carbon::parse($activePeriod->start_date)->format('m/d/Y') }} – {{ \Carbon\Carbon::parse($activePeriod->end_date)->format('m/d/Y') }}</div>
+                        @elseif($latestPeriod)
                         <div class="sub">Cutoff: {{ \Carbon\Carbon::parse($latestPeriod->start_date)->format('m/d/Y') }} – {{ \Carbon\Carbon::parse($latestPeriod->end_date)->format('m/d/Y') }}</div>
                         @else
-                        <div class="sub">Cutoff Period: 02/16/2026 – 02/28/2026</div>
+                        <div class="sub">No active period</div>
                         @endif
                     </div>
                 </div>
@@ -344,7 +343,7 @@
                                 <th>Start Date</th>
                                 <th>End Date</th>
                                 <th>Status</th>
-                                <th></th>
+                                <th style="text-align:center">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -356,12 +355,13 @@
                                 <td>
                                     <span class="px-3 py-1 rounded-full text-xs font-medium
                                         @if($period->status==='Pending') badge-pending
-                                        @elseif($period->status==='Completed') badge-completed
+                                        @elseif($period->status==='Released') badge-released
+                                        @elseif($period->status==='Submitted') badge-submitted
                                         @else badge-submitted @endif">
                                         {{ $period->status }}
                                     </span>
                                 </td>
-                                <td class="text-right">
+                                <td style="text-align:center">
                                     <button class="btn-view"
                                         @click="openPeriodView(
                                             {{ $period->id }},
@@ -724,7 +724,11 @@
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-800" x-text="viewPeriod.name"></h2>
                     <template x-if="viewPeriod.status === 'Pending'">
-                        <button class="btn-primary" @click="showSubmitConfirm=true">
+                        <button class="btn-primary"
+                                :disabled="pvSubmittedCount < pvTotalCount"
+                                :class="pvSubmittedCount < pvTotalCount ? 'opacity-50 cursor-not-allowed' : ''"
+                                :title="pvSubmittedCount < pvTotalCount ? 'All payslips must be submitted first (' + pvSubmittedCount + '/' + pvTotalCount + ' done)' : ''"
+                                @click="pvSubmittedCount >= pvTotalCount && (showSubmitConfirm=true)">
                             Submit for Approval
                         </button>
                     </template>
@@ -732,7 +736,7 @@
                         <span class="px-4 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-700">Submitted</span>
                     </template>
                     <template x-if="viewPeriod.status === 'Released'">
-                        <span class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed">Released</span>
+                        <span class="px-4 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-700">Released</span>
                     </template>
                 </div>
             </div>
@@ -839,7 +843,7 @@
                                             <td class="text-gray-600">₱<span x-text="fmt(ps.netPay)"></span></td>
                                             <td>
                                                 <span class="px-3 py-1 rounded-full text-xs font-medium"
-                                                    :class="ps.status === 'Submitted' ? 'badge-submitted' : 'badge-pending'"
+                                                    :class="ps.status === 'Submitted' ? 'badge-submitted' : ps.status === 'Released' ? 'badge-released' : 'badge-pending'"
                                                     x-text="ps.status">
                                                 </span>
                                             </td>
@@ -902,10 +906,11 @@
 
                                 {{-- Actions --}}
                                 <div class="flex gap-2 mt-5">
-                                    <button class="btn-outline flex-1" @click="pvEditPayslip()" x-show="viewPeriod.status !== 'Released'">Edit</button>
+                                    <button class="btn-outline flex-1" @click="pvEditPayslip()"
+                                            x-show="viewPeriod.status !== 'Released' && pvActive.status !== 'Submitted'">Edit</button>
                                     <template x-if="viewPeriod.status === 'Released'">
-                                        <span class="flex-1 text-center py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed">
-                                            Released
+                                        <span class="flex-1 text-center py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg border border-green-100">
+                                            Released ✓
                                         </span>
                                     </template>
                                     <template x-if="viewPeriod.status !== 'Released' && pvActive.status !== 'Submitted'">
@@ -1302,12 +1307,16 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <form action="{{ route('payroll_officer.payroll.grade.store') }}" method="POST" class="space-y-4">
+            <form action="{{ route('payroll_officer.payroll.grade.store') }}" method="POST" class="space-y-4"
+                  @submit.prevent="if(!addGradeCodeDuplicate) $el.submit()">
                 @csrf
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Grade Code</label>
-                        <input type="text" name="grade_code" required placeholder="e.g. Grade 1" class="ctrl w-full">
+                        <input type="text" name="grade_code" required placeholder="e.g. Grade 1" class="ctrl w-full"
+                               x-model="addGradeCode"
+                               :class="addGradeCodeDuplicate ? 'border-red-400 focus:border-red-400 focus:shadow-none' : ''">
+                        <p x-show="addGradeCodeDuplicate" class="text-red-500 text-xs mt-1">Grade code already exists.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Monthly Basic Salary (₱)</label>
@@ -1476,6 +1485,33 @@
         </div>
     </div>
 
+    {{-- Centered Alert/Error Dialog --}}
+    <div x-show="alertModal.show" x-cloak
+         class="fixed inset-0 z-[999] flex items-center justify-center modal-overlay"
+         @click.self="alertModal.show=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-7 text-center"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"  x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+                 :class="alertModal.type==='error' ? 'bg-red-50' : 'bg-green-50'">
+                <svg class="w-6 h-6" :class="alertModal.type==='error' ? 'text-red-500' : 'text-green-500'"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <template x-if="alertModal.type==='error'">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </template>
+                    <template x-if="alertModal.type!=='error'">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </template>
+                </svg>
+            </div>
+            <p class="text-gray-800 font-semibold text-base mb-2" x-text="alertModal.title"></p>
+            <p class="text-gray-500 text-sm mb-6" x-text="alertModal.message"></p>
+            <button @click="alertModal.show=false"
+                    class="w-full py-2.5 rounded-lg text-sm font-semibold text-white transition"
+                    :class="alertModal.type==='error' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'">OK</button>
+        </div>
+    </div>
+
     {{-- Custom Confirm Modal --}}
     <div x-show="confirmModal.show" x-cloak class="fixed inset-0 z-[999] flex items-center justify-center modal-overlay">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-7"
@@ -1536,6 +1572,9 @@
             editContribType: '',
             contrib: @json($contrib),
 
+            // ── Alert modal ──
+            alertModal: { show: false, type: 'error', title: '', message: '' },
+
             // ── Custom confirm modal ──
             confirmModal: { show: false, title: '', message: '', action: null, danger: true },
 
@@ -1550,6 +1589,11 @@
             gradeEmpSearch:    '',
             gradeShowDrop:     false,
             allEmps: @json($employees->map(fn($e) => ['id' => $e->id, 'name' => $e->fname.' '.$e->lname])->values()),
+            existingGradeCodes: @json($salaryGrades->pluck('grade_code')->map(fn($c) => strtolower($c))->values()),
+            assignedEmpMap: @json($salaryGrades->mapWithKeys(fn($g) => [$g->id => $g->employees->pluck('id')->toArray()])),
+            addGradeCode: '',
+            addGradeCodeError: '',
+            editingGradeId: null,
 
             // ── Period View state ──
             viewPeriod:        { id: null, name: '', startDate: '', endDate: '', status: 'Pending' },
@@ -1566,10 +1610,20 @@
 
             // ── Computed: filtered employee list for grade selector ──
             get gradeFiltered() {
+                // Build flat list of emp IDs already assigned to OTHER grades
+                const takenIds = Object.entries(this.assignedEmpMap)
+                    .filter(([gId]) => String(gId) !== String(this.editingGradeId))
+                    .flatMap(([, ids]) => ids);
                 return this.allEmps.filter(e =>
                     !this.gradeSelectedEmps.find(s => s.id === e.id) &&
+                    !takenIds.includes(e.id) &&
                     e.name.toLowerCase().includes(this.gradeEmpSearch.toLowerCase())
                 );
+            },
+
+            get addGradeCodeDuplicate() {
+                return this.addGradeCode.trim() !== '' &&
+                       this.existingGradeCodes.includes(this.addGradeCode.trim().toLowerCase());
             },
 
             init() {
@@ -1589,9 +1643,12 @@
                 this.gradeSelectedEmps = this.gradeSelectedEmps.filter(e => e.id !== id);
             },
             openAddGrade() {
-                this.gradeSelectedEmps = [];
-                this.gradeEmpSearch    = '';
-                this.showAddGradeModal = true;
+                this.gradeSelectedEmps  = [];
+                this.gradeEmpSearch     = '';
+                this.addGradeCode       = '';
+                this.addGradeCodeError  = '';
+                this.editingGradeId     = null;
+                this.showAddGradeModal  = true;
             },
 
             // ── Custom confirm modal ──
@@ -1601,6 +1658,10 @@
             confirmAction() {
                 if (this.confirmModal.action) this.confirmModal.action();
                 this.confirmModal.show = false;
+            },
+
+            showAlert(title, message, type = 'error') {
+                this.alertModal = { show: true, type, title, message };
             },
 
             // ── Open period view ──
@@ -1670,7 +1731,7 @@
 
             async saveEditPayslip() {
                 const csrf = document.querySelector('meta[name="csrf-token"]').content;
-                await fetch(`/payroll_officer/payroll/payslip/${this.editPayslip.id}/save`, {
+                const res  = await fetch(`/payroll_officer/payroll/payslip/${this.editPayslip.id}/save`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1679,6 +1740,11 @@
                     },
                     body: JSON.stringify(this.editPayslip),
                 });
+                const data = await res.json();
+                if (data.success === false) {
+                    this.showAlert('Cannot Save', data.message || 'An error occurred.');
+                    return;
+                }
 
                 const idx = this.pvPayslips.findIndex(p => p.id === this.editPayslip.id);
                 if (idx !== -1) this.pvPayslips[idx] = { ...this.pvPayslips[idx], ...this.editPayslip };
@@ -1701,7 +1767,11 @@
                             headers: { 'X-CSRF-TOKEN': csrf }
                         })
                         .then(r => r.json())
-                        .then(() => {
+                        .then(data => {
+                            if (data.success === false) {
+                                this.showAlert('Cannot Submit', data.message || 'An error occurred.');
+                                return;
+                            }
                             const ps = this.pvPayslips.find(p => p.id === this.pvActive.id);
                             if (ps) ps.status = 'Submitted';
                             this.pvActive.status  = 'Submitted';
@@ -1717,6 +1787,7 @@
                 this.editGrade         = { id, gradeCode, levelName, monthlySalary };
                 this.gradeSelectedEmps = Array.isArray(assignedEmps) ? assignedEmps : [];
                 this.gradeEmpSearch    = '';
+                this.editingGradeId    = id;
                 this.showEditGradeModal = true;
             },
             deleteGrade(id) {

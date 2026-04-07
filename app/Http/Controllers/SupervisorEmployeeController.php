@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class SupervisorEmployeeController extends Controller
 {
@@ -80,11 +81,11 @@ class SupervisorEmployeeController extends Controller
         $authDeptId = $this->getAuthDeptId();
 
         $request->validate([
-            'first_name'        => 'required|string|max:255',
-            'last_name'         => 'required|string|max:255',
+            'first_name'        => ['required', 'string', 'max:255', 'regex:/^[a-zA-ZÑñ\s\-\']+$/'],
+            'last_name'         => ['required', 'string', 'max:255', 'regex:/^[a-zA-ZÑñ\s\-\']+$/'],
             'mi'                => 'nullable|string|max:5',
             'suffix'            => 'nullable|string|max:20',
-            'email'             => 'required|email|unique:users,email',
+            'email'             => 'required|email:rfc,dns|unique:users,email',
             'contact_no'        => 'required|string|max:20',
             'gender'            => 'required|string',
             'date_of_birth'     => 'required|date',
@@ -120,7 +121,7 @@ class SupervisorEmployeeController extends Controller
 
                 $user = User::create([
                     'email'    => $request->email,
-                    'password' => Hash::make('Welcome@123'),
+                    'password' => Hash::make(Str::random(32)),
                     'role'     => $role,
                 ]);
                 $user->sendEmailVerificationNotification();

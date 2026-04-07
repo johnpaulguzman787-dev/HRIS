@@ -68,6 +68,7 @@
         /* ── Badges ── */
         .badge-pending   { background:#fff3e0; color:#e65100; }
         .badge-submitted { background:#e3f2fd; color:#1565c0; }
+        .badge-released  { background:#e8f5e9; color:#2e7d32; }
 
         /* ── Tables ── */
         .data-table { width:100%; border-collapse:collapse; }
@@ -249,7 +250,7 @@
                                             <td>&#8369;<span x-text="fmt(ps.netPay)"></span></td>
                                             <td>
                                                 <span class="px-3 py-1 rounded-full text-xs font-semibold"
-                                                      :class="ps.status==='Submitted' ? 'badge-submitted' : 'badge-pending'"
+                                                      :class="ps.status==='Released' ? 'badge-released' : ps.status==='Submitted' ? 'badge-submitted' : 'badge-pending'"
                                                       x-text="ps.status"></span>
                                             </td>
                                             <td class="text-right"><button class="btn-view" @click.stop="allSelect(ps)">View</button></td>
@@ -371,7 +372,7 @@
                                             <td class="text-gray-500" x-text="p.endDate"></td>
                                             <td>
                                                 <span class="px-3 py-1 rounded-full text-xs font-semibold"
-                                                      :class="p.status==='Submitted' ? 'badge-submitted' : 'badge-pending'"
+                                                      :class="p.status==='Released' ? 'badge-released' : p.status==='Submitted' ? 'badge-submitted' : 'badge-pending'"
                                                       x-text="p.status"></span>
                                             </td>
                                             <td class="text-right"><button class="btn-view" @click.stop="mySelect(p)">View</button></td>

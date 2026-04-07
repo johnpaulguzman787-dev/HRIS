@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\SetPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminEmployeeController;
 use App\Http\Controllers\SettingsController;
@@ -45,6 +46,10 @@ Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink
 // Reset Password
 Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showForm'])->name('password.reset');
 Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
+
+// Set Password (new account activation)
+Route::get('/set-password/{token}', [SetPasswordController::class, 'showForm'])->name('set-password.show');
+Route::post('/set-password', [SetPasswordController::class, 'setPassword'])->name('set-password.submit');
 
 // Email Verification
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -273,21 +278,52 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/requests/{id}/cancel',          [AdminAttendanceController::class, 'cancelRequest'])->name('admin.requests.cancel');
 
     // ── ADMIN PAYROLL ──────────────────────────────────────────────────────
-    Route::get('/admin/payroll',  fn() => view('admin.admin_payroll'))->name('admin.payroll');
-    Route::get('/admin/payslips', fn() => view('admin.admin_payslips'))->name('admin.payslips');
-    Route::get('/admin/govpay',   fn() => view('admin.admin_govpay'))->name('admin.govpay');
+    Route::get('/admin/payroll',       [\App\Http\Controllers\AdminPayrollController::class, 'index'])->name('admin.payroll');
+    Route::get('/admin/payslips',      [\App\Http\Controllers\AdminPayrollController::class, 'payslips'])->name('admin.payslips');
+    Route::get('/admin/govpay',        [\App\Http\Controllers\AdminPayrollController::class, 'govpay'])->name('admin.govpay');
+    Route::get('/admin/govpay/{id}',   [\App\Http\Controllers\AdminPayrollController::class, 'govpayView'])->name('admin.govpay.view');
+
+    // ── Admin Payroll Actions ────────────────────────────────────────────────
+    Route::post('/admin/payroll/period/{id}/release',          [\App\Http\Controllers\AdminPayrollController::class, 'releasePayroll'])->name('admin.payroll.period.release');
+    Route::get('/admin/payroll/period/{id}/payslips',          [\App\Http\Controllers\AdminPayrollController::class, 'periodPayslips'])->name('admin.payroll.period.payslips');
+    Route::get('/admin/payroll/period/{id}/released-payslips', [\App\Http\Controllers\AdminPayrollController::class, 'releasedPeriodPayslips'])->name('admin.payroll.period.released-payslips');
+
+    // ── Admin Salary Grades ──────────────────────────────────────────────────
+    Route::post('/admin/payroll/grade/store',            [\App\Http\Controllers\AdminPayrollController::class, 'storeGrade'])->name('admin.payroll.grade.store');
+    Route::put('/admin/payroll/grade/{id}/update',       [\App\Http\Controllers\AdminPayrollController::class, 'updateGrade'])->name('admin.payroll.grade.update');
+    Route::delete('/admin/payroll/grade/{id}/delete',    [\App\Http\Controllers\AdminPayrollController::class, 'deleteGrade'])->name('admin.payroll.grade.delete');
+
+    // ── Admin Payroll Items ──────────────────────────────────────────────────
+    Route::post('/admin/payroll/item/store',             [\App\Http\Controllers\AdminPayrollController::class, 'storePayrollItem'])->name('admin.payroll.item.store');
+    Route::put('/admin/payroll/item/{id}/update',        [\App\Http\Controllers\AdminPayrollController::class, 'updatePayrollItem'])->name('admin.payroll.item.update');
+    Route::post('/admin/payroll/item/{id}/deactivate',   [\App\Http\Controllers\AdminPayrollController::class, 'deactivatePayrollItem'])->name('admin.payroll.item.deactivate');
+    Route::delete('/admin/payroll/item/{id}/delete',     [\App\Http\Controllers\AdminPayrollController::class, 'deletePayrollItem'])->name('admin.payroll.item.delete');
+    Route::get('/admin/payroll/item/{id}',               [\App\Http\Controllers\AdminPayrollController::class, 'getPayrollItem'])->name('admin.payroll.item.get');
+
+    // ── Admin Benefits ───────────────────────────────────────────────────────
+    Route::post('/admin/payroll/benefit/store',          [\App\Http\Controllers\AdminPayrollController::class, 'storeBenefit'])->name('admin.payroll.benefit.store');
+    Route::put('/admin/payroll/benefit/{id}/update',     [\App\Http\Controllers\AdminPayrollController::class, 'updateBenefit'])->name('admin.payroll.benefit.update');
+    Route::post('/admin/payroll/benefit/{id}/deactivate',[\App\Http\Controllers\AdminPayrollController::class, 'deactivateBenefit'])->name('admin.payroll.benefit.deactivate');
+    Route::delete('/admin/payroll/benefit/{id}/delete',  [\App\Http\Controllers\AdminPayrollController::class, 'deleteBenefit'])->name('admin.payroll.benefit.delete');
+    Route::get('/admin/payroll/benefit/{id}',            [\App\Http\Controllers\AdminPayrollController::class, 'getBenefit'])->name('admin.payroll.benefit.get');
+
+    // ── Admin Contribution Settings ──────────────────────────────────────────
+    Route::post('/admin/payroll/contrib/update',         [\App\Http\Controllers\AdminPayrollController::class, 'updateContrib'])->name('admin.payroll.contrib.update');
+
+    // ── Admin Payslips AJAX ──────────────────────────────────────────────────
+    Route::get('/admin/payslips/period/{id}',            [\App\Http\Controllers\AdminPayrollController::class, 'releasedPeriodPayslips'])->name('admin.payslips.period');
 
     // ── HR PAYROLL ─────────────────────────────────────────────────────────
-    Route::get('/hr/payslips', fn() => view('hr.hr_payslips'))->name('hr.payslips');
-    Route::get('/hr/govpay',   fn() => view('hr.hr_govpay'))->name('hr.govpay');
+    Route::get('/hr/payslips', [\App\Http\Controllers\EmployeePayrollController::class, 'payslips'])->name('hr.payslips');
+    Route::get('/hr/govpay',   [\App\Http\Controllers\EmployeePayrollController::class, 'govpay'])->name('hr.govpay');
 
     // ── SUPERVISOR PAYROLL ─────────────────────────────────────────────────
-    Route::get('/supervisor/payslips', fn() => view('supervisor.supervisor_payslips'))->name('supervisor.payslips');
-    Route::get('/supervisor/govpay',   fn() => view('supervisor.supervisor_govpay'))->name('supervisor.govpay');
+    Route::get('/supervisor/payslips', [\App\Http\Controllers\EmployeePayrollController::class, 'payslips'])->name('supervisor.payslips');
+    Route::get('/supervisor/govpay',   [\App\Http\Controllers\EmployeePayrollController::class, 'govpay'])->name('supervisor.govpay');
 
     // ── EMPLOYEE PAYROLL ───────────────────────────────────────────────────
-    Route::get('/employee/payslips', fn() => view('employee.employee_payslips'))->name('employee.payslips');
-    Route::get('/employee/govpay',   fn() => view('employee.employee_govpay'))->name('employee.govpay');
+    Route::get('/employee/payslips', [\App\Http\Controllers\EmployeePayrollController::class, 'payslips'])->name('employee.payslips');
+    Route::get('/employee/govpay',   [\App\Http\Controllers\EmployeePayrollController::class, 'govpay'])->name('employee.govpay');
 
     // ══════════════════════════════════════════════════════════════════════
     // ── PAYROLL OFFICER ROUTES ─────────────────────────────────────────────
@@ -320,11 +356,8 @@ Route::middleware(['auth'])->group(function () {
     // ── Payroll Officer Payroll (FIXED — now uses controller) ─────────────
     Route::get('/payroll_officer/payroll',  [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'index'])->name('payroll_officer.payroll');
     Route::get('/payroll_officer/payslips', [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'payslips'])->name('payroll_officer.payslips');
-    Route::get('/payroll_officer/govpay',   fn() => view('payroll_officer.payroll-officer_govpay'))->name('payroll_officer.govpay');
-    Route::get('/payroll_officer/govpay/{id}', fn() => view('payroll_officer.payroll-officer_govpay', [
-        'isView'   => true,
-        'periodId' => request()->route('id'),
-    ]))->name('payroll_officer.govpay.view');
+    Route::get('/payroll_officer/govpay',        [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'govpay'])->name('payroll_officer.govpay');
+    Route::get('/payroll_officer/govpay/{id}',   [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'govpayView'])->name('payroll_officer.govpay.view');
 
     // ── Payroll Period ─────────────────────────────────────────────────────
     Route::post('/payroll_officer/payroll/period/store',                 [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'storePeriod'])->name('payroll_officer.payroll.period.store');
@@ -363,7 +396,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/finance_officer/payroll',  [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'index'])->name('finance_officer.payroll');
     Route::get('/finance_officer/payslips', [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'payslips'])->name('finance_officer.payslips');
-    Route::get('/finance_officer/govpay',   fn() => view('finance_officer.finance-officer_govpay'))->name('finance_officer.govpay');
+    Route::get('/finance_officer/govpay',        [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'govpay'])->name('finance_officer.govpay');
+    Route::get('/finance_officer/govpay/{id}',   [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'govpayView'])->name('finance_officer.govpay.view');
 
     // ── Finance Officer Payroll Actions ───────────────────────────────────────
     Route::post('/finance_officer/payroll/period/{id}/release',       [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'releasePayroll'])->name('finance_officer.payroll.period.release');

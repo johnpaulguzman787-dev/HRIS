@@ -35,9 +35,12 @@ class FinanceOfficerPayrollController extends Controller
         }
 
         $daysToCutoff  = 0;
-        $pendingPeriod = PayrollPeriod::where('status', 'Submitted')->orderByDesc('start_date')->first();
-        if ($pendingPeriod) {
-            $daysToCutoff = max(0, now()->diffInDays($pendingPeriod->end_date, false));
+        $activePeriod  = PayrollPeriod::whereIn('status', ['Pending', 'Submitted'])
+            ->where('end_date', '>=', now()->toDateString())
+            ->orderBy('end_date')
+            ->first();
+        if ($activePeriod) {
+            $daysToCutoff = max(0, (int) ceil(now()->floatDiffInDays($activePeriod->end_date, false)));
         }
 
         $payrollItems = PayrollItem::orderBy('name')->get();
@@ -48,7 +51,7 @@ class FinanceOfficerPayrollController extends Controller
 
         return view('finance_officer.finance-officer_payroll', compact(
             'periods', 'grossPayroll', 'netPay', 'totalDeductions',
-            'latestPeriod', 'year', 'daysToCutoff',
+            'latestPeriod', 'activePeriod', 'year', 'daysToCutoff',
             'payrollItems', 'salaryGrades', 'benefits', 'employees', 'contrib'
         ));
     }
@@ -422,5 +425,93 @@ class FinanceOfficerPayrollController extends Controller
         }
 
         return response()->json(['success' => true]);
+    }
+
+    // ── Govt. Contributions ──────────────────────────────────────────────────
+
+    public function govpay(Request $request)
+    {
+        $year = $request->get('year', now()->year);
+
+        $contributions = DB::table('payslips as ps')
+            ->join('payroll_periods as pp', 'ps.payroll_period_id', '=', 'pp.id')
+            ->where('pp.status', 'Released')
+            ->whereYear('pp.start_date', $year)
+            ->select(
+                'pp.id as payroll_period_id',
+                'pp.name as period_name',
+                'pp.status',
+                DB::raw('SUM(ps.sss)            as sss_total'),
+                DB::raw('SUM(ps.philhealth)      as philhealth_total'),
+                DB::raw('SUM(ps.pagibig)         as pagibig_total'),
+                DB::raw('SUM(ps.withholding_tax) as tax_total')
+            )
+            ->groupBy('pp.id', 'pp.name', 'pp.status')
+            ->orderByDesc('pp.start_date')
+            ->get();
+
+        $authEmployee    = auth()->user()->employee ?? null;
+        $myContributions = collect();
+
+        if ($authEmployee) {
+            $myContributions = DB::table('payslips as ps')
+                ->join('payroll_periods as pp', 'ps.payroll_period_id', '=', 'pp.id')
+                ->where('ps.employee_id', $authEmployee->id)
+                ->where('pp.status', 'Released')
+                ->whereYear('pp.start_date', $year)
+                ->select(
+                    'pp.name as period_name',
+                    'pp.status',
+                    'ps.sss',
+                    'ps.philhealth',
+                    'ps.pagibig',
+                    'ps.withholding_tax as tax'
+                )
+                ->orderByDesc('pp.start_date')
+                ->get();
+        }
+
+        $years        = range(now()->year, now()->year - 3);
+        $totalPending = DB::table('notifications')
+            ->where('user_id', auth()->id())
+            ->where('is_read', false)
+            ->count();
+
+        return view('finance_officer.finance-officer_govpay', compact(
+            'contributions', 'myContributions', 'years', 'year', 'totalPending'
+        ));
+    }
+
+    public function govpayView(Request $request, $id)
+    {
+        $year   = $request->get('year', now()->year);
+        $period = PayrollPeriod::findOrFail($id);
+
+        $records = DB::table('payslips as ps')
+            ->join('employees as e', 'ps.employee_id', '=', 'e.id')
+            ->where('ps.payroll_period_id', $id)
+            ->select(
+                'e.fname',
+                'e.lname',
+                'ps.sss',
+                'ps.philhealth',
+                'ps.pagibig',
+                'ps.withholding_tax as tax',
+                'ps.status'
+            )
+            ->orderBy('e.lname')
+            ->get();
+
+        $years        = range(now()->year, now()->year - 3);
+        $periodName   = $period->name;
+        $periodId     = $period->id;
+        $totalPending = DB::table('notifications')
+            ->where('user_id', auth()->id())
+            ->where('is_read', false)
+            ->count();
+
+        return view('finance_officer.finance-officer_govpay', compact(
+            'records', 'years', 'year', 'periodName', 'periodId', 'totalPending'
+        ));
     }
 }

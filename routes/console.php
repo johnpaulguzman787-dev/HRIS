@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('attendance:auto-clockout')->dailyAt('00:01');
 Schedule::command('attendance:mark-holidays')->dailyAt('23:55');
+Schedule::command('payroll:cutoff-notifications')->dailyAt('08:00');

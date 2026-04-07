@@ -22,11 +22,10 @@
         breakAllowed: {{ $employeeShift?->shift?->break_schedule ? 'true' : 'false' }},
         currentTime: '',
         currentDate: '',
+        mobileMenuOpen: false,
 
-        // ── Attendance Popup ──
         showAttendancePopup: {{ ($employeeShift && !in_array($todayLog?->status ?? '', ['on_leave', 'holiday']) && !$todayLog?->clock_in) ? 'true' : 'false' }},
 
-        // ── Announcement Modal ──
         showAnnouncement: false,
         annType: '',
         annTypeOpen: false,
@@ -47,19 +46,11 @@
         },
         openAnnouncement() {
             this.showAnnouncement = true;
-            this.annType = '';
-            this.annTypeOpen = false;
-            this.annTitle = '';
-            this.annMessage = '';
-            this.annAudience = '';
-            this.annDept = '';
-            this.annError = '';
+            this.annType = ''; this.annTypeOpen = false; this.annTitle = '';
+            this.annMessage = ''; this.annAudience = ''; this.annDept = ''; this.annError = '';
             document.body.style.overflow = 'hidden';
         },
-        closeAnnouncement() {
-            this.showAnnouncement = false;
-            document.body.style.overflow = '';
-        },
+        closeAnnouncement() { this.showAnnouncement = false; document.body.style.overflow = ''; },
         async submitAnnouncement() {
             this.annError = '';
             if (!this.annType || !this.annTitle || !this.annMessage || !this.annAudience) {
@@ -74,13 +65,7 @@
                 const res = await fetch('{{ route('admin.announcements.store') }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-                    body: JSON.stringify({
-                        type: this.annType,
-                        title: this.annTitle,
-                        message: this.annMessage,
-                        audience: this.annAudience,
-                        department_id: this.annDept || null,
-                    })
+                    body: JSON.stringify({ type: this.annType, title: this.annTitle, message: this.annMessage, audience: this.annAudience, department_id: this.annDept || null })
                 });
                 const data = await res.json();
                 if (res.ok) { this.closeAnnouncement(); window.location.reload(); }
@@ -88,7 +73,6 @@
             } catch(e) { this.annError = 'An error occurred. Please try again.'; }
             this.annSaving = false;
         },
-
         get elapsedDisplay() {
             const h = String(Math.floor(this.elapsedSeconds/3600)).padStart(2,'0');
             const m = String(Math.floor((this.elapsedSeconds%3600)/60)).padStart(2,'0');
@@ -107,12 +91,6 @@
                 this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
             });
         },
-        formatTime(t) {
-            if (!t) return '—';
-            const [h, m] = t.split(':');
-            const d = new Date(); d.setHours(h, m);
-            return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-        },
         updateTime() {
             const now = new Date();
             this.currentTime = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
@@ -125,36 +103,29 @@
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             if (this.onBreak) {
                 const res = await fetch('{{ route("admin.attendance.clock-in") }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
                     body: JSON.stringify({ work_setup: this.workSetup, shift_id: this.assignedShiftId })
                 });
                 const data = await res.json();
-                if (res.ok) {
-                    this.onBreak = false; this.resumed = true; this.clockedIn = true;
-                    this.breakMinutes = data.break_minutes;
-                } else { alert(data.message ?? 'Resume failed.'); }
+                if (res.ok) { this.onBreak = false; this.resumed = true; this.clockedIn = true; this.breakMinutes = data.break_minutes; }
+                else { alert(data.message ?? 'Resume failed.'); }
                 return;
             }
             if (!this.clockedIn) {
                 const res = await fetch('{{ route("admin.attendance.clock-in") }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
                     body: JSON.stringify({ work_setup: this.workSetup, shift_id: this.assignedShiftId })
                 });
                 const data = await res.json();
-                if (res.ok) {
-                    this.clockedIn = true; this.clockInTime = data.clock_in; this.clockInTimestamp = Date.now();
-                } else { alert(data.message ?? 'Clock-in failed.'); }
+                if (res.ok) { this.clockedIn = true; this.clockInTime = data.clock_in; this.clockInTimestamp = Date.now(); }
+                else { alert(data.message ?? 'Clock-in failed.'); }
             }
         },
         async handleBreak() {
             if (!this.clockedIn || this.clockedOut || this.onBreak || this.resumed) return;
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             const res = await fetch('{{ route("admin.attendance.break") }}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-                body: JSON.stringify({})
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify({})
             });
             const data = await res.json();
             if (res.ok) { this.onBreak = true; this.breakTime = data.break_start; this.breakStartTimestamp = Date.now(); }
@@ -164,9 +135,7 @@
             if (!this.clockedIn || this.clockedOut) return;
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             const res = await fetch('{{ route("admin.attendance.clock-out") }}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-                body: JSON.stringify({})
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify({})
             });
             const data = await res.json();
             if (res.ok) { this.clockedOut = true; this.clockOutTime = data.clock_out; this.onBreak = false; }
@@ -176,52 +145,137 @@
     x-init="initClock()"
     class="flex h-screen overflow-hidden" style="background:#eef2f7;">
 
-    @include('admin.admin_sidebar', ['activeMenu' => 'dashboard'])
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- DESKTOP SIDEBAR (hidden on mobile)      --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div class="hidden lg:block">
+        @include('admin.admin_sidebar', ['activeMenu' => 'dashboard'])
+    </div>
 
-    <main class="flex-1 overflow-y-auto min-h-screen"
-        :class="sidebarCollapsed ? 'ml-20' : 'ml-72'"
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- MOBILE SLIDE-OUT DRAWER                 --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 lg:hidden"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+            @include('admin.admin_sidebar', ['activeMenu' => 'dashboard'])
+        </div>
+    </div>
+
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- MAIN CONTENT                            --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <main class="flex-1 overflow-y-auto min-h-screen w-full"
+        :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
         style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
-            <div class="px-8 py-5 flex items-center justify-between">
-                <h1 class="text-2xl font-bold text-white header-title">Dashboard</h1>
+        {{-- ── HEADER ── --}}
+        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
+            <div class="px-5 py-4 flex items-center justify-between">
+                {{-- Hamburger on mobile --}}
+                <div class="flex items-center gap-3">
+                    <button @click="mobileMenuOpen = true"
+                            class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h1 class="text-xl font-bold text-white header-title">Dashboard</h1>
+                </div>
                 <div class="flex items-center space-x-3">
                     <x-notification-bell />
                 </div>
             </div>
         </header>
 
-        <div class="p-6">
-            <div class="grid grid-cols-4 gap-5 mb-5">
-                <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.05s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Total Employees</p>
-                    <p class="text-5xl font-bold" style="color:#3b82f6;">{{ $totalEmployees }}</p>
-                    <div class="stat-bar mt-4"><div class="stat-bar-fill" style="width:100%; background:#3b82f6;"></div></div>
+        <div class="p-3 lg:p-6">
+
+            {{-- ── STAT CARDS ── --}}
+            {{-- Mobile: 2-col grid | Desktop: 4-col grid --}}
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5 mb-4 lg:mb-5">
+                <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.05s; border:1px solid #e5e7eb;">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Total Employees</p>
+                    <p class="text-3xl lg:text-5xl font-bold" style="color:#3b82f6;">{{ $totalEmployees }}</p>
+                    <div class="stat-bar mt-3"><div class="stat-bar-fill" style="width:100%; background:#3b82f6;"></div></div>
                 </div>
-                <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.12s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Present Today</p>
-                    <p class="text-5xl font-bold text-gray-900">{{ $presentToday }}</p>
-                    <div class="stat-bar mt-4"><div class="stat-bar-fill" style="width:82%; background:#22c55e;"></div></div>
+                <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.12s; border:1px solid #e5e7eb;">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Present Today</p>
+                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">{{ $presentToday }}</p>
+                    <div class="stat-bar mt-3"><div class="stat-bar-fill" style="width:82%; background:#22c55e;"></div></div>
                 </div>
-                <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.19s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Late and Absent</p>
-                    <p class="text-5xl font-bold text-gray-900">{{ $lateToday }}</p>
-                    <div class="stat-bar mt-4"><div class="stat-bar-fill" style="width:18%; background:#ef4444;"></div></div>
+                <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.19s; border:1px solid #e5e7eb;">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Late and Absent</p>
+                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">{{ $lateToday }}</p>
+                    <div class="stat-bar mt-3"><div class="stat-bar-fill" style="width:18%; background:#ef4444;"></div></div>
                 </div>
-                <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.26s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Pending Requests</p>
-                    <p class="text-5xl font-bold text-gray-900">{{ $pendingRequests }}</p>
-                    <div class="stat-bar mt-4"><div class="stat-bar-fill" style="width:9%; background:#f59e0b;"></div></div>
+                @if(isset($pendingRequests))
+                <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.26s; border:1px solid #e5e7eb;">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Pending Requests</p>
+                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">{{ $pendingRequests }}</p>
+                    <div class="stat-bar mt-3"><div class="stat-bar-fill" style="width:9%; background:#f59e0b;"></div></div>
                 </div>
+                @endif
             </div>
 
-            <div class="grid grid-cols-3 gap-5">
+            {{-- ── MAIN GRID ── --}}
+            {{-- Mobile: single column stacked | Desktop: 3-col grid --}}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5">
 
-                <div class="space-y-5">
-                    <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.3s; border:1px solid #e5e7eb;">
+                {{-- ── LEFT COLUMN ── --}}
+                <div class="space-y-4 lg:space-y-5">
+
+                    {{-- TODAY'S ATTENDANCE SUMMARY --}}
+                    <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.3s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Today's Attendance Summary</h2>
                         <p class="text-xs text-gray-400 mt-1 mb-3">{{ date('F d, Y') }}</p>
-                        <div class="grid grid-cols-4 gap-2 mb-5">
+
+                        {{-- Department filter (shown in mobile design) --}}
+                        <div class="mb-3">
+                            <select class="text-xs border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400">
+                                <option>All Department</option>
+                                @foreach($departments ?? [] as $dept)
+                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Mobile: vertical stacked big stat boxes (as in mockup) --}}
+                        <div class="space-y-2 mb-4 lg:hidden">
+                            <div class="rounded-xl p-4 text-center" style="background:#dcfce7;">
+                                <p class="text-2xl font-bold" style="color:#16a34a;">{{ $attendanceSummary['present'] }}</p>
+                                <p class="text-xs font-bold uppercase mt-1" style="color:#16a34a;">Present</p>
+                            </div>
+                            <div class="rounded-xl p-4 text-center" style="background:#fef9c3;">
+                                <p class="text-2xl font-bold" style="color:#ca8a04;">{{ $attendanceSummary['late'] }}</p>
+                                <p class="text-xs font-bold uppercase mt-1" style="color:#ca8a04;">Late</p>
+                            </div>
+                            <div class="rounded-xl p-4 text-center" style="background:#fee2e2;">
+                                <p class="text-2xl font-bold" style="color:#dc2626;">{{ $attendanceSummary['absent'] }}</p>
+                                <p class="text-xs font-bold uppercase mt-1" style="color:#dc2626;">Absent</p>
+                            </div>
+                            <div class="rounded-xl p-4 text-center" style="background:#fce7f3;">
+                                <p class="text-2xl font-bold" style="color:#db2777;">{{ $attendanceSummary['on_leave'] }}</p>
+                                <p class="text-xs font-bold uppercase mt-1" style="color:#db2777;">On Leave</p>
+                            </div>
+                        </div>
+
+                        {{-- Desktop: 4-col grid --}}
+                        <div class="hidden lg:grid grid-cols-4 gap-2 mb-5">
                             <div class="stat-box rounded-xl p-2 text-center" style="background:#dcfce7;">
                                 <p class="text-base font-bold" style="color:#16a34a;">{{ $attendanceSummary['present'] }}</p>
                                 <p class="text-xs font-semibold uppercase" style="color:#16a34a;">Present</p>
@@ -239,6 +293,7 @@
                                 <p class="text-xs font-semibold uppercase" style="color:#db2777;">On Leave</p>
                             </div>
                         </div>
+
                         <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Overview</p>
                         <div class="space-y-3">
                             @foreach($departmentProgress as $dept)
@@ -256,11 +311,11 @@
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.42s; border:1px solid #e5e7eb;">
+                    {{-- QUICK ACTIONS --}}
+                    <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.42s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4">Quick Actions</h2>
                         <div class="grid grid-cols-2 gap-3">
                             <button class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">Add Employee</button>
-                            {{-- ✅ Create Announcement button --}}
                             <button @click="openAnnouncement()"
                                 class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">
                                 Create Announcement
@@ -269,11 +324,12 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl p-6 card-anim flex flex-col" style="animation-delay:0.35s; border:1px solid #e5e7eb;">
+                {{-- ── CENTER COLUMN: TIME & ATTENDANCE ── --}}
+                <div class="bg-white rounded-xl p-4 lg:p-6 card-anim flex flex-col" style="animation-delay:0.35s; border:1px solid #e5e7eb;">
                     <p class="text-sm font-bold text-gray-700 uppercase tracking-widest mb-1">Time & Attendance</p>
                     <div class="mb-1">
                         <p class="text-xs text-gray-400 font-medium mb-1" x-text="currentDate"></p>
-                        <p class="font-black tabular-nums leading-none" style="font-size:2.8rem; letter-spacing:-1px; color:#3b82f6;" x-text="currentTime"></p>
+                        <p class="font-black tabular-nums leading-none" style="font-size:2.4rem; letter-spacing:-1px; color:#3b82f6;" x-text="currentTime"></p>
                     </div>
                     <hr class="my-4 border-gray-100">
                     <div class="mb-3">
@@ -288,7 +344,15 @@
                             </div>
                             <div class="flex items-center justify-between px-3 py-2 border-t border-gray-100">
                                 <span class="text-xs text-gray-400">Work Setup</span>
-                                <span class="text-xs font-semibold" style="color:#1d4ed8;">{{ strtoupper($employeeShift->work_setup ?? '—') }}</span>
+                                {{-- Mobile: toggle buttons as shown in mockup --}}
+                                <div class="flex gap-1">
+                                    <button class="text-xs px-3 py-1 rounded-lg font-semibold transition-all"
+                                            :class="workSetup === 'office' ? 'bg-blue-100 text-blue-700' : 'text-gray-400 hover:bg-gray-100'"
+                                            @click="workSetup = 'office'">Office</button>
+                                    <button class="text-xs px-3 py-1 rounded-lg font-semibold transition-all"
+                                            :class="workSetup === 'wfh' ? 'bg-blue-100 text-blue-700' : 'text-gray-400 hover:bg-gray-100'"
+                                            @click="workSetup = 'wfh'">WFH</button>
+                                </div>
                             </div>
                         </div>
                         @else
@@ -302,7 +366,7 @@
                         <p class="text-xs font-semibold text-gray-500 mb-2">Today's Attendance</p>
                         <div class="flex gap-2 mb-2">
                             <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50">
-                                <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">CLOCK IN</p>
+                                <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">TIME IN</p>
                                 <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedIn ? clockInTime : '–'"></p>
                             </div>
                             <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50">
@@ -310,7 +374,7 @@
                                 <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="breakTime ? breakTime : '–'"></p>
                             </div>
                             <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50">
-                                <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">CLOCK OUT</p>
+                                <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">TIME OUT</p>
                                 <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedOut ? clockOutTime : '–'"></p>
                             </div>
                         </div>
@@ -342,7 +406,8 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.4s; border:1px solid #e5e7eb;">
+                {{-- ── RIGHT COLUMN: CALENDAR ── --}}
+                <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.4s; border:1px solid #e5e7eb;">
                     <div class="flex items-center justify-between mb-4">
                         <button class="cal-nav-btn p-1.5 hover:bg-gray-100 rounded-lg">
                             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -400,7 +465,7 @@
     </main>
 
     {{-- ═══════════════════════════════════════ --}}
-    {{-- ✅ CREATE ANNOUNCEMENT MODAL            --}}
+    {{-- CREATE ANNOUNCEMENT MODAL              --}}
     {{-- ═══════════════════════════════════════ --}}
     <div x-show="showAnnouncement"
          x-transition:enter="transition ease-out duration-200"
@@ -409,113 +474,62 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-[999] flex items-center justify-center p-4"
+         class="fixed inset-0 z-[999] flex items-end sm:items-center justify-center p-0 sm:p-4"
          style="display:none;">
-
-        {{-- Backdrop --}}
         <div class="absolute inset-0 bg-black/40" @click="closeAnnouncement()"></div>
-
-        {{-- Modal Box --}}
         <div x-show="showAnnouncement"
              x-transition:enter="transition ease-out duration-250"
-             x-transition:enter-start="opacity-0 scale-95 translate-y-3"
-             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:enter-start="opacity-0 translate-y-full sm:scale-95 sm:translate-y-3"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-             x-transition:leave-end="opacity-0 scale-95 translate-y-3"
-             class="relative bg-white rounded-2xl w-full max-w-lg shadow-2xl"
-             style="padding: 32px 32px 28px;">
-
-            {{-- Close button --}}
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-full sm:scale-95 sm:translate-y-3"
+             class="relative bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-y-auto"
+             style="max-height: 90vh; padding: 24px 20px 28px; sm:padding: 32px 32px 28px;">
             <button @click="closeAnnouncement()"
-                class="absolute top-5 right-5 w-9 h-9 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all">
+                class="absolute top-4 right-4 w-9 h-9 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
-
-            {{-- Title --}}
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Create Announcement</h2>
-
-            {{-- Error --}}
+            {{-- drag handle for mobile --}}
+            <div class="sm:hidden w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+            <h2 class="text-xl font-bold text-gray-900 mb-5">Create Announcement</h2>
             <template x-if="annError">
                 <div class="mb-4 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600" x-text="annError"></div>
             </template>
-
-            {{-- Announcement Type --}}
-            <div class="mb-5">
+            <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-800 mb-2">Announcement Type</label>
                 <div class="relative" @click.outside="annTypeOpen = false">
-                    <button type="button"
-                        @click="annTypeOpen = !annTypeOpen"
+                    <button type="button" @click="annTypeOpen = !annTypeOpen"
                         class="w-full flex items-center justify-between px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white hover:border-gray-300 transition-colors focus:outline-none"
                         :class="annTypeOpen ? 'border-blue-400 ring-2 ring-blue-100' : ''">
                         <div class="flex items-center gap-2.5">
-                            <template x-if="!selectedTypeObj">
-                                <span class="text-gray-400">Choose announcement type</span>
-                            </template>
+                            <template x-if="!selectedTypeObj"><span class="text-gray-400">Choose type</span></template>
                             <template x-if="selectedTypeObj">
                                 <div class="flex items-center gap-2.5">
-                                    {{-- Icon --}}
-                                    <div class="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
-                                         :class="selectedTypeObj.bg">
-                                        {{-- notice --}}
-                                        <template x-if="selectedTypeObj.icon === 'info'">
-                                            <svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        </template>
-                                        {{-- check --}}
-                                        <template x-if="selectedTypeObj.icon === 'check'">
-                                            <svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        </template>
-                                        {{-- caution --}}
-                                        <template x-if="selectedTypeObj.icon === 'caution'">
-                                            <svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        </template>
-                                        {{-- warning --}}
-                                        <template x-if="selectedTypeObj.icon === 'warning'">
-                                            <svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                        </template>
+                                    <div class="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" :class="selectedTypeObj.bg">
+                                        <template x-if="selectedTypeObj.icon === 'info'"><svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></template>
+                                        <template x-if="selectedTypeObj.icon === 'check'"><svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></template>
+                                        <template x-if="selectedTypeObj.icon === 'caution'"><svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></template>
+                                        <template x-if="selectedTypeObj.icon === 'warning'"><svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></template>
                                     </div>
                                     <span class="text-gray-800 font-medium" x-text="selectedTypeObj.label"></span>
                                 </div>
                             </template>
                         </div>
-                        <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="annTypeOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
+                        <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="annTypeOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
-
-                    {{-- Dropdown --}}
-                    <div x-show="annTypeOpen"
-                         x-transition:enter="transition ease-out duration-150"
-                         x-transition:enter-start="opacity-0 -translate-y-1 scale-98"
-                         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                         x-transition:leave="transition ease-in duration-100"
-                         x-transition:leave-start="opacity-100"
-                         x-transition:leave-end="opacity-0 scale-98"
-                         class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1.5">
+                    <div x-show="annTypeOpen" x-transition class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1.5">
                         <template x-for="opt in annTypeOptions" :key="opt.value">
-                            <button type="button"
-                                @click="annType = opt.value; annTypeOpen = false"
+                            <button type="button" @click="annType = opt.value; annTypeOpen = false"
                                 class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left"
                                 :class="annType === opt.value ? 'bg-blue-50/60' : ''">
                                 <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" :class="opt.bg">
-                                    {{-- notice --}}
-                                    <template x-if="opt.icon === 'info'">
-                                        <svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    </template>
-                                    {{-- check --}}
-                                    <template x-if="opt.icon === 'check'">
-                                        <svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    </template>
-                                    {{-- caution --}}
-                                    <template x-if="opt.icon === 'caution'">
-                                        <svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    </template>
-                                    {{-- warning --}}
-                                    <template x-if="opt.icon === 'warning'">
-                                        <svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                    </template>
+                                    <template x-if="opt.icon === 'info'"><svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></template>
+                                    <template x-if="opt.icon === 'check'"><svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></template>
+                                    <template x-if="opt.icon === 'caution'"><svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></template>
+                                    <template x-if="opt.icon === 'warning'"><svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></template>
                                 </div>
                                 <span class="text-sm text-gray-700 font-medium" x-text="opt.label"></span>
                             </button>
@@ -523,75 +537,57 @@
                     </div>
                 </div>
             </div>
-
-            {{-- Title --}}
-            <div class="mb-5">
+            <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-800 mb-2">Title</label>
                 <input type="text" x-model="annTitle" placeholder="Enter title"
                     class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all">
             </div>
-
-            {{-- Message --}}
-            <div class="mb-5">
+            <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-800 mb-2">Message</label>
-                <textarea x-model="annMessage" placeholder="Write your announcement"
-                    rows="3"
+                <textarea x-model="annMessage" placeholder="Write your announcement" rows="3"
                     class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all resize-none"></textarea>
             </div>
-
-            {{-- Audience --}}
-            <div class="mb-5">
+            <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-800 mb-2">Audience</label>
                 <div class="flex items-center gap-6">
                     <label class="flex items-center gap-2 cursor-pointer select-none">
-                        <input type="checkbox"
-                            :checked="annAudience === 'everyone'"
-                            @change="annAudience = annAudience === 'everyone' ? '' : 'everyone'"
+                        <input type="checkbox" :checked="annAudience === 'everyone'" @change="annAudience = annAudience === 'everyone' ? '' : 'everyone'"
                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-400 cursor-pointer">
                         <span class="text-sm text-gray-700">Everyone</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer select-none">
-                        <input type="checkbox"
-                            :checked="annAudience === 'department'"
-                            @change="annAudience = annAudience === 'department' ? '' : 'department'"
+                        <input type="checkbox" :checked="annAudience === 'department'" @change="annAudience = annAudience === 'department' ? '' : 'department'"
                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-400 cursor-pointer">
                         <span class="text-sm text-gray-700">Selected Department</span>
                     </label>
                 </div>
             </div>
-
-            {{-- Department (conditional) --}}
-            <div class="mb-6" x-show="annAudience === 'department'" x-transition>
+            <div class="mb-5" x-show="annAudience === 'department'" x-transition>
                 <label class="block text-sm font-semibold text-gray-800 mb-2">Department</label>
                 <div class="relative">
                     <select x-model="annDept"
                         class="w-full appearance-none px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 bg-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer">
-                        <option value="" disabled selected>Selected department</option>
+                        <option value="" disabled selected>Select department</option>
                         @foreach($departments ?? [] as $dept)
                         <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                         @endforeach
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </div>
                 </div>
             </div>
-
-            {{-- Actions --}}
-            <div class="flex items-center justify-end gap-3">
+            <div class="flex items-center gap-3">
                 <button @click="closeAnnouncement()"
-                    class="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all">
+                    class="flex-1 sm:flex-none px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all">
                     Cancel
                 </button>
                 <button @click="submitAnnouncement()"
                     :disabled="annSaving"
-                    class="px-7 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+                    class="flex-1 sm:flex-none px-7 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
                     x-text="annSaving ? 'Submitting…' : 'Submit'">
                 </button>
             </div>
-
         </div>
     </div>
 
@@ -606,13 +602,12 @@
 ::-webkit-scrollbar-track { background: #f8fafc; }
 ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-.chevron-icon { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
 .header-title { animation: slideDown 0.5s cubic-bezier(0.22,1,0.36,1) both; }
 @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
 .card-anim { opacity: 0; animation: cardUp 0.55s cubic-bezier(0.22,1,0.36,1) forwards; }
 @keyframes cardUp { from { opacity:0; transform:translateY(24px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
 .stat-card { transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease; }
-.stat-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 20px 45px rgba(59,130,246,0.13); }
+.stat-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 32px rgba(59,130,246,0.12); }
 .stat-bar { height:3px; background:#f1f5f9; border-radius:99px; overflow:hidden; }
 .stat-bar-fill { height:100%; border-radius:99px; transform:scaleX(0); transform-origin:left; animation:growBar 1.3s cubic-bezier(0.22,1,0.36,1) 0.4s forwards; }
 @keyframes growBar { to { transform:scaleX(1); } }

@@ -203,13 +203,19 @@ class SupervisorAttendanceController extends Controller
             if ($now->gt($shiftEnd)) {
                 $approvedOt = OvertimeRequest::where('employee_id', $employee->id)
                     ->where('status', 'approved')
-                    ->whereDate('ot_date', $today)
+                    ->where(function ($q) use ($today) {
+                        $yesterday = Carbon::yesterday()->toDateString();
+                        $q->whereDate('ot_date', $today)
+                          ->orWhere(function ($q2) use ($yesterday) {
+                              $q2->whereDate('ot_date', $yesterday)
+                                 ->whereColumn('ot_end_time', '<', 'ot_start_time');
+                          });
+                    })
                     ->first();
 
                 if ($approvedOt) {
-                    $approvedEnd = Carbon::createFromTimeString(
-                        Carbon::today()->toDateString() . ' ' . $approvedOt->ot_end_time
-                    );
+                    $otDateBase  = Carbon::parse($approvedOt->ot_date)->toDateString();
+                    $approvedEnd = Carbon::createFromTimeString($otDateBase . ' ' . $approvedOt->ot_end_time);
                     if ($approvedEnd->lt($shiftEnd)) {
                         $approvedEnd->addDay();
                     }

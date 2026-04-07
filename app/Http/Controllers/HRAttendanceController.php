@@ -209,18 +209,23 @@ class HRAttendanceController extends Controller
             }
 
             if ($now->gt($shiftEnd)) {
-                // Only count overtime if there is an approved OT request for today
+                // Only count overtime if there is an approved OT request for today (or yesterday's that crosses midnight)
                 $approvedOt = OvertimeRequest::where('employee_id', $employee->id)
                     ->where('status', 'approved')
-                    ->whereDate('ot_date', $today)
+                    ->where(function ($q) use ($today) {
+                        $yesterday = Carbon::yesterday()->toDateString();
+                        $q->whereDate('ot_date', $today)
+                          ->orWhere(function ($q2) use ($yesterday) {
+                              $q2->whereDate('ot_date', $yesterday)
+                                 ->whereColumn('ot_end_time', '<', 'ot_start_time');
+                          });
+                    })
                     ->first();
 
                 if ($approvedOt) {
                     // Cap overtime at the approved ot_end_time, not actual clock-out
-                    $approvedEnd = Carbon::createFromTimeString(
-                        Carbon::today()->toDateString() . ' ' . $approvedOt->ot_end_time
-                    );
-                    // Handle overnight approved OT end time
+                    $otDateBase  = Carbon::parse($approvedOt->ot_date)->toDateString();
+                    $approvedEnd = Carbon::createFromTimeString($otDateBase . ' ' . $approvedOt->ot_end_time);
                     if ($approvedEnd->lt($shiftEnd)) {
                         $approvedEnd->addDay();
                     }

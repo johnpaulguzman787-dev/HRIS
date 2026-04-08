@@ -44,6 +44,11 @@ class FinanceOfficerDashboardController extends Controller
             'on_leave' => AttendanceLog::where('employee_id', $authEmployee->id)->whereMonth('attendance_date', $month)->whereYear('attendance_date', $year)->whereIn('status', ['on_leave', 'holiday'])->count(),
         ] : array_fill_keys(['present', 'late', 'absent', 'on_leave'], 0);
 
+        $latestPeriod  = \App\Models\PayrollPeriod::latest('start_date')->first();
+        $grossPayroll  = $latestPeriod ? \App\Models\Payslip::where('payroll_period_id', $latestPeriod->id)->sum('gross_pay') : 0;
+        $netPayroll    = $latestPeriod ? \App\Models\Payslip::where('payroll_period_id', $latestPeriod->id)->sum('net_pay')   : 0;
+        $daysToCutoff  = $latestPeriod ? max(0, (int)$today->diffInDays($latestPeriod->end_date, false)) : null;
+
         $data = [
             'dashInitials'    => $dashInitials,
             'dashName'        => $dashName,
@@ -63,6 +68,11 @@ class FinanceOfficerDashboardController extends Controller
             'stats'           => $stats,
             'month'           => $month,
             'year'            => $year,
+            'latestPeriod'    => $latestPeriod,
+            'grossPayroll'    => $grossPayroll,
+            'netPayroll'      => $netPayroll,
+            'daysToCutoff'    => $daysToCutoff,
+            'departments'     => \App\Models\Department::orderBy('name')->get(),
             'upcomingHolidays' => \App\Models\Holiday::whereDate('date', '>=', $today)
                 ->whereDate('date', '<=', Carbon::today()->endOfMonth())
                 ->orderBy('date')

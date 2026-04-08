@@ -331,6 +331,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/payroll_officer/dashboard', [\App\Http\Controllers\PayrollOfficerDashboardController::class, 'index'])->name('payroll_officer.dashboard');
     Route::get('/payroll_officer/profile',   [\App\Http\Controllers\PayrollOfficerProfileController::class, 'profile'])->name('payroll_officer.profile');
+    Route::post('/payroll_officer/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('payroll_officer.announcements.store');
 
     // ── Payroll Officer Attendance ─────────────────────────────────────────
     Route::get('/payroll_officer/attendance/reports',   [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'index'])->name('payroll_officer.attendance.reports');
@@ -393,6 +394,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/finance_officer/dashboard', [\App\Http\Controllers\FinanceOfficerDashboardController::class, 'index'])->name('finance_officer.dashboard');
     Route::get('/finance_officer/profile',   [\App\Http\Controllers\FinanceOfficerProfileController::class, 'profile'])->name('finance_officer.profile');
+    Route::post('/finance_officer/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('finance_officer.announcements.store');
 
     Route::get('/finance_officer/payroll',  [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'index'])->name('finance_officer.payroll');
     Route::get('/finance_officer/payslips', [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'payslips'])->name('finance_officer.payslips');

@@ -23,6 +23,18 @@
         currentDate: '',
         showAttendancePopup: {{ ($employeeShift && !in_array($todayLog?->status ?? '', ['on_leave', 'holiday']) && !$todayLog?->clock_in) ? 'true' : 'false' }},
         mobileMenuOpen: false,
+        shiftStartTime: '{{ $employeeShift?->shift?->start_time ? \Carbon\Carbon::parse($employeeShift->shift->start_time)->format("H:i") : "" }}',
+        shiftEndTime: '{{ $employeeShift?->shift?->end_time ? \Carbon\Carbon::parse($employeeShift->shift->end_time)->format("H:i") : "" }}',
+        get shiftProgress() {
+            if (!this.shiftStartTime || !this.shiftEndTime) return 0;
+            const [sh, sm] = this.shiftStartTime.split(':').map(Number);
+            const [eh, em] = this.shiftEndTime.split(':').map(Number);
+            const now = new Date();
+            const nowSecs = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+            const startSecs = sh * 3600 + sm * 60;
+            const endSecs = eh * 3600 + em * 60;
+            return Math.min(100, Math.max(0, Math.round((nowSecs - startSecs) / (endSecs - startSecs) * 100)));
+        },
         get elapsedDisplay() {
             const h = String(Math.floor(this.elapsedSeconds/3600)).padStart(2,'0');
             const m = String(Math.floor((this.elapsedSeconds%3600)/60)).padStart(2,'0');
@@ -205,62 +217,71 @@
                 <!-- COL 1: My Attendance Summary + Quick Actions -->
                 <div class="space-y-4 lg:space-y-5">
 
-                    <!-- My Attendance Summary -->
+                    <!-- Shift Schedule -->
                     <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.3s; border:1px solid #e5e7eb;">
-                        <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">My Attendance Summary</h2>
-                        <p class="text-xs text-gray-400 mt-1 mb-3">{{ date('F d, Y') }}</p>
+                        <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Shift Schedule</h2>
+                        <p class="text-xs text-gray-400 mt-1 mb-3" x-text="currentDate"></p>
 
-                        <!-- Stat Boxes (Mobile: vertical stack via grid-cols-2, Desktop: 4 cols) -->
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-5">
-                            <div class="stat-box rounded-xl p-2 text-center" style="background:#dcfce7;">
-                                <p class="text-base font-bold" style="color:#16a34a;">{{ $stats['present'] }}</p>
-                                <p class="text-xs font-semibold uppercase" style="color:#16a34a;">Present</p>
+                        @if($employeeShift && $employeeShift->shift)
+                        @php
+                            $shift = $employeeShift->shift;
+                            $bs = $shift->break_schedule ? (is_string($shift->break_schedule) ? json_decode($shift->break_schedule, true) : $shift->break_schedule) : null;
+                            $shiftStart = \Carbon\Carbon::parse($shift->start_time)->format('g:i A');
+                            $shiftEnd   = \Carbon\Carbon::parse($shift->end_time)->format('g:i A');
+                            $breakStart = isset($bs['start']) ? \Carbon\Carbon::parse($bs['start'])->format('g:i A') : null;
+                            $breakEnd   = isset($bs['end'])   ? \Carbon\Carbon::parse($bs['end'])->format('g:i A')   : null;
+                        @endphp
+
+                        <!-- Shift name + work setup badge -->
+                        <div class="flex items-center justify-between border border-gray-200 rounded-xl px-3 py-2 mb-4" style="background:#f8fafc;">
+                            <span class="text-xs font-semibold text-gray-700">{{ $shift->name }}</span>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#dbeafe; color:#1d4ed8;">
+                                {{ strtoupper($employeeShift->work_setup ?? 'WFH') }}
+                            </span>
+                        </div>
+
+                        <!-- Timeline markers -->
+                        <div class="flex items-start justify-between mb-4 px-1">
+                            <div class="text-center">
+                                <p class="text-base font-bold text-gray-800">{{ $shiftStart }}</p>
+                                <p class="text-xs text-gray-400 uppercase tracking-wider">START</p>
                             </div>
-                            <div class="stat-box rounded-xl p-2 text-center" style="background:#fef9c3;">
-                                <p class="text-base font-bold" style="color:#ca8a04;">{{ $stats['late'] }}</p>
-                                <p class="text-xs font-semibold uppercase" style="color:#ca8a04;">Late</p>
+                            @if($breakStart)
+                            <div class="text-center">
+                                <p class="text-xs font-semibold text-gray-600">{{ $breakStart }}{{ $breakEnd ? ' - '.$breakEnd : '' }}</p>
+                                <p class="text-xs text-gray-400 uppercase tracking-wider">Break</p>
                             </div>
-                            <div class="stat-box rounded-xl p-2 text-center" style="background:#fee2e2;">
-                                <p class="text-base font-bold" style="color:#dc2626;">{{ $stats['absent'] }}</p>
-                                <p class="text-xs font-semibold uppercase" style="color:#dc2626;">Absent</p>
-                            </div>
-                            <div class="stat-box rounded-xl p-2 text-center" style="background:#fce7f3;">
-                                <p class="text-base font-bold" style="color:#db2777;">{{ $stats['on_leave'] }}</p>
-                                <p class="text-xs font-semibold uppercase" style="color:#db2777;">On Leave</p>
+                            @endif
+                            <div class="text-center">
+                                <p class="text-base font-bold text-gray-800">{{ $shiftEnd }}</p>
+                                <p class="text-xs text-gray-400 uppercase tracking-wider">END</p>
                             </div>
                         </div>
 
-                        <!-- Overview Bar -->
-                        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Overview</p>
-                        <div class="mb-3">
-                            @php
-                                $total = $stats['present'] + $stats['late'] + $stats['absent'] + $stats['on_leave'];
-                                $pPresent  = $total > 0 ? round($stats['present']  / $total * 100) : 0;
-                                $pLate     = $total > 0 ? round($stats['late']     / $total * 100) : 0;
-                                $pAbsent   = $total > 0 ? round($stats['absent']   / $total * 100) : 0;
-                                $pOnLeave  = $total > 0 ? round($stats['on_leave'] / $total * 100) : 0;
-                            @endphp
-                            <div class="flex h-3 rounded-full overflow-hidden w-full" style="background:#f1f5f9;">
-                                <div class="bg-green-400 overview-segment" style="--seg-w: {{ $pPresent }}%;"></div>
-                                <div class="bg-yellow-400 overview-segment" style="--seg-w: {{ $pLate }}%;"></div>
-                                <div class="bg-red-400 overview-segment" style="--seg-w: {{ $pAbsent }}%;"></div>
-                                <div class="bg-pink-400 overview-segment" style="--seg-w: {{ $pOnLeave }}%;"></div>
-                            </div>
-                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
-                                <span class="flex items-center text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-green-400 inline-block mr-1"></span>Present</span>
-                                <span class="flex items-center text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-yellow-400 inline-block mr-1"></span>Late</span>
-                                <span class="flex items-center text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-red-400 inline-block mr-1"></span>Absent</span>
-                                <span class="flex items-center text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-pink-400 inline-block mr-1"></span>On Leave</span>
-                            </div>
+                        <!-- Progress bar -->
+                        <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
+                            <span>{{ $shiftStart }}</span>
+                            <span x-text="shiftProgress + '%'" style="color:#3b82f6; font-weight:600;"></span>
+                            <span>{{ $shiftEnd }}</span>
                         </div>
+                        <div class="h-2 rounded-full overflow-hidden" style="background:#dbeafe;">
+                            <div class="h-full rounded-full" style="background:#3b82f6; transition:width 1s linear;" :style="'width:' + shiftProgress + '%'"></div>
+                        </div>
+
+                        @else
+                        <div class="border border-dashed border-gray-200 rounded-xl px-3 py-6 bg-gray-50 text-center">
+                            <p class="text-xs text-gray-400 font-medium">No shift assigned yet.</p>
+                            <p class="text-xs text-gray-300 mt-1">Contact your HR to assign a shift.</p>
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Quick Actions -->
                     <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.42s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4">Quick Actions</h2>
                         <div class="grid grid-cols-2 gap-3">
-                            <button class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">OT Request</button>
-                            <button class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">View Attendance Reports</button>
+                            <button @click="window.location='{{ route('employee.requests.pending') }}'" class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">OT Request</button>
+                            <button @click="window.location='{{ route('employee.attendance.reports') }}'" class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">View Attendance</button>
                         </div>
                     </div>
                 </div>

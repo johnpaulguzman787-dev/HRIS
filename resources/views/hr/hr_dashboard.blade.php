@@ -357,7 +357,7 @@
                     <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.42s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4">Quick Actions</h2>
                         <div class="grid grid-cols-2 gap-3">
-                            <button class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">Add Employee</button>
+                            <button @click="window.location='{{ route('hr.employees.directory') }}?action=add'" class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">Add Employee</button>
                             <button @click="openAnnouncement()"
                                 class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">
                                 Create Announcement

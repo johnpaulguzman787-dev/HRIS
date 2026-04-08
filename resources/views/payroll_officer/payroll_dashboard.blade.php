@@ -23,6 +23,67 @@
         currentDate: '',
         showAttendancePopup: {{ ($employeeShift && !in_array($todayLog?->status ?? '', ['on_leave', 'holiday']) && !$todayLog?->clock_in) ? 'true' : 'false' }},
         mobileMenuOpen: false,
+
+        showAnnouncement: false,
+        annType: '',
+        annTypeOpen: false,
+        annTitle: '',
+        annMessage: '',
+        annAudience: '',
+        annDept: '',
+        annSaving: false,
+        annError: '',
+        annTypeOptions: [
+            { value: 'notice',       label: 'Notice',       icon: 'info',    bg: 'bg-blue-100',   color: 'text-blue-600'  },
+            { value: 'process_done', label: 'Process Done', icon: 'check',   bg: 'bg-green-100',  color: 'text-green-600' },
+            { value: 'caution',      label: 'Caution',      icon: 'caution', bg: 'bg-orange-100', color: 'text-orange-500'},
+            { value: 'warning',      label: 'Warning',      icon: 'warning', bg: 'bg-red-100',    color: 'text-red-500'   },
+        ],
+        get selectedTypeObj() {
+            return this.annTypeOptions.find(t => t.value === this.annType) || null;
+        },
+        openAnnouncement() {
+            this.showAnnouncement = true;
+            this.annType = ''; this.annTypeOpen = false; this.annTitle = '';
+            this.annMessage = ''; this.annAudience = ''; this.annDept = ''; this.annError = '';
+            document.body.style.overflow = 'hidden';
+        },
+        closeAnnouncement() { this.showAnnouncement = false; document.body.style.overflow = ''; },
+        async submitAnnouncement() {
+            this.annError = '';
+            if (!this.annType || !this.annTitle || !this.annMessage || !this.annAudience) {
+                this.annError = 'Please fill in all required fields.'; return;
+            }
+            if (this.annAudience === 'department' && !this.annDept) {
+                this.annError = 'Please select a department.'; return;
+            }
+            this.annSaving = true;
+            const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+            try {
+                const res = await fetch('{{ route('payroll_officer.announcements.store') }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    body: JSON.stringify({ type: this.annType, title: this.annTitle, message: this.annMessage, audience: this.annAudience, department_id: this.annDept || null })
+                });
+                const data = await res.json();
+                if (res.ok) { this.closeAnnouncement(); window.location.reload(); }
+                else { this.annError = data.message ?? 'Something went wrong.'; }
+            } catch(e) { this.annError = 'An error occurred. Please try again.'; }
+            this.annSaving = false;
+        },
+
+        shiftStartTime: '{{ $employeeShift?->shift?->start_time ? \Carbon\Carbon::parse($employeeShift->shift->start_time)->format("H:i") : "" }}',
+        shiftEndTime: '{{ $employeeShift?->shift?->end_time ? \Carbon\Carbon::parse($employeeShift->shift->end_time)->format("H:i") : "" }}',
+        get shiftProgress() {
+            if (!this.shiftStartTime || !this.shiftEndTime) return 0;
+            const [sh, sm] = this.shiftStartTime.split(':').map(Number);
+            const [eh, em] = this.shiftEndTime.split(':').map(Number);
+            const now = new Date();
+            const nowSecs = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+            const startSecs = sh * 3600 + sm * 60;
+            const endSecs = eh * 3600 + em * 60;
+            return Math.min(100, Math.max(0, Math.round((nowSecs - startSecs) / (endSecs - startSecs) * 100)));
+        },
         get elapsedDisplay() {
             const h = String(Math.floor(this.elapsedSeconds/3600)).padStart(2,'0');
             const m = String(Math.floor((this.elapsedSeconds%3600)/60)).padStart(2,'0');
@@ -176,26 +237,45 @@
 
             <!-- ROW 1: 3 Stat Cards (Mobile: 1 col, Desktop: 3 col) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-5 mb-4 lg:mb-5">
-                <!-- Total Days Present -->
+                <!-- Gross Payroll -->
                 <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.05s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 lg:mb-3">Total Days Present</p>
-                    <p class="text-3xl lg:text-5xl font-bold" style="color:#3b82f6;">{{ $stats['present'] }}</p>
-                    <p class="text-xs text-gray-400 mt-2 lg:mt-3 uppercase tracking-wider font-medium">{{ strtoupper(date('F Y')) }}</p>
-                    <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:86.6%; background:#3b82f6;"></div></div>
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 lg:mb-3">Gross Payroll</p>
+                    <p class="text-3xl lg:text-4xl font-bold" style="color:#3b82f6;">
+                        @if($latestPeriod && $grossPayroll > 0)
+                            ₱{{ number_format($grossPayroll, 0) }}
+                        @else
+                            <span class="text-2xl lg:text-3xl text-gray-400">No Data</span>
+                        @endif
+                    </p>
+                    <p class="text-xs text-gray-400 mt-2 lg:mt-3 uppercase tracking-wider font-medium">{{ $latestPeriod ? strtoupper($latestPeriod->name) : 'NO PERIOD' }}</p>
+                    <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:100%; background:#3b82f6;"></div></div>
                 </div>
-                <!-- Total Days Late -->
+                <!-- Net Payroll -->
                 <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.15s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 lg:mb-3">Total Days Late</p>
-                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">{{ $stats['late'] }}</p>
-                    <p class="text-xs text-gray-400 mt-2 lg:mt-3 uppercase tracking-wider font-medium">{{ strtoupper(date('F Y')) }}</p>
-                    <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:40%; background:#f59e0b;"></div></div>
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 lg:mb-3">Net Payroll</p>
+                    <p class="text-3xl lg:text-4xl font-bold text-gray-900">
+                        @if($latestPeriod && $netPayroll > 0)
+                            ₱{{ number_format($netPayroll, 0) }}
+                        @else
+                            <span class="text-2xl lg:text-3xl text-gray-400">No Data</span>
+                        @endif
+                    </p>
+                    <p class="text-xs text-gray-400 mt-2 lg:mt-3 uppercase tracking-wider font-medium">{{ $latestPeriod ? strtoupper($latestPeriod->name) : 'NO PERIOD' }}</p>
+                    @php $netPct = ($grossPayroll > 0) ? round($netPayroll / $grossPayroll * 100) : 0; @endphp
+                    <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:{{ $netPct }}%; background:#22c55e;"></div></div>
                 </div>
-                <!-- Leave Balance -->
+                <!-- Days to Cutoff -->
                 <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.25s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 lg:mb-3">Leave Balance</p>
-                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">3</p>
-                    <a href="#" class="text-xs mt-2 lg:mt-3 block uppercase tracking-wider font-semibold" style="color:#3b82f6;">View All</a>
-                    <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:30%; background:#22c55e;"></div></div>
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 lg:mb-3">Days to Cutoff</p>
+                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">{{ $daysToCutoff ?? '—' }}</p>
+                    <p class="text-xs text-gray-400 mt-2 lg:mt-3 font-medium" style="font-size:0.65rem;">
+                        @if($latestPeriod)
+                            Cutoff Period: {{ $latestPeriod->start_date->format('n/j/Y') }} – {{ $latestPeriod->end_date->format('n/j/Y') }}
+                        @else
+                            No active period
+                        @endif
+                    </p>
+                    <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:{{ $daysToCutoff !== null ? min(100, $daysToCutoff * 5) : 0 }}%; background:#f59e0b;"></div></div>
                 </div>
             </div>
 
@@ -205,62 +285,71 @@
                 <!-- COL 1: My Attendance Summary + Quick Actions -->
                 <div class="space-y-4 lg:space-y-5">
 
-                    <!-- My Attendance Summary -->
+                    <!-- Shift Schedule -->
                     <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.3s; border:1px solid #e5e7eb;">
-                        <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">My Attendance Summary</h2>
-                        <p class="text-xs text-gray-400 mt-1 mb-3">{{ date('F d, Y') }}</p>
+                        <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Shift Schedule</h2>
+                        <p class="text-xs text-gray-400 mt-1 mb-3" x-text="currentDate"></p>
 
-                        <!-- Stat Boxes (Mobile: 2x2 grid, Desktop: 4 cols) -->
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-5">
-                            <div class="stat-box rounded-xl p-2 text-center" style="background:#dcfce7;">
-                                <p class="text-base font-bold" style="color:#16a34a;">{{ $stats['present'] }}</p>
-                                <p class="text-xs font-semibold uppercase" style="color:#16a34a;">Present</p>
+                        @if($employeeShift && $employeeShift->shift)
+                        @php
+                            $shift = $employeeShift->shift;
+                            $bs = $shift->break_schedule ? (is_string($shift->break_schedule) ? json_decode($shift->break_schedule, true) : $shift->break_schedule) : null;
+                            $shiftStart = \Carbon\Carbon::parse($shift->start_time)->format('g:i A');
+                            $shiftEnd   = \Carbon\Carbon::parse($shift->end_time)->format('g:i A');
+                            $breakStart = isset($bs['start']) ? \Carbon\Carbon::parse($bs['start'])->format('g:i A') : null;
+                            $breakEnd   = isset($bs['end'])   ? \Carbon\Carbon::parse($bs['end'])->format('g:i A')   : null;
+                        @endphp
+
+                        <!-- Shift name + work setup badge -->
+                        <div class="flex items-center justify-between border border-gray-200 rounded-xl px-3 py-2 mb-4" style="background:#f8fafc;">
+                            <span class="text-xs font-semibold text-gray-700">{{ $shift->name }}</span>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#dbeafe; color:#1d4ed8;">
+                                {{ strtoupper($employeeShift->work_setup ?? 'WFH') }}
+                            </span>
+                        </div>
+
+                        <!-- Timeline markers -->
+                        <div class="flex items-start {{ $breakStart ? 'justify-between' : 'justify-between' }} mb-4 px-1">
+                            <div class="text-center">
+                                <p class="text-base font-bold text-gray-800">{{ $shiftStart }}</p>
+                                <p class="text-xs text-gray-400 uppercase tracking-wider">START</p>
                             </div>
-                            <div class="stat-box rounded-xl p-2 text-center" style="background:#fef9c3;">
-                                <p class="text-base font-bold" style="color:#ca8a04;">{{ $stats['late'] }}</p>
-                                <p class="text-xs font-semibold uppercase" style="color:#ca8a04;">Late</p>
+                            @if($breakStart)
+                            <div class="text-center">
+                                <p class="text-xs font-semibold text-gray-600">{{ $breakStart }}{{ $breakEnd ? ' - '.$breakEnd : '' }}</p>
+                                <p class="text-xs text-gray-400 uppercase tracking-wider">Break</p>
                             </div>
-                            <div class="stat-box rounded-xl p-2 text-center" style="background:#fee2e2;">
-                                <p class="text-base font-bold" style="color:#dc2626;">{{ $stats['absent'] }}</p>
-                                <p class="text-xs font-semibold uppercase" style="color:#dc2626;">Absent</p>
-                            </div>
-                            <div class="stat-box rounded-xl p-2 text-center" style="background:#fce7f3;">
-                                <p class="text-base font-bold" style="color:#db2777;">{{ $stats['on_leave'] }}</p>
-                                <p class="text-xs font-semibold uppercase" style="color:#db2777;">On Leave</p>
+                            @endif
+                            <div class="text-center">
+                                <p class="text-base font-bold text-gray-800">{{ $shiftEnd }}</p>
+                                <p class="text-xs text-gray-400 uppercase tracking-wider">END</p>
                             </div>
                         </div>
 
-                        <!-- Overview Bar -->
-                        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Overview</p>
-                        <div class="mb-3">
-                            @php
-                                $total = $stats['present'] + $stats['late'] + $stats['absent'] + $stats['on_leave'];
-                                $pPresent  = $total > 0 ? round($stats['present']  / $total * 100) : 0;
-                                $pLate     = $total > 0 ? round($stats['late']     / $total * 100) : 0;
-                                $pAbsent   = $total > 0 ? round($stats['absent']   / $total * 100) : 0;
-                                $pOnLeave  = $total > 0 ? round($stats['on_leave'] / $total * 100) : 0;
-                            @endphp
-                            <div class="flex h-3 rounded-full overflow-hidden w-full" style="background:#f1f5f9;">
-                                <div class="bg-green-400 overview-segment" style="--seg-w: {{ $pPresent }}%;"></div>
-                                <div class="bg-yellow-400 overview-segment" style="--seg-w: {{ $pLate }}%;"></div>
-                                <div class="bg-red-400 overview-segment" style="--seg-w: {{ $pAbsent }}%;"></div>
-                                <div class="bg-pink-400 overview-segment" style="--seg-w: {{ $pOnLeave }}%;"></div>
-                            </div>
-                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
-                                <span class="flex items-center text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-green-400 inline-block mr-1"></span>Present</span>
-                                <span class="flex items-center text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-yellow-400 inline-block mr-1"></span>Late</span>
-                                <span class="flex items-center text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-red-400 inline-block mr-1"></span>Absent</span>
-                                <span class="flex items-center text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-pink-400 inline-block mr-1"></span>On Leave</span>
-                            </div>
+                        <!-- Progress bar -->
+                        <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
+                            <span>{{ $shiftStart }}</span>
+                            <span x-text="shiftProgress + '%'" style="color:#3b82f6; font-weight:600;"></span>
+                            <span>{{ $shiftEnd }}</span>
                         </div>
+                        <div class="h-2 rounded-full overflow-hidden" style="background:#dbeafe;">
+                            <div class="h-full rounded-full" style="background:#3b82f6; transition:width 1s linear;" :style="'width:' + shiftProgress + '%'"></div>
+                        </div>
+
+                        @else
+                        <div class="border border-dashed border-gray-200 rounded-xl px-3 py-6 bg-gray-50 text-center">
+                            <p class="text-xs text-gray-400 font-medium">No shift assigned yet.</p>
+                            <p class="text-xs text-gray-300 mt-1">Contact your HR to assign a shift.</p>
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Quick Actions -->
                     <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.42s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4">Quick Actions</h2>
                         <div class="grid grid-cols-2 gap-3">
-                            <button class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">OT Request</button>
-                            <button class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">View Attendance Reports</button>
+                            <a href="{{ route('payroll_officer.payroll') }}" class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium text-center block">View Payroll</a>
+                            <button @click="openAnnouncement()" class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">Create Announcement</button>
                         </div>
                     </div>
                 </div>
@@ -405,6 +494,130 @@
             </div>
         </div>
     </main>
+
+    <!-- ===================== ANNOUNCEMENT MODAL ===================== -->
+    <div x-show="showAnnouncement"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[999] flex items-end sm:items-center justify-center p-0 sm:p-4"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="closeAnnouncement()"></div>
+        <div x-show="showAnnouncement"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="opacity-0 translate-y-full sm:scale-95 sm:translate-y-3"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-full sm:scale-95 sm:translate-y-3"
+             class="relative bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-y-auto"
+             style="max-height:90vh; padding:24px 20px 28px;">
+            <button @click="closeAnnouncement()"
+                class="absolute top-4 right-4 w-9 h-9 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            <div class="sm:hidden w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+            <h2 class="text-xl font-bold text-gray-900 mb-5">Create Announcement</h2>
+            <template x-if="annError">
+                <div class="mb-4 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600" x-text="annError"></div>
+            </template>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-800 mb-2">Announcement Type</label>
+                <div class="relative" @click.outside="annTypeOpen = false">
+                    <button type="button" @click="annTypeOpen = !annTypeOpen"
+                        class="w-full flex items-center justify-between px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white hover:border-gray-300 transition-colors focus:outline-none"
+                        :class="annTypeOpen ? 'border-blue-400 ring-2 ring-blue-100' : ''">
+                        <div class="flex items-center gap-2.5">
+                            <template x-if="!selectedTypeObj"><span class="text-gray-400">Choose type</span></template>
+                            <template x-if="selectedTypeObj">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" :class="selectedTypeObj.bg">
+                                        <template x-if="selectedTypeObj.icon === 'info'"><svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></template>
+                                        <template x-if="selectedTypeObj.icon === 'check'"><svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></template>
+                                        <template x-if="selectedTypeObj.icon === 'caution'"><svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></template>
+                                        <template x-if="selectedTypeObj.icon === 'warning'"><svg class="w-3.5 h-3.5" :class="selectedTypeObj.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></template>
+                                    </div>
+                                    <span class="text-gray-800 font-medium" x-text="selectedTypeObj.label"></span>
+                                </div>
+                            </template>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="annTypeOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="annTypeOpen" x-transition class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1.5">
+                        <template x-for="opt in annTypeOptions" :key="opt.value">
+                            <button type="button" @click="annType = opt.value; annTypeOpen = false"
+                                class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left"
+                                :class="annType === opt.value ? 'bg-blue-50/60' : ''">
+                                <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" :class="opt.bg">
+                                    <template x-if="opt.icon === 'info'"><svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></template>
+                                    <template x-if="opt.icon === 'check'"><svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></template>
+                                    <template x-if="opt.icon === 'caution'"><svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></template>
+                                    <template x-if="opt.icon === 'warning'"><svg class="w-4 h-4" :class="opt.color" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></template>
+                                </div>
+                                <span class="text-sm text-gray-700 font-medium" x-text="opt.label"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-800 mb-2">Title</label>
+                <input type="text" x-model="annTitle" placeholder="Enter title"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-800 mb-2">Message</label>
+                <textarea x-model="annMessage" placeholder="Write your announcement" rows="3"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all resize-none"></textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-800 mb-2">Audience</label>
+                <div class="flex items-center gap-6">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" :checked="annAudience === 'everyone'" @change="annAudience = annAudience === 'everyone' ? '' : 'everyone'"
+                            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-400 cursor-pointer">
+                        <span class="text-sm text-gray-700">Everyone</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" :checked="annAudience === 'department'" @change="annAudience = annAudience === 'department' ? '' : 'department'"
+                            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-400 cursor-pointer">
+                        <span class="text-sm text-gray-700">Selected Department</span>
+                    </label>
+                </div>
+            </div>
+            <div class="mb-5" x-show="annAudience === 'department'" x-transition>
+                <label class="block text-sm font-semibold text-gray-800 mb-2">Department</label>
+                <div class="relative">
+                    <select x-model="annDept"
+                        class="w-full appearance-none px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 bg-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer">
+                        <option value="" disabled selected>Select department</option>
+                        @foreach($departments ?? [] as $dept)
+                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                        @endforeach
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button @click="closeAnnouncement()"
+                    class="flex-1 sm:flex-none px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all">
+                    Cancel
+                </button>
+                <button @click="submitAnnouncement()"
+                    :disabled="annSaving"
+                    class="flex-1 sm:flex-none px-7 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+                    x-text="annSaving ? 'Submitting…' : 'Submit'">
+                </button>
+            </div>
+        </div>
+    </div>
 
     @include('partials.attendance-popup')
 </div>

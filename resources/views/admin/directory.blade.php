@@ -544,7 +544,9 @@
 
     alertModal: { show: false, message: '', type: 'error' },
     showAlert(message, type = 'error') { this.alertModal = { show: true, message, type }; }
-}" class="flex h-screen overflow-hidden bg-gray-50" @keydown.escape.window="closeModal(); closeAddEmployee()">
+}"
+    x-init="if (new URLSearchParams(window.location.search).get('action') === 'add') openAddEmployee()"
+    class="flex h-screen overflow-hidden bg-gray-50" @keydown.escape.window="closeModal(); closeAddEmployee()">
 
     @include('admin.admin_sidebar', ['activeMenu' => 'employees'])
 

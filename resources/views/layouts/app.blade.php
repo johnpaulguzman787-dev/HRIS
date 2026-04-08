@@ -33,5 +33,59 @@
     @yield('content')
     
     @stack('scripts')
+
+    {{-- Shared Alpine calendar widget used by all dashboard & leave-management pages --}}
+    <script>
+    function calendarWidget(holidays) {
+        const today = new Date();
+        return {
+            allHolidays: holidays,
+            calYear:  today.getFullYear(),
+            calMonth: today.getMonth() + 1, // 1-12
+            todayDay:   today.getDate(),
+            todayMonth: today.getMonth() + 1,
+            todayYear:  today.getFullYear(),
+
+            get calMonthName() {
+                return new Date(this.calYear, this.calMonth - 1, 1)
+                    .toLocaleString('en-US', { month: 'long', year: 'numeric' })
+                    .toUpperCase();
+            },
+            get firstDay() {
+                return new Date(this.calYear, this.calMonth - 1, 1).getDay();
+            },
+            get totalDays() {
+                return new Date(this.calYear, this.calMonth, 0).getDate();
+            },
+            get holidayMap() {
+                const map = {};
+                this.allHolidays.forEach(h => {
+                    if (h.month === this.calMonth && h.year === this.calYear) {
+                        map[h.day] = h.name;
+                    }
+                });
+                return map;
+            },
+            get upcomingEvents() {
+                return this.allHolidays
+                    .filter(h => h.month === this.calMonth && h.year === this.calYear)
+                    .sort((a, b) => a.day - b.day);
+            },
+            prevMonth() {
+                if (this.calMonth === 1) { this.calMonth = 12; this.calYear--; }
+                else { this.calMonth--; }
+            },
+            nextMonth() {
+                if (this.calMonth === 12) { this.calMonth = 1; this.calYear++; }
+                else { this.calMonth++; }
+            },
+            isToday(day) {
+                return day === this.todayDay && this.calMonth === this.todayMonth && this.calYear === this.todayYear;
+            },
+            range(n) { return Array.from({ length: n }, (_, i) => i); },
+            days() { return Array.from({ length: this.totalDays }, (_, i) => i + 1); },
+        };
+    }
+    </script>
 </body>
 </html>

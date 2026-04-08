@@ -188,13 +188,14 @@ $availableShifts = \App\Models\Shift::where('is_active', true)->get();
         ],
         'departments'      => Department::orderBy('name')->get(),
         'currentDate'      => Carbon::today()->format('l, F j, Y'),
-        'upcomingHolidays' => \App\Models\Holiday::whereDate('date', '>=', $today)
-            ->whereDate('date', '<=', Carbon::today()->endOfMonth())
-            ->orderBy('date')
-            ->get(),
-        'calendarHolidays' => \App\Models\Holiday::whereYear('date', Carbon::today()->year)
-            ->whereMonth('date', Carbon::today()->month)
-            ->get(),
+        'allHolidays' => \App\Models\Holiday::select('name', 'date', 'type')->get()->map(fn($h) => [
+            'name'  => $h->name,
+            'date'  => $h->date->format('Y-m-d'),
+            'day'   => (int) $h->date->format('j'),
+            'month' => (int) $h->date->format('n'),
+            'year'  => (int) $h->date->format('Y'),
+            'type'  => $h->type,
+        ])->values(),
         'totalDepartments' => 7,
         'newHires' => 5,
         'birthdaysThisMonth' => 3,

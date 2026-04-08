@@ -407,56 +407,58 @@
                 </div>
 
                 {{-- ── RIGHT COLUMN: CALENDAR ── --}}
-                <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.4s; border:1px solid #e5e7eb;">
+                <div x-data="calendarWidget({{ json_encode($allHolidays) }})"
+                     class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.4s; border:1px solid #e5e7eb;">
                     <div class="flex items-center justify-between mb-4">
-                        <button class="cal-nav-btn p-1.5 hover:bg-gray-100 rounded-lg">
+                        <button @click="prevMonth()" class="cal-nav-btn p-1.5 hover:bg-gray-100 rounded-lg">
                             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
                         </button>
-                        <p class="text-xs font-bold uppercase tracking-widest" style="color:#3b82f6;">{{ strtoupper(date('F Y')) }}</p>
-                        <button class="cal-nav-btn p-1.5 hover:bg-gray-100 rounded-lg">
+                        <p class="text-xs font-bold uppercase tracking-widest" style="color:#3b82f6;" x-text="calMonthName"></p>
+                        <button @click="nextMonth()" class="cal-nav-btn p-1.5 hover:bg-gray-100 rounded-lg">
                             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
                         </button>
                     </div>
                     <div class="grid grid-cols-7 mb-1">
-                        @foreach(['Su','Mo','Tu','We','Th','Fr','Sa'] as $d)
-                        <div class="text-center text-xs text-gray-400 font-semibold py-1">{{ $d }}</div>
-                        @endforeach
+                        <template x-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']">
+                            <div class="text-center text-xs text-gray-400 font-semibold py-1" x-text="d"></div>
+                        </template>
                     </div>
-                    @php
-                        $today    = (int)date('j');
-                        $total    = (int)date('t');
-                        $firstDay = (int)date('w', strtotime(date('Y-m-01')));
-                        $holidayMap = [];
-                        foreach($calendarHolidays as $h) { $holidayMap[$h->date->day] = $h->name; }
-                    @endphp
                     <div class="grid grid-cols-7 gap-0.5 mb-5">
-                        @for($i = 0; $i < $firstDay; $i++)<div></div>@endfor
-                        @for($i = 1; $i <= $total; $i++)
-                        <div class="cal-cell">
-                            <button class="cal-day w-full text-center text-xs py-2 rounded-full {{ $i == $today ? 'today-pill text-white font-bold' : 'text-gray-600 hover:bg-gray-100' }}"
-                                style="{{ $i == $today ? 'background:#3b82f6;' : '' }}">{{ $i }}</button>
-                            @if(isset($holidayMap[$i]))<span class="holiday-dot"></span><div class="holiday-tooltip">{{ $holidayMap[$i] }}</div>@endif
-                        </div>
-                        @endfor
+                        <template x-for="_ in range(firstDay)"><div></div></template>
+                        <template x-for="day in days()">
+                            <div class="cal-cell">
+                                <button class="cal-day w-full text-center text-xs py-2 rounded-full"
+                                    :class="isToday(day) ? 'today-pill text-white font-bold' : 'text-gray-600 hover:bg-gray-100'"
+                                    :style="isToday(day) ? 'background:#3b82f6;' : ''"
+                                    x-text="day"></button>
+                                <template x-if="holidayMap[day]">
+                                    <span class="holiday-dot"></span>
+                                </template>
+                                <template x-if="holidayMap[day]">
+                                    <div class="holiday-tooltip" x-text="holidayMap[day]"></div>
+                                </template>
+                            </div>
+                        </template>
                     </div>
                     <div class="border-t border-gray-100 mb-4"></div>
                     <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-3">Upcoming Events</h2>
                     <div class="space-y-3">
-                        @forelse($upcomingHolidays as $holiday)
-                        <div class="flex items-center gap-3 p-3 rounded-lg" style="background:#eff6ff;">
-                            <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:#3b82f6;"></div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-semibold text-gray-700 truncate">{{ $holiday->name }}</p>
-                                <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($holiday->date)->format('F d, Y') }} · {{ ucfirst($holiday->type) }}</p>
+                        <template x-if="upcomingEvents.length === 0">
+                            <p class="text-xs text-gray-400 text-center py-3">No upcoming events this month.</p>
+                        </template>
+                        <template x-for="h in upcomingEvents" :key="h.date">
+                            <div class="flex items-center gap-3 p-3 rounded-lg" style="background:#eff6ff;">
+                                <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:#3b82f6;"></div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-semibold text-gray-700 truncate" x-text="h.name"></p>
+                                    <p class="text-xs text-gray-400" x-text="new Date(h.date + 'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'2-digit',year:'numeric'}) + ' · ' + h.type.charAt(0).toUpperCase() + h.type.slice(1)"></p>
+                                </div>
                             </div>
-                        </div>
-                        @empty
-                        <p class="text-xs text-gray-400 text-center py-3">No upcoming events this month.</p>
-                        @endforelse
+                        </template>
                     </div>
                 </div>
 

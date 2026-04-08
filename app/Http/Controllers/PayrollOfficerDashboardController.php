@@ -73,13 +73,14 @@ class PayrollOfficerDashboardController extends Controller
             'netPayroll'      => $netPayroll,
             'daysToCutoff'    => $daysToCutoff,
             'departments'     => \App\Models\Department::orderBy('name')->get(),
-            'upcomingHolidays' => \App\Models\Holiday::whereDate('date', '>=', $today)
-                ->whereDate('date', '<=', Carbon::today()->endOfMonth())
-                ->orderBy('date')
-                ->get(),
-            'calendarHolidays' => \App\Models\Holiday::whereYear('date', Carbon::today()->year)
-                ->whereMonth('date', Carbon::today()->month)
-                ->get(),
+            'allHolidays' => \App\Models\Holiday::select('name', 'date', 'type')->get()->map(fn($h) => [
+                'name'  => $h->name,
+                'date'  => $h->date->format('Y-m-d'),
+                'day'   => (int) $h->date->format('j'),
+                'month' => (int) $h->date->format('n'),
+                'year'  => (int) $h->date->format('Y'),
+                'type'  => $h->type,
+            ])->values(),
         ];
 
         return view('payroll_officer.payroll_dashboard', $data);

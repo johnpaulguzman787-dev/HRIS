@@ -64,10 +64,14 @@ class HRDashboardController extends Controller
             ];
         })->filter(fn($d) => $d['total'] > 0)->values();
 
-        $upcomingHolidays = \App\Models\Holiday::whereDate('date', '>=', $today)
-            ->whereDate('date', '<=', Carbon::today()->endOfMonth())
-            ->orderBy('date')
-            ->get();
+        $allHolidays = \App\Models\Holiday::select('name', 'date', 'type')->get()->map(fn($h) => [
+            'name'  => $h->name,
+            'date'  => $h->date->format('Y-m-d'),
+            'day'   => (int) $h->date->format('j'),
+            'month' => (int) $h->date->format('n'),
+            'year'  => (int) $h->date->format('Y'),
+            'type'  => $h->type,
+        ])->values();
 
         $data = [
             'dashInitials'    => $dashInitials,
@@ -90,10 +94,7 @@ class HRDashboardController extends Controller
             ],
             'departmentProgress' => $departmentProgress,
             'currentDate'      => Carbon::today()->format('l, F j, Y'),
-            'upcomingHolidays' => $upcomingHolidays,
-            'calendarHolidays' => \App\Models\Holiday::whereYear('date', Carbon::today()->year)
-                ->whereMonth('date', Carbon::today()->month)
-                ->get(),
+            'allHolidays' => $allHolidays,
         ];
 
         return view('hr.hr_dashboard', $data);

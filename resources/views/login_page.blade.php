@@ -97,9 +97,8 @@
             text-transform: uppercase;
             transition: all 0.2s ease;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -1px rgba(0,0,0,0.06);
-
-            display: block;        /* required for margin auto */
-            margin: 30px auto 0 auto;        /* centers horizontally */
+            display: block;
+            margin: 30px auto 0 auto;
         }
         .btn-signin:hover {
             background-color: #FFFFFF;
@@ -133,6 +132,15 @@
             text-decoration: none;
         }
         .forgot-link:hover { text-decoration: underline; }
+
+        /* Bottom sign up link */
+        .text-link {
+            font-size: 14px;
+            font-weight: 400;
+            color: #3B7DED;
+            text-decoration: none;
+        }
+        .text-link:hover { text-decoration: underline; }
 
         /* Asterisk */
         .deco-asterisk {
@@ -177,31 +185,32 @@
             overflow: hidden;
         }
 
-        /* ===== MOBILE LAYOUT (xs, sm) ===== */
+        /* ===== MOBILE LAYOUT ===== */
         @media (max-width: 767px) {
             .page-wrapper {
                 flex-direction: column;
                 height: auto;
                 min-height: 100vh;
                 padding: 16px;
-                gap: 16px;
+                gap: 0;
             }
             .left-col {
                 flex: none;
-                min-height: 180px;
+                min-height: 300px;
                 padding: 24px;
-                border-radius: 16px;
+                border-radius: 20px;
             }
             .left-col h1 {
-                font-size: 28px !important;
+                font-size: 36px !important;
             }
             .left-col p {
                 font-size: 16px !important;
             }
             .right-col {
                 flex: 1;
-                padding: 32px 20px;
-                border-radius: 16px;
+                padding: 32px 20px 40px;
+                border-radius: 0;
+                justify-content: flex-start;
             }
             .form-inner {
                 max-width: 100% !important;
@@ -209,29 +218,26 @@
             .sign-in-heading {
                 font-size: 28px !important;
             }
+            .btn-signin {
+                width: 100% !important;
+                margin-top: 20px !important;
+            }
         }
 
         /* Shake animation */
-           @keyframes shake {
-           0% { transform: translateX(0); }
-           20% { transform: translateX(-4px); }
-           40% { transform: translateX(4px); }
-           60% { transform: translateX(-4px); }
-           80% { transform: translateX(4px); }
-           100% { transform: translateX(0); }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-4px); }
+            40% { transform: translateX(4px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+            100% { transform: translateX(0); }
         }
-
-           .shake {
-           animation: shake 0.3s ease-in-out;
+        .shake { animation: shake 0.3s ease-in-out; }
+        .input-error {
+            border-color: #EF4444;
+            box-shadow: 0 0 0 1px #EF4444;
         }
-
-           .input-error {
-           border-color: #EF4444; /* Tailwind red-500 */
-           box-shadow: 0 0 0 1px #EF4444;
-         }
-
-       
-
     </style>
 </head>
 <body>
@@ -243,9 +249,8 @@
 
         <!-- Asterisk top right -->
         <div style="display:flex; justify-content:flex-end;">
-           <span class="deco-asterisk" style="font-size:82px;">*</span>
+            <span class="deco-asterisk" style="font-size:82px;">*</span>
         </div>
-
 
         <!-- Welcome text bottom -->
         <div>
@@ -293,7 +298,7 @@
 
             <!-- Form -->
             <form method="POST" action="{{ route('login.submit') }}" style="display:flex; flex-direction:column; gap:20px;">
-                
+
                 @csrf
 
                 <!-- Email -->
@@ -346,6 +351,12 @@
 
             </form>
 
+            <!-- Bottom sign up link -->
+            <div style="text-align:center; margin-top:20px;">
+                <span style="font-size:14px; font-weight:300; color:rgba(45,45,45,0.70);">Don't have an account? </span>
+                <a href="#" class="text-link">Sign up</a>
+            </div>
+
         </div>
     </div>
 
@@ -369,9 +380,6 @@
         }
     }
 </script>
-
-
-
 
 </body>
 </html>

@@ -22,6 +22,7 @@
         breakAllowed: {{ $employeeShift?->shift?->break_schedule ? 'true' : 'false' }},
         currentTime: '',
         currentDate: '',
+        mobileMenuOpen: false,
 
         // ── Attendance Popup ──
         showAttendancePopup: {{ ($employeeShift && !in_array($todayLog?->status ?? '', ['on_leave', 'holiday']) && !$todayLog?->clock_in) ? 'true' : 'false' }},
@@ -187,60 +188,136 @@
     x-init="initClock()"
     class="flex h-screen overflow-hidden" style="background:#eef2f7;">
 
-    <!-- ===================== SIDEBAR ===================== -->
-    @include('hr.hr_sidebar')
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- DESKTOP SIDEBAR (hidden on mobile)      --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div class="hidden lg:block">
+        @include('hr.hr_sidebar')
+    </div>
 
-    <!-- ===================== MAIN CONTENT ===================== -->
-    <main class="flex-1 overflow-y-auto min-h-screen"
-        :class="sidebarCollapsed ? 'ml-20' : 'ml-72'"
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- MOBILE SLIDE-OUT DRAWER                 --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 lg:hidden"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+            @include('hr.hr_sidebar')
+        </div>
+    </div>
+
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- MAIN CONTENT                            --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <main class="flex-1 overflow-y-auto min-h-screen w-full"
+        :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
         style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
-        <!-- Header — blue -->
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
-            <div class="px-8 py-5 flex items-center justify-between">
-                <h1 class="text-2xl font-bold text-white header-title">Dashboard</h1>
-                <x-hr-notif />
+        {{-- ── HEADER ── --}}
+        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
+            <div class="px-5 py-4 flex items-center justify-between">
+                {{-- Hamburger on mobile --}}
+                <div class="flex items-center gap-3">
+                    <button @click="mobileMenuOpen = true"
+                            class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h1 class="text-xl font-bold text-white header-title">Dashboard</h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <x-hr-notif />
+                </div>
             </div>
         </header>
 
-        <!-- Body -->
-        <div class="p-6">
+        {{-- Body --}}
+        <div class="p-3 lg:p-6">
 
-            <!-- ROW 1: 4 Stat Cards -->
-            <div class="grid grid-cols-4 gap-5 mb-5">
-                <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.05s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Total Employees</p>
-                    <p class="text-5xl font-bold" style="color:#3b82f6;">{{ $totalEmployees }}</p>
-                    <div class="stat-bar mt-4"><div class="stat-bar-fill" style="width:100%; background:#3b82f6;"></div></div>
+            {{-- ── STAT CARDS ── --}}
+            {{-- Mobile: 2-col grid | Desktop: 4-col grid --}}
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5 mb-4 lg:mb-5">
+                <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.05s; border:1px solid #e5e7eb;">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Total Employees</p>
+                    <p class="text-3xl lg:text-5xl font-bold" style="color:#3b82f6;">{{ $totalEmployees }}</p>
+                    <div class="stat-bar mt-3"><div class="stat-bar-fill" style="width:100%; background:#3b82f6;"></div></div>
                 </div>
-                <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.12s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Present Today</p>
-                    <p class="text-5xl font-bold text-gray-900">{{ $presentToday }}</p>
-                    <div class="stat-bar mt-4"><div class="stat-bar-fill" style="width:81.8%; background:#22c55e;"></div></div>
+                <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.12s; border:1px solid #e5e7eb;">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Present Today</p>
+                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">{{ $presentToday }}</p>
+                    <div class="stat-bar mt-3"><div class="stat-bar-fill" style="width:81.8%; background:#22c55e;"></div></div>
                 </div>
-                <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.19s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Late and Absent</p>
-                    <p class="text-5xl font-bold text-gray-900">{{ $lateToday }}</p>
-                    <div class="stat-bar mt-4"><div class="stat-bar-fill" style="width:18.2%; background:#ef4444;"></div></div>
+                <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.19s; border:1px solid #e5e7eb;">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Late and Absent</p>
+                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">{{ $lateToday }}</p>
+                    <div class="stat-bar mt-3"><div class="stat-bar-fill" style="width:18.2%; background:#ef4444;"></div></div>
                 </div>
-                <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.26s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Pending Requests</p>
-                    <p class="text-5xl font-bold text-gray-900">{{ $pendingRequests }}</p>
-                    <div class="stat-bar mt-4"><div class="stat-bar-fill" style="width:9%; background:#f59e0b;"></div></div>
+                <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.26s; border:1px solid #e5e7eb;">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Pending Requests</p>
+                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">{{ $pendingRequests }}</p>
+                    <div class="stat-bar mt-3"><div class="stat-bar-fill" style="width:9%; background:#f59e0b;"></div></div>
                 </div>
             </div>
 
-            <!-- ROW 2: Three columns -->
-            <div class="grid grid-cols-3 gap-5">
+            {{-- ── MAIN GRID ── --}}
+            {{-- Mobile: single column stacked | Desktop: 3-col grid --}}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5">
 
-                <!-- COL 1: Attendance Summary + Quick Actions -->
-                <div class="space-y-5">
+                {{-- COL 1: Attendance Summary + Quick Actions --}}
+                <div class="space-y-4 lg:space-y-5">
 
-                    <!-- Attendance Summary -->
-                    <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.3s; border:1px solid #e5e7eb;">
+                    {{-- Attendance Summary --}}
+                    <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.3s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Today's Attendance Summary</h2>
                         <p class="text-xs text-gray-400 mt-1 mb-3">{{ date('F d, Y') }}</p>
-                        <div class="grid grid-cols-4 gap-2 mb-5">
+
+                        {{-- Department filter (shown in mobile design) --}}
+                        <div class="mb-3">
+                            <select class="text-xs border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 w-full lg:w-auto">
+                                <option>All Department</option>
+                                @foreach($departments ?? [] as $dept)
+                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Mobile: vertical stacked big stat boxes --}}
+                        <div class="space-y-2 mb-4 lg:hidden">
+                            <div class="rounded-xl p-4 text-center" style="background:#dcfce7;">
+                                <p class="text-2xl font-bold" style="color:#16a34a;">{{ $attendanceSummary['present'] }}</p>
+                                <p class="text-xs font-bold uppercase mt-1" style="color:#16a34a;">Present</p>
+                            </div>
+                            <div class="rounded-xl p-4 text-center" style="background:#fef9c3;">
+                                <p class="text-2xl font-bold" style="color:#ca8a04;">{{ $attendanceSummary['late'] }}</p>
+                                <p class="text-xs font-bold uppercase mt-1" style="color:#ca8a04;">Late</p>
+                            </div>
+                            <div class="rounded-xl p-4 text-center" style="background:#fee2e2;">
+                                <p class="text-2xl font-bold" style="color:#dc2626;">{{ $attendanceSummary['absent'] }}</p>
+                                <p class="text-xs font-bold uppercase mt-1" style="color:#dc2626;">Absent</p>
+                            </div>
+                            <div class="rounded-xl p-4 text-center" style="background:#fce7f3;">
+                                <p class="text-2xl font-bold" style="color:#db2777;">{{ $attendanceSummary['on_leave'] }}</p>
+                                <p class="text-xs font-bold uppercase mt-1" style="color:#db2777;">On Leave</p>
+                            </div>
+                        </div>
+
+                        {{-- Desktop: 4-col grid --}}
+                        <div class="hidden lg:grid grid-cols-4 gap-2 mb-5">
                             <div class="stat-box rounded-xl p-2 text-center" style="background:#dcfce7;">
                                 <p class="text-base font-bold" style="color:#16a34a;">{{ $attendanceSummary['present'] }}</p>
                                 <p class="text-xs font-semibold uppercase" style="color:#16a34a;">Present</p>
@@ -258,6 +335,7 @@
                                 <p class="text-xs font-semibold uppercase" style="color:#db2777;">On Leave</p>
                             </div>
                         </div>
+
                         <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Overview</p>
                         <div class="space-y-3">
                             @foreach($departmentProgress as $dept)
@@ -275,8 +353,8 @@
                         </div>
                     </div>
 
-                    <!-- Quick Actions -->
-                    <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.42s; border:1px solid #e5e7eb;">
+                    {{-- Quick Actions --}}
+                    <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.42s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4">Quick Actions</h2>
                         <div class="grid grid-cols-2 gap-3">
                             <button class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">Add Employee</button>
@@ -288,12 +366,12 @@
                     </div>
                 </div>
 
-                <!-- COL 2: Time & Attendance -->
-                <div class="bg-white rounded-xl p-6 card-anim flex flex-col" style="animation-delay:0.35s; border:1px solid #e5e7eb;">
+                {{-- COL 2: Time & Attendance --}}
+                <div class="bg-white rounded-xl p-4 lg:p-6 card-anim flex flex-col" style="animation-delay:0.35s; border:1px solid #e5e7eb;">
                     <p class="text-sm font-bold text-gray-700 uppercase tracking-widest mb-1">Time & Attendance</p>
-                    <p class="text-xs text-gray-400 font-medium mb-2" x-text="currentDate"></p>
                     <div class="mb-1">
-                        <p class="font-black tabular-nums leading-none" style="font-size:2.8rem; letter-spacing:-1px; color:#3b82f6;" x-text="currentTime"></p>
+                        <p class="text-xs text-gray-400 font-medium mb-1" x-text="currentDate"></p>
+                        <p class="font-black tabular-nums leading-none" style="font-size:2.4rem; letter-spacing:-1px; color:#3b82f6;" x-text="currentTime"></p>
                     </div>
                     <hr class="my-4 border-gray-100">
                     <div class="mb-3">
@@ -308,7 +386,15 @@
                             </div>
                             <div class="flex items-center justify-between px-3 py-2 border-t border-gray-100">
                                 <span class="text-xs text-gray-400">Work Setup</span>
-                                <span class="text-xs font-semibold" style="color:#1d4ed8;">{{ strtoupper($employeeShift->work_setup ?? '—') }}</span>
+                                {{-- Mobile: toggle buttons as shown in mockup --}}
+                                <div class="flex gap-1">
+                                    <button class="text-xs px-3 py-1 rounded-lg font-semibold transition-all"
+                                            :class="workSetup === 'office' ? 'bg-blue-100 text-blue-700' : 'text-gray-400 hover:bg-gray-100'"
+                                            @click="workSetup = 'office'">Office</button>
+                                    <button class="text-xs px-3 py-1 rounded-lg font-semibold transition-all"
+                                            :class="workSetup === 'wfh' ? 'bg-blue-100 text-blue-700' : 'text-gray-400 hover:bg-gray-100'"
+                                            @click="workSetup = 'wfh'">WFH</button>
+                                </div>
                             </div>
                         </div>
                         @else
@@ -321,15 +407,15 @@
                     <div class="mb-3">
                         <p class="text-xs font-semibold text-gray-500 mb-2">Today's Attendance</p>
                         <div class="flex gap-2 mb-2">
-                            <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
+                            <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50">
                                 <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">TIME IN</p>
                                 <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedIn ? clockInTime : '–'"></p>
                             </div>
-                            <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
+                            <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50">
                                 <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">BREAK</p>
                                 <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="breakTime ? breakTime : '–'"></p>
                             </div>
-                            <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
+                            <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50">
                                 <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">TIME OUT</p>
                                 <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedOut ? clockOutTime : '–'"></p>
                             </div>
@@ -362,8 +448,8 @@
                     </div>
                 </div>
 
-                <!-- COL 3: Calendar + Upcoming Events -->
-                <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.4s; border:1px solid #e5e7eb;">
+                {{-- COL 3: Calendar + Upcoming Events --}}
+                <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.4s; border:1px solid #e5e7eb;">
                     <div class="flex items-center justify-between mb-4">
                         <button class="cal-nav-btn p-1.5 hover:bg-gray-100 rounded-lg">
                             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -435,7 +521,7 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-[999] flex items-center justify-center p-4"
+         class="fixed inset-0 z-[999] flex items-end sm:items-center justify-center p-0 sm:p-4"
          style="display:none;">
 
         {{-- Backdrop --}}
@@ -444,24 +530,27 @@
         {{-- Modal Box --}}
         <div x-show="showAnnouncement"
              x-transition:enter="transition ease-out duration-250"
-             x-transition:enter-start="opacity-0 scale-95 translate-y-3"
-             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:enter-start="opacity-0 translate-y-full sm:scale-95 sm:translate-y-3"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-             x-transition:leave-end="opacity-0 scale-95 translate-y-3"
-             class="relative bg-white rounded-2xl w-full max-w-lg shadow-2xl"
-             style="padding: 32px 32px 28px;">
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-full sm:scale-95 sm:translate-y-3"
+             class="relative bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-y-auto"
+             style="max-height: 90vh; padding: 24px 20px 28px; sm:padding: 32px 32px 28px;">
 
             {{-- Close button --}}
             <button @click="closeAnnouncement()"
-                class="absolute top-5 right-5 w-9 h-9 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all">
+                class="absolute top-4 right-4 w-9 h-9 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
 
+            {{-- drag handle for mobile --}}
+            <div class="sm:hidden w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+
             {{-- Title --}}
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Create Announcement</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-5">Create Announcement</h2>
 
             {{-- Error --}}
             <template x-if="annError">
@@ -469,7 +558,7 @@
             </template>
 
             {{-- Announcement Type --}}
-            <div class="mb-5">
+            <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-800 mb-2">Announcement Type</label>
                 <div class="relative" @click.outside="annTypeOpen = false">
                     <button type="button"
@@ -507,12 +596,7 @@
 
                     {{-- Dropdown --}}
                     <div x-show="annTypeOpen"
-                         x-transition:enter="transition ease-out duration-150"
-                         x-transition:enter-start="opacity-0 -translate-y-1 scale-98"
-                         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                         x-transition:leave="transition ease-in duration-100"
-                         x-transition:leave-start="opacity-100"
-                         x-transition:leave-end="opacity-0 scale-98"
+                         x-transition
                          class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1.5">
                         <template x-for="opt in annTypeOptions" :key="opt.value">
                             <button type="button"
@@ -541,14 +625,14 @@
             </div>
 
             {{-- Title --}}
-            <div class="mb-5">
+            <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-800 mb-2">Title</label>
                 <input type="text" x-model="annTitle" placeholder="Enter title"
                     class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all">
             </div>
 
             {{-- Message --}}
-            <div class="mb-5">
+            <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-800 mb-2">Message</label>
                 <textarea x-model="annMessage" placeholder="Write your announcement"
                     rows="3"
@@ -556,7 +640,7 @@
             </div>
 
             {{-- Audience --}}
-            <div class="mb-5">
+            <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-800 mb-2">Audience</label>
                 <div class="flex items-center gap-6">
                     <label class="flex items-center gap-2 cursor-pointer select-none">
@@ -577,7 +661,7 @@
             </div>
 
             {{-- Department (conditional) --}}
-            <div class="mb-6" x-show="annAudience === 'department'" x-transition>
+            <div class="mb-5" x-show="annAudience === 'department'" x-transition>
                 <label class="block text-sm font-semibold text-gray-800 mb-2">Department</label>
                 <div class="relative">
                     <select x-model="annDept"
@@ -596,14 +680,14 @@
             </div>
 
             {{-- Actions --}}
-            <div class="flex items-center justify-end gap-3">
+            <div class="flex items-center gap-3">
                 <button @click="closeAnnouncement()"
-                    class="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all">
+                    class="flex-1 sm:flex-none px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all">
                     Cancel
                 </button>
                 <button @click="submitAnnouncement()"
                     :disabled="annSaving"
-                    class="px-7 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+                    class="flex-1 sm:flex-none px-7 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
                     x-text="annSaving ? 'Submitting…' : 'Submit'">
                 </button>
             </div>
@@ -680,5 +764,316 @@ a:hover .settings-icon { animation: spinOnce 0.45s ease forwards; }
 @keyframes todayGlow { 0%,100% { box-shadow:0 2px 8px rgba(59,130,246,0.4); } 50% { box-shadow:0 2px 18px rgba(59,130,246,0.7); } }
 .shimmer { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.8s infinite linear; }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ===== MOBILE RESPONSIVENESS (max-width: 767px) ===== */
+@media (max-width: 767px) {
+    /* Layout containers */
+    .page-wrapper {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+        padding: 16px;
+        gap: 0;
+    }
+    
+    /* Left column */
+    .left-col {
+        flex: none;
+        min-height: 300px;
+        padding: 24px;
+        border-radius: 20px;
+    }
+    
+    .left-col h1 {
+        font-size: 36px !important;
+    }
+    
+    .left-col p {
+        font-size: 16px !important;
+    }
+    
+    /* Right column */
+    .right-col {
+        flex: 1;
+        padding: 32px 20px 40px;
+        border-radius: 0;
+        justify-content: flex-start;
+    }
+    
+    /* Form inner container */
+    .form-inner {
+        max-width: 100% !important;
+    }
+    
+    /* Page heading */
+    .page-heading {
+        font-size: 28px !important;
+    }
+    
+    /* Primary button */
+    .btn-primary {
+        width: 100% !important;
+        margin-top: 20px !important;
+    }
+    
+    /* Stat cards grid - 2 columns */
+    .grid-cols-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    
+    /* Main grid - single column */
+    .grid-cols-3 {
+        grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    }
+    
+    /* Card padding */
+    .p-6 {
+        padding: 1rem !important;
+    }
+    
+    /* Gap adjustments */
+    .gap-5 {
+        gap: 1rem !important;
+    }
+    
+    /* Margin adjustments */
+    .mb-5 {
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Text size adjustments */
+    .text-5xl {
+        font-size: 2rem !important;
+        line-height: 2rem !important;
+    }
+    
+    /* Calendar adjustments */
+    .cal-day {
+        font-size: 0.7rem !important;
+        padding: 0.25rem 0 !important;
+    }
+    
+    /* Attendance boxes - vertical stack */
+    .lg\\:grid-cols-4 {
+        grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    }
+    
+    /* Hide desktop elements on mobile */
+    .lg\\:block {
+        display: none !important;
+    }
+    
+    /* Show mobile elements */
+    .lg\\:hidden {
+        display: block !important;
+    }
+    
+    /* Header adjustments */
+    .header-title {
+        font-size: 1.25rem !important;
+    }
+    
+    /* Clock button adjustments */
+    .clock-btn {
+        padding: 0.625rem 0 !important;
+        font-size: 0.7rem !important;
+    }
+    
+    /* Time display */
+    .tabular-nums {
+        font-size: 1.8rem !important;
+    }
+    
+    /* Attendance summary boxes */
+    .stat-box {
+        padding: 0.75rem !important;
+    }
+    
+    /* Department filter */
+    select.text-xs {
+        width: 100% !important;
+    }
+    
+    /* Quick action buttons */
+    .action-btn {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.75rem !important;
+    }
+    
+    /* Modal adjustments */
+    .sm\\:max-w-lg {
+        max-width: 100% !important;
+    }
+    
+    /* Modal padding */
+    .sm\\:rounded-2xl {
+        border-radius: 1rem 1rem 0 0 !important;
+    }
+    
+    /* Calendar cells */
+    .cal-cell {
+        font-size: 0.7rem;
+    }
+    
+    /* Holiday tooltip */
+    .holiday-tooltip {
+        font-size: 0.65rem !important;
+        white-space: normal !important;
+        width: max-content !important;
+        max-width: 120px !important;
+    }
+}
+
+/* ===== TABLET RESPONSIVENESS (768px - 1023px) ===== */
+@media (min-width: 768px) and (max-width: 1023px) {
+    /* Stat cards - 2 columns on tablet */
+    .grid-cols-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    
+    /* Main grid - 2 columns on tablet */
+    .grid-cols-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    
+    /* Card padding */
+    .p-6 {
+        padding: 1.25rem !important;
+    }
+    
+    /* Text sizes */
+    .text-5xl {
+        font-size: 2.5rem !important;
+    }
+    
+    /* Clock buttons */
+    .clock-btn {
+        font-size: 0.7rem !important;
+    }
+}
+
+/* ===== SMALL MOBILE (max-width: 480px) ===== */
+@media (max-width: 480px) {
+    /* Header padding */
+    .px-5 {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+    
+    /* Stat card text */
+    .text-3xl {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Clock time display */
+    .tabular-nums {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Attendance boxes padding */
+    .rounded-xl {
+        padding: 0.75rem !important;
+    }
+    
+    /* Button text */
+    .clock-btn {
+        font-size: 0.65rem !important;
+        padding: 0.5rem 0 !important;
+    }
+    
+    /* Modal buttons */
+    .sm\\:flex-none {
+        flex: 1 !important;
+    }
+    
+    /* Calendar grid gap */
+    .gap-0\\.5 {
+        gap: 0.125rem !important;
+    }
+    
+    /* Quick actions grid */
+    .grid-cols-2 {
+        gap: 0.5rem !important;
+    }
+    
+    /* Action buttons */
+    .action-btn {
+        padding: 0.5rem !important;
+        font-size: 0.7rem !important;
+    }
+}
+
+/* ===== ADDITIONAL MOBILE FIXES ===== */
+/* Fix for mobile menu drawer */
+@media (max-width: 767px) {
+    .fixed.inset-0.z-50 {
+        z-index: 9999;
+    }
+    
+    /* Improve touch targets */
+    button, 
+    .clock-btn,
+    .action-btn,
+    .cal-day {
+        min-height: 44px;
+    }
+    
+    /* Better spacing for forms */
+    .space-y-3 > * + * {
+        margin-top: 0.5rem;
+    }
+    
+    /* Adjust stat cards hover effect on mobile */
+    .stat-card:hover {
+        transform: none;
+    }
+    
+    /* Prevent horizontal scroll */
+    body {
+        overflow-x: hidden;
+    }
+    
+    /* Make calendar more touch-friendly */
+    .cal-day {
+        padding: 0.5rem 0 !important;
+        min-width: 32px;
+    }
+    
+    /* Adjust upcoming events */
+    .space-y-3 > div {
+        padding: 0.5rem !important;
+    }
+    
+    /* Better modal spacing */
+    .rounded-t-2xl {
+        border-radius: 1rem 1rem 0 0 !important;
+    }
+    
+    /* Modal drag handle */
+    .w-10.h-1 {
+        width: 2.5rem;
+        height: 0.25rem;
+    }
+}
+
+/* ===== FIX FOR MOBILE HOVER STATES ===== */
+@media (hover: none) and (pointer: coarse) {
+    .stat-card:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .clock-btn:hover:not(:disabled) {
+        transform: none;
+    }
+    
+    .action-btn:hover {
+        transform: none;
+    }
+    
+    .cal-day:hover:not(.today-pill) {
+        transform: none;
+    }
+}
 </style>
 @endsection

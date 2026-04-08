@@ -22,6 +22,7 @@
         currentTime: '',
         currentDate: '',
         showAttendancePopup: {{ ($employeeShift && !in_array($todayLog?->status ?? '', ['on_leave', 'holiday']) && !$todayLog?->clock_in) ? 'true' : 'false' }},
+        mobileMenuOpen: false,
         get elapsedDisplay() {
             const h = String(Math.floor(this.elapsedSeconds/3600)).padStart(2,'0');
             const m = String(Math.floor((this.elapsedSeconds%3600)/60)).padStart(2,'0');
@@ -119,18 +120,51 @@
     x-init="initClock()"
     class="flex h-screen overflow-hidden" style="background:#eef2f7;">
 
-    <!-- ===================== SIDEBAR ===================== -->
-    @include('employee.employee_sidebar')
+    <!-- ===================== DESKTOP SIDEBAR ===================== -->
+    <div class="hidden lg:block">
+        @include('employee.employee_sidebar')
+    </div>
+
+    <!-- ===================== MOBILE DRAWER ===================== -->
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 lg:hidden"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+            @include('employee.employee_sidebar')
+        </div>
+    </div>
 
     <!-- ===================== MAIN CONTENT ===================== -->
-<main class="flex-1 overflow-y-auto min-h-screen"
-    :class="sidebarCollapsed ? 'ml-20' : 'ml-72'"
-    style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
+    <main class="flex-1 overflow-y-auto min-h-screen w-full"
+        :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
+        style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
         <!-- Header -->
-        <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
-            <div class="px-8 py-5 flex items-center justify-between">
-                <h1 class="text-2xl font-bold text-white header-title">Dashboard</h1>
+        <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl overflow-visible">
+            <div class="px-5 lg:px-8 py-4 lg:py-5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <button @click="mobileMenuOpen = true"
+                            class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h1 class="text-xl lg:text-2xl font-bold text-white header-title">Dashboard</h1>
+                </div>
                 <div class="flex items-center space-x-3">
                     <x-employee-notif />
                 </div>
@@ -138,46 +172,46 @@
         </header>
 
         <!-- Body -->
-        <div class="p-6">
+        <div class="p-3 lg:p-6">
 
-            <!-- ROW 1: 3 Stat Cards -->
-            <div class="grid grid-cols-3 gap-5 mb-5">
+            <!-- ROW 1: 3 Stat Cards (Mobile: 1 col, Desktop: 3 col) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-5 mb-4 lg:mb-5">
                 <!-- Total Days Present -->
-                <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.05s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Total Days Present</p>
-                    <p class="text-5xl font-bold" style="color:#3b82f6;">{{ $stats['present'] }}</p>
-                    <p class="text-xs text-gray-400 mt-3 uppercase tracking-wider font-medium">{{ strtoupper(date('F Y')) }}</p>
+                <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.05s; border:1px solid #e5e7eb;">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 lg:mb-3">Total Days Present</p>
+                    <p class="text-3xl lg:text-5xl font-bold" style="color:#3b82f6;">{{ $stats['present'] }}</p>
+                    <p class="text-xs text-gray-400 mt-2 lg:mt-3 uppercase tracking-wider font-medium">{{ strtoupper(date('F Y')) }}</p>
                     <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:86.6%; background:#3b82f6;"></div></div>
                 </div>
                 <!-- Total Days Late -->
-                <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.15s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Total Days Late</p>
-                    <p class="text-5xl font-bold text-gray-900">{{ $stats['late'] }}</p>
-                    <p class="text-xs text-gray-400 mt-3 uppercase tracking-wider font-medium">{{ strtoupper(date('F Y')) }}</p>
+                <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.15s; border:1px solid #e5e7eb;">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 lg:mb-3">Total Days Late</p>
+                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">{{ $stats['late'] }}</p>
+                    <p class="text-xs text-gray-400 mt-2 lg:mt-3 uppercase tracking-wider font-medium">{{ strtoupper(date('F Y')) }}</p>
                     <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:40%; background:#f59e0b;"></div></div>
                 </div>
                 <!-- Leave Balance -->
-                <div class="stat-card bg-white rounded-xl p-6 card-anim" style="animation-delay:0.25s; border:1px solid #e5e7eb;">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Leave Balance</p>
-                    <p class="text-5xl font-bold text-gray-900">3</p>
-                    <a href="#" class="text-xs mt-3 block uppercase tracking-wider font-semibold" style="color:#3b82f6;">View All</a>
+                <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.25s; border:1px solid #e5e7eb;">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 lg:mb-3">Leave Balance</p>
+                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">3</p>
+                    <a href="#" class="text-xs mt-2 lg:mt-3 block uppercase tracking-wider font-semibold" style="color:#3b82f6;">View All</a>
                     <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:30%; background:#22c55e;"></div></div>
                 </div>
             </div>
 
-            <!-- ROW 2: Three columns -->
-            <div class="grid grid-cols-3 gap-5">
+            <!-- ROW 2: Three columns (Mobile: 1 col, Desktop: 3 col) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5">
 
                 <!-- COL 1: My Attendance Summary + Quick Actions -->
-                <div class="space-y-5">
+                <div class="space-y-4 lg:space-y-5">
 
                     <!-- My Attendance Summary -->
-                    <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.3s; border:1px solid #e5e7eb;">
+                    <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.3s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">My Attendance Summary</h2>
                         <p class="text-xs text-gray-400 mt-1 mb-3">{{ date('F d, Y') }}</p>
 
-                        <!-- Stat Boxes -->
-                        <div class="grid grid-cols-4 gap-2 mb-5">
+                        <!-- Stat Boxes (Mobile: vertical stack via grid-cols-2, Desktop: 4 cols) -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-5">
                             <div class="stat-box rounded-xl p-2 text-center" style="background:#dcfce7;">
                                 <p class="text-base font-bold" style="color:#16a34a;">{{ $stats['present'] }}</p>
                                 <p class="text-xs font-semibold uppercase" style="color:#16a34a;">Present</p>
@@ -212,7 +246,7 @@
                                 <div class="bg-red-400 overview-segment" style="--seg-w: {{ $pAbsent }}%;"></div>
                                 <div class="bg-pink-400 overview-segment" style="--seg-w: {{ $pOnLeave }}%;"></div>
                             </div>
-                            <div class="flex items-center space-x-3 mt-2">
+                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
                                 <span class="flex items-center text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-green-400 inline-block mr-1"></span>Present</span>
                                 <span class="flex items-center text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-yellow-400 inline-block mr-1"></span>Late</span>
                                 <span class="flex items-center text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-red-400 inline-block mr-1"></span>Absent</span>
@@ -222,7 +256,7 @@
                     </div>
 
                     <!-- Quick Actions -->
-                    <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.42s; border:1px solid #e5e7eb;">
+                    <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.42s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4">Quick Actions</h2>
                         <div class="grid grid-cols-2 gap-3">
                             <button class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">OT Request</button>
@@ -232,24 +266,24 @@
                 </div>
 
                 <!-- COL 2: Time & Attendance -->
-                <div class="bg-white rounded-xl p-6 card-anim flex flex-col" style="animation-delay:0.35s; border:1px solid #e5e7eb;">
+                <div class="bg-white rounded-xl p-4 lg:p-6 card-anim flex flex-col" style="animation-delay:0.35s; border:1px solid #e5e7eb;">
                     <p class="text-sm font-bold text-gray-700 uppercase tracking-widest mb-1">Time & Attendance</p>
-                    <p class="text-xs text-gray-400 font-medium mb-2" x-text="currentDate"></p>
+                    <p class="text-xs text-gray-400 font-medium mb-1" x-text="currentDate"></p>
                     <div class="mb-1">
-                        <p class="font-black tabular-nums leading-none" style="font-size:2.8rem; letter-spacing:-1px; color:#3b82f6;" x-text="currentTime"></p>
+                        <p class="font-black tabular-nums leading-none" style="font-size:1.8rem lg:font-size:2.8rem; letter-spacing:-1px; color:#3b82f6;" x-text="currentTime"></p>
                     </div>
                     <hr class="my-4 border-gray-100">
                     <div class="mb-3">
                         <p class="text-xs font-semibold text-gray-500 mb-2">Shift Schedule</p>
                         @if($employeeShift)
                         <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
-                            <div class="flex items-center justify-between px-3 py-2">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between px-3 py-2 gap-1">
                                 <span class="text-xs font-semibold text-gray-600">{{ $employeeShift->shift->name ?? '—' }}</span>
                                 <span class="text-xs text-gray-400">
                                     {{ $employeeShift->shift ? \Carbon\Carbon::parse($employeeShift->shift->start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($employeeShift->shift->end_time)->format('g:i A') : '—' }}
                                 </span>
                             </div>
-                            <div class="flex items-center justify-between px-3 py-2 border-t border-gray-100">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between px-3 py-2 border-t border-gray-100 gap-1">
                                 <span class="text-xs text-gray-400">Work Setup</span>
                                 <span class="text-xs font-semibold" style="color:#1d4ed8;">{{ strtoupper($employeeShift->work_setup ?? '—') }}</span>
                             </div>
@@ -263,7 +297,7 @@
                     </div>
                     <div class="mb-3">
                         <p class="text-xs font-semibold text-gray-500 mb-2">Today's Attendance</p>
-                        <div class="flex gap-2 mb-2">
+                        <div class="flex flex-col sm:flex-row gap-2 mb-2">
                             <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
                                 <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">TIME IN</p>
                                 <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedIn ? clockInTime : '–'"></p>
@@ -306,8 +340,8 @@
                 </div>
 
                 <!-- COL 3: Calendar + Upcoming Events -->
-                <div class="space-y-5">
-                    <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.4s; border:1px solid #e5e7eb;">
+                <div class="space-y-4 lg:space-y-5">
+                    <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.4s; border:1px solid #e5e7eb;">
                         <div class="flex items-center justify-between mb-4">
                             <button class="cal-nav-btn p-1.5 hover:bg-gray-100 rounded-lg">
                                 <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -350,7 +384,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-xl p-6 card-anim" style="animation-delay:0.5s; border:1px solid #e5e7eb;">
+                    <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.5s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4">Upcoming Events</h2>
                         <div class="space-y-3">
                             @forelse($upcomingHolidays as $holiday)
@@ -450,5 +484,58 @@ a:hover .settings-icon { animation: spinOnce 0.45s ease forwards; }
 @keyframes todayGlow { 0%,100% { box-shadow:0 2px 8px rgba(59,130,246,0.4); } 50% { box-shadow:0 2px 18px rgba(59,130,246,0.7); } }
 .shimmer { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.8s infinite linear; }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ===== MOBILE RESPONSIVENESS ===== */
+@media (max-width: 767px) {
+    .lg\\:block {
+        display: none !important;
+    }
+    .tabular-nums {
+        font-size: 1.8rem !important;
+    }
+    .clock-btn {
+        padding: 0.625rem 0 !important;
+        font-size: 0.7rem !important;
+    }
+    .action-btn {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.75rem !important;
+    }
+    .stat-card:hover {
+        transform: none;
+    }
+    .clock-btn:hover:not(:disabled) {
+        transform: none;
+    }
+    .action-btn:hover {
+        transform: none;
+    }
+    .cal-day:hover:not(.today-pill) {
+        transform: none;
+    }
+    button, .clock-btn, .action-btn, .cal-day {
+        min-height: 44px;
+    }
+    body {
+        overflow-x: hidden;
+    }
+}
+
+@media (max-width: 480px) {
+    .tabular-nums {
+        font-size: 1.5rem !important;
+    }
+    .clock-btn {
+        font-size: 0.65rem !important;
+        padding: 0.5rem 0 !important;
+    }
+    .action-btn {
+        padding: 0.5rem !important;
+        font-size: 0.7rem !important;
+    }
+    .grid-cols-2 {
+        gap: 0.5rem !important;
+    }
+}
 </style>
 @endsection

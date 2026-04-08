@@ -537,7 +537,7 @@ class SupervisorAttendanceController extends Controller
         foreach ($employees as $emp) {
             $empShift = $allShifts->get($emp->id);
             $daysOff  = $empShift && $empShift->days_off
-                ? json_decode($empShift->days_off, true)
+                ? $empShift->days_off
                 : ['Sat', 'Sun'];
 
             $days = [];

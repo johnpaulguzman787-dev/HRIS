@@ -69,10 +69,10 @@ class HREmployeeController extends Controller
             'mi'                => 'nullable|string|max:5',
             'suffix'            => 'nullable|string|max:20',
             'email'             => 'required|email:rfc,dns|unique:users,email',
-            'contact_no'        => 'required|string|max:20',
+            'contact_no'        => ['required', 'regex:/^(09|\+639)[0-9]{9}$/'],
             'gender'            => 'required|string',
             'date_of_birth'     => 'required|date',
-            'address'           => 'required|string',
+            'address'           => ['required', 'string', 'regex:/[a-zA-Z]/'],
             'department_id'     => 'required|exists:departments,id',
             'job_title_id'      => 'required|exists:job_titles,id',
             'employment_type'   => 'required|string',
@@ -154,11 +154,12 @@ class HREmployeeController extends Controller
             'mi'            => 'nullable|string|max:3',
             'suffix'        => 'nullable|string|max:20',
             'email'         => 'required|email|unique:users,email,' . $employee->user->id,
-            'contact_no'    => 'required|string|min:10|max:15',
+            'contact_no'    => ['required', 'regex:/^(09|\+639)[0-9]{9}$/'],
             'department_id'   => 'required|exists:departments,id',
             'job_title_id'    => 'required|exists:job_titles,id',
-            'start_date'      => 'required|date',
-            'employment_type' => 'required|string',
+            'start_date'        => 'required|date',
+            'employment_type'   => 'required|string',
+            'employment_status' => 'required|string',
         ]);
 
         $jobTitle = \DB::table('job_titles')->where('id', $request->job_title_id)->value('title');
@@ -190,11 +191,12 @@ class HREmployeeController extends Controller
                     'lname'           => $request->last_name,
                     'mi'              => $request->mi,
                     'suffix'          => $request->suffix,
-                    'contact_no'      => $request->contact_no,
-                    'department_id'   => $request->department_id,
-                    'job_title_id'    => $request->job_title_id,
-                    'start_date'      => $request->start_date,
-                    'employment_type' => $request->employment_type,
+                    'contact_no'        => $request->contact_no,
+                    'department_id'     => $request->department_id,
+                    'job_title_id'      => $request->job_title_id,
+                    'start_date'        => $request->start_date,
+                    'employment_type'   => $request->employment_type,
+                    'employment_status' => $request->employment_status,
                 ]);
             });
 
@@ -386,5 +388,13 @@ class HREmployeeController extends Controller
             ]);
         }
         return response()->download($path, $doc->file_name);
+    }
+
+    public function deleteDocument($docId)
+    {
+        $doc = \App\Models\Document::findOrFail($docId);
+        \Illuminate\Support\Facades\Storage::disk('public')->delete($doc->file_path);
+        $doc->delete();
+        return response()->json(['success' => true, 'message' => 'Document deleted.']);
     }
 }

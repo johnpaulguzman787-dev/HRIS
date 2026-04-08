@@ -78,7 +78,27 @@
 
     nextStep() { if (this.addStep < 3) this.addStep++; },
     saveAndContinue() { this.nextStep(); },
-    validEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); },
+    validEmail(email) { return /^[^\s@]+@[a-zA-Z][^\s@]*\.[a-zA-Z]{2,}$/.test(email); },
+    validateContactNo(val) {
+        const digits = val.replace(/[^0-9]/g, '');
+        if (/[^0-9]/.test(val)) {
+            this.formErrors = {...this.formErrors, contact_no: ['Contact number must contain digits only.']};
+        } else if (digits.length > 0 && digits.length !== 11) {
+            this.formErrors = {...this.formErrors, contact_no: ['Contact number must be exactly 11 digits (e.g. 09XXXXXXXXX).']};
+        } else {
+            const {contact_no, ...rest} = this.formErrors;
+            this.formErrors = rest;
+        }
+        return digits;
+    },
+    validateEmail(val) {
+        if (val && !this.validEmail(val)) {
+            this.formErrors = {...this.formErrors, email: ['Please enter a valid email address.']};
+        } else {
+            const {email, ...rest} = this.formErrors;
+            this.formErrors = rest;
+        }
+    },
 
     handleFileUpload(event) {
         const files = Array.from(event.target.files);
@@ -379,8 +399,8 @@
             gender:            employee.gender || '',
             date_of_birth:     employee.date_of_birth || '',
             address:           employee.address || '',
-            employment_type:   employee.employment_type || '',
-            employment_status: employee.employment_status || '',
+            employment_type:   employee.employment_type || 'Full-time',
+            employment_status: employee.employment_status || 'Active',
         };
         this.isEditMode = false;
         this.empTab = 'basic';
@@ -410,10 +430,11 @@
             department_id:   this.selectedEmployee.department_id,
             job_title_id:    this.selectedEmployee.job_title_id,
             role:            this.selectedEmployee.role,
-            start_date:      this.selectedEmployee.date_hired,
-            employment_type: this.selectedEmployee.employment_type,
-            _method:         'PUT',
-            _token:          document.querySelector('meta[name=csrf-token]').getAttribute('content')
+            start_date:        this.selectedEmployee.date_hired,
+            employment_type:   this.selectedEmployee.employment_type,
+            employment_status: this.selectedEmployee.employment_status,
+            _method:           'PUT',
+            _token:            document.querySelector('meta[name=csrf-token]').getAttribute('content')
         };
 
         try {
@@ -444,10 +465,13 @@
                     this.employees[empIdx].department_id = this.selectedEmployee.department_id;
                     this.employees[empIdx].department    = dept ? dept.name : this.employees[empIdx].department;
                     this.employees[empIdx].job_title_id  = this.selectedEmployee.job_title_id;
-                    this.employees[empIdx].job_title     = newJobTitle ? newJobTitle.title : this.employees[empIdx].job_title;
-                    this.employees[empIdx].start_date    = this.selectedEmployee.date_hired;
-                    this.employees[empIdx].name          = [this.selectedEmployee.first_name, this.selectedEmployee.mi ? this.selectedEmployee.mi + '.' : '', this.selectedEmployee.last_name].filter(Boolean).join(' ');
-                    this.employees[empIdx].avatar        = (this.selectedEmployee.first_name.charAt(0) + this.selectedEmployee.last_name.charAt(0)).toUpperCase();
+                    this.employees[empIdx].job_title          = newJobTitle ? newJobTitle.title : this.employees[empIdx].job_title;
+                    this.employees[empIdx].start_date         = this.selectedEmployee.date_hired;
+                    this.employees[empIdx].employment_type    = this.selectedEmployee.employment_type;
+                    this.employees[empIdx].employment_status  = this.selectedEmployee.employment_status;
+                    this.employees[empIdx].status             = this.selectedEmployee.employment_status;
+                    this.employees[empIdx].name               = [this.selectedEmployee.first_name, this.selectedEmployee.mi ? this.selectedEmployee.mi + '.' : '', this.selectedEmployee.last_name].filter(Boolean).join(' ');
+                    this.employees[empIdx].avatar             = (this.selectedEmployee.first_name.charAt(0) + this.selectedEmployee.last_name.charAt(0)).toUpperCase();
                 }
 
                 this.showToast('Employee updated successfully!', 'success');
@@ -508,6 +532,24 @@
         event.target.value = '';
     },
 
+    async deleteDocument(docId) {
+        this.showConfirm('Are you sure you want to delete this document? This cannot be undone.', async () => {
+            try {
+                const res = await fetch(`/hr/employees/documents/${docId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'), 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.employeeDocuments = this.employeeDocuments.filter(d => d.id !== docId);
+                    this.showToast('Document deleted.', 'success');
+                } else {
+                    this.showToast(data.message || 'Delete failed.', 'error');
+                }
+            } catch (e) { this.showToast('Network error.', 'error'); }
+        });
+    },
+
     async deleteDepartment(dept) {
         if (dept.employees_count > 0) {
             this.showAlert('Employees still exist in this department. Reassign their department and job titles first before deleting this department.', 'error');
@@ -534,14 +576,14 @@
     clearFilters() { this.selectedDepartments = []; this.selectedSort = ''; },
     applyFilters() { this.showFilters = false; },
 
-    toast: { show: false, message: '', type: 'success' },
-    showToast(message, type = 'success') {
-        this.toast = { show: true, message, type };
-        setTimeout(() => { this.toast.show = false; }, 3000);
-    },
+    alertModal: { show: false, message: '', type: 'success' },
+    showAlert(message, type = 'success') { this.alertModal = { show: true, message, type }; },
+    showToast(message, type = 'success') { this.showAlert(message, type); },
 
-    alertModal: { show: false, message: '', type: 'error' },
-    showAlert(message, type = 'error') { this.alertModal = { show: true, message, type }; }
+    confirmModal: { show: false, message: '', onConfirm: null },
+    showConfirm(message, onConfirm) { this.confirmModal = { show: true, message, onConfirm }; },
+    confirmOk() { if (this.confirmModal.onConfirm) this.confirmModal.onConfirm(); this.confirmModal.show = false; },
+    confirmCancel() { this.confirmModal.show = false; },
 }"
     x-init="if (new URLSearchParams(window.location.search).get('action') === 'add') openAddEmployee()"
     class="flex h-screen overflow-hidden bg-gray-50" @keydown.escape.window="closeModal(); closeAddEmployee()">
@@ -566,34 +608,6 @@
 
         <div class="p-4 sm:p-6 lg:p-8 mt-4 page-fade-in">
 
-            <!-- Toast Notification -->
-            <div x-show="toast.show" x-cloak
-                x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 translate-y-[-20px]"
-                x-transition:enter-end="opacity-100 translate-y-0"
-                x-transition:leave="transition ease-in duration-200"
-                x-transition:leave-start="opacity-100 translate-y-0"
-                x-transition:leave-end="opacity-0 translate-y-[-20px]"
-                class="fixed top-6 right-6 z-[9999] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl border"
-                :class="toast.type === 'success' ? 'bg-white border-green-100 text-gray-800' : 'bg-white border-red-100 text-gray-800'">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                    :class="toast.type === 'success' ? 'bg-green-100' : 'bg-red-100'">
-                    <template x-if="toast.type === 'success'">
-                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    </template>
-                    <template x-if="toast.type === 'error'">
-                        <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </template>
-                </div>
-                <div>
-                    <p class="text-sm font-semibold" x-text="toast.type === 'success' ? 'Success' : 'Error'"></p>
-                    <p class="text-xs text-gray-500" x-text="toast.message"></p>
-                </div>
-                <button @click="toast.show = false" class="ml-2 text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-
             <!-- ===================== ALERT MODAL ===================== -->
             <div x-show="alertModal.show" x-cloak
                 class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
@@ -609,9 +623,9 @@
                     class="bg-white rounded-2xl shadow-2xl flex flex-col items-center justify-center text-center p-10"
                     style="width: 460px; min-height: 320px;"
                     @click.stop>
-                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 shadow-sm" :class="alertModal.type === 'success' ? 'bg-green-50' : 'bg-red-50'">
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 shadow-sm" :class="alertModal.type === 'success' ? 'bg-blue-50' : 'bg-red-50'">
                         <template x-if="alertModal.type === 'success'">
-                            <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                             </svg>
                         </template>
@@ -627,6 +641,40 @@
                         class="px-8 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-150 shadow-md hover:shadow-lg">
                         OK
                     </button>
+                </div>
+            </div>
+
+            <!-- ===================== CONFIRM MODAL ===================== -->
+            <div x-show="confirmModal.show" x-cloak
+                class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+                style="background: rgba(0,0,0,0.45); backdrop-filter: blur(6px);">
+                <div x-show="confirmModal.show"
+                    x-transition:enter="transition-all duration-200 ease-out"
+                    x-transition:enter-start="opacity-0 scale-90"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition-all duration-150 ease-in"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-90"
+                    class="bg-white rounded-2xl shadow-2xl flex flex-col items-center justify-center text-center p-10"
+                    style="width: 420px; min-height: 260px;"
+                    @click.stop>
+                    <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-5 shadow-sm">
+                        <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        </svg>
+                    </div>
+                    <p class="text-sm font-semibold text-gray-800 mb-1">Confirm Action</p>
+                    <p class="text-sm text-gray-500 mb-7 leading-snug" x-text="confirmModal.message"></p>
+                    <div class="flex gap-3">
+                        <button @click="confirmCancel()"
+                            class="px-7 py-2.5 text-sm font-semibold rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all">
+                            Cancel
+                        </button>
+                        <button @click="confirmOk()"
+                            class="px-7 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-md">
+                            Confirm
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -972,6 +1020,7 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-800 mb-1.5">Email</label>
                             <input type="email" x-model="newEmployeeForm.email" placeholder="Enter email"
+                                @input="validateEmail($event.target.value)"
                                 :class="hasError('email') ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-blue-400'"
                                 class="w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-transparent text-gray-700 placeholder-gray-400">
                             <p x-show="hasError('email')" x-text="fieldError('email')" class="text-xs text-red-500 mt-1"></p>
@@ -987,9 +1036,9 @@
 
                         <div>
                             <label class="block text-sm font-semibold text-gray-800 mb-1.5">Contact Number</label>
-                            <input type="text" x-model="newEmployeeForm.contact_no" placeholder="Enter contact number"
-                                maxlength="15"
-                                @input="newEmployeeForm.contact_no = newEmployeeForm.contact_no.replace(/[^0-9]/g, '')"
+                            <input type="text" x-model="newEmployeeForm.contact_no" placeholder="09XXXXXXXXX"
+                                maxlength="11"
+                                @input="newEmployeeForm.contact_no = validateContactNo($event.target.value)"
                                 :class="hasError('contact_no') ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-blue-400'"
                                 class="w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-transparent text-gray-700 placeholder-gray-400">
                             <p x-show="hasError('contact_no')" x-text="fieldError('contact_no')" class="text-xs text-red-500 mt-1"></p>
@@ -1311,18 +1360,22 @@
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Email Address</label>
                                         <input type="email" x-model="selectedEmployee.email"
                                             :readonly="!isEditMode"
-                                            :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                            @input="if(isEditMode) validateEmail($event.target.value)"
+                                            :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'border-red-400': isEditMode && hasError('email'), 'bg-white': isEditMode && !hasError('email'), 'bg-white': isEditMode}"
                                             class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                                        <p x-show="isEditMode" class="text-xs text-yellow-600 mt-1">⚠ Changing email will send a new verification link.</p>
+                                        <p x-show="isEditMode && hasError('email')" x-text="fieldError('email')" class="text-xs text-red-500 mt-1"></p>
+                                        <p x-show="isEditMode && !hasError('email')" class="text-xs text-yellow-600 mt-1">⚠ Changing email will send a new verification link.</p>
                                     </div>
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Contact Number</label>
                                         <input type="text" x-model="selectedEmployee.contact_number"
                                             :readonly="!isEditMode"
-                                            maxlength="15"
-                                            @input="if(isEditMode) selectedEmployee.contact_number = selectedEmployee.contact_number.replace(/[^0-9]/g, '')"
-                                            :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                            maxlength="11"
+                                            placeholder="09XXXXXXXXX"
+                                            @input="if(isEditMode) selectedEmployee.contact_number = validateContactNo($event.target.value)"
+                                            :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'border-red-400': isEditMode && hasError('contact_no'), 'bg-white': isEditMode}"
                                             class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                                        <p x-show="isEditMode && hasError('contact_no')" x-text="fieldError('contact_no')" class="text-xs text-red-500 mt-1"></p>
                                     </div>
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
@@ -1429,8 +1482,20 @@
                                     </div>
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Employment Status</label>
-                                        <input type="text" x-model="selectedEmployee.employment_status" readonly
-                                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed">
+                                        <div class="relative">
+                                            <select x-model="selectedEmployee.employment_status"
+                                                :disabled="!isEditMode"
+                                                :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
+                                                class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all">
+                                                <option value="Active">Active</option>
+                                                <option value="Resigned">Resigned</option>
+                                                <option value="Retired">Retired</option>
+                                                <option value="Terminated">Terminated</option>
+                                            </select>
+                                            <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1463,22 +1528,29 @@
                                         </template>
                                         <div class="space-y-2">
                                             <template x-for="doc in employeeDocuments" :key="doc.id">
-                                                <a :href="`/hr/employees/documents/${doc.id}/download`" target="_blank"
-                                                    class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all group">
-                                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                                                        :class="doc.file_type === 'pdf' ? 'bg-red-100' : 'bg-blue-100'">
-                                                        <svg class="w-5 h-5" :class="doc.file_type === 'pdf' ? 'text-red-500' : 'text-blue-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                <div class="flex items-center gap-2">
+                                                    <a :href="`/hr/employees/documents/${doc.id}/download`" target="_blank"
+                                                        class="flex-1 flex items-center gap-3 p-3 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all group">
+                                                        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                            :class="doc.file_type === 'pdf' ? 'bg-red-100' : 'bg-blue-100'">
+                                                            <svg class="w-5 h-5" :class="doc.file_type === 'pdf' ? 'text-red-500' : 'text-blue-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                            </svg>
+                                                        </div>
+                                                        <div class="flex-1 min-w-0">
+                                                            <p class="text-sm font-medium text-gray-800 truncate group-hover:text-blue-600" x-text="doc.file_name"></p>
+                                                            <p class="text-xs text-gray-400" x-text="doc.file_size + ' · ' + doc.created_at"></p>
+                                                        </div>
+                                                        <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                                         </svg>
-                                                    </div>
-                                                    <div class="flex-1 min-w-0">
-                                                        <p class="text-sm font-medium text-gray-800 truncate group-hover:text-blue-600" x-text="doc.file_name"></p>
-                                                        <p class="text-xs text-gray-400" x-text="doc.file_size + ' · ' + doc.created_at"></p>
-                                                    </div>
-                                                    <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                                    </svg>
-                                                </a>
+                                                    </a>
+                                                    <button @click.prevent="deleteDocument(doc.id)"
+                                                        class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                                                        title="Delete document">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    </button>
+                                                </div>
                                             </template>
                                         </div>
                                     </div>

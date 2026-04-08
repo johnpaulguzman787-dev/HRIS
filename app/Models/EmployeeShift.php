@@ -21,6 +21,13 @@ class EmployeeShift extends Model
         'description',
     ];
 
+    protected $casts = [
+        'days_off'       => 'array',
+        'effective_date' => 'date',
+        'end_date'       => 'date',
+        'is_active'      => 'boolean',
+    ];
+
     public function employee()
     {
         return $this->belongsTo(Employee::class);

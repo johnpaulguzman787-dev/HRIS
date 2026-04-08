@@ -1314,7 +1314,7 @@ public function getLeaveRequest($id)
             'work_setup'     => $request->work_setup,
             'effective_date' => $request->effective_date,
             'end_date'       => $request->end_date ?? null,
-            'days_off'       => json_encode($request->days_off ?? ['Sat', 'Sun']),
+            'days_off'       => $request->days_off ?? ['Sat', 'Sun'],
             'is_active'      => true,
         ]);
 
@@ -1332,13 +1332,21 @@ public function getLeaveRequest($id)
             'days_off'          => 'nullable|array',
         ]);
 
-        $empShift = EmployeeShift::findOrFail($request->employee_shift_id);
-        $empShift->update([
+        $old = EmployeeShift::findOrFail($request->employee_shift_id);
+
+        $old->update([
+            'is_active' => false,
+            'end_date'  => Carbon::parse($request->effective_date)->subDay()->toDateString(),
+        ]);
+
+        EmployeeShift::create([
+            'employee_id'    => $old->employee_id,
             'shift_id'       => $request->shift_id,
             'work_setup'     => $request->work_setup,
             'effective_date' => $request->effective_date,
             'end_date'       => $request->end_date ?? null,
-            'days_off'       => json_encode($request->days_off ?? ['Sat', 'Sun']),
+            'days_off'       => $request->days_off ?? ['Sat', 'Sun'],
+            'is_active'      => true,
         ]);
 
         return response()->json(['message' => 'Shift updated successfully.']);

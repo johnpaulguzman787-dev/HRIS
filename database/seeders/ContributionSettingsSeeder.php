@@ -10,7 +10,7 @@ class ContributionSettingsSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('contribution_settings')->insert([
+        DB::table('contribution_settings')->insertOrIgnore([
             ['key' => 'sss_employee_rate',  'value' => 5.00],
             ['key' => 'sss_employer_rate',  'value' => 10.00],
             ['key' => 'sss_max_msc',        'value' => 30000],

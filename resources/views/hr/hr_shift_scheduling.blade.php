@@ -351,14 +351,18 @@
                    class="tab-btn {{ $activeTab === 'holidays' ? 'active' : '' }}">Holiday Calendar</a>
             </div>
             <div style="display:flex; gap:10px; margin-bottom:2px; padding-left:20px;">
+                @canDo('Time & Attendance', 'edit')
                 <button class="btn-outline" @click="showEditShiftModal = true">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     Edit Shift
                 </button>
+                @endcanDo
+                @canDo('Time & Attendance', 'create')
                 <button class="btn-primary" @click="showAssignShiftModal = true">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     Assign Shift
                 </button>
+                @endcanDo
             </div>
         </div>
         <div style="border-bottom:2px solid #e5e7eb; margin-bottom:24px;"></div>
@@ -544,10 +548,12 @@
                             @endforeach
                         </select>
                     </form>
+                    @canDo('Time & Attendance', 'create')
                     <button class="btn-primary" @click="showAddShiftTypeModal = true">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Add Shift Type
                     </button>
+                    @endcanDo
                 </div>
             </div>
             <div style="overflow-x:auto;">
@@ -748,10 +754,12 @@
                         <option value="special">Special Non-Working</option>
                         <option value="local">Local</option>
                     </select>
+                    @canDo('Time & Attendance', 'create')
                     <button class="btn-primary" @click="showAddHolidayModal = true">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Add Holiday
                     </button>
+                    @endcanDo
                 </div>
             </div>
             <div style="overflow-x:auto;">

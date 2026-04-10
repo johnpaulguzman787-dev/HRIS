@@ -181,10 +181,12 @@
                 </div>
                 <select class="fsel"><option>All Stages</option><option>Awaiting Approval</option><option>Approved</option><option>Rejected</option></select>
                 <select class="fsel"><option>All Types</option><option>Leave Request</option><option>Overtime Request</option><option>Shift Arrangement</option></select>
+                @canDo('Requests & Approval', 'create')
                 <button class="btn-primary" @click="showFileReq=true">
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     File a Request
                 </button>
+                @endcanDo
             </div>
         </div>
 

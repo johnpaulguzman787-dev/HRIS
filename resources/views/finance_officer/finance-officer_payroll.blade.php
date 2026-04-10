@@ -234,10 +234,12 @@
                 <div>
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-base font-bold text-gray-800">Salary Grade</h3>
+                        @canDo('Payroll', 'edit')
                         <button class="btn-primary" @click="openAddGrade()">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Add Salary Grade
                         </button>
+                        @endcanDo
                     </div>
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                         <table class="data-table">
@@ -253,12 +255,14 @@
                                     <td class="text-gray-600">₱{{ number_format($grade->monthly_basic_salary / 2, 2) }}</td>
                                     <td><span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">{{ $grade->employees_count ?? 0 }} employee{{ ($grade->employees_count ?? 0) !== 1 ? 's' : '' }}</span></td>
                                     <td class="text-right">
+                                        @canDo('Payroll', 'edit')
                                         <div class="flex items-center justify-end gap-2">
                                             <button class="btn-view"
                                                 data-emps="{{ json_encode($grade->employees->map(fn($e) => ['id' => $e->id, 'name' => $e->fname.' '.$e->lname])->values()) }}"
                                                 @click="openEditGrade({{ $grade->id }}, '{{ addslashes($grade->grade_code) }}', '{{ addslashes($grade->level_name) }}', {{ $grade->monthly_basic_salary }}, JSON.parse($el.getAttribute('data-emps')))">Edit</button>
                                             <button class="btn-delete" @click="deleteGrade({{ $grade->id }})">Delete</button>
                                         </div>
+                                        @endcanDo
                                     </td>
                                 </tr>
                                 @empty
@@ -275,10 +279,12 @@
                         <h3 class="text-base font-bold text-gray-800">Payroll Items</h3>
                         <div class="flex items-center gap-3">
                             <select class="ctrl" x-model="itemStatusFilter"><option value="">Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+                            @canDo('Payroll', 'edit')
                             <button class="btn-primary" @click="showAddItemModal=true">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                 Add Payroll Item
                             </button>
+                            @endcanDo
                         </div>
                     </div>
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -295,10 +301,12 @@
                                     <td class="text-gray-500">{{ $item->basis }}</td>
                                     <td><span class="px-3 py-1 rounded-full text-xs font-medium {{ $item->status==='Active' ? 'badge-active' : 'badge-inactive' }}">{{ $item->status }}</span></td>
                                     <td class="text-right">
+                                        @canDo('Payroll', 'edit')
                                         <div class="flex items-center justify-end gap-2">
                                             <button class="btn-view" @click="openEditItem({{ $item->id }}, '{{ addslashes($item->name) }}', {{ $item->multiplier }}, '{{ $item->type }}', '{{ $item->basis }}', '{{ $item->status }}')">Edit</button>
                                             <button class="btn-delete" @click="deleteItem({{ $item->id }})">Delete</button>
                                         </div>
+                                        @endcanDo
                                     </td>
                                 </tr>
                                 @empty
@@ -321,10 +329,12 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <select class="ctrl" x-model="benefitStatusFilter"><option value="">Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+                        @canDo('Payroll', 'edit')
                         <button class="btn-primary" @click="showAddBenefitModal=true">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Add Benefit
                         </button>
+                        @endcanDo
                     </div>
                 </div>
                 <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -343,10 +353,12 @@
                                 <td class="text-gray-500">{{ $benefit->eligibility }}</td>
                                 <td><span class="px-3 py-1 rounded-full text-xs font-medium {{ $benefit->status==='Active' ? 'badge-active' : 'badge-inactive' }}">{{ $benefit->status }}</span></td>
                                 <td class="text-right">
+                                    @canDo('Payroll', 'edit')
                                     <div class="flex items-center justify-end gap-2">
                                         <button class="btn-view" @click="openEditBenefit({{ $benefit->id }}, '{{ addslashes($benefit->name) }}', '{{ $benefit->type }}', {{ $benefit->amount }}, '{{ $benefit->tax }}', '{{ $benefit->frequency }}', '{{ addslashes($benefit->eligibility) }}', '{{ $benefit->status }}')">Edit</button>
                                         <button class="btn-delete" @click="deleteBenefit({{ $benefit->id }})">Delete</button>
                                     </div>
+                                    @endcanDo
                                 </td>
                             </tr>
                             @empty
@@ -517,11 +529,13 @@
 
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-800" x-text="viewPeriod.name"></h2>
+                    @canDo('Payroll', 'edit')
                     <template x-if="viewPeriod.status === 'Submitted'">
                         <button class="btn-primary" @click="showReleaseConfirm=true">
                             Release Payroll
                         </button>
                     </template>
+                    @endcanDo
                 </div>
             </div>
 

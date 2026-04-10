@@ -363,10 +363,12 @@
                         <option value="{{ $lt->id }}" {{ request('type') == $lt->id ? 'selected' : '' }}>{{ $lt->name }}</option>
                     @endforeach
                 </select>
+                @canDo('Leave Management', 'create')
                 <button class="btn-primary" @click="showFileLeave = true">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     File Leave
                 </button>
+                @endcanDo
             </div>
         </div>
 
@@ -576,10 +578,12 @@
         <div class="toolbar">
             <div class="toolbar-title">Leave Types</div>
             <div class="toolbar-right">
+                @canDo('Leave Management', 'edit')
                 <button class="btn-primary" @click="showAddLeaveType = true">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     Add Leave Type
                 </button>
+                @endcanDo
             </div>
         </div>
 
@@ -866,10 +870,12 @@
                 </template>
 
                 <div class="modal-actions">
-                    <template x-if="selectedLeave.status === 'pending'">
+                    @canDo('Leave Management', 'create')
+                <template x-if="selectedLeave.status === 'pending'">
                         <button class="btn-cancel" style="background:#fef2f2;color:#dc2626;border-color:#fecaca;"
                             @click="cancelLeave(selectedLeave.id)" x-text="cancelling ? 'Cancelling…' : 'Cancel Request'"></button>
                     </template>
+                @endcanDo
                     <button class="btn-save" @click="showLeaveDetails = false">Close</button>
                 </div>
             </div>

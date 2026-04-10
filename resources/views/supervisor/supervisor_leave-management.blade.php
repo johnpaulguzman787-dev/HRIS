@@ -331,10 +331,12 @@
                         <option value="{{ $lt->id }}" {{ request('type') == $lt->id ? 'selected' : '' }}>{{ $lt->name }}</option>
                     @endforeach
                 </select>
+                @canDo('Leave Management', 'create')
                 <button class="btn-primary" @click="showFileLeave = true">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     File Leave
                 </button>
+                @endcanDo
             </div>
         </div>
 
@@ -661,8 +663,10 @@
                 </template>
                 <div class="modal-actions">
                     <template x-if="selectedLeave.status === 'pending'">
+                        @canDo('Leave Management', 'create')
                         <button class="btn-cancel" style="background:#fef2f2;color:#dc2626;border-color:#fecaca;"
                             @click="cancelLeave(selectedLeave.id)" x-text="cancelling ? 'Cancelling…' : 'Cancel Request'"></button>
+                        @endcanDo
                     </template>
                     <button class="btn-save" @click="showLeaveDetails = false">Close</button>
                 </div>

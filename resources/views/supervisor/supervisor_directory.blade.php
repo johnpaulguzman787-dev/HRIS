@@ -690,10 +690,12 @@
                         </div>
                     </div>
                     <div class="px-8 py-5 flex justify-end space-x-3">
+                        @canDo('Employee Management', 'edit')
                         <button x-show="!isDeptEditMode" @click="isDeptEditMode = true"
                             class="px-8 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-all duration-200">
                             Edit
                         </button>
+                        @endcanDo
                         <button @click="saveDepartmentDetails()" :disabled="isSaving"
                             :class="isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'"
                             class="px-8 py-2.5 text-white text-sm font-medium rounded-xl transition-all duration-200">
@@ -1374,10 +1376,12 @@
 
                     <!-- Footer Buttons (only for basic/job tabs) -->
                     <div x-show="empTab !== 'docs'" class="px-8 py-4 bg-white border-t border-gray-100 flex justify-end gap-3 flex-shrink-0">
+                        @canDo('Employee Management', 'edit')
                         <button x-show="!isEditMode" @click="enableEditMode"
                             class="px-7 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-all">
                             Edit
                         </button>
+                        @endcanDo
                         <button x-show="isEditMode" @click="isEditMode = false"
                             class="px-7 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-all">
                             Cancel
@@ -1472,6 +1476,7 @@
                             <span class="sm:hidden">Dept</span>
                         </span>
                     </button>
+                    @canDo('Employee Management', 'create')
                     <button @click="openAddEmployee()"
                         class="flex-1 sm:flex-none px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:shadow-xl transform hover:scale-105 group">
                         <span class="flex items-center justify-center space-x-2">
@@ -1482,6 +1487,7 @@
                             <span class="sm:hidden">Add</span>
                         </span>
                     </button>
+                    @endcanDo
                 </div>
             </div>
 

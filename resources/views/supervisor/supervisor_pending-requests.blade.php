@@ -186,10 +186,12 @@
                 <select class="fsel"><option>All Stages</option><option>Awaiting Approval</option><option>Approved</option><option>Rejected</option></select>
                 <select class="fsel"><option>All Types</option><option>Leave Request</option><option>Overtime Request</option><option>Shift Arrangement</option></select>
                 <select class="fsel"><option>All Departments</option>@foreach($departments ?? [] as $d)<option>{{ $d->name }}</option>@endforeach</select>
+                @canDo('Requests & Approval', 'create')
                 <button class="btn-primary" @click="showFileReq=true">
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     File a Request
                 </button>
+                @endcanDo
             </div>
         </div>
 
@@ -255,6 +257,7 @@
                     <div class="pstep"><div class="pcircle" style="background:#f9fafb;border:2px solid #d1d5db;color:#9ca3af;"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01"/></svg></div><div class="pname">HR Manager</div><div class="pstatus">Awaiting Supervisor</div></div>
                 </div></div>
             </div>
+            @canDo('Requests & Approval', 'edit')
             <div class="action-row">
                 <button class="btn-approve" @click="selId={{ $req->id }};selName='{{ addslashes($empName) }}';selApproveUrl='{{ $approveUrl }}';selType='{{ $req->type }}';showApprove=true">
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Approve
@@ -263,6 +266,7 @@
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Reject
                 </button>
             </div>
+            @endcanDo
         </div>
         @empty
         <div style="text-align:center;padding:60px 16px;">

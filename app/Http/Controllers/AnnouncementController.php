@@ -23,6 +23,17 @@ class AnnouncementController extends Controller
             'department_id' => ['nullable', 'integer', 'exists:departments,id'],
         ]);
 
+        // Resolve sender display name
+        $senderName = $user->employee?->full_name ?? $user->email;
+        $roleLabel  = match($user->role) {
+            'admin'           => 'Admin',
+            'hr_manager'      => 'HR Manager',
+            'supervisor'      => 'Supervisor',
+            'payroll_officer' => 'Payroll Officer',
+            'finance_officer' => 'Finance Officer',
+            default           => 'Employee',
+        };
+
         if ($user->isSupervisor()) {
             // Auto-target the supervisor's own department
             $deptId = $user->employee?->department_id;
@@ -52,11 +63,12 @@ class AnnouncementController extends Controller
             return response()->json(['message' => 'No recipients found for this announcement.'], 422);
         }
 
-        $now = now();
-        $rows = $userIds->map(fn($id) => [
+        $now     = now();
+        $message = $validated['message'] . "\n\n— Sent by {$senderName} ({$roleLabel})";
+        $rows    = $userIds->map(fn($id) => [
             'user_id'    => $id,
             'title'      => $validated['title'],
-            'message'    => $validated['message'],
+            'message'    => $message,
             'icon'       => $validated['type'],
             'link'       => null,
             'is_read'    => false,

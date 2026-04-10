@@ -210,10 +210,10 @@
     <option value="approved" {{ request('status')==='approved' ? 'selected' : '' }}>Approved</option>
     <option value="rejected" {{ request('status')==='rejected' ? 'selected' : '' }}>Rejected</option>
 </select>
-                <select class="filter-select">
+                <select class="filter-select" onchange="window.location.href='{{ route('payroll_officer.leave.management') }}?tab=my-leave&type='+this.value+'&status={{ request('status') }}'">
                     <option value="">All Types</option>
                     @foreach($leaveTypes as $lt)
-                        <option value="{{ $lt->id }}">{{ $lt->name }}</option>
+                        <option value="{{ $lt->id }}" {{ request('type') == $lt->id ? 'selected' : '' }}>{{ $lt->name }}</option>
                     @endforeach
                 </select>
                 <button class="btn-primary" @click="showFileLeave = true">

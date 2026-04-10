@@ -29,6 +29,25 @@ trait NotifiesReviewers
     }
 
     /**
+     * Notify a single employee (via their linked user account).
+     */
+    private function notifyEmployee(int $employeeId, string $title, string $message, string $icon = 'process_done'): void
+    {
+        $emp = \App\Models\Employee::find($employeeId);
+        if (!$emp || !$emp->user_id) return;
+
+        DB::table('notifications')->insert([
+            'user_id'    => $emp->user_id,
+            'title'      => $title,
+            'message'    => $message,
+            'icon'       => $icon,
+            'is_read'    => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
      * Notify admin, HR managers, and the supervisor of the employee's department
      * whenever an employee files a new request.
      */

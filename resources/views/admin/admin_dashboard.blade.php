@@ -68,10 +68,19 @@
                     body: JSON.stringify({ type: this.annType, title: this.annTitle, message: this.annMessage, audience: this.annAudience, department_id: this.annDept || null })
                 });
                 const data = await res.json();
-                if (res.ok) { this.closeAnnouncement(); window.location.reload(); }
+                if (res.ok) { this.closeAnnouncement(); this.showAlert('Announcement Created!', 'Your announcement has been sent to the intended audience.', () => window.location.reload()); }
                 else { this.annError = data.message ?? 'Something went wrong.'; }
             } catch(e) { this.annError = 'An error occurred. Please try again.'; }
             this.annSaving = false;
+        },
+        alertModal: { show: false, title: '', message: '', callback: null },
+        showAlert(title, message, callback = null) {
+            this.alertModal = { show: true, title, message, callback };
+        },
+        alertOk() {
+            const cb = this.alertModal.callback;
+            this.alertModal.show = false;
+            if (cb) cb();
         },
         get elapsedDisplay() {
             const h = String(Math.floor(this.elapsedSeconds/3600)).padStart(2,'0');
@@ -594,6 +603,37 @@
     </div>
 
     @include('partials.attendance-popup')
+
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- ALERT MODAL                            --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div x-show="alertModal.show" x-cloak
+         class="fixed inset-0 z-[1100] flex items-center justify-center p-4"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="alertOk()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100">
+            <div class="flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 mx-auto mb-4">
+                <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2" x-text="alertModal.title"></h3>
+            <p class="text-sm text-gray-500 mb-6" x-text="alertModal.message"></p>
+            <button @click="alertOk()"
+                class="w-full py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all">
+                OK
+            </button>
+        </div>
+    </div>
 </div>
 
 <style>

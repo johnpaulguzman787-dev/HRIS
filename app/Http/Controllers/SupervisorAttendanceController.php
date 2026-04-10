@@ -622,6 +622,9 @@ class SupervisorAttendanceController extends Controller
             if (request()->filled('status')) {
                 $myLeaveQuery->where('status', request('status'));
             }
+            if (request()->filled('type')) {
+                $myLeaveQuery->where('leave_type_id', request('type'));
+            }
             $myLeaveRequests = $myLeaveQuery->get();
 
             $credits = LeaveCredit::with('leaveType')
@@ -1180,11 +1183,16 @@ class SupervisorAttendanceController extends Controller
             if ($ot->status !== 'pending') {
                 return response()->json(['message' => 'Request is no longer pending.'], 409);
             }
+            $ot->load('employee');
             $ot->update([
                 'status'      => 'supervisor_approved',
                 'approved_by' => Auth::id(),
                 'approved_at' => now(),
             ]);
+            $this->notifyHR(
+                'Overtime Request Pending Final Approval',
+                "{$ot->employee->full_name} has an overtime request ({$ot->ref_no}) approved by supervisor. Please review for final approval."
+            );
             return response()->json(['message' => 'Overtime request forwarded to HR for final approval.']);
         }
 
@@ -1207,11 +1215,16 @@ class SupervisorAttendanceController extends Controller
         if ($leave->status !== 'pending') {
             return response()->json(['message' => 'Leave is no longer pending.'], 409);
         }
+        $leave->load('employee');
         $leave->update([
             'status'      => 'supervisor_approved',
             'approved_by' => $authEmployee->id,
             'approved_at' => now(),
         ]);
+        $this->notifyHR(
+            'Leave Request Pending Final Approval',
+            "{$leave->employee->full_name} has a leave request ({$leave->ref_no}) approved by supervisor. Please review for final approval."
+        );
         return response()->json(['message' => 'Leave forwarded to HR for final approval.']);
     }
 
@@ -1237,6 +1250,12 @@ class SupervisorAttendanceController extends Controller
                 'status'           => 'rejected',
                 'rejection_reason' => $request->rejection_reason,
             ]);
+            $this->notifyEmployee(
+                $ot->employee_id,
+                'Overtime Request Rejected',
+                "Your overtime request ({$ot->ref_no}) has been rejected. Reason: {$request->rejection_reason}",
+                'warning'
+            );
             return response()->json(['message' => 'Overtime request rejected.']);
         }
 

@@ -363,6 +363,9 @@ class PayrollOfficerAttendanceController extends Controller
             if (request()->filled('status')) {
                 $myLeaveQuery->where('status', request('status'));
             }
+            if (request()->filled('type')) {
+                $myLeaveQuery->where('leave_type_id', request('type'));
+            }
             $myLeaveRequests = $myLeaveQuery->get();
 
             $credits = LeaveCredit::with('leaveType')

@@ -599,10 +599,16 @@ class AdminAttendanceController extends Controller
     $myLeaveRequests = collect();
 
     if ($activeTab === 'my-leave' && $employee) {
-        $myLeaveRequests = LeaveRequest::with(['leaveType', 'approver'])
+        $myLeaveQuery = LeaveRequest::with(['leaveType', 'approver'])
             ->where('employee_id', $employee->id)
-            ->orderByDesc('created_at')
-            ->get();
+            ->orderByDesc('created_at');
+        if (request()->filled('status')) {
+            $myLeaveQuery->where('status', request('status'));
+        }
+        if (request()->filled('type')) {
+            $myLeaveQuery->where('leave_type_id', request('type'));
+        }
+        $myLeaveRequests = $myLeaveQuery->get();
 
         $credits = LeaveCredit::with('leaveType')
             ->where('employee_id', $employee->id)

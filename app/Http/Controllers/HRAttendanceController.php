@@ -15,9 +15,11 @@ use App\Models\LeaveCredit;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use App\Models\ShiftChangeRequest;
+use App\Traits\NotifiesReviewers;
 
 class HRAttendanceController extends Controller
 {
+    use NotifiesReviewers;
     public function index()
     {
         $user     = Auth::user();
@@ -876,6 +878,9 @@ class HRAttendanceController extends Controller
             if (request()->filled('status')) {
                 $myLeaveQuery->where('status', request('status'));
             }
+            if (request()->filled('type')) {
+                $myLeaveQuery->where('leave_type_id', request('type'));
+            }
             $myLeaveRequests = $myLeaveQuery->get();
 
             $credits = LeaveCredit::with('leaveType')
@@ -1100,6 +1105,11 @@ class HRAttendanceController extends Controller
             $credit->save();
         }
 
+        $this->notifyEmployee(
+            $leave->employee_id,
+            'Leave Request Approved',
+            "Your leave request ({$leave->ref_no}) from {$leave->start_date} to {$leave->end_date} has been approved."
+        );
         return response()->json(['message' => 'Leave approved successfully.']);
     }
 
@@ -1118,6 +1128,12 @@ class HRAttendanceController extends Controller
             'rejection_reason' => $request->rejection_reason,
         ]);
 
+        $this->notifyEmployee(
+            $leave->employee_id,
+            'Leave Request Rejected',
+            "Your leave request ({$leave->ref_no}) has been rejected. Reason: {$request->rejection_reason}",
+            'warning'
+        );
         return response()->json(['message' => 'Leave rejected.']);
     }
 
@@ -1588,6 +1604,11 @@ class HRAttendanceController extends Controller
             'status'          => 'pending',
         ]);
 
+        $this->notifyHR(
+            'New Overtime Request',
+            "{$employee->full_name} (HR) filed an overtime request ({$refNo}) on {$request->ot_date} ({$requestedHours} hrs)."
+        );
+
         return response()->json(['message' => 'Overtime request filed successfully.', 'ref_no' => $refNo]);
     }
 
@@ -1658,6 +1679,12 @@ class HRAttendanceController extends Controller
             'approved_at'    => now(),
         ]);
 
+        $this->notifyEmployee(
+            $ot->employee_id,
+            'Overtime Request Approved',
+            "Your overtime request ({$ot->ref_no}) on {$ot->ot_date} ({$ot->requested_hours} hrs) has been approved."
+        );
+
         return response()->json(['message' => 'Overtime request approved.']);
     }
 
@@ -1666,7 +1693,7 @@ class HRAttendanceController extends Controller
         $request->validate(['rejection_reason' => 'required|string|max:500']);
         $ot = OvertimeRequest::findOrFail($id);
 
-        if ($ot->status !== 'pending') {
+        if (!in_array($ot->status, ['pending', 'supervisor_approved'])) {
             return response()->json(['message' => 'Request is no longer pending.'], 409);
         }
 
@@ -1674,6 +1701,13 @@ class HRAttendanceController extends Controller
             'status'           => 'rejected',
             'rejection_reason' => $request->rejection_reason,
         ]);
+
+        $this->notifyEmployee(
+            $ot->employee_id,
+            'Overtime Request Rejected',
+            "Your overtime request ({$ot->ref_no}) has been rejected. Reason: {$request->rejection_reason}",
+            'warning'
+        );
 
         return response()->json(['message' => 'Overtime request rejected.']);
     }

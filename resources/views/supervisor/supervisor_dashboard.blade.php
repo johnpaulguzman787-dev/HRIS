@@ -34,6 +34,15 @@
         annMessage: '',
         annSaving: false,
         annError: '',
+        alertModal: { show: false, title: '', message: '', callback: null },
+        showAlert(title, message, callback = null) {
+            this.alertModal = { show: true, title, message, callback };
+        },
+        alertOk() {
+            const cb = this.alertModal.callback;
+            this.alertModal.show = false;
+            if (cb) cb();
+        },
         annTypeOptions: [
             { value: 'notice',       label: 'Notice',       icon: 'info',    bg: 'bg-blue-100',   color: 'text-blue-600'  },
             { value: 'process_done', label: 'Process Done', icon: 'check',   bg: 'bg-green-100',  color: 'text-green-600' },
@@ -74,7 +83,7 @@
                     })
                 });
                 const data = await res.json();
-                if (res.ok) { this.closeAnnouncement(); window.location.reload(); }
+                if (res.ok) { this.closeAnnouncement(); this.showAlert('Announcement Created!', 'Your announcement has been sent to the intended audience.', () => window.location.reload()); }
                 else { this.annError = data.message ?? 'Something went wrong.'; }
             } catch(e) { this.annError = 'An error occurred. Please try again.'; }
             this.annSaving = false;
@@ -560,6 +569,21 @@
                 </button>
             </div>
 
+        </div>
+    </div>
+
+    {{-- Announcement Created Alert Modal --}}
+    <div x-show="alertModal.show" x-cloak class="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40" @click="alertOk()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
+            <div class="flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 mx-auto mb-4">
+                <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2" x-text="alertModal.title"></h3>
+            <p class="text-gray-500 text-sm mb-6" x-text="alertModal.message"></p>
+            <button @click="alertOk()" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">OK</button>
         </div>
     </div>
 

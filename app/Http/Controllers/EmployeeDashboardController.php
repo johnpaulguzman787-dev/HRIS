@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Employee;
 use App\Models\AttendanceLog;
+use App\Models\LeaveCredit;
 use Illuminate\Support\Facades\Auth;
 
 class EmployeeDashboardController extends Controller
@@ -63,6 +64,10 @@ class EmployeeDashboardController extends Controller
             'stats'           => $stats,
             'month'           => $month,
             'year'            => $year,
+            'leaveCredits'    => $authEmployee ? LeaveCredit::with('leaveType')
+                ->where('employee_id', $authEmployee->id)
+                ->where('year', $year)
+                ->get() : collect(),
             'allHolidays' => \App\Models\Holiday::select('name', 'date', 'type')->get()->map(fn($h) => [
                 'name'  => $h->name,
                 'date'  => $h->date->format('Y-m-d'),

@@ -720,6 +720,12 @@ public function fileLeave(Request $request)
         $docPath = $request->file('document')->store('leave_documents', 'public');
     }
 
+    $leaveType = LeaveType::find($request->leave_type_id);
+    LeaveCredit::firstOrCreate(
+        ['employee_id' => $employee->id, 'leave_type_id' => $request->leave_type_id, 'year' => $start->year],
+        ['total_days' => $leaveType->days_entitled ?? 0, 'used_days' => 0, 'remaining_days' => $leaveType->days_entitled ?? 0]
+    );
+
     LeaveRequest::create([
         'ref_no'        => $refNo,
         'employee_id'   => $employee->id,

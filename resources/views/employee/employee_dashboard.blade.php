@@ -205,9 +205,17 @@
                 <!-- Leave Balance -->
                 <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.25s; border:1px solid #e5e7eb;">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 lg:mb-3">Leave Balance</p>
-                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">3</p>
-                    <a href="#" class="text-xs mt-2 lg:mt-3 block uppercase tracking-wider font-semibold" style="color:#3b82f6;">View All</a>
-                    <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:30%; background:#22c55e;"></div></div>
+                    @php $totalRemaining = $leaveCredits->sum('remaining_days'); $totalDays = $leaveCredits->sum('total_days'); @endphp
+                    <p class="text-3xl lg:text-5xl font-bold text-gray-900">{{ number_format($totalRemaining, 0) }}</p>
+                    <p class="text-xs text-gray-400 mt-1">days remaining</p>
+                    @foreach($leaveCredits as $credit)
+                        <p class="text-xs text-gray-500 mt-1">{{ $credit->leaveType->name ?? '' }}: {{ $credit->remaining_days }}/{{ $credit->total_days }}</p>
+                    @endforeach
+                    @if($leaveCredits->isEmpty())
+                        <p class="text-xs text-gray-400 mt-1">No credits assigned yet</p>
+                    @endif
+                    <a href="{{ route('employee.leave.management') }}" class="text-xs mt-2 lg:mt-3 block uppercase tracking-wider font-semibold" style="color:#3b82f6;">View All</a>
+                    <div class="stat-bar mt-2"><div class="stat-bar-fill" style="width:{{ $totalDays > 0 ? min(100, ($totalRemaining/$totalDays)*100) : 0 }}%; background:#22c55e;"></div></div>
                 </div>
             </div>
 

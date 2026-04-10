@@ -50,7 +50,7 @@
             <img src="{{ asset('images/HRISLogo-Icon.png') }}"
                  x-show="sidebarCollapsed"
                  alt="HRIS Logo"
-                 style="width:72px; height:auto; object-fit:contain;">
+                 style="width:36px; height:auto; object-fit:contain;">
             <img src="{{ asset('images/HRISLogo-Secondary.png') }}"
                  x-show="!sidebarCollapsed"
                  x-transition:enter="transition ease-out duration-300 delay-100"

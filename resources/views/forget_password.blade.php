@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediSource - Forgot Password</title>
@@ -225,21 +226,9 @@
 
         <div class="form-inner" style="width:100%; max-width:420px;">
 
-            <!-- Lock Icon -->
+            <!-- Logo -->
             <div style="display:flex; justify-content:center; margin-bottom:20px;">
-                <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Lock body -->
-                    <rect x="12" y="36" width="48" height="38" rx="7" fill="#1E1E1E"/>
-                    <!-- Lock shackle -->
-                    <path d="M24 36V27C24 18.163 31.163 11 40 11C48.837 11 56 18.163 56 27V36" stroke="#1E1E1E" stroke-width="4.5" stroke-linecap="round"/>
-                    <!-- Blue accent on shackle top -->
-                    <circle cx="40" cy="11" r="8" fill="#3B7DED"/>
-                    <!-- Dot eyes on lock face -->
-                    <circle cx="32" cy="57" r="3.5" fill="white"/>
-                    <circle cx="46" cy="57" r="3.5" fill="white"/>
-                    <!-- Question mark -->
-                    <text x="57" y="78" font-family="Manrope,sans-serif" font-size="22" font-weight="700" fill="#1E1E1E">?</text>
-                </svg>
+                <img src="{{ asset('images/HRISLogo-Primary.png') }}" alt="HRIS Logo" style="width:180px; height:auto; object-fit:contain;">
             </div>
 
             <!-- Heading -->

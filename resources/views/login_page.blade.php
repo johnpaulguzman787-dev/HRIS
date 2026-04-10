@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediSource - Sign In</title>
@@ -132,14 +133,6 @@
             text-decoration: none;
         }
         .forgot-link:hover { text-decoration: underline; }
-
-        /* Bottom sign up link */
-        .text-link {
-            font-size: 14px;
-            font-weight: 400;
-            color: #3B7DED;
-            text-decoration: none;
-        }
         .text-link:hover { text-decoration: underline; }
 
         /* Asterisk */
@@ -271,8 +264,8 @@
 
             <!-- Logo -->
             <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:28px;">
-                <img src="{{ asset('images/place_holder.png') }}" alt="MediSource Logo"
-                     style="width:80px; height:56px; object-fit:contain;"
+                <img src="{{ asset('images/HRISLogo-Icon.png') }}" alt="MediSource Logo"
+                     style="width:180px; height:120px; object-fit:contain;"
                      onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
                 <div id="logo-fallback" style="display:none; width:80px; height:56px; border:2px solid #2D2D2D; border-radius:2px; align-items:center; justify-content:center; position:relative; overflow:hidden;">
                     <svg width="80" height="56" viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -281,9 +274,7 @@
                         <line x1="79" y1="1" x2="1" y2="55" stroke="#2D2D2D" stroke-width="1.5"/>
                     </svg>
                 </div>
-                <span style="font-size:18px; font-weight:600; color:#2D2D2D; margin-top:8px; text-transform:uppercase;">
-                    MediSource
-                </span>
+          
             </div>
 
             <!-- Heading -->
@@ -351,11 +342,6 @@
 
             </form>
 
-            <!-- Bottom sign up link -->
-            <div style="text-align:center; margin-top:20px;">
-                <span style="font-size:14px; font-weight:300; color:rgba(45,45,45,0.70);">Don't have an account? </span>
-                <a href="#" class="text-link">Sign up</a>
-            </div>
 
         </div>
     </div>

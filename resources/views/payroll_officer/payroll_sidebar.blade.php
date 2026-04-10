@@ -44,21 +44,22 @@
     style="transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 2px 0 20px rgba(0,0,0,0.06);">
 
     <!-- Logo -->
-    <div class="px-6 py-5 border-b border-gray-100">
-        <div class="flex items-center space-x-3" :class="sidebarCollapsed ? 'justify-center' : ''">
-            <div class="w-9 h-9 border-2 border-gray-800 flex items-center justify-center flex-shrink-0" style="border-radius:6px;">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
-            </div>
-            <h1 x-show="!sidebarCollapsed"
-                x-transition:enter="transition ease-out duration-300 delay-100"
-                x-transition:enter-start="opacity-0 -translate-x-4"
-                x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-100"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0"
-                class="font-bold text-gray-900 text-lg tracking-widest whitespace-nowrap">MEDISOURCE</h1>
+    <div class="py-5 border-b border-gray-100" :class="sidebarCollapsed ? 'px-2' : 'px-6'">
+        <div class="flex items-center justify-center">
+            <img src="{{ asset('images/HRISLogo-Icon.png') }}"
+                 x-show="sidebarCollapsed"
+                 alt="HRIS Logo"
+                 style="width:72px; height:auto; object-fit:contain;">
+            <img src="{{ asset('images/HRISLogo-Secondary.png') }}"
+                 x-show="!sidebarCollapsed"
+                 x-transition:enter="transition ease-out duration-300 delay-100"
+                 x-transition:enter-start="opacity-0 -translate-x-4"
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 alt="HRIS Logo"
+                 style="width:200px; height:80px; object-fit:contain;">
         </div>
     </div>
 

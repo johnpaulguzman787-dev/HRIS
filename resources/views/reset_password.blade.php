@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediSource - Reset Password</title>
@@ -251,24 +252,12 @@
         <div class="form-inner" style="width:100%; max-width:420px;">
 
             <!-- Logo -->
-            <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:28px;">
-                <img src="{{ asset('images/place_holder.png') }}" alt="MediSource Logo"
-                     style="width:80px; height:56px; object-fit:contain;"
-                     onerror="this.style.display='none'; document.getElementById('logo-fallback-rp').style.display='flex';">
-                <div id="logo-fallback-rp" style="display:none; width:80px; height:56px; border:2px solid #2D2D2D; border-radius:2px; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-                    <svg width="80" height="56" viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="1" y="1" width="78" height="54" stroke="#2D2D2D" stroke-width="1.5"/>
-                        <line x1="1" y1="1" x2="79" y2="55" stroke="#2D2D2D" stroke-width="1.5"/>
-                        <line x1="79" y1="1" x2="1" y2="55" stroke="#2D2D2D" stroke-width="1.5"/>
-                    </svg>
-                </div>
-                <span style="font-size:18px; font-weight:600; color:#2D2D2D; margin-top:8px; text-transform:uppercase;">
-                    MediSource
-                </span>
+            <div style="display:flex; justify-content:center; margin-bottom:28px;">
+                <img src="{{ asset('images/HRISLogo-Primary.png') }}" alt="HRIS Logo" style="width:180px; height:auto; object-fit:contain;">
             </div>
 
             <!-- Heading -->
-            <div style="margin-bottom:28px;">
+            <div style="text-align:center; margin-bottom:28px;">
                 <h2 class="page-heading" style="font-size:32px; font-weight:700; color:#2D2D2D; margin:0 0 8px 0;">
                     Reset Password
                 </h2>

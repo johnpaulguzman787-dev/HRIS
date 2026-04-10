@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -1200,7 +1201,8 @@
 
             _buildPayslipHtml(name, jobTitle, department, period, ps) {
                 const f = n => Number(n||0).toLocaleString('en-PH', { minimumFractionDigits:2, maximumFractionDigits:2 });
-                return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Payslip – ${name}</title>
+                return `<!DOCTYPE html><html><head>
+    <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}"><meta charset="UTF-8"><title>Payslip – ${name}</title>
 <style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0}body{padding:48px;max-width:620px;margin:0 auto;color:#1e293b}.company{font-size:20px;font-weight:700;color:#2563eb}.period-label{font-size:12px;color:#64748b;margin-top:2px;margin-bottom:28px}.info-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;background:#f8faff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:24px}.info-label{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}.info-value{font-size:13px;font-weight:600;color:#1e293b}.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0}.line{display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0}.line.bold{font-weight:700;color:#0f172a;font-size:14px;border-top:2px solid #e2e8f0;padding-top:8px;margin-top:4px}.red{color:#dc2626}.footer{margin-top:32px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:12px}@media print{body{padding:24px}@page{margin:1cm}}</style>
 </head><body>
 <div class="company">MediSource</div><div class="period-label">${period||'—'}</div>

@@ -19,8 +19,7 @@ class AdminPayrollController extends Controller
     {
         $year = $request->input('year', now()->year);
 
-        $periods = PayrollPeriod::whereIn('status', ['Submitted', 'Released'])
-            ->orderByDesc('start_date')->get();
+        $periods = PayrollPeriod::orderByDesc('start_date')->get();
 
         $latestPeriod    = $periods->first();
         $grossPayroll    = 0;
@@ -68,6 +67,27 @@ class AdminPayrollController extends Controller
 
         $period->update(['status' => 'Released']);
         Payslip::where('payroll_period_id', $id)->update(['status' => 'Released']);
+
+        // Notify all payroll officers
+        $recipients = DB::table('users')
+            ->where('role', 'payroll_officer')
+            ->pluck('id');
+
+        $now = now();
+        $notifications = $recipients->map(fn($uid) => [
+            'user_id'    => $uid,
+            'title'      => 'Payroll Released',
+            'message'    => "Payroll period \"{$period->name}\" has been approved and released to employees.",
+            'icon'       => 'process_done',
+            'link'       => null,
+            'is_read'    => false,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->all();
+
+        if ($notifications) {
+            DB::table('notifications')->insert($notifications);
+        }
 
         return redirect()->back()->with('success', 'Payroll released successfully.');
     }
@@ -480,6 +500,211 @@ class AdminPayrollController extends Controller
         return view('admin.admin_govpay', compact(
             'contributions', 'myContributions', 'years', 'year', 'totalPending'
         ));
+    }
+
+    // ── Payroll Period Creation ───────────────────────────────────────────────
+
+    public function storePeriod(Request $request)
+    {
+        $request->validate([
+            'name'        => 'required|string|max:255',
+            'start_date'  => 'required|date',
+            'end_date'    => 'required|date|after_or_equal:start_date',
+            'payout_date' => 'required|date',
+        ]);
+
+        $period = PayrollPeriod::create([
+            'name'        => $request->name,
+            'start_date'  => $request->start_date,
+            'end_date'    => $request->end_date,
+            'payout_date' => $request->payout_date,
+            'status'      => 'Pending',
+        ]);
+
+        $this->generatePayslips($period);
+
+        return redirect()->route('admin.payroll')
+            ->with('success', 'Payroll period created and payslips generated.');
+    }
+
+    public function submitForApproval($id)
+    {
+        $period = PayrollPeriod::findOrFail($id);
+
+        if ($period->status !== 'Pending') {
+            return redirect()->back()->with('error', 'This payroll period has already been submitted or released.');
+        }
+
+        $unsubmitted = $period->payslips()->where('status', '!=', 'Submitted')->count();
+        if ($unsubmitted > 0) {
+            return redirect()->back()->with('error', "Cannot submit: {$unsubmitted} payslip(s) are not yet submitted.");
+        }
+
+        $period->update(['status' => 'Submitted']);
+
+        return redirect()->back()->with('success', 'Payroll period submitted for approval.');
+    }
+
+    // ── All Payslips (all statuses, for period management view) ─────────────
+
+    public function allPeriodPayslips($id)
+    {
+        $period   = PayrollPeriod::findOrFail($id);
+        $payslips = Payslip::with('employee.department', 'employee.jobTitle')
+            ->where('payroll_period_id', $id)
+            ->get();
+
+        $data = $payslips->map(fn($p) => [
+            'id'             => $p->id,
+            'employeeId'     => $p->employee_id,
+            'employeeName'   => $p->employee->full_name,
+            'jobTitle'       => $p->employee->jobTitle->title ?? '—',
+            'department'     => $p->employee->department->name ?? '—',
+            'basicPay'       => (float) $p->basic_pay,
+            'otPay'          => (float) $p->ot_pay,
+            'benefits'       => (float) $p->benefits_total,
+            'grossPay'       => (float) $p->gross_pay,
+            'sss'            => (float) $p->sss,
+            'philhealth'     => (float) $p->philhealth,
+            'pagibig'        => (float) $p->pagibig,
+            'withholdingTax' => (float) $p->withholding_tax,
+            'totalDeductions'=> (float) $p->total_deductions,
+            'netPay'         => (float) $p->net_pay,
+            'status'         => $p->status,
+            'period'         => $period->name,
+        ])->values();
+
+        return response()->json(['payslips' => $data]);
+    }
+
+    // ── Payslip Edit & Submit ─────────────────────────────────────────────────
+
+    public function savePayslip(Request $request, $id)
+    {
+        $request->validate([
+            'basicPay'       => 'required|numeric|min:0',
+            'otPay'          => 'required|numeric|min:0',
+            'benefits'       => 'required|numeric|min:0',
+            'sss'            => 'required|numeric|min:0',
+            'philhealth'     => 'required|numeric|min:0',
+            'pagibig'        => 'required|numeric|min:0',
+            'withholdingTax' => 'required|numeric|min:0',
+        ]);
+
+        $payslip = Payslip::with('period')->findOrFail($id);
+
+        if (in_array($payslip->period->status, ['Submitted', 'Released'])) {
+            return response()->json(['success' => false, 'message' => 'Payslip cannot be edited after the period has been submitted.']);
+        }
+
+        $grossPay        = $request->basicPay + $request->otPay + $request->benefits;
+        $totalDeductions = $request->sss + $request->philhealth + $request->pagibig + $request->withholdingTax;
+
+        $payslip->update([
+            'basic_pay'        => $request->basicPay,
+            'ot_pay'           => $request->otPay,
+            'benefits_total'   => $request->benefits,
+            'gross_pay'        => $grossPay,
+            'sss'              => $request->sss,
+            'philhealth'       => $request->philhealth,
+            'pagibig'          => $request->pagibig,
+            'withholding_tax'  => $request->withholdingTax,
+            'total_deductions' => $totalDeductions,
+            'net_pay'          => $grossPay - $totalDeductions,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function submitPayslip($id)
+    {
+        $payslip = Payslip::with('period')->findOrFail($id);
+
+        if ($payslip->period->status !== 'Pending') {
+            return response()->json(['success' => false, 'message' => 'Payslip cannot be submitted after the period is no longer pending.']);
+        }
+
+        $payslip->update(['status' => 'Submitted']);
+
+        return response()->json(['success' => true]);
+    }
+
+    // ── Payslip Generation ───────────────────────────────────────────────────
+
+    private function generatePayslips(PayrollPeriod $period): void
+    {
+        $employees     = Employee::with('salaryGrade')->whereNull('deleted_at')->get();
+        $benefitsTotal = Benefit::where('status', 'Active')->sum('amount');
+
+        $c = DB::table('contribution_settings')->pluck('value', 'key');
+
+        foreach ($employees as $emp) {
+            $grade         = $emp->salaryGrade;
+            $monthlySalary = $grade ? (float) $grade->monthly_basic_salary : 0;
+            $basicPay      = $monthlySalary / 2;
+
+            $hourlyRate = $monthlySalary > 0 ? ($monthlySalary * 12 / 261 / 8) : 0;
+            $otHours    = \App\Models\OvertimeRequest::where('employee_id', $emp->id)
+                ->where('status', 'approved')
+                ->whereBetween('ot_date', [$period->start_date, $period->end_date])
+                ->sum('approved_hours');
+            $otPay = round($otHours * $hourlyRate * 1.25, 2);
+
+            $grossPay = $basicPay + $otPay + $benefitsTotal;
+
+            $msc = min($monthlySalary, (float) $c['sss_max_msc']);
+            $sss = round($msc * ((float) $c['sss_employee_rate'] / 100) / 2, 2);
+
+            $phBase     = max((float) $c['philhealth_floor'], min($monthlySalary, (float) $c['philhealth_ceiling']));
+            $philhealth = round($phBase * ((float) $c['philhealth_rate'] / 100 / 2) / 2, 2);
+
+            $pagibigRate = $monthlySalary <= 1500
+                ? (float) $c['pagibig_low_rate'] / 100
+                : (float) $c['pagibig_high_rate'] / 100;
+            $pagibig = round(min($monthlySalary * $pagibigRate, (float) $c['pagibig_max']) / 2, 2);
+
+            $annualDeductions = ($sss + $philhealth + $pagibig) * 24;
+            $annualTaxable    = max(0, ($grossPay * 24) - $annualDeductions);
+            $withholdingTax   = round($this->computeWithholdingTax($annualTaxable, $c) / 24, 2);
+
+            $totalDeductions = $sss + $philhealth + $pagibig + $withholdingTax;
+            $netPay          = $grossPay - $totalDeductions;
+
+            Payslip::create([
+                'payroll_period_id' => $period->id,
+                'employee_id'       => $emp->id,
+                'basic_pay'         => $basicPay,
+                'ot_pay'            => $otPay,
+                'benefits_total'    => $benefitsTotal,
+                'gross_pay'         => $grossPay,
+                'sss'               => $sss,
+                'philhealth'        => $philhealth,
+                'pagibig'           => $pagibig,
+                'withholding_tax'   => $withholdingTax,
+                'total_deductions'  => $totalDeductions,
+                'net_pay'           => $netPay,
+                'status'            => 'Pending',
+            ]);
+        }
+    }
+
+    private function computeWithholdingTax(float $annual, $c = null): float
+    {
+        $b1 = $c ? (float) $c['wtax_bracket_1'] : 250000;
+        $b2 = $c ? (float) $c['wtax_bracket_2'] : 400000;
+        $b3 = $c ? (float) $c['wtax_bracket_3'] : 800000;
+        $b4 = $c ? (float) $c['wtax_bracket_4'] : 2000000;
+        $r1 = $c ? (float) $c['wtax_rate_1'] / 100 : 0.15;
+        $r2 = $c ? (float) $c['wtax_rate_2'] / 100 : 0.20;
+        $r3 = $c ? (float) $c['wtax_rate_3'] / 100 : 0.25;
+        $r4 = $c ? (float) $c['wtax_rate_4'] / 100 : 0.35;
+
+        if ($annual <= $b1) return 0;
+        if ($annual <= $b2) return ($annual - $b1) * $r1;
+        if ($annual <= $b3) return ($b2 - $b1) * $r1 + ($annual - $b2) * $r2;
+        if ($annual <= $b4) return ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($annual - $b3) * $r3;
+
+        return ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($b4 - $b3) * $r3 + ($annual - $b4) * $r4;
     }
 
     public function govpayView(Request $request, $id)

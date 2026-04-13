@@ -256,7 +256,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/leave/management',               [AdminAttendanceController::class, 'leaveManagement'])->name('admin.leave.management');
 
     // ── ADMIN LEAVE ────────────────────────────────────────────────────────
+    Route::get('/admin/leave/credits',                  [AdminAttendanceController::class, 'getLeaveCredits'])->name('admin.leave.credits.get');
+    Route::post('/admin/leave/types/store',             [AdminAttendanceController::class, 'storeLeaveType'])->name('admin.leave.type.store');
+    Route::get('/admin/leave/types/{id}',               [AdminAttendanceController::class, 'getLeaveType'])->name('admin.leave.type.get');
+    Route::post('/admin/leave/types/{id}/update',       [AdminAttendanceController::class, 'updateLeaveType'])->name('admin.leave.type.update');
     Route::post('/admin/leave/file',                    [AdminAttendanceController::class, 'fileLeave'])->name('admin.leave.file');
+    Route::post('/admin/leave/{id}/approve',            [AdminAttendanceController::class, 'approveLeave'])->name('admin.leave.approve');
+    Route::post('/admin/leave/{id}/reject',             [AdminAttendanceController::class, 'rejectLeave'])->name('admin.leave.reject');
     Route::post('/admin/leave/{id}/cancel',             [AdminAttendanceController::class, 'cancelLeave'])->name('admin.leave.cancel');
     Route::get('/admin/leave/{id}',                     [AdminAttendanceController::class, 'getLeaveRequest'])->name('admin.leave.get');
     Route::post('/admin/requests/overtime/file',        [AdminAttendanceController::class, 'fileOvertimeRequest'])->name('admin.requests.overtime.file');
@@ -279,6 +285,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/requests/pending',               [AdminAttendanceController::class, 'pendingRequests'])->name('admin.requests.pending');
     Route::get('/admin/requests/approved',              [AdminAttendanceController::class, 'approvedRequests'])->name('admin.requests.approved');
     Route::post('/admin/requests/{id}/cancel',          [AdminAttendanceController::class, 'cancelRequest'])->name('admin.requests.cancel');
+    Route::post('/admin/requests/{id}/approve',         [AdminAttendanceController::class, 'approveRequest'])->name('admin.requests.approve');
+    Route::post('/admin/requests/{id}/reject',          [AdminAttendanceController::class, 'rejectRequest'])->name('admin.requests.reject');
+    Route::post('/admin/requests/overtime/{id}/approve',[AdminAttendanceController::class, 'approveOvertimeRequest'])->name('admin.requests.overtime.approve');
+    Route::post('/admin/requests/overtime/{id}/reject', [AdminAttendanceController::class, 'rejectOvertimeRequest'])->name('admin.requests.overtime.reject');
+    Route::post('/admin/requests/shift/{id}/approve',   [AdminAttendanceController::class, 'approveShiftChangeRequest'])->name('admin.requests.shift.approve');
+    Route::post('/admin/requests/shift/{id}/reject',    [AdminAttendanceController::class, 'rejectShiftChangeRequest'])->name('admin.requests.shift.reject');
 
     // ── ADMIN PAYROLL ──────────────────────────────────────────────────────
     Route::get('/admin/payroll',       [\App\Http\Controllers\AdminPayrollController::class, 'index'])->name('admin.payroll');
@@ -287,9 +299,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/govpay/{id}',   [\App\Http\Controllers\AdminPayrollController::class, 'govpayView'])->name('admin.govpay.view');
 
     // ── Admin Payroll Actions ────────────────────────────────────────────────
+    Route::post('/admin/payroll/period/store',                 [\App\Http\Controllers\AdminPayrollController::class, 'storePeriod'])->name('admin.payroll.period.store');
     Route::post('/admin/payroll/period/{id}/release',          [\App\Http\Controllers\AdminPayrollController::class, 'releasePayroll'])->name('admin.payroll.period.release');
+    Route::post('/admin/payroll/period/{id}/submit',           [\App\Http\Controllers\AdminPayrollController::class, 'submitForApproval'])->name('admin.payroll.period.submit');
     Route::get('/admin/payroll/period/{id}/payslips',          [\App\Http\Controllers\AdminPayrollController::class, 'periodPayslips'])->name('admin.payroll.period.payslips');
+    Route::get('/admin/payroll/period/{id}/all-payslips',      [\App\Http\Controllers\AdminPayrollController::class, 'allPeriodPayslips'])->name('admin.payroll.period.all-payslips');
     Route::get('/admin/payroll/period/{id}/released-payslips', [\App\Http\Controllers\AdminPayrollController::class, 'releasedPeriodPayslips'])->name('admin.payroll.period.released-payslips');
+    Route::put('/admin/payroll/payslip/{id}/save',             [\App\Http\Controllers\AdminPayrollController::class, 'savePayslip'])->name('admin.payroll.payslip.save');
+    Route::post('/admin/payroll/payslip/{id}/submit',          [\App\Http\Controllers\AdminPayrollController::class, 'submitPayslip'])->name('admin.payroll.payslip.submit');
 
     // ── Admin Salary Grades ──────────────────────────────────────────────────
     Route::post('/admin/payroll/grade/store',            [\App\Http\Controllers\AdminPayrollController::class, 'storeGrade'])->name('admin.payroll.grade.store');
@@ -368,8 +385,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payroll_officer/payroll/period/{id}/payslips',          [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'periodPayslips'])->name('payroll_officer.payroll.period.payslips');
     Route::get('/payroll_officer/payroll/period/{id}/all-payslips',      [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'allPeriodPayslips'])->name('payroll_officer.payroll.period.all-payslips');
     Route::post('/payroll_officer/payroll/period/{id}/submit',           [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'submitForApproval'])->name('payroll_officer.payroll.period.submit');
+    Route::post('/payroll_officer/payroll/period/{id}/unsubmit',         [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'unsubmitPeriod'])->name('payroll_officer.payroll.period.unsubmit');
     Route::put('/payroll_officer/payroll/payslip/{id}/save',        [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'savePayslip'])->name('payroll_officer.payroll.payslip.save');
     Route::post('/payroll_officer/payroll/payslip/{id}/submit',     [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'submitPayslip'])->name('payroll_officer.payroll.payslip.submit');
+    Route::post('/payroll_officer/payroll/payslip/{id}/unsubmit',   [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'unsubmitPayslip'])->name('payroll_officer.payroll.payslip.unsubmit');
 
     // ── Payroll Items (Salary Structure) ───────────────────────────────────
     Route::post('/payroll_officer/payroll/item/store',              [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'storePayrollItem'])->name('payroll_officer.payroll.item.store');

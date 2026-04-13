@@ -40,7 +40,7 @@
         payrollOpen: {{ in_array($currentRoute, $payrollRoutes) ? 'true' : 'false' }},
         requestsOpen: {{ in_array($currentRoute, $requestRoutes) ? 'true' : 'false' }}
     }"
-    x-init="$watch('sidebarCollapsed', value => localStorage.setItem('sidebarCollapsed', value))"
+    x-init="$watch('sidebarCollapsed', value => { localStorage.setItem('sidebarCollapsed', value); window.dispatchEvent(new CustomEvent('sidebar-toggle', { detail: { collapsed: value } })); })"
     :class="sidebarCollapsed ? 'w-20' : 'w-64'"
     style="transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 2px 0 20px rgba(0,0,0,0.06);">
 
@@ -112,7 +112,7 @@
 
         <!-- Time & Attendance -->
         <div>
-            <button @click="attendanceOpen = !attendanceOpen"
+            <button @click="sidebarCollapsed ? window.location='{{ route('finance_officer.attendance.reports') }}' : attendanceOpen = !attendanceOpen"
                 class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg
                     {{ in_array($currentRoute, $attendanceRoutes) ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
                 <div class="flex items-center space-x-3">
@@ -159,7 +159,7 @@
 
         <!-- Payroll -->
         <div>
-            <button @click="payrollOpen = !payrollOpen"
+            <button @click="sidebarCollapsed ? window.location='{{ route('finance_officer.payroll') }}' : payrollOpen = !payrollOpen"
                 class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
                 <div class="flex items-center space-x-3">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,7 +187,7 @@
 
         <!-- Requests & Approval -->
         <div>
-            <button @click="requestsOpen = !requestsOpen"
+            <button @click="sidebarCollapsed ? window.location='{{ route('finance_officer.requests.pending') }}' : requestsOpen = !requestsOpen"
                 class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
                 <div class="flex items-center space-x-3">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

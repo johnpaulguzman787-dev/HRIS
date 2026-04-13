@@ -96,8 +96,8 @@
                     this.elapsedSeconds = Math.floor((Date.now() - this.clockInTimestamp) / 1000) - (this.breakMinutes * 60);
                 }
             }, 1000);
-            window.addEventListener('storage', () => {
-                this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            window.addEventListener('sidebar-toggle', e => {
+                this.sidebarCollapsed = e.detail.collapsed;
             });
         },
         updateTime() {
@@ -253,10 +253,10 @@
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Today's Attendance Summary</h2>
                         <p class="text-xs text-gray-400 mt-1 mb-3">{{ date('F d, Y') }}</p>
 
-                        {{-- Department filter (shown in mobile design) --}}
+                        {{-- Department filter --}}
                         <div class="mb-3">
-                            <select class="text-xs border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400">
-                                <option>All Department</option>
+                            <select id="attendance-dept-filter" onchange="filterAttendanceSummary(this.value)" class="text-xs border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400">
+                                <option value="all">All Departments</option>
                                 @foreach($departments ?? [] as $dept)
                                 <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                 @endforeach
@@ -266,19 +266,19 @@
                         {{-- Mobile: vertical stacked big stat boxes (as in mockup) --}}
                         <div class="space-y-2 mb-4 lg:hidden">
                             <div class="rounded-xl p-4 text-center" style="background:#dcfce7;">
-                                <p class="text-2xl font-bold" style="color:#16a34a;">{{ $attendanceSummary['present'] }}</p>
+                                <p id="stat-present-mobile" class="text-2xl font-bold" style="color:#16a34a;">{{ $attendanceSummary['present'] }}</p>
                                 <p class="text-xs font-bold uppercase mt-1" style="color:#16a34a;">Present</p>
                             </div>
                             <div class="rounded-xl p-4 text-center" style="background:#fef9c3;">
-                                <p class="text-2xl font-bold" style="color:#ca8a04;">{{ $attendanceSummary['late'] }}</p>
+                                <p id="stat-late-mobile" class="text-2xl font-bold" style="color:#ca8a04;">{{ $attendanceSummary['late'] }}</p>
                                 <p class="text-xs font-bold uppercase mt-1" style="color:#ca8a04;">Late</p>
                             </div>
                             <div class="rounded-xl p-4 text-center" style="background:#fee2e2;">
-                                <p class="text-2xl font-bold" style="color:#dc2626;">{{ $attendanceSummary['absent'] }}</p>
+                                <p id="stat-absent-mobile" class="text-2xl font-bold" style="color:#dc2626;">{{ $attendanceSummary['absent'] }}</p>
                                 <p class="text-xs font-bold uppercase mt-1" style="color:#dc2626;">Absent</p>
                             </div>
                             <div class="rounded-xl p-4 text-center" style="background:#fce7f3;">
-                                <p class="text-2xl font-bold" style="color:#db2777;">{{ $attendanceSummary['on_leave'] }}</p>
+                                <p id="stat-onleave-mobile" class="text-2xl font-bold" style="color:#db2777;">{{ $attendanceSummary['on_leave'] }}</p>
                                 <p class="text-xs font-bold uppercase mt-1" style="color:#db2777;">On Leave</p>
                             </div>
                         </div>
@@ -286,27 +286,27 @@
                         {{-- Desktop: 4-col grid --}}
                         <div class="hidden lg:grid grid-cols-4 gap-2 mb-5">
                             <div class="stat-box rounded-xl p-2 text-center" style="background:#dcfce7;">
-                                <p class="text-base font-bold" style="color:#16a34a;">{{ $attendanceSummary['present'] }}</p>
+                                <p id="stat-present-desktop" class="text-base font-bold" style="color:#16a34a;">{{ $attendanceSummary['present'] }}</p>
                                 <p class="text-xs font-semibold uppercase" style="color:#16a34a;">Present</p>
                             </div>
                             <div class="stat-box rounded-xl p-2 text-center" style="background:#fef9c3;">
-                                <p class="text-base font-bold" style="color:#ca8a04;">{{ $attendanceSummary['late'] }}</p>
+                                <p id="stat-late-desktop" class="text-base font-bold" style="color:#ca8a04;">{{ $attendanceSummary['late'] }}</p>
                                 <p class="text-xs font-semibold uppercase" style="color:#ca8a04;">Late</p>
                             </div>
                             <div class="stat-box rounded-xl p-2 text-center" style="background:#fee2e2;">
-                                <p class="text-base font-bold" style="color:#dc2626;">{{ $attendanceSummary['absent'] }}</p>
+                                <p id="stat-absent-desktop" class="text-base font-bold" style="color:#dc2626;">{{ $attendanceSummary['absent'] }}</p>
                                 <p class="text-xs font-semibold uppercase" style="color:#dc2626;">Absent</p>
                             </div>
                             <div class="stat-box rounded-xl p-2 text-center" style="background:#fce7f3;">
-                                <p class="text-base font-bold" style="color:#db2777;">{{ $attendanceSummary['on_leave'] }}</p>
+                                <p id="stat-onleave-desktop" class="text-base font-bold" style="color:#db2777;">{{ $attendanceSummary['on_leave'] }}</p>
                                 <p class="text-xs font-semibold uppercase" style="color:#db2777;">On Leave</p>
                             </div>
                         </div>
 
                         <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Overview</p>
-                        <div class="space-y-3">
+                        <div id="overview-rows" class="space-y-3">
                             @foreach($departmentProgress as $dept)
-                            <div>
+                            <div data-dept-id="{{ $dept['id'] }}">
                                 <div class="flex justify-between mb-1">
                                     <span class="text-xs text-gray-600 font-medium">{{ $dept['name'] }}</span>
                                     <span class="text-xs text-gray-400">{{ $dept['percentage'] }}%</span>
@@ -676,4 +676,19 @@
 .today-pill { animation: todayGlow 2.5s ease-in-out infinite; }
 @keyframes todayGlow { 0%,100% { box-shadow:0 2px 8px rgba(59,130,246,0.4); } 50% { box-shadow:0 2px 18px rgba(59,130,246,0.7); } }
 </style>
+<script>
+const _deptStats = @json($departmentAttendance);
+function filterAttendanceSummary(deptId) {
+    const s = _deptStats[deptId] ?? { present: 0, late: 0, absent: 0, on_leave: 0 };
+    ['mobile','desktop'].forEach(v => {
+        document.getElementById('stat-present-' + v).textContent = s.present;
+        document.getElementById('stat-late-' + v).textContent    = s.late;
+        document.getElementById('stat-absent-' + v).textContent  = s.absent;
+        document.getElementById('stat-onleave-' + v).textContent = s.on_leave;
+    });
+    document.querySelectorAll('#overview-rows [data-dept-id]').forEach(row => {
+        row.style.display = (deptId === 'all' || row.dataset.deptId === deptId) ? '' : 'none';
+    });
+}
+</script>
 @endsection

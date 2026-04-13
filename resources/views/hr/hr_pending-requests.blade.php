@@ -136,7 +136,7 @@
         resultTitle:'',
         resultMessage:''
      }"
-     x-init="window.addEventListener('storage',e=>{if(e.key==='sidebarCollapsed')collapsed=e.newValue==='true'})"
+     x-init="window.addEventListener('sidebar-toggle',e=>{collapsed=e.detail.collapsed})"
      :style="collapsed?'margin-left:5rem':'margin-left:16rem'"
      style="transition:margin-left .35s cubic-bezier(.4,0,.2,1);min-height:100vh;">
 

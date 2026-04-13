@@ -1074,9 +1074,7 @@
             },
 
             init() {
-                window.addEventListener('storage', () => {
-                    this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                });
+                window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
                 this.$watch('activeTab', val => { location.hash = val; });
             },
 

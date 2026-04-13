@@ -103,8 +103,8 @@
                     this.elapsedSeconds = Math.floor((Date.now() - this.clockInTimestamp) / 1000) - (this.breakMinutes * 60);
                 }
             }, 1000);
-            window.addEventListener('storage', () => {
-                this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            window.addEventListener('sidebar-toggle', e => {
+                this.sidebarCollapsed = e.detail.collapsed;
             });
         },
         updateTime() {

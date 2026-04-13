@@ -373,9 +373,7 @@
             },
 
             init() {
-                window.addEventListener('storage', () => {
-                    this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                });
+                window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
             },
 
             fmt(n) {

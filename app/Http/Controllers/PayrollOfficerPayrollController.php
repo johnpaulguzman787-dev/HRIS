@@ -102,7 +102,42 @@ class PayrollOfficerPayrollController extends Controller
 
         $period->update(['status' => 'Submitted']);
 
+        // Notify all admins and finance officers
+        $recipients = DB::table('users')
+            ->whereIn('role', ['admin', 'finance_officer'])
+            ->pluck('id');
+
+        $now = now();
+        $notifications = $recipients->map(fn($uid) => [
+            'user_id'    => $uid,
+            'title'      => 'Payroll Submitted for Approval',
+            'message'    => "Payroll period \"{$period->name}\" has been submitted and is awaiting your approval.",
+            'icon'       => 'notice',
+            'link'       => null,
+            'is_read'    => false,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->all();
+
+        if ($notifications) {
+            DB::table('notifications')->insert($notifications);
+        }
+
         return redirect()->back()->with('success', 'Payroll period submitted for approval.');
+    }
+
+    public function unsubmitPeriod($id)
+    {
+        $period = PayrollPeriod::findOrFail($id);
+
+        // Guard: can only unsubmit if currently Submitted (not Released)
+        if ($period->status !== 'Submitted') {
+            return redirect()->back()->with('error', 'This payroll period cannot be unsubmitted.');
+        }
+
+        $period->update(['status' => 'Pending']);
+
+        return redirect()->back()->with('success', 'Payroll period has been unsubmitted and returned to Pending.');
     }
 
     // ── Payslips Page ────────────────────────────────────────────────────────
@@ -320,6 +355,24 @@ class PayrollOfficerPayrollController extends Controller
         }
 
         $payslip->update(['status' => 'Submitted']);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function unsubmitPayslip($id)
+    {
+        $payslip = Payslip::with('period')->findOrFail($id);
+
+        // Guard: can only unsubmit if period is still Pending (not submitted/released)
+        if ($payslip->period->status !== 'Pending') {
+            return response()->json(['success' => false, 'message' => 'Payslip cannot be unsubmitted once the period has been submitted for approval.']);
+        }
+
+        if ($payslip->status !== 'Submitted') {
+            return response()->json(['success' => false, 'message' => 'Payslip is not in a submitted state.']);
+        }
+
+        $payslip->update(['status' => 'Pending']);
 
         return response()->json(['success' => true]);
     }

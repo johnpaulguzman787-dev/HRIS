@@ -158,6 +158,37 @@ $availableShifts = \App\Models\Shift::where('is_active', true)->get();
             'absent'   => AttendanceLog::whereDate('attendance_date', $today)->where('status', 'absent')->count(),
             'on_leave' => AttendanceLog::whereDate('attendance_date', $today)->whereIn('status', ['on_leave', 'holiday'])->count(),
         ],
+        'departmentAttendance' => (function () use ($today) {
+            $logs = AttendanceLog::whereDate('attendance_date', $today)
+                ->join('employees', 'attendance_logs.employee_id', '=', 'employees.id')
+                ->whereNotNull('employees.department_id')
+                ->select('employees.department_id', 'attendance_logs.status')
+                ->get();
+
+            $map = ['all' => ['present' => 0, 'late' => 0, 'absent' => 0, 'on_leave' => 0]];
+
+            foreach ($logs as $log) {
+                $deptId = (string) $log->department_id;
+                if (!isset($map[$deptId])) {
+                    $map[$deptId] = ['present' => 0, 'late' => 0, 'absent' => 0, 'on_leave' => 0];
+                }
+                if (in_array($log->status, ['present', 'undertime', 'overtime'])) {
+                    $map[$deptId]['present']++;
+                    $map['all']['present']++;
+                } elseif ($log->status === 'late') {
+                    $map[$deptId]['late']++;
+                    $map['all']['late']++;
+                } elseif ($log->status === 'absent') {
+                    $map[$deptId]['absent']++;
+                    $map['all']['absent']++;
+                } elseif (in_array($log->status, ['on_leave', 'holiday'])) {
+                    $map[$deptId]['on_leave']++;
+                    $map['all']['on_leave']++;
+                }
+            }
+
+            return $map;
+        })(),
         'departmentProgress' => Department::with(['employees.attendanceLogs' => function ($q) use ($today) {
             $q->whereDate('attendance_date', $today);
         }])->get()->map(function ($dept) {
@@ -167,6 +198,7 @@ $availableShifts = \App\Models\Shift::where('is_active', true)->get();
             })->count();
             $percentage = $total > 0 ? round($present / $total * 100) : 0;
             return [
+                'id'         => $dept->id,
                 'name'       => $dept->name,
                 'total'      => $total,
                 'present'    => $present,

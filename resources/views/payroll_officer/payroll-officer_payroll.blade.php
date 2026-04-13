@@ -933,8 +933,13 @@
                                         <button class="btn-primary flex-1 justify-center" @click="pvSubmitPayslip()">Submit</button>
                                     </template>
                                     @endcanDo
-                                    <template x-if="viewPeriod.status !== 'Released' && pvActive.status === 'Submitted'">
-                                        <span class="flex-1 text-center py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg border border-green-100">
+                                    <template x-if="viewPeriod.status === 'Pending' && pvActive.status === 'Submitted'">
+                                        <button class="flex-1 text-center py-2 text-sm font-medium text-amber-700 bg-amber-50 rounded-lg border border-amber-200 hover:bg-amber-100 transition-colors" @click="pvUnsubmitPayslip()">
+                                            Unsubmit
+                                        </button>
+                                    </template>
+                                    <template x-if="viewPeriod.status === 'Submitted' && pvActive.status === 'Submitted'">
+                                        <span class="flex-1 text-center py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg border border-blue-100">
                                             Submitted ✓
                                         </span>
                                     </template>
@@ -1218,6 +1223,27 @@
         </div>
     </div>
 
+
+    {{-- Unsubmit Period Confirm --}}
+    <div x-show="showUnsubmitConfirm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showUnsubmitConfirm=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-8 text-center"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+            </div>
+            <p class="text-gray-700 font-semibold text-base mb-2">Unsubmit Payroll Period?</p>
+            <p class="text-gray-400 text-sm mb-6">This will return the payroll period to Pending so you can make changes before resubmitting.</p>
+            <div class="flex justify-center gap-3">
+                <button @click="showUnsubmitConfirm=false" class="btn-outline px-8">Cancel</button>
+                <form :action="`/payroll_officer/payroll/period/${viewPeriod.id}/unsubmit`" method="POST">
+                    @csrf
+                    <button type="submit" class="px-8 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors">Unsubmit</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     {{-- Edit Payslip Modal --}}
     <div x-show="showEditPayslipModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showEditPayslipModal=false">
@@ -1582,6 +1608,7 @@
             showAddBenefitModal:  false,
             showEditBenefitModal: false,
             showSubmitConfirm:    false,
+            showUnsubmitConfirm:  false,
             showEditPayslipModal: false,
             showAddGradeModal:    false,
             showEditGradeModal:   false,
@@ -1644,9 +1671,7 @@
             },
 
             init() {
-                window.addEventListener('storage', () => {
-                    this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                });
+                window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
                 this.$watch('activeTab', val => { location.hash = val; });
             },
 
@@ -1792,6 +1817,32 @@
                             const ps = this.pvPayslips.find(p => p.id === this.pvActive.id);
                             if (ps) ps.status = 'Submitted';
                             this.pvActive.status  = 'Submitted';
+                            this.pvSubmittedCount = this.pvPayslips.filter(p => p.status === 'Submitted').length;
+                        });
+                    },
+                    false
+                );
+            },
+
+            pvUnsubmitPayslip() {
+                this.askConfirm(
+                    'Unsubmit Payslip',
+                    `Return payslip for ${this.pvActive.employeeName} to Pending?`,
+                    () => {
+                        const csrf = document.querySelector('meta[name="csrf-token"]').content;
+                        fetch(`/payroll_officer/payroll/payslip/${this.pvActive.id}/unsubmit`, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrf }
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success === false) {
+                                this.showAlert('Cannot Unsubmit', data.message || 'An error occurred.');
+                                return;
+                            }
+                            const ps = this.pvPayslips.find(p => p.id === this.pvActive.id);
+                            if (ps) ps.status = 'Pending';
+                            this.pvActive.status  = 'Pending';
                             this.pvSubmittedCount = this.pvPayslips.filter(p => p.status === 'Submitted').length;
                         });
                     },

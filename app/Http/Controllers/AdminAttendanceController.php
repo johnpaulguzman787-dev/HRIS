@@ -1501,4 +1501,325 @@ public function getLeaveRequest($id)
         return response()->json(['message' => 'Holiday deleted successfully.']);
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // LEAVE APPROVAL (Admin can approve/reject all leave requests)
+    // ══════════════════════════════════════════════════════════════════════
+
+    public function approveLeave(Request $request, $id)
+    {
+        $leave    = LeaveRequest::with('leaveType')->findOrFail($id);
+        $approver = Employee::where('user_id', Auth::id())->first();
+        if (!$approver) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
+
+        if (!in_array($leave->status, ['pending', 'supervisor_approved'])) {
+            return response()->json(['message' => 'Leave is no longer pending.'], 409);
+        }
+
+        $leave->update([
+            'status'      => 'approved',
+            'approved_by' => $approver->id,
+            'approved_at' => now(),
+            'hr_notes'    => $request->hr_notes ?? null,
+        ]);
+
+        $cursor = Carbon::parse($leave->start_date);
+        $end    = Carbon::parse($leave->end_date);
+        while ($cursor->lte($end)) {
+            AttendanceLog::updateOrCreate(
+                ['employee_id' => $leave->employee_id, 'attendance_date' => $cursor->toDateString()],
+                ['status' => 'on_leave', 'work_setup' => null]
+            );
+            $cursor->addDay();
+        }
+
+        $credit = LeaveCredit::where('employee_id', $leave->employee_id)
+            ->where('leave_type_id', $leave->leave_type_id)
+            ->where('year', Carbon::parse($leave->start_date)->year)
+            ->first();
+
+        if ($credit) {
+            $credit->used_days      += $leave->total_days;
+            $credit->remaining_days  = max(0, $credit->total_days - $credit->used_days);
+            $credit->save();
+        }
+
+        $this->notifyEmployee(
+            $leave->employee_id,
+            'Leave Request Approved',
+            "Your leave request ({$leave->ref_no}) from {$leave->start_date} to {$leave->end_date} has been approved."
+        );
+        return response()->json(['message' => 'Leave approved successfully.']);
+    }
+
+    public function rejectLeave(Request $request, $id)
+    {
+        $request->validate(['rejection_reason' => 'required|string|max:500']);
+
+        $leave = LeaveRequest::findOrFail($id);
+
+        if (!in_array($leave->status, ['pending', 'supervisor_approved'])) {
+            return response()->json(['message' => 'Leave is no longer pending.'], 409);
+        }
+
+        $leave->update([
+            'status'           => 'rejected',
+            'rejection_reason' => $request->rejection_reason,
+        ]);
+
+        $this->notifyEmployee(
+            $leave->employee_id,
+            'Leave Request Rejected',
+            "Your leave request ({$leave->ref_no}) has been rejected. Reason: {$request->rejection_reason}",
+            'warning'
+        );
+        return response()->json(['message' => 'Leave rejected.']);
+    }
+
+    public function approveRequest(Request $request, $id)
+    {
+        $leave = LeaveRequest::find($id);
+        if (!$leave) {
+            return response()->json(['message' => 'Leave request not found.'], 404);
+        }
+        if (!in_array($leave->status, ['pending', 'supervisor_approved'])) {
+            return response()->json(['message' => 'Leave is no longer pending.'], 409);
+        }
+        return $this->approveLeave($request, $id);
+    }
+
+    public function rejectRequest(Request $request, $id)
+    {
+        if (!$request->filled('rejection_reason')) {
+            $request->merge(['rejection_reason' => $request->reason]);
+        }
+        if (!$request->filled('rejection_reason')) {
+            return response()->json(['message' => 'Please provide a rejection reason.'], 422);
+        }
+
+        $leave = LeaveRequest::find($id);
+        if ($leave && !in_array($leave->status, ['pending', 'supervisor_approved'])) {
+            return response()->json(['message' => 'Leave is no longer pending.'], 409);
+        }
+
+        return $this->rejectLeave($request, $id);
+    }
+
+    public function approveOvertimeRequest(Request $request, $id)
+    {
+        $ot       = OvertimeRequest::findOrFail($id);
+        $approver = Employee::where('user_id', Auth::id())->first();
+        if (!$approver) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
+
+        if (!in_array($ot->status, ['pending', 'supervisor_approved'])) {
+            return response()->json(['message' => 'Request is no longer pending.'], 409);
+        }
+
+        $ot->update([
+            'status'         => 'approved',
+            'approved_by'    => Auth::id(),
+            'approved_hours' => $ot->requested_hours,
+            'approved_at'    => now(),
+        ]);
+
+        $this->notifyEmployee(
+            $ot->employee_id,
+            'Overtime Request Approved',
+            "Your overtime request ({$ot->ref_no}) on {$ot->ot_date} ({$ot->requested_hours} hrs) has been approved."
+        );
+
+        return response()->json(['message' => 'Overtime request approved.']);
+    }
+
+    public function rejectOvertimeRequest(Request $request, $id)
+    {
+        $request->validate(['rejection_reason' => 'required|string|max:500']);
+        $ot = OvertimeRequest::findOrFail($id);
+
+        if (!in_array($ot->status, ['pending', 'supervisor_approved'])) {
+            return response()->json(['message' => 'Request is no longer pending.'], 409);
+        }
+
+        $ot->update([
+            'status'           => 'rejected',
+            'rejection_reason' => $request->rejection_reason,
+        ]);
+
+        $this->notifyEmployee(
+            $ot->employee_id,
+            'Overtime Request Rejected',
+            "Your overtime request ({$ot->ref_no}) has been rejected. Reason: {$request->rejection_reason}",
+            'warning'
+        );
+
+        return response()->json(['message' => 'Overtime request rejected.']);
+    }
+
+    public function approveShiftChangeRequest(Request $request, $id)
+    {
+        $scr      = ShiftChangeRequest::findOrFail($id);
+        $approver = Employee::where('user_id', Auth::id())->first();
+        if (!$approver) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
+
+        if (!in_array($scr->status, ['pending', 'supervisor_approved'])) {
+            return response()->json(['message' => 'Request is no longer pending.'], 409);
+        }
+
+        $scr->update([
+            'status'      => 'approved',
+            'approved_by' => $approver->id,
+            'approved_at' => now(),
+        ]);
+
+        $oldShift = EmployeeShift::where('employee_id', $scr->employee_id)
+            ->where('is_active', true)
+            ->latest('effective_date')
+            ->first();
+
+        if ($oldShift) {
+            $oldShift->update([
+                'is_active' => false,
+                'end_date'  => Carbon::parse($scr->effective_from)->subDay()->toDateString(),
+            ]);
+        }
+
+        EmployeeShift::create([
+            'employee_id'    => $scr->employee_id,
+            'shift_id'       => $scr->requested_shift_id,
+            'work_setup'     => $oldShift?->work_setup ?? 'office',
+            'effective_date' => $scr->effective_from,
+            'end_date'       => $scr->effective_until ?? null,
+            'is_active'      => true,
+            'days_off'       => $oldShift?->days_off ?? json_encode(['Sat', 'Sun']),
+        ]);
+
+        if ($scr->effective_until && $oldShift) {
+            EmployeeShift::create([
+                'employee_id'    => $scr->employee_id,
+                'shift_id'       => $oldShift->shift_id,
+                'work_setup'     => $oldShift->work_setup,
+                'effective_date' => Carbon::parse($scr->effective_until)->addDay()->toDateString(),
+                'end_date'       => null,
+                'is_active'      => true,
+                'days_off'       => $oldShift->days_off,
+            ]);
+        }
+
+        return response()->json(['message' => 'Shift change request approved.']);
+    }
+
+    public function rejectShiftChangeRequest(Request $request, $id)
+    {
+        $request->validate(['rejection_reason' => 'required|string|max:500']);
+        $scr = ShiftChangeRequest::findOrFail($id);
+
+        if (!in_array($scr->status, ['pending', 'supervisor_approved'])) {
+            return response()->json(['message' => 'Request is no longer pending.'], 409);
+        }
+
+        $scr->update([
+            'status'           => 'rejected',
+            'rejection_reason' => $request->rejection_reason,
+        ]);
+
+        return response()->json(['message' => 'Shift change request rejected.']);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // LEAVE TYPES & CREDITS (Admin can manage leave types like HR)
+    // ══════════════════════════════════════════════════════════════════════
+
+    public function storeLeaveType(Request $request)
+    {
+        $request->validate([
+            'name'               => 'required|string|max:100',
+            'code'               => 'required|string|max:20|unique:leave_types,code',
+            'days_entitled'      => 'nullable|integer|min:1|max:365',
+            'is_paid'            => 'boolean',
+            'requires_document'  => 'boolean',
+            'applicable_to'      => 'nullable|string|max:255',
+            'carry_over'         => 'boolean',
+        ]);
+
+        $leaveType = LeaveType::create([
+            'name'              => $request->name,
+            'code'              => strtoupper($request->code),
+            'days_entitled'     => $request->days_entitled,
+            'is_paid'           => $request->boolean('is_paid'),
+            'requires_document' => $request->boolean('requires_document'),
+            'applicable_to'     => $request->applicable_to,
+            'carry_over'        => $request->boolean('carry_over'),
+            'is_active'         => true,
+        ]);
+
+        if ($request->days_entitled) {
+            $activeEmployees = Employee::where('employment_status', 'Active')->get();
+            foreach ($activeEmployees as $emp) {
+                LeaveCredit::firstOrCreate(
+                    ['employee_id' => $emp->id, 'leave_type_id' => $leaveType->id, 'year' => now()->year],
+                    ['total_days' => $request->days_entitled, 'used_days' => 0, 'remaining_days' => $request->days_entitled]
+                );
+            }
+        }
+
+        return response()->json(['message' => 'Leave type created successfully.']);
+    }
+
+    public function getLeaveType($id)
+    {
+        $lt = LeaveType::findOrFail($id);
+        return response()->json($lt);
+    }
+
+    public function updateLeaveType(Request $request, $id)
+    {
+        $request->validate([
+            'name'              => 'required|string|max:100',
+            'code'              => 'required|string|max:20|unique:leave_types,code,' . $id,
+            'days_entitled'     => 'nullable|integer|min:1|max:365',
+            'is_paid'           => 'boolean',
+            'requires_document' => 'boolean',
+            'applicable_to'     => 'nullable|string|max:255',
+            'carry_over'        => 'boolean',
+        ]);
+
+        $lt = LeaveType::findOrFail($id);
+        $lt->update([
+            'name'              => $request->name,
+            'code'              => strtoupper($request->code),
+            'days_entitled'     => $request->days_entitled,
+            'is_paid'           => $request->boolean('is_paid'),
+            'requires_document' => $request->boolean('requires_document'),
+            'applicable_to'     => $request->applicable_to,
+            'carry_over'        => $request->boolean('carry_over'),
+        ]);
+
+        return response()->json(['message' => 'Leave type updated successfully.']);
+    }
+
+    public function getLeaveCredits(Request $request)
+    {
+        $employeeId = $request->get('employee_id');
+        $year       = $request->get('year', now()->year);
+
+        $credits = LeaveCredit::with('leaveType')
+            ->where('employee_id', $employeeId)
+            ->where('year', $year)
+            ->get()
+            ->mapWithKeys(fn($c) => [
+                strtolower($c->leaveType->code ?? 'unknown') => [
+                    'total'     => $c->total_days,
+                    'used'      => $c->used_days,
+                    'remaining' => $c->remaining_days,
+                ]
+            ]);
+
+        return response()->json($credits);
+    }
+
 }

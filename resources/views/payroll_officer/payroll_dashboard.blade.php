@@ -107,8 +107,8 @@
                     this.elapsedSeconds = Math.floor((Date.now() - this.clockInTimestamp) / 1000) - (this.breakMinutes * 60);
                 }
             }, 1000);
-            window.addEventListener('storage', () => {
-                this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            window.addEventListener('sidebar-toggle', e => {
+                this.sidebarCollapsed = e.detail.collapsed;
             });
         },
         updateTime() {
@@ -357,8 +357,8 @@
                     <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.42s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4">Quick Actions</h2>
                         <div class="grid grid-cols-2 gap-3">
-                            <a href="{{ route('payroll_officer.payroll') }}" class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium text-center block">View Payroll</a>
-                            <button @click="openAnnouncement()" class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">Create Announcement</button>
+                            <a href="{{ route('payroll_officer.payroll') }}" class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium text-center block w-full">View Payroll</a>
+                            <button @click="openAnnouncement()" class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium text-center w-full">Announce</button>
                         </div>
                     </div>
                 </div>

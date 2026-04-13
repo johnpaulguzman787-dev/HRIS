@@ -69,6 +69,27 @@ class FinanceOfficerPayrollController extends Controller
         $period->update(['status' => 'Released']);
         Payslip::where('payroll_period_id', $id)->update(['status' => 'Released']);
 
+        // Notify all payroll officers
+        $recipients = DB::table('users')
+            ->where('role', 'payroll_officer')
+            ->pluck('id');
+
+        $now = now();
+        $notifications = $recipients->map(fn($uid) => [
+            'user_id'    => $uid,
+            'title'      => 'Payroll Released',
+            'message'    => "Payroll period \"{$period->name}\" has been approved and released to employees.",
+            'icon'       => 'process_done',
+            'link'       => null,
+            'is_read'    => false,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->all();
+
+        if ($notifications) {
+            DB::table('notifications')->insert($notifications);
+        }
+
         return redirect()->back()->with('success', 'Payroll released successfully.');
     }
 

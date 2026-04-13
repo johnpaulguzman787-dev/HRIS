@@ -615,9 +615,7 @@
 
             // ── Init ──
             init() {
-                window.addEventListener('storage', () => {
-                    this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                });
+                window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
                 if (this.allPayslips.length > 0) this.allSelect(this.allPayslips[0]);
             },
 

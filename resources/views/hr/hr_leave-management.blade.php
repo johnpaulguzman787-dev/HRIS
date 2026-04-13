@@ -292,7 +292,7 @@
          }
      }"
      x-init="
-         window.addEventListener('storage', e => { if(e.key==='sidebarCollapsed') collapsed = e.newValue==='true' });
+         window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed });
          window.addEventListener('set-edit-lt', e => {
              const d = e.detail;
              document.querySelector('[x-show=\'showEditLeaveType\']').__x.$data.editLt = {

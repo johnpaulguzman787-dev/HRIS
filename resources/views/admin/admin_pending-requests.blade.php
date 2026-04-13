@@ -126,15 +126,20 @@
         showFileReq:false,
         reqType:'',
         showCancel:false,
+        showApprove:false,
+        showReject:false,
         selName:'',
         selId:null,
+        rejectReason:'',
         selCancelUrl:'',
+        selApproveUrl:'',
+        selRejectUrl:'',
         showResult:false,
         resultType:'success',
         resultTitle:'',
         resultMessage:''
      }"
-     x-init="window.addEventListener('storage',e=>{if(e.key==='sidebarCollapsed')collapsed=e.newValue==='true'})"
+     x-init="window.addEventListener('sidebar-toggle',e=>{collapsed=e.detail.collapsed})"
      :style="collapsed?'margin-left:5rem':'margin-left:16rem'"
      style="transition:margin-left .35s cubic-bezier(.4,0,.2,1);min-height:100vh;">
 
@@ -248,9 +253,25 @@
                     <div class="pstep"><div class="pcircle" style="background:#f9fafb;border:2px solid #d1d5db;color:#9ca3af;"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01"/></svg></div><div class="pname">HR Manager</div><div class="pstatus">Pending</div></div>
                 </div></div>
             </div>
-            <div class="action-row" style="grid-template-columns:1fr;">
-                <button class="btn-reject" @click="selId={{ $req->id }};selName='{{ addslashes(trim(($req->employee->fname ?? '').' '.($req->employee->lname ?? ''))) }}';selCancelUrl='/admin/requests/{{ $req->id }}/cancel';showCancel=true">
-                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Cancel Request
+            @php
+                $empName    = trim(($req->employee->fname ?? '') . ' ' . ($req->employee->lname ?? ''));
+                $approveUrl = match($req->type) {
+                    'overtime' => '/admin/requests/overtime/' . $req->id . '/approve',
+                    'shift'    => '/admin/requests/shift/'    . $req->id . '/approve',
+                    default    => '/admin/requests/'          . $req->id . '/approve',
+                };
+                $rejectUrl = match($req->type) {
+                    'overtime' => '/admin/requests/overtime/' . $req->id . '/reject',
+                    'shift'    => '/admin/requests/shift/'    . $req->id . '/reject',
+                    default    => '/admin/requests/'          . $req->id . '/reject',
+                };
+            @endphp
+            <div class="action-row">
+                <button class="btn-approve" @click="selId={{ $req->id }};selName='{{ addslashes($empName) }}';selApproveUrl='{{ $approveUrl }}';showApprove=true">
+                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Approve
+                </button>
+                <button class="btn-reject" @click="selId={{ $req->id }};selName='{{ addslashes($empName) }}';selRejectUrl='{{ $rejectUrl }}';showReject=true">
+                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Reject
                 </button>
             </div>
         </div>
@@ -448,6 +469,37 @@
                 <div class="mactions">
                     <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ══ APPROVE CONFIRM ══ --}}
+    <div x-show="showApprove" class="modal-overlay" x-cloak @click.self="showApprove=false">
+        <div class="modal-box" style="width:400px;text-align:center;">
+            <div style="width:56px;height:56px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                <svg style="width:26px;height:26px;color:#16a34a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div style="font-size:17px;font-weight:800;color:#111827;margin-bottom:8px;">Approve Request?</div>
+            <div style="font-size:13px;color:#6b7280;margin-bottom:24px;">Are you sure you want to approve the request from <strong x-text="selName"></strong>? This action cannot be undone.</div>
+            <div style="display:flex;justify-content:center;gap:12px;">
+                <button class="btn-cancel" style="min-width:100px;" @click="showApprove=false">Cancel</button>
+                <button style="min-width:100px;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#16a34a;color:#fff;" @click="fetch(selApproveUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({})}).then(async r=>{const d=await r.json();showApprove=false;if(r.ok){resultType='success';resultTitle='Request Approved';resultMessage=d.message??'The request has been approved successfully.';showResult=true;setTimeout(()=>window.location.reload(),2500);}else{resultType='error';resultTitle='Approval Failed';resultMessage=d.message??'Something went wrong. Please try again.';showResult=true;}}).catch(()=>{showApprove=false;resultType='error';resultTitle='Error';resultMessage='An error occurred. Please try again.';showResult=true;})">Approve</button>
+            </div>
+        </div>
+    </div>
+
+    {{-- ══ REJECT CONFIRM ══ --}}
+    <div x-show="showReject" class="modal-overlay" x-cloak @click.self="showReject=false">
+        <div class="modal-box" style="width:420px;text-align:center;">
+            <div style="width:56px;height:56px;background:#fee2e2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                <svg style="width:26px;height:26px;color:#dc2626;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </div>
+            <div style="font-size:17px;font-weight:800;color:#111827;margin-bottom:8px;">Reject Request?</div>
+            <div style="font-size:13px;color:#6b7280;margin-bottom:14px;">Please provide a reason for rejecting <strong x-text="selName"></strong>'s request.</div>
+            <textarea class="finput" rows="3" placeholder="Enter rejection reason..." style="resize:none;text-align:left;" x-model="rejectReason"></textarea>
+            <div style="display:flex;justify-content:center;gap:12px;margin-top:16px;">
+                <button class="btn-cancel" style="min-width:100px;" @click="showReject=false">Cancel</button>
+                <button style="min-width:100px;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#dc2626;color:#fff;" @click="fetch(selRejectUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({reason:rejectReason,rejection_reason:rejectReason})}).then(async r=>{const d=await r.json();showReject=false;rejectReason='';if(r.ok){resultType='success';resultTitle='Request Rejected';resultMessage=d.message??'The request has been rejected successfully.';showResult=true;setTimeout(()=>window.location.reload(),2500);}else{resultType='error';resultTitle='Rejection Failed';resultMessage=d.message??'Something went wrong. Please try again.';showResult=true;}}).catch(()=>{showReject=false;resultType='error';resultTitle='Error';resultMessage='An error occurred. Please try again.';showResult=true;})">Reject</button>
             </div>
         </div>
     </div>

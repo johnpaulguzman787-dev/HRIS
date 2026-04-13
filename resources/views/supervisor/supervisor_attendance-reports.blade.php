@@ -64,7 +64,8 @@
 @include('supervisor.supervisor_sidebar')
 
 {{-- ═══════════ MAIN CONTENT ═══════════ --}}
-<div id="main-content" class="min-h-screen bg-gray-100 ml-64"
+<div id="main-content" class="min-h-screen bg-gray-100"
+     :style="sidebarCollapsed ? 'margin-left:5rem' : 'margin-left:16rem'"
      style="transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1);">
 
     {{-- Blue Header --}}
@@ -175,13 +176,24 @@
                 </table>
             </div>
             <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-                <p class="text-xs text-gray-400">Showing <span class="font-semibold text-gray-600">8</span> of <span class="font-semibold text-gray-600">26</span> records</p>
+                <p class="text-xs text-gray-400">
+                    Showing <span class="font-semibold text-gray-600" x-text="rows.length"></span>
+                    of <span class="font-semibold text-gray-600" x-text="totalRecords"></span> records
+                </p>
                 <div class="flex items-center gap-1">
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 text-xs flex items-center justify-center hover:bg-gray-50">&lsaquo;</button>
-                    <button class="w-8 h-8 rounded-lg text-xs font-bold text-white flex items-center justify-center" style="background:#3b82f6;">1</button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 text-gray-500 text-xs flex items-center justify-center hover:bg-gray-50">2</button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 text-gray-500 text-xs flex items-center justify-center hover:bg-gray-50">3</button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 text-xs flex items-center justify-center hover:bg-gray-50">&rsaquo;</button>
+                    <button @click="if(currentPage>1) loadRecords(currentPage-1)"
+                            :disabled="currentPage<=1"
+                            class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 text-xs flex items-center justify-center hover:bg-gray-50 disabled:opacity-40">&lsaquo;</button>
+                    <template x-for="p in Math.ceil(totalRecords/perPage)" :key="p">
+                        <button @click="loadRecords(p)"
+                                :style="p===currentPage ? 'background:#3b82f6;color:#fff;' : ''"
+                                :class="p===currentPage ? '' : 'border border-gray-200 text-gray-500 hover:bg-gray-50'"
+                                class="w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center"
+                                x-text="p"></button>
+                    </template>
+                    <button @click="if(currentPage<Math.ceil(totalRecords/perPage)) loadRecords(currentPage+1)"
+                            :disabled="currentPage>=Math.ceil(totalRecords/perPage)"
+                            class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 text-xs flex items-center justify-center hover:bg-gray-50 disabled:opacity-40">&rsaquo;</button>
                 </div>
             </div>
         </div>
@@ -192,6 +204,7 @@
 <script>
 function attendancePage() {
     return {
+        sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
         workSetup: '{{ $todayLog?->work_setup ?? ($employeeShift?->work_setup ?? "wfh") }}',
         assignedShiftId: {{ $employeeShift?->shift_id ?? 'null' }},
         breakAllowed: {{ $employeeShift?->shift?->break_schedule ? 'true' : 'false' }},
@@ -226,6 +239,7 @@ clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
                         ? Math.floor((Date.now() - this.clockInTimestamp) / 1000) - (this.breakMinutes * 60)
                         : 0;
             }, 1000);
+            window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
             await this.loadRecords();
         },
 

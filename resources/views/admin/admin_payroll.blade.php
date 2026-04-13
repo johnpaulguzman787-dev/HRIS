@@ -164,13 +164,18 @@
 
                 {{-- Toolbar --}}
                 <div class="flex items-center justify-between gap-3 mb-4">
+                    <button class="btn-primary" @click="showCreatePeriod=true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Create Payroll Period
+                    </button>
                     <div class="search-wrap flex-1 max-w-xs">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>
                         <input type="text" placeholder="Search" class="ctrl w-full" x-model="periodSearch">
                     </div>
                     <div class="flex items-center gap-3">
                         <select class="ctrl" x-model="periodStatusFilter">
-                            <option value="">Status</option>
+                            <option value="">All Status</option>
+                            <option value="Pending">Pending</option>
                             <option value="Submitted">Submitted</option>
                             <option value="Released">Released</option>
                         </select>
@@ -202,20 +207,29 @@
                                 <td class="text-gray-500">{{ \Carbon\Carbon::parse($period->end_date)->format('m/d/Y') }}</td>
                                 <td>
                                     <span class="px-3 py-1 rounded-full text-xs font-medium
-                                        @if($period->status==='Submitted') badge-submitted
+                                        @if($period->status==='Pending') badge-pending
+                                        @elseif($period->status==='Submitted') badge-submitted
                                         @else badge-released @endif">
                                         {{ $period->status }}
                                     </span>
                                 </td>
                                 <td style="text-align:center">
-                                    <button class="btn-view"
-                                        @click="openPeriodView(
-                                            {{ $period->id }},
-                                            '{{ addslashes($period->name) }}',
-                                            '{{ $period->start_date }}',
-                                            '{{ $period->end_date }}',
-                                            '{{ $period->status }}'
-                                        )">View</button>
+                                    <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+                                        <button class="btn-view"
+                                            @click="openPeriodView(
+                                                {{ $period->id }},
+                                                '{{ addslashes($period->name) }}',
+                                                '{{ $period->start_date }}',
+                                                '{{ $period->end_date }}',
+                                                '{{ $period->status }}'
+                                            )">View</button>
+                                        @if($period->status === 'Pending')
+                                        <form method="POST" action="{{ route('admin.payroll.period.submit', $period->id) }}" style="display:inline;" onsubmit="return confirm('Submit this period for approval?')">
+                                            @csrf
+                                            <button type="submit" style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#dbeafe;color:#1d4ed8;">Submit</button>
+                                        </form>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                             @empty
@@ -517,6 +531,11 @@
 
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-800" x-text="viewPeriod.name"></h2>
+                    <template x-if="viewPeriod.status === 'Pending'">
+                        <button class="btn-primary" @click="adminSubmitPeriod()">
+                            Submit for Approval
+                        </button>
+                    </template>
                     <template x-if="viewPeriod.status === 'Submitted'">
                         <button class="btn-primary" @click="showReleaseConfirm=true">
                             Release Payroll
@@ -621,12 +640,20 @@
                                 <div class="payslip-line"><span>Earnings</span><span x-text="'₱ '+fmt(pvActive.grossPay||0)"></span></div>
                                 <div class="payslip-line"><span>Deductions</span><span class="text-red-500" x-text="'-₱ '+fmt(pvActive.totalDeductions||0)"></span></div>
                                 <div class="payslip-line bold"><span>Net Pay</span><span x-text="'₱ '+fmt(pvActive.netPay||0)"></span></div>
-                                <div class="flex gap-2 mt-5">
+                                <div class="flex gap-2 mt-5 flex-wrap">
                                     <button class="btn-close-ps" @click="pvSelectedId=null;pvActive={}">Close</button>
-                                    <button class="btn-export-ps" @click="exportPayslip(pvActive)">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                        Export PDF
-                                    </button>
+                                    <template x-if="viewPeriod.status === 'Pending' && pvActive.status !== 'Submitted'">
+                                        <button style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;border:1.5px solid #e5e7eb;background:#fff;color:#374151;" @click="adminEditPayslip()">Edit</button>
+                                    </template>
+                                    <template x-if="viewPeriod.status === 'Pending' && pvActive.status !== 'Submitted'">
+                                        <button style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#dbeafe;color:#1d4ed8;" @click="adminSubmitPayslip()">Submit</button>
+                                    </template>
+                                    <template x-if="viewPeriod.status === 'Released'">
+                                        <button class="btn-export-ps" @click="exportPayslip(pvActive)">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                            Export PDF
+                                        </button>
+                                    </template>
                                 </div>
                             </div>
                         </div>
@@ -694,6 +721,78 @@
         </div>
     </div>
     @endif
+
+    {{-- Edit Payslip Modal --}}
+    <div x-show="showEditPayslipModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showEditPayslipModal=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-bold text-gray-900">Edit Payslip — <span x-text="editPayslip.employeeName"></span></h3>
+                <button @click="showEditPayslipModal=false" class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Earnings</div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div><label class="block text-xs text-gray-500 mb-1">Basic Pay</label><input type="number" step="0.01" min="0" class="ctrl w-full" x-model.number="editPayslip.basicPay"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">OT Pay</label><input type="number" step="0.01" min="0" class="ctrl w-full" x-model.number="editPayslip.otPay"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">Benefits</label><input type="number" step="0.01" min="0" class="ctrl w-full" x-model.number="editPayslip.benefits"></div>
+                </div>
+                <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 mt-3">Deductions</div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-xs text-gray-500 mb-1">SSS</label><input type="number" step="0.01" min="0" class="ctrl w-full" x-model.number="editPayslip.sss"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">PhilHealth</label><input type="number" step="0.01" min="0" class="ctrl w-full" x-model.number="editPayslip.philhealth"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">Pag-IBIG</label><input type="number" step="0.01" min="0" class="ctrl w-full" x-model.number="editPayslip.pagibig"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">Withholding Tax</label><input type="number" step="0.01" min="0" class="ctrl w-full" x-model.number="editPayslip.withholdingTax"></div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" @click="showEditPayslipModal=false" class="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button type="button" @click="saveEditPayslip()" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Create Payroll Period --}}
+    <div x-show="showCreatePeriod" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showCreatePeriod=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-900">Create Payroll Period</h3>
+                <button @click="showCreatePeriod=false" class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form method="POST" action="{{ route('admin.payroll.period.store') }}">
+                @csrf
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Period Name</label>
+                        <input type="text" name="name" class="ctrl w-full" placeholder="e.g. March 2026 – 1st Half" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Start Date</label>
+                            <input type="date" name="start_date" class="ctrl w-full" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">End Date</label>
+                            <input type="date" name="end_date" class="ctrl w-full" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Payout Date</label>
+                        <input type="date" name="payout_date" class="ctrl w-full" required>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" @click="showCreatePeriod=false" class="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Create & Generate Payslips</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     {{-- Release Confirm --}}
     <div x-show="showReleaseConfirm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showReleaseConfirm=false">
@@ -1012,6 +1111,7 @@
             periodSearch: '', periodStatusFilter: '', periodYearFilter: '{{ $year }}',
             benefitStatusFilter: '', itemStatusFilter: '',
 
+            showCreatePeriod:     false,
             showReleaseConfirm:   false,
             showAddItemModal:     false,
             showEditItemModal:    false,
@@ -1025,6 +1125,9 @@
 
             alertModal: { show: false, type: 'error', title: '', message: '' },
             confirmModal: { show: false, title: '', message: '', action: null, danger: true },
+
+            showEditPayslipModal: false,
+            editPayslip: {},
 
             editItem:    { id: null, name: '', multiplier: '', type: '', basis: '', status: '' },
             editBenefit: { id: null, name: '', type: '', amount: '', tax: '', frequency: '', eligibility: '', status: '' },
@@ -1060,9 +1163,7 @@
             },
 
             init() {
-                window.addEventListener('storage', () => {
-                    this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                });
+                window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
                 this.$watch('activeTab', val => { location.hash = val; });
             },
 
@@ -1078,7 +1179,7 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
                 try {
-                    const res  = await fetch(`/admin/payroll/period/${id}/payslips`, {
+                    const res  = await fetch(`/admin/payroll/period/${id}/all-payslips`, {
                         headers: { 'X-Requested-With': 'XMLHttpRequest' }
                     });
                     const data = await res.json();
@@ -1104,6 +1205,75 @@
             },
 
             pvSelectPayslip(ps) { this.pvSelectedId = ps.id; this.pvActive = { ...ps }; },
+
+            // ── Admin Payslip Actions ──
+            adminEditPayslip() {
+                this.editPayslip       = { ...this.pvActive };
+                this.showEditPayslipModal = true;
+            },
+
+            async adminSubmitPayslip() {
+                if (!confirm(`Submit payslip for ${this.pvActive.employeeName}?`)) return;
+                const csrf = document.querySelector('meta[name="csrf-token"]').content;
+                const res  = await fetch(`/admin/payroll/payslip/${this.pvActive.id}/submit`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const idx = this.pvPayslips.findIndex(p => p.id === this.pvActive.id);
+                    if (idx !== -1) { this.pvPayslips[idx].status = 'Submitted'; this.pvActive.status = 'Submitted'; }
+                    this.showAlert('success', 'Payslip Submitted', 'Payslip marked as submitted.');
+                } else {
+                    this.showAlert('error', 'Error', data.message || 'Could not submit payslip.');
+                }
+            },
+
+            adminSubmitPeriod() {
+                const submitted = this.pvPayslips.filter(p => p.status === 'Submitted').length;
+                const total     = this.pvPayslips.length;
+                if (submitted < total) {
+                    this.showAlert('error', 'Cannot Submit', `All payslips must be submitted first (${submitted}/${total} done).`);
+                    return;
+                }
+                if (!confirm('Submit this payroll period for approval?')) return;
+                const csrf = document.querySelector('meta[name="csrf-token"]').content;
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/admin/payroll/period/${this.viewPeriod.id}/submit`;
+                const token = document.createElement('input');
+                token.type = 'hidden'; token.name = '_token'; token.value = csrf;
+                form.appendChild(token);
+                document.body.appendChild(form);
+                form.submit();
+            },
+
+            async saveEditPayslip() {
+                const csrf = document.querySelector('meta[name="csrf-token"]').content;
+                const res  = await fetch(`/admin/payroll/payslip/${this.editPayslip.id}/save`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        basicPay:       this.editPayslip.basicPay,
+                        otPay:          this.editPayslip.otPay,
+                        benefits:       this.editPayslip.benefits,
+                        sss:            this.editPayslip.sss,
+                        philhealth:     this.editPayslip.philhealth,
+                        pagibig:        this.editPayslip.pagibig,
+                        withholdingTax: this.editPayslip.withholdingTax,
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const idx = this.pvPayslips.findIndex(p => p.id === this.editPayslip.id);
+                    if (idx !== -1) { this.pvPayslips[idx] = { ...this.pvPayslips[idx], ...this.editPayslip }; }
+                    this.pvActive = { ...this.editPayslip };
+                    this.showEditPayslipModal = false;
+                    this.showAlert('success', 'Saved', 'Payslip updated successfully.');
+                } else {
+                    this.showAlert('error', 'Error', data.message || 'Could not save payslip.');
+                }
+            },
 
             // ── Grade helpers ──
             gradeAddEmp(emp) { this.gradeSelectedEmps.push(emp); this.gradeEmpSearch = ''; this.gradeShowDrop = false; },

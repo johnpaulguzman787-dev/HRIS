@@ -15,6 +15,7 @@
 
 <div x-data="{
     sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+    init() { window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; }); },
     mobileMenuOpen: false,
     showAddEmployee: false,
     showAddDepartment: false,

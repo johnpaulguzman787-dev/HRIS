@@ -31,6 +31,7 @@
 
 <div x-data="{
     sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+    init() { window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; }); },
     matrix: window.__matrix,
     saving: null,
     toast: { show: false, message: '', type: 'success' },

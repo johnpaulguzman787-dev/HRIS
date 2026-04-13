@@ -5,6 +5,7 @@
 @section('content')
 <div x-data="{
     sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+    init() { window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; }); },
     employeesOpen: true,
     attendanceOpen: false,
     requestsOpen: false,
@@ -48,8 +49,6 @@
 
     {{-- ===================== MAIN CONTENT ===================== --}}
     <main class="flex-1 overflow-y-auto min-h-screen"
-          x-data="{ sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
-          @storage.window="sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true'"
           :class="sidebarCollapsed ? 'ml-20' : 'ml-64'"
           style="transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
 

@@ -70,7 +70,7 @@
    {{-- ═══════════ SIDEBAR ═══════════ --}}
    @include('finance_officer.finance_sidebar')
    {{-- ═══════════ MAIN ═══════════ --}}
-    <div class="flex-1 flex flex-col" style="margin-left:256px;">
+    <div class="flex-1 flex flex-col" :style="sidebarCollapsed ? 'margin-left:5rem' : 'margin-left:16rem'" style="transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1);">
 
          {{-- Top bar --}}
 <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-hidden">
@@ -414,7 +414,10 @@ function closeViewModal() {
 }
 
 function approvedLogs() {
-    return {};
+    return {
+        sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+        init() { window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; }); },
+    };
 }
 </script>
 </body>

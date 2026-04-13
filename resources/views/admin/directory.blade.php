@@ -1,3 +1,6 @@
+@php
+    // This directive ensures the layout is used, but the blade content is the main focus
+@endphp
 @extends('layouts.app')
 
 @section('title', 'Employees Directory - Medisource HRMS')
@@ -723,9 +726,9 @@
                 </div>
             </div>
 
-            <!-- ===================== MANAGE DEPARTMENTS MODAL ===================== -->
+            <!-- ===================== MANAGE DEPARTMENTS MODAL - FULLY MOBILE RESPONSIVE ===================== -->
             <div x-show="showManageDepartment" x-cloak
-                class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
                 style="background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);"
                 @click.self="showManageDepartment = false; document.body.style.overflow = 'auto'">
                 <div x-show="showManageDepartment"
@@ -735,63 +738,120 @@
                     x-transition:leave="transition-all duration-200 ease-in"
                     x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                     x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-                    class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden relative"
+                    class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden relative flex flex-col"
+                    style="max-height: 92vh;"
                     @click.stop>
 
-                    <div class="px-8 pt-8 pb-6 flex items-center justify-between">
-                        <h2 class="text-2xl font-bold text-gray-900">Manage Departments</h2>
+                    <!-- Header -->
+                    <div class="px-4 sm:px-8 pt-5 sm:pt-7 pb-3 sm:pb-4 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Manage Departments</h2>
                         <button @click="showManageDepartment = false; document.body.style.overflow = 'auto'"
-                            class="w-10 h-10 flex items-center justify-center rounded-full border-2 border-gray-300 text-gray-500 hover:border-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200 bg-white">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full border-2 border-gray-300 text-gray-500 hover:border-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200 bg-white">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </button>
                     </div>
 
-                    <div class="px-8 pb-4">
+                    <!-- Add Department Button -->
+                    <div class="px-4 sm:px-8 py-3 sm:py-4 border-b border-gray-100 flex-shrink-0">
                         <button @click="showManageDepartment = false; showAddDepartment = true; resetDepartmentForm()"
-                            class="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm">
+                            class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
                             </svg>
-                            Add Department
+                            Add New Department
                         </button>
                     </div>
 
-                    <!-- Responsive Table Container -->
-                    <div class="px-8 pb-8 overflow-x-auto" style="max-height: calc(90vh - 180px);">
-                        <table class="w-full border border-gray-200 rounded-xl overflow-hidden min-w-[500px]">
-                            <thead>
-                                <tr class="bg-gray-50 border-b border-gray-200">
-                                    <th class="text-left px-5 py-3 text-sm font-semibold text-gray-700 w-1/3">Department</th>
-                                    <th class="text-left px-5 py-3 text-sm font-semibold text-gray-700">Job Titles</th>
-                                    <th class="text-center px-5 py-3 text-sm font-semibold text-gray-700 w-32">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <template x-for="dept in departments" :key="dept.id">
-                                    <tr class="hover:bg-gray-50 transition-colors duration-150">
-                                        <td class="px-5 py-4 text-sm font-medium text-gray-800 align-top" x-text="dept.name"></td>
-                                        <td class="px-5 py-4 text-sm text-gray-500 align-top">
-                                            <span x-text="dept.job_titles.map(j => j.title).join(', ')"></span>
-                                        </td>
-                                        <td class="px-5 py-4 text-center align-middle">
-                                            <div class="flex items-center justify-center gap-2">
-                                                <button @click="viewDepartmentDetails(dept)"
-                                                    class="whitespace-nowrap px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">Edit</button>
-                                                <button @click="deleteDepartment(dept)"
-                                                    class="whitespace-nowrap px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-xl hover:bg-red-600 transition-all duration-200 shadow-md hover:shadow-lg">Delete</button>
-                                            </div>
-                                        </td>
+                    <!-- Departments List - Mobile Optimized -->
+                    <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+                        <!-- Mobile Card View (visible on small screens) -->
+                        <div class="space-y-3 sm:hidden">
+                            <template x-for="dept in departments" :key="dept.id">
+                                <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <h3 class="text-base font-bold text-gray-800" x-text="dept.name"></h3>
+                                        <div class="flex gap-2">
+                                            <button @click="viewDepartmentDetails(dept)"
+                                                class="px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-sm">
+                                                Edit
+                                            </button>
+                                            <button @click="deleteDepartment(dept)"
+                                                class="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-lg hover:bg-red-600 transition-all duration-200 shadow-sm">
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="pt-2 border-t border-gray-100">
+                                        <p class="text-xs text-gray-500 mb-2">Job Titles</p>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <template x-for="job in dept.job_titles" :key="job.id">
+                                                <span class="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md" x-text="job.title"></span>
+                                            </template>
+                                            <template x-if="dept.job_titles.length === 0">
+                                                <span class="text-xs text-gray-400 italic">No job titles</span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="departments.length === 0">
+                                <div class="text-center py-8">
+                                    <p class="text-sm text-gray-400">No departments found.</p>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Desktop Table View (visible on medium and up) -->
+                        <div class="hidden sm:block overflow-x-auto">
+                            <table class="w-full border border-gray-200 rounded-xl overflow-hidden">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b border-gray-200">
+                                        <th class="text-left px-5 py-3 text-sm font-semibold text-gray-700 w-1/3">Department</th>
+                                        <th class="text-left px-5 py-3 text-sm font-semibold text-gray-700">Job Titles</th>
+                                        <th class="text-center px-5 py-3 text-sm font-semibold text-gray-700 w-32">Actions</th>
                                     </tr>
-                                </template>
-                                <template x-if="departments.length === 0">
-                                    <tr>
-                                        <td colspan="3" class="px-5 py-8 text-center text-sm text-gray-400">No departments found.</td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <template x-for="dept in departments" :key="dept.id">
+                                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                            <td class="px-5 py-4 text-sm font-medium text-gray-800 align-top" x-text="dept.name"></td>
+                                            <td class="px-5 py-4 text-sm text-gray-500 align-top">
+                                                <div class="flex flex-wrap gap-1">
+                                                    <template x-for="job in dept.job_titles" :key="job.id">
+                                                        <span class="inline-block px-2 py-0.5 bg-gray-100 rounded text-xs" x-text="job.title"></span>
+                                                    </template>
+                                                    <template x-if="dept.job_titles.length === 0">
+                                                        <span class="text-gray-400 text-xs">—</span>
+                                                    </template>
+                                                </div>
+                                            </td>
+                                            <td class="px-5 py-4 text-center align-middle">
+                                                <div class="flex items-center justify-center gap-2">
+                                                    <button @click="viewDepartmentDetails(dept)"
+                                                        class="whitespace-nowrap px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">Edit</button>
+                                                    <button @click="deleteDepartment(dept)"
+                                                        class="whitespace-nowrap px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-xl hover:bg-red-600 transition-all duration-200 shadow-md hover:shadow-lg">Delete</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <template x-if="departments.length === 0">
+                                        <tr>
+                                            <td colspan="3" class="px-5 py-8 text-center text-sm text-gray-400">No departments found.</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Footer Note (optional) -->
+                    <div class="px-4 sm:px-8 py-3 border-t border-gray-100 bg-gray-50 flex-shrink-0">
+                        <p class="text-xs text-gray-400 text-center sm:text-left">
+                            <span x-text="departments.length"></span> department<span x-show="departments.length !== 1">s</span> total
+                        </p>
                     </div>
                 </div>
             </div>
@@ -997,7 +1057,6 @@
 
                         <div>
                             <label class="block text-sm font-semibold text-gray-800 mb-1.5">Name</label>
-                            <!-- Responsive name fields - stack on mobile -->
                             <div class="flex flex-col sm:flex-row gap-2">
                                 <div class="flex-1 min-w-0">
                                     <input type="text" x-model="newEmployeeForm.first_name" placeholder="First Name"
@@ -1040,7 +1099,6 @@
                             </div>
                         </div>
 
-                        <!-- DOB + Gender - stack on mobile -->
                         <div class="flex flex-col sm:flex-row gap-3">
                             <div class="flex-1">
                                 <label class="block text-sm font-semibold text-gray-800 mb-1.5">Date of Birth</label>
@@ -1647,7 +1705,7 @@
             </div>
 
             <!-- Department Summary Cards - Responsive Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 mx-8">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 mx-4 sm:mx-8">
                 @foreach($departments as $dept)
                 <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
                     <p class="text-sm text-gray-500 mb-1">{{ $dept['name'] }}</p>
@@ -1658,7 +1716,7 @@
             </div>
 
             <!-- Top Control Section - Responsive Layout -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mx-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mx-4 sm:mx-8">
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                     <div class="relative flex-1 sm:flex-none sm:w-80 group">
                         <input type="text" x-model="searchQuery" placeholder="Search employees..."
@@ -1767,7 +1825,7 @@
             </div>
 
             <!-- Active Filters -->
-            <div x-show="selectedDepartments.length > 0 || selectedSort" class="mb-4 flex flex-wrap items-center gap-2 mx-8">
+            <div x-show="selectedDepartments.length > 0 || selectedSort" class="mb-4 flex flex-wrap items-center gap-2 mx-4 sm:mx-8">
                 <span class="text-xs text-gray-500">Active filters:</span>
                 <template x-for="dept in selectedDepartments" :key="dept">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
@@ -1787,13 +1845,13 @@
             </div>
 
             <!-- Search Results Info -->
-            <div x-show="searchQuery.length > 0" class="mb-4 flex items-center justify-between mx-8">
+            <div x-show="searchQuery.length > 0" class="mb-4 flex items-center justify-between mx-4 sm:mx-8">
                 <p class="text-sm text-gray-600">Found <span class="font-semibold text-blue-600" x-text="resultCount"></span> result<span x-show="resultCount !== 1">s</span> for "<span class="font-semibold" x-text="searchQuery"></span>"</p>
                 <button @click="clearSearch" class="text-xs text-gray-500 hover:text-blue-600 transition-colors duration-200">Clear search</button>
             </div>
 
             <!-- Employee Table - Responsive with mobile cards -->
-            <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden mx-8">
+            <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden mx-4 sm:mx-8">
                 <!-- Desktop Table -->
                 <div class="hidden md:block">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">

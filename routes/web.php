@@ -329,6 +329,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Admin Contribution Settings ──────────────────────────────────────────
     Route::post('/admin/payroll/contrib/update',         [\App\Http\Controllers\AdminPayrollController::class, 'updateContrib'])->name('admin.payroll.contrib.update');
+    Route::post('/admin/payroll/sss/save',               [\App\Http\Controllers\AdminPayrollController::class, 'saveSssTable'])->name('admin.payroll.sss.save');
 
     // ── Admin Payslips AJAX ──────────────────────────────────────────────────
     Route::get('/admin/payslips/period/{id}',            [\App\Http\Controllers\AdminPayrollController::class, 'releasedPeriodPayslips'])->name('admin.payslips.period');
@@ -402,6 +403,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/payroll_officer/payroll/grade/{id}/update',        [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'updateGrade'])->name('payroll_officer.payroll.grade.update');
     Route::delete('/payroll_officer/payroll/grade/{id}/delete',     [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'deleteGrade'])->name('payroll_officer.payroll.grade.delete');
     Route::post('/payroll_officer/payroll/contrib/update',          [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'updateContrib'])->name('payroll_officer.payroll.contrib.update');
+    Route::post('/payroll_officer/payroll/sss/save',                [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'saveSssTable'])->name('payroll_officer.payroll.sss.save');
 
     // ── Benefits ───────────────────────────────────────────────────────────
     Route::post('/payroll_officer/payroll/benefit/store',           [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'storeBenefit'])->name('payroll_officer.payroll.benefit.store');
@@ -449,6 +451,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Finance Officer Contributions ─────────────────────────────────────────
     Route::post('/finance_officer/payroll/contrib/update',         [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'updateContrib'])->name('finance_officer.payroll.contrib.update');
+    Route::post('/finance_officer/payroll/sss/save',               [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'saveSssTable'])->name('finance_officer.payroll.sss.save');
 
     // ── Finance Officer Attendance ─────────────────────────────────────────
     Route::get('/finance_officer/attendance/reports',   [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'index'])->name('finance_officer.attendance.reports');

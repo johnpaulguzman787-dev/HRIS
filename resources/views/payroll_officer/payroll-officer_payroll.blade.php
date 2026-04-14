@@ -557,20 +557,24 @@
 
                     {{-- SSS --}}
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-                        <div class="flex items-center justify-between mb-4">
-                            <h4 class="text-sm font-bold text-gray-700">SSS Rates</h4>
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wide">SSS Rates</h4>
                             <button @click="openEditContrib('sss')" class="text-gray-400 hover:text-blue-500 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                             </button>
                         </div>
-                        <div class="space-y-2.5 text-sm">
-                            <div class="flex justify-between"><span class="text-gray-500">Employee Share</span><span class="font-medium text-gray-700">{{ $contrib['sss_employee_rate'] }}%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">Employer Share</span><span class="font-medium text-gray-700">{{ $contrib['sss_employer_rate'] }}%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">Total Rate</span><span class="font-medium text-gray-700">{{ $contrib['sss_employee_rate'] + $contrib['sss_employer_rate'] }}%</span></div>
-                            <div class="flex justify-between pt-2.5 border-t border-gray-100">
-                                <span class="text-gray-500 text-xs leading-tight">Max Monthly<br>Salary Credit Range</span>
-                                <span class="font-medium text-gray-700">₱{{ number_format($contrib['sss_max_msc']) }}</span>
+                        <div class="space-y-1.5 text-xs max-h-36 overflow-y-auto pr-1">
+                            @forelse($sssRows as $row)
+                            <div class="flex justify-between items-center py-0.5">
+                                <span class="text-gray-500">
+                                    ₱{{ number_format($row->salary_from, 2) }} –
+                                    {{ $row->salary_to !== null ? '₱'.number_format($row->salary_to, 2) : 'above' }}
+                                </span>
+                                <span class="font-semibold text-orange-500">₱{{ number_format($row->employee_share, 2) }}</span>
                             </div>
+                            @empty
+                            <p class="text-gray-400 text-xs italic">No SSS brackets found. Click edit to add.</p>
+                            @endforelse
                         </div>
                     </div>
 
@@ -598,23 +602,23 @@
                     {{-- Pag-IBIG --}}
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
                         <div class="flex items-center justify-between mb-4">
-                            <h4 class="text-sm font-bold text-gray-700">Pag-IBIG</h4>
+                            <h4 class="text-sm font-bold text-gray-700">PAG-IBIG</h4>
                             <button @click="openEditContrib('pagibig')" class="text-gray-400 hover:text-blue-500 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                             </button>
                         </div>
                         <div class="space-y-2.5 text-sm">
-                            <div class="flex justify-between items-start">
-                                <span class="text-gray-500 text-xs leading-tight">Employee<br>(salary ≤ ₱1,500)</span>
-                                <span class="font-medium text-gray-700">{{ $contrib['pagibig_low_rate'] }}%</span>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-500 text-xs">Below ₱{{ number_format($contrib['pagibig_threshold']) }}:</span>
+                                <span class="font-medium text-orange-500">₱{{ number_format($contrib['pagibig_low_amount']) }}/mo</span>
                             </div>
-                            <div class="flex justify-between items-start">
-                                <span class="text-gray-500 text-xs leading-tight">Employee<br>(salary &gt; ₱1,500)</span>
-                                <span class="font-medium text-gray-700 text-right text-xs leading-tight">{{ $contrib['pagibig_high_rate'] }}%, max<br>₱{{ number_format($contrib['pagibig_max']) }}/mo</span>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-500 text-xs">₱{{ number_format($contrib['pagibig_threshold']) }} &amp; above:</span>
+                                <span class="font-medium text-orange-500">₱{{ number_format($contrib['pagibig_high_amount']) }}/mo</span>
                             </div>
-                            <div class="flex justify-between items-start pt-2.5 border-t border-gray-100">
-                                <span class="text-gray-500">Employer match</span>
-                                <span class="font-medium text-gray-700 text-right text-xs leading-tight">{{ $contrib['pagibig_high_rate'] }}%, max<br>₱{{ number_format($contrib['pagibig_max']) }}/mo</span>
+                            <div class="flex justify-between items-center pt-2.5 border-t border-gray-100">
+                                <span class="text-gray-500 text-xs">Threshold</span>
+                                <span class="font-medium text-gray-700">₱{{ number_format($contrib['pagibig_threshold']) }}.00</span>
                             </div>
                         </div>
                     </div>
@@ -622,17 +626,18 @@
                     {{-- W/Tax --}}
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
                         <div class="flex items-center justify-between mb-4">
-                            <h4 class="text-sm font-bold text-gray-700">W/Tax</h4>
+                            <h4 class="text-sm font-bold text-gray-700">WITHHOLDING TAX</h4>
                             <button @click="openEditContrib('wtax')" class="text-gray-400 hover:text-blue-500 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                             </button>
                         </div>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between"><span class="text-gray-500">Up to ₱{{ number_format($contrib['wtax_bracket_1']) }}/Year</span><span class="font-medium text-gray-700">0%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_1']) }} – ₱{{ number_format($contrib['wtax_bracket_2']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_1'] }}%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_2']) }} – ₱{{ number_format($contrib['wtax_bracket_3']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_2'] }}%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_3']) }} – ₱{{ number_format($contrib['wtax_bracket_4']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_3'] }}%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_4']) }}+</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_4'] }}%</span></div>
+                        <div class="space-y-1.5 text-xs max-h-36 overflow-y-auto pr-1">
+                            <div class="flex justify-between"><span class="text-gray-500">₱0 – ₱{{ number_format($contrib['wtax_bracket_1']) }}</span><span class="font-medium text-gray-700">₱0.00 + 0% (Excess over ₱0)</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_1']) }} – ₱{{ number_format($contrib['wtax_bracket_2']) }}</span><span class="font-medium text-gray-700">₱0.00 + {{ $contrib['wtax_rate_1'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_1']) }})</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_2']) }} – ₱{{ number_format($contrib['wtax_bracket_3']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_2'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_2']) }})</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_3']) }} – ₱{{ number_format($contrib['wtax_bracket_4']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_3'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_3']) }})</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_4']) }} – ₱{{ number_format($contrib['wtax_bracket_5']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_4'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_4']) }})</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_5']) }}+</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_5'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_5']) }})</span></div>
                         </div>
                     </div>
 
@@ -660,29 +665,41 @@
                             <tbody>
                                 @forelse($salaryGrades as $grade)
                                 @php
-                                    $sal       = (float) $grade->monthly_basic_salary;
-                                    $msc       = min($sal, (float) $contrib['sss_max_msc']);
-                                    $sssEmp    = round($msc * ((float) $contrib['sss_employee_rate'] / 100), 2);
-                                    $sssEmr    = round($msc * ((float) $contrib['sss_employer_rate'] / 100), 2);
-                                    $phBase    = max((float) $contrib['philhealth_floor'], min($sal, (float) $contrib['philhealth_ceiling']));
-                                    $ph        = round($phBase * ((float) $contrib['philhealth_rate'] / 100 / 2), 2);
-                                    $pagRate   = $sal <= 1500 ? (float) $contrib['pagibig_low_rate'] / 100 : (float) $contrib['pagibig_high_rate'] / 100;
-                                    $pi        = round(min($sal * $pagRate, (float) $contrib['pagibig_max']), 2);
+                                    $sal    = (float) $grade->monthly_basic_salary;
+
+                                    // SSS — table-based lookup
+                                    $sssRow = $sssRows->first(fn($r) => $sal >= $r->salary_from && ($r->salary_to === null || $sal <= $r->salary_to));
+                                    $sssEmp = $sssRow ? (float) $sssRow->employee_share : 0;
+                                    $sssEmr = $sssRow ? (float) $sssRow->employer_share : 0;
+
+                                    // PhilHealth — percentage, employee half, monthly
+                                    $phBase = max((float) $contrib['philhealth_floor'], min($sal, (float) $contrib['philhealth_ceiling']));
+                                    $ph     = round($phBase * ((float) $contrib['philhealth_rate'] / 100 / 2), 2);
+
+                                    // Pag-IBIG — threshold-based fixed monthly amount
+                                    $pi = $sal < (float) $contrib['pagibig_threshold']
+                                        ? (float) $contrib['pagibig_low_amount']
+                                        : (float) $contrib['pagibig_high_amount'];
+
+                                    // W/Tax — TRAIN Law 6-bracket annualized
                                     $b1 = (float) $contrib['wtax_bracket_1'];
                                     $b2 = (float) $contrib['wtax_bracket_2'];
                                     $b3 = (float) $contrib['wtax_bracket_3'];
                                     $b4 = (float) $contrib['wtax_bracket_4'];
+                                    $b5 = (float) $contrib['wtax_bracket_5'];
                                     $r1 = (float) $contrib['wtax_rate_1'] / 100;
                                     $r2 = (float) $contrib['wtax_rate_2'] / 100;
                                     $r3 = (float) $contrib['wtax_rate_3'] / 100;
                                     $r4 = (float) $contrib['wtax_rate_4'] / 100;
-                                    $annualDeductions = ($sssEmp + $ph + $pi) * 24;
+                                    $r5 = (float) $contrib['wtax_rate_5'] / 100;
+                                    $annualDeductions = ($sssEmp + $ph + $pi) * 12;
                                     $annualTaxable    = max(0, ($sal * 12) - $annualDeductions);
                                     if ($annualTaxable <= $b1)      $wt = 0;
                                     elseif ($annualTaxable <= $b2)  $wt = ($annualTaxable - $b1) * $r1;
                                     elseif ($annualTaxable <= $b3)  $wt = ($b2 - $b1) * $r1 + ($annualTaxable - $b2) * $r2;
                                     elseif ($annualTaxable <= $b4)  $wt = ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($annualTaxable - $b3) * $r3;
-                                    else                            $wt = ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($b4 - $b3) * $r3 + ($annualTaxable - $b4) * $r4;
+                                    elseif ($annualTaxable <= $b5)  $wt = ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($b4 - $b3) * $r3 + ($annualTaxable - $b4) * $r4;
+                                    else                            $wt = ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($b4 - $b3) * $r3 + ($b5 - $b4) * $r4 + ($annualTaxable - $b5) * $r5;
                                     $wt         = round($wt / 12, 2);
                                     $totalMonth = $sssEmp + $ph + $pi + $wt;
                                 @endphp
@@ -1480,20 +1497,32 @@
                 </button>
             </div>
 
-            {{-- SSS Fields --}}
-            <div x-show="editContribType==='sss'" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employee Share (%)</label><input type="number" step="0.01" x-model="contrib.sss_employee_rate" class="ctrl w-full"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employer Share (%)</label><input type="number" step="0.01" x-model="contrib.sss_employer_rate" class="ctrl w-full"></div>
+            {{-- SSS Fields — table editor --}}
+            <div x-show="editContribType==='sss'" class="space-y-3">
+                <p class="text-xs text-gray-400 uppercase font-semibold tracking-wider">Salary Brackets → Fixed Monthly Contribution</p>
+                <div class="max-h-64 overflow-y-auto space-y-2 pr-1">
+                    <template x-for="(row, i) in sssRows" :key="i">
+                        <div class="grid grid-cols-5 gap-1.5 items-center">
+                            <input type="number" step="0.01" x-model="row.salary_from" placeholder="From" class="ctrl col-span-1 text-xs">
+                            <input type="number" step="0.01" x-model="row.salary_to"   placeholder="To (blank=∞)" class="ctrl col-span-1 text-xs">
+                            <input type="number" step="0.01" x-model="row.employee_share" placeholder="Employee" class="ctrl col-span-1 text-xs">
+                            <input type="number" step="0.01" x-model="row.employer_share" placeholder="Employer" class="ctrl col-span-1 text-xs">
+                            <button type="button" @click="sssRows.splice(i,1)" class="text-red-400 hover:text-red-600 text-xs font-bold">✕</button>
+                        </div>
+                    </template>
                 </div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Max Monthly Salary Credit (₱)</label><input type="number" step="0.01" x-model="contrib.sss_max_msc" class="ctrl w-full"></div>
+                <div class="grid grid-cols-5 gap-1.5 items-center text-xs text-gray-400 font-medium px-0.5">
+                    <span>Salary From</span><span>Salary To</span><span>Emp. Share</span><span>Emr. Share</span><span></span>
+                </div>
+                <button type="button" @click="sssRows.push({salary_from:'',salary_to:'',employee_share:'',employer_share:''})"
+                        class="text-xs text-blue-500 hover:text-blue-700 font-medium">+ Add Row</button>
             </div>
 
             {{-- PhilHealth Fields --}}
             <div x-show="editContribType==='philhealth'" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employee Share (%)</label><input type="number" step="0.01" x-model="contrib.philhealth_rate" class="ctrl w-full"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employer Share (%)</label><input type="number" step="0.01" value="2.5" class="ctrl w-full"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employer Share (%)</label><input type="number" step="0.01" value="2.5" class="ctrl w-full" disabled></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Floor (₱)</label><input type="number" step="0.01" x-model="contrib.philhealth_floor" class="ctrl w-full"></div>
@@ -1503,22 +1532,22 @@
 
             {{-- Pag-IBIG Fields --}}
             <div x-show="editContribType==='pagibig'" class="space-y-4">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employee Rate — Salary ≤ ₱1,500 (%)</label><input type="number" step="0.01" x-model="contrib.pagibig_low_rate" class="ctrl w-full"></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employee Rate — Salary &gt; ₱1,500 (%)</label><input type="number" step="0.01" x-model="contrib.pagibig_high_rate" class="ctrl w-full"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Threshold (₱) — below this = low amount</label><input type="number" step="0.01" x-model="contrib.pagibig_threshold" class="ctrl w-full"></div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employer Match Rate (%)</label><input type="number" step="0.01" value="2" class="ctrl w-full"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Max Contribution (₱)</label><input type="number" step="0.01" x-model="contrib.pagibig_max" class="ctrl w-full"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Below Threshold (₱/month)</label><input type="number" step="0.01" x-model="contrib.pagibig_low_amount" class="ctrl w-full"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">At/Above Threshold (₱/month)</label><input type="number" step="0.01" x-model="contrib.pagibig_high_amount" class="ctrl w-full"></div>
                 </div>
             </div>
 
             {{-- W/Tax Fields --}}
             <div x-show="editContribType==='wtax'" class="space-y-3">
-                <p class="text-xs text-gray-400 uppercase font-semibold tracking-wider">Annual Income Brackets</p>
-                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">Up to ₱250K</span><input type="number" step="0.01" value="0" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
-                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">₱250K – ₱400K</span><input type="number" step="0.01" x-model="contrib.wtax_rate_1" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
-                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">₱400K – ₱800K</span><input type="number" step="0.01" x-model="contrib.wtax_rate_2" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
-                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">₱800K – ₱2M</span><input type="number" step="0.01" x-model="contrib.wtax_rate_3" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
-                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">₱2M+</span><input type="number" step="0.01" x-model="contrib.wtax_rate_4" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <p class="text-xs text-gray-400 uppercase font-semibold tracking-wider">Annual Income Brackets (TRAIN Law)</p>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-40">Up to ₱{{ number_format($contrib['wtax_bracket_1'] ?? 250000) }}</span><input type="number" step="0.01" value="0" class="ctrl flex-1" disabled><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-40">₱250K – ₱400K</span><input type="number" step="0.01" x-model="contrib.wtax_rate_1" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-40">₱400K – ₱800K</span><input type="number" step="0.01" x-model="contrib.wtax_rate_2" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-40">₱800K – ₱2M</span><input type="number" step="0.01" x-model="contrib.wtax_rate_3" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-40">₱2M – ₱8M</span><input type="number" step="0.01" x-model="contrib.wtax_rate_4" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-40">₱8M+</span><input type="number" step="0.01" x-model="contrib.wtax_rate_5" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
             </div>
 
             <div class="flex justify-end gap-3 pt-5">
@@ -1615,6 +1644,7 @@
             showEditContribModal: false,
             editContribType: '',
             contrib: @json($contrib),
+            sssRows: @json($sssRowsForJs),
 
             // ── Alert modal ──
             alertModal: { show: false, type: 'error', title: '', message: '' },
@@ -1941,18 +1971,28 @@
                 this.showEditContribModal = true;
             },
             async saveContrib() {
-                const csrf   = document.querySelector('meta[name="csrf-token"]').content;
-                const keys   = Object.keys(this.contrib);
-                const values = Object.values(this.contrib);
-                await fetch('/payroll_officer/payroll/contrib/update', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrf,
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    body: JSON.stringify({ keys, values }),
-                });
+                const csrf = document.querySelector('meta[name="csrf-token"]').content;
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    'X-Requested-With': 'XMLHttpRequest',
+                };
+
+                if (this.editContribType === 'sss') {
+                    await fetch('/payroll_officer/payroll/sss/save', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ rows: this.sssRows }),
+                    });
+                } else {
+                    const keys   = Object.keys(this.contrib);
+                    const values = Object.values(this.contrib);
+                    await fetch('/payroll_officer/payroll/contrib/update', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ keys, values }),
+                    });
+                }
                 this.reloadTab();
             },
 

@@ -47,11 +47,18 @@ class AdminPayrollController extends Controller
         $benefits     = Benefit::orderBy('name')->get();
         $employees    = Employee::whereNull('deleted_at')->orderBy('fname')->get();
         $contrib      = DB::table('contribution_settings')->pluck('value', 'key');
+        $sssRows      = DB::table('sss_contributions')->orderBy('salary_from')->get();
+        $sssRowsForJs = $sssRows->map(fn($r) => [
+            'salary_from'    => $r->salary_from,
+            'salary_to'      => $r->salary_to,
+            'employee_share' => $r->employee_share,
+            'employer_share' => $r->employer_share,
+        ])->values()->all();
 
         return view('admin.admin_payroll', compact(
             'periods', 'grossPayroll', 'netPay', 'totalDeductions',
             'latestPeriod', 'activePeriod', 'year', 'daysToCutoff',
-            'payrollItems', 'salaryGrades', 'benefits', 'employees', 'contrib'
+            'payrollItems', 'salaryGrades', 'benefits', 'employees', 'contrib', 'sssRows', 'sssRowsForJs'
         ));
     }
 
@@ -636,13 +643,15 @@ class AdminPayrollController extends Controller
         $employees     = Employee::with('salaryGrade')->whereNull('deleted_at')->get();
         $benefitsTotal = Benefit::where('status', 'Active')->sum('amount');
 
-        $c = DB::table('contribution_settings')->pluck('value', 'key');
+        $c       = DB::table('contribution_settings')->pluck('value', 'key');
+        $sssRows = DB::table('sss_contributions')->orderBy('salary_from')->get();
 
         foreach ($employees as $emp) {
             $grade         = $emp->salaryGrade;
             $monthlySalary = $grade ? (float) $grade->monthly_basic_salary : 0;
             $basicPay      = $monthlySalary / 2;
 
+            // OT pay: approved OT hours × hourly rate × 1.25 (Regular OT)
             $hourlyRate = $monthlySalary > 0 ? ($monthlySalary * 12 / 261 / 8) : 0;
             $otHours    = \App\Models\OvertimeRequest::where('employee_id', $emp->id)
                 ->where('status', 'approved')
@@ -652,17 +661,24 @@ class AdminPayrollController extends Controller
 
             $grossPay = $basicPay + $otPay + $benefitsTotal;
 
-            $msc = min($monthlySalary, (float) $c['sss_max_msc']);
-            $sss = round($msc * ((float) $c['sss_employee_rate'] / 100) / 2, 2);
+            // ── SSS: table-based lookup (fixed employee share per salary bracket) ──
+            $sssRow = $sssRows->first(fn($r) =>
+                $monthlySalary >= $r->salary_from &&
+                ($r->salary_to === null || $monthlySalary <= $r->salary_to)
+            );
+            $sss = $sssRow ? round((float) $sssRow->employee_share / 2, 2) : 0;
 
+            // ── PhilHealth: percentage-based, employee half, semi-monthly ─────────
             $phBase     = max((float) $c['philhealth_floor'], min($monthlySalary, (float) $c['philhealth_ceiling']));
             $philhealth = round($phBase * ((float) $c['philhealth_rate'] / 100 / 2) / 2, 2);
 
-            $pagibigRate = $monthlySalary <= 1500
-                ? (float) $c['pagibig_low_rate'] / 100
-                : (float) $c['pagibig_high_rate'] / 100;
-            $pagibig = round(min($monthlySalary * $pagibigRate, (float) $c['pagibig_max']) / 2, 2);
+            // ── Pag-IBIG: fixed ₱100 or ₱200/month based on salary threshold ─────
+            $pagibigMonthly = $monthlySalary < (float) $c['pagibig_threshold']
+                ? (float) $c['pagibig_low_amount']
+                : (float) $c['pagibig_high_amount'];
+            $pagibig = round($pagibigMonthly / 2, 2);
 
+            // ── Withholding tax: TRAIN Law 6-bracket, annualized projection ───────
             $annualDeductions = ($sss + $philhealth + $pagibig) * 24;
             $annualTaxable    = max(0, ($grossPay * 24) - $annualDeductions);
             $withholdingTax   = round($this->computeWithholdingTax($annualTaxable, $c) / 24, 2);
@@ -690,21 +706,54 @@ class AdminPayrollController extends Controller
 
     private function computeWithholdingTax(float $annual, $c = null): float
     {
+        // TRAIN Law brackets (6-tier, effective 2023)
         $b1 = $c ? (float) $c['wtax_bracket_1'] : 250000;
         $b2 = $c ? (float) $c['wtax_bracket_2'] : 400000;
         $b3 = $c ? (float) $c['wtax_bracket_3'] : 800000;
         $b4 = $c ? (float) $c['wtax_bracket_4'] : 2000000;
+        $b5 = $c ? (float) $c['wtax_bracket_5'] : 8000000;
         $r1 = $c ? (float) $c['wtax_rate_1'] / 100 : 0.15;
         $r2 = $c ? (float) $c['wtax_rate_2'] / 100 : 0.20;
         $r3 = $c ? (float) $c['wtax_rate_3'] / 100 : 0.25;
-        $r4 = $c ? (float) $c['wtax_rate_4'] / 100 : 0.35;
+        $r4 = $c ? (float) $c['wtax_rate_4'] / 100 : 0.30;
+        $r5 = $c ? (float) $c['wtax_rate_5'] / 100 : 0.35;
 
         if ($annual <= $b1) return 0;
         if ($annual <= $b2) return ($annual - $b1) * $r1;
         if ($annual <= $b3) return ($b2 - $b1) * $r1 + ($annual - $b2) * $r2;
         if ($annual <= $b4) return ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($annual - $b3) * $r3;
+        if ($annual <= $b5) return ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($b4 - $b3) * $r3 + ($annual - $b4) * $r4;
 
-        return ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($b4 - $b3) * $r3 + ($annual - $b4) * $r4;
+        return ($b2 - $b1) * $r1 + ($b3 - $b2) * $r2 + ($b4 - $b3) * $r3 + ($b5 - $b4) * $r4 + ($annual - $b5) * $r5;
+    }
+
+    // ── SSS Contribution Table CRUD ──────────────────────────────────────────
+
+    public function saveSssTable(Request $request)
+    {
+        $request->validate([
+            'rows'                   => 'required|array|min:1',
+            'rows.*.salary_from'     => 'required|numeric|min:0',
+            'rows.*.salary_to'       => 'nullable|numeric',
+            'rows.*.employee_share'  => 'required|numeric|min:0',
+            'rows.*.employer_share'  => 'required|numeric|min:0',
+        ]);
+
+        DB::table('sss_contributions')->truncate();
+
+        $now  = now();
+        $rows = collect($request->rows)->map(fn($r) => [
+            'salary_from'    => $r['salary_from'],
+            'salary_to'      => $r['salary_to'] ?: null,
+            'employee_share' => $r['employee_share'],
+            'employer_share' => $r['employer_share'],
+            'created_at'     => $now,
+            'updated_at'     => $now,
+        ])->all();
+
+        DB::table('sss_contributions')->insert($rows);
+
+        return response()->json(['success' => true]);
     }
 
     public function govpayView(Request $request, $id)

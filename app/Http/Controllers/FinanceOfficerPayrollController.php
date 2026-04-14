@@ -48,11 +48,18 @@ class FinanceOfficerPayrollController extends Controller
         $benefits     = Benefit::orderBy('name')->get();
         $employees    = Employee::whereNull('deleted_at')->orderBy('fname')->get();
         $contrib      = DB::table('contribution_settings')->pluck('value', 'key');
+        $sssRows      = DB::table('sss_contributions')->orderBy('salary_from')->get();
+        $sssRowsForJs = $sssRows->map(fn($r) => [
+            'salary_from'    => $r->salary_from,
+            'salary_to'      => $r->salary_to,
+            'employee_share' => $r->employee_share,
+            'employer_share' => $r->employer_share,
+        ])->values()->all();
 
         return view('finance_officer.finance-officer_payroll', compact(
             'periods', 'grossPayroll', 'netPay', 'totalDeductions',
             'latestPeriod', 'activePeriod', 'year', 'daysToCutoff',
-            'payrollItems', 'salaryGrades', 'benefits', 'employees', 'contrib'
+            'payrollItems', 'salaryGrades', 'benefits', 'employees', 'contrib', 'sssRows', 'sssRowsForJs'
         ));
     }
 
@@ -443,6 +450,31 @@ class FinanceOfficerPayrollController extends Controller
             DB::table('contribution_settings')
                 ->where('key', $key)
                 ->update(['value' => $data['values'][$i]]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function saveSssTable(Request $request)
+    {
+        $data = $request->validate([
+            'rows'                   => 'required|array',
+            'rows.*.salary_from'     => 'required|numeric|min:0',
+            'rows.*.salary_to'       => 'nullable|numeric|min:0',
+            'rows.*.employee_share'  => 'required|numeric|min:0',
+            'rows.*.employer_share'  => 'required|numeric|min:0',
+        ]);
+
+        DB::table('sss_contributions')->truncate();
+        foreach ($data['rows'] as $row) {
+            DB::table('sss_contributions')->insert([
+                'salary_from'    => $row['salary_from'],
+                'salary_to'      => $row['salary_to'] !== '' ? $row['salary_to'] : null,
+                'employee_share' => $row['employee_share'],
+                'employer_share' => $row['employer_share'],
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
         }
 
         return response()->json(['success' => true]);

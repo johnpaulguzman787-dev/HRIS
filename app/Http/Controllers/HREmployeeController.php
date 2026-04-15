@@ -69,7 +69,7 @@ class HREmployeeController extends Controller
             'mi'                => 'nullable|string|max:5',
             'suffix'            => 'nullable|string|max:20',
             'email'             => 'required|email:rfc,dns|unique:users,email',
-            'contact_no'        => ['required', 'regex:/^(09|\+639)[0-9]{9}$/'],
+            'contact_no'        => ['required', 'regex:/^\+?[\d\s\-\(\)]{7,20}$/'],
             'gender'            => 'required|string',
             'date_of_birth'     => 'required|date',
             'address'           => ['required', 'string', 'regex:/[a-zA-Z]/'],
@@ -302,14 +302,25 @@ class HREmployeeController extends Controller
     }
 
     public function profile()
-{
-    $user = auth()->user();
-    $employee = \App\Models\Employee::with(['department', 'jobTitle'])
-        ->where('user_id', $user->id)
-        ->first();
+    {
+        $user = auth()->user();
+        $employee = \App\Models\Employee::with(['department', 'jobTitle'])
+            ->where('user_id', $user->id)
+            ->first();
 
-    return view('hr.hr-profile', compact('user', 'employee'));
-}
+        $documents = $employee
+            ? $employee->documents()->orderByDesc('created_at')->get()->map(fn($d) => [
+                'id'           => $d->id,
+                'name'         => $d->file_name,
+                'file_type'    => strtolower($d->file_type),
+                'file_size'    => $d->formatted_size,
+                'created_at'   => $d->created_at->format('M j, Y'),
+                'download_url' => route('hr.employees.documents.download', $d->id),
+              ])->values()
+            : collect();
+
+        return view('hr.hr-profile', compact('user', 'employee', 'documents'));
+    }
 
     public function destroyDepartment($id)
     {

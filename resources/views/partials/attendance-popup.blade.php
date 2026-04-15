@@ -1,8 +1,8 @@
 {{--
     Attendance Popup Modal
-    - Auto-opens on dashboard load (controlled by showAttendancePopup in parent x-data)
-    - Shows only if: user has a shift AND not on leave/holiday AND hasn't clocked in yet
-    - Closes when clicking outside or pressing any action button
+    - Auto-opens on every dashboard load (controlled by showAttendancePopup in parent x-data)
+    - Shows if: user has a shift assigned
+    - Closes only via the X button or action buttons (not by clicking outside)
 --}}
 
 <div x-show="showAttendancePopup"
@@ -14,8 +14,7 @@
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0"
      class="fixed inset-0 z-[9999] flex items-center justify-center p-6"
-     style="background: rgba(0,0,0,0.55); display:none;"
-     @click.self="showAttendancePopup = false">
+     style="background: rgba(0,0,0,0.55); display:none;">
 
     <div x-transition:enter="transition ease-out duration-250"
          x-transition:enter-start="opacity-0 scale-95 translate-y-3"
@@ -27,7 +26,16 @@
          style="max-width: 560px; padding: 40px 44px 36px;">
 
         {{-- Header --}}
-        <p class="text-base font-bold text-gray-700 uppercase tracking-widest mb-1">Time & Attendance</p>
+        <div class="flex items-start justify-between mb-1">
+            <p class="text-base font-bold text-gray-700 uppercase tracking-widest">Time & Attendance</p>
+            <button @click="showAttendancePopup = false"
+                    class="ml-4 shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+                    style="margin-top: -4px;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
         <p class="text-sm text-gray-400 mb-4" x-text="currentDate"></p>
 
         {{-- Live Clock --}}

@@ -151,6 +151,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/supervisor',         [SupervisorDashboardController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/employee/dashboard', [EmployeeDashboardController::class, 'index'])->name('employee.dashboard');
     Route::get('/employee/profile',   [App\Http\Controllers\EmployeeProfileController::class, 'profile'])->name('employee.profile');
+    Route::get('/profile/documents/{docId}/download', [App\Http\Controllers\EmployeeProfileController::class, 'downloadDocument'])->name('profile.documents.download');
 
     // ── EMPLOYEE ATTENDANCE ────────────────────────────────────────────────
     Route::get('/employee/attendance/reports',  [EmployeeAttendanceController::class, 'index'])->name('employee.attendance.reports');

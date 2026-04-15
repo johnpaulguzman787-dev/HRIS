@@ -21,7 +21,7 @@
         elapsedSeconds: 0,
         currentTime: '',
         currentDate: '',
-        showAttendancePopup: {{ ($employeeShift && !in_array($todayLog?->status ?? '', ['on_leave', 'holiday']) && !$todayLog?->clock_in) ? 'true' : 'false' }},
+        showAttendancePopup: {{ $employeeShift ? 'true' : 'false' }},
         mobileMenuOpen: false,
         shiftStartTime: '{{ $employeeShift?->shift?->start_time ? \Carbon\Carbon::parse($employeeShift->shift->start_time)->format("H:i") : "" }}',
         shiftEndTime: '{{ $employeeShift?->shift?->end_time ? \Carbon\Carbon::parse($employeeShift->shift->end_time)->format("H:i") : "" }}',

@@ -3,6 +3,7 @@
 @section('title', 'Employee Profile - Medisource HRMS')
 
 @section('content')
+<script>window._profileDocs = @json($documents);</script>
 <div x-data="{
     sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
     init() { window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; }); },
@@ -29,7 +30,7 @@
         end_date: '{{ $employee?->end_date ? \Carbon\Carbon::parse($employee->end_date)->format("m/d/Y") : "" }}',
     },
 
-    documents: [],
+    documents: window._profileDocs,
 
     showDocModal: false,
     activeDoc: null,
@@ -237,7 +238,7 @@
                                 <button @click="openDoc(doc)" class="px-4 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200 hover:shadow-md">
                                     View
                                 </button>
-                                <button class="px-4 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200 hover:shadow-md">
+                                <button @click="window.location.href = doc.download_url" class="px-4 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200 hover:shadow-md">
                                     Download
                                 </button>
                             </div>

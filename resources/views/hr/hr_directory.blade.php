@@ -12,7 +12,12 @@
 
 <div x-data="{
     sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
-    init() { window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; }); },
+    init() {
+        window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
+        this.$watch('searchQuery', () => { this.currentPage = 1; });
+        this.$watch('selectedDepartments', () => { this.currentPage = 1; });
+        this.$watch('selectedSort', () => { this.currentPage = 1; });
+    },
     showAddEmployee: false,
     showAddDepartment: false,
     showManageDepartment: false,
@@ -27,6 +32,8 @@
     searchQuery: '',
     selectedDepartments: [],
     selectedSort: '',
+    currentPage: 1,
+    perPage: 10,
 
     addStep: 1,
     uploadedFiles: [],
@@ -324,6 +331,11 @@
         return result;
     },
 
+    get totalPages() { return Math.max(1, Math.ceil(this.filteredEmployees.length / this.perPage)); },
+    get pagedEmployees() {
+        const start = (this.currentPage - 1) * this.perPage;
+        return this.filteredEmployees.slice(start, start + this.perPage);
+    },
     get resultCount() { return this.filteredEmployees.length; },
     get activeFilterCount() { return this.selectedDepartments.length + (this.selectedSort ? 1 : 0); },
     resetDepartmentForm() { this.departmentForm = { name: '', jobTitles: [], newJobTitle: '' }; },
@@ -1743,7 +1755,7 @@
                         </div>
                     </div>
                     <div class="divide-y divide-gray-100">
-                        <template x-for="employee in filteredEmployees" :key="employee.email">
+                        <template x-for="employee in pagedEmployees" :key="employee.email">
                             <div class="px-6 py-4 hover:bg-blue-50 transition-all duration-300 group">
                                 <div class="grid grid-cols-12 gap-4 items-center">
                                     <div class="col-span-3">
@@ -1789,7 +1801,7 @@
 
                 <!-- Mobile Cards -->
                 <div class="md:hidden">
-                    <template x-for="employee in filteredEmployees" :key="employee.email">
+                    <template x-for="employee in pagedEmployees" :key="employee.email">
                         <div class="p-4 border-b border-gray-100 hover:bg-blue-50 transition-all duration-300">
                             <div class="flex items-start space-x-3">
                                 <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-semibold shadow-md flex-shrink-0">
@@ -1830,15 +1842,27 @@
                 <!-- Table Footer -->
                 <div x-show="filteredEmployees.length > 0" class="px-4 sm:px-6 py-4 border-t border-gray-100 bg-gray-50">
                     <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <p class="text-sm text-gray-500">Showing <span class="font-medium" x-text="filteredEmployees.length"></span> of <span class="font-medium" x-text="employees.length"></span> employees</p>
-                        <div class="flex items-center space-x-2">
-                            <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-200 disabled:opacity-50" disabled>
+                        <p class="text-sm text-gray-500">
+                            Showing
+                            <span class="font-medium" x-text="Math.min((currentPage - 1) * perPage + 1, filteredEmployees.length)"></span>–<span class="font-medium" x-text="Math.min(currentPage * perPage, filteredEmployees.length)"></span>
+                            of <span class="font-medium" x-text="filteredEmployees.length"></span> employees
+                        </p>
+                        <div x-show="totalPages > 1" class="flex items-center space-x-2 overflow-x-auto">
+                            <button @click="currentPage > 1 && currentPage--"
+                                    :disabled="currentPage === 1"
+                                    class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-200 disabled:opacity-50">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                             </button>
-                            <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-all duration-200">1</button>
-                            <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-200">2</button>
-                            <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-200">3</button>
-                            <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-200">
+                            <template x-for="page in Array.from({length: totalPages}, (_, i) => i + 1)" :key="page">
+                                <button @click="currentPage = page"
+                                        :class="currentPage === page ? 'bg-blue-600 text-white hover:bg-blue-700' : 'border border-gray-200 bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'"
+                                        class="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200"
+                                        x-text="page">
+                                </button>
+                            </template>
+                            <button @click="currentPage < totalPages && currentPage++"
+                                    :disabled="currentPage === totalPages"
+                                    class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-200 disabled:opacity-50">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             </button>
                         </div>

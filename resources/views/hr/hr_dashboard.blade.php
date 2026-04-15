@@ -25,7 +25,7 @@
         mobileMenuOpen: false,
 
         // ── Attendance Popup ──
-        showAttendancePopup: {{ ($employeeShift && !in_array($todayLog?->status ?? '', ['on_leave', 'holiday']) && !$todayLog?->clock_in) ? 'true' : 'false' }},
+        showAttendancePopup: {{ $employeeShift ? 'true' : 'false' }},
 
         // ── Announcement Modal ──
         showAnnouncement: false,

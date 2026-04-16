@@ -351,7 +351,7 @@
                         </thead>
                         <tbody>
                             @forelse($periods as $period)
-                            <tr>
+                            <tr x-show="(!periodStatusFilter || periodStatusFilter === '{{ $period->status }}') && (!periodSearch || '{{ strtolower($period->name) }}'.includes(periodSearch.toLowerCase())) && (!periodYearFilter || periodYearFilter === '{{ \Carbon\Carbon::parse($period->start_date)->year }}')">
                                 <td class="font-medium text-gray-700">{{ $period->name }}</td>
                                 <td class="text-gray-500">{{ \Carbon\Carbon::parse($period->start_date)->format('m/d/Y') }}</td>
                                 <td class="text-gray-500">{{ \Carbon\Carbon::parse($period->end_date)->format('m/d/Y') }}</td>

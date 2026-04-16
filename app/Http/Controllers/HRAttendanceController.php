@@ -80,13 +80,13 @@ class HRAttendanceController extends Controller
             return response()->json(['message' => 'You are on approved leave today.'], 409);
         }
 
-        if ($existing && $existing->clock_in && $existing->break_start && !$existing->break_end && !$existing->clock_out) {
-            $newBreakMinutes   = (int) Carbon::parse($existing->break_start)->diffInMinutes($now);
-            $totalBreakMinutes = $existing->break_minutes + $newBreakMinutes;
-            $existing->update([
-                'break_end'     => $now,
-                'break_minutes' => $totalBreakMinutes,
-            ]);
+        $openSession = $existing ? $existing->sessions()->whereNull('clock_out')->first() : null;
+
+        if ($openSession && $openSession->break_start && !$openSession->break_end) {
+            $newBreakMinutes   = (int) Carbon::parse($openSession->break_start)->diffInMinutes($now);
+            $totalBreakMinutes = $openSession->break_minutes + $newBreakMinutes;
+            $openSession->update(['break_end' => $now, 'break_minutes' => $totalBreakMinutes]);
+            $existing->update(['break_minutes' => $existing->sessions()->sum('break_minutes')]);
             return response()->json([
                 'message'       => 'Break ended, resumed work.',
                 'break_end'     => $now->format('h:i A'),
@@ -94,14 +94,14 @@ class HRAttendanceController extends Controller
             ]);
         }
 
+        if ($openSession) {
+            return response()->json(['message' => 'Already clocked in.'], 409);
+        }
+
         $request->validate([
             'work_setup' => 'required|in:office,wfh',
             'shift_id'   => 'nullable|exists:shifts,id',
         ]);
-
-        if ($existing && $existing->clock_in) {
-            return response()->json(['message' => 'Already clocked in today.'], 409);
-        }
 
         $employeeShift = EmployeeShift::with('shift')
             ->where('employee_id', $employee->id)
@@ -114,40 +114,39 @@ class HRAttendanceController extends Controller
             ->first();
 
         $shiftId       = $request->shift_id ?? $employeeShift?->shift_id;
-        $lateMinutes   = 0;
-        $status        = 'present';
         $selectedShift = $shiftId ? \App\Models\Shift::find($shiftId) : $employeeShift?->shift;
 
-        // Check if today is a holiday
-        $todayHoliday = \App\Models\Holiday::whereDate('date', $today)->first();
-        $holidayId    = $todayHoliday?->id;
+        $isFirstSession = !$existing;
+        $lateMinutes    = 0;
+        $status         = 'present';
 
-        if ($selectedShift) {
-            $shiftStart = Carbon::createFromTimeString(
-                Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
-            );
+        if ($isFirstSession && $selectedShift) {
+            $shiftStart = Carbon::createFromTimeString(Carbon::today()->toDateString() . ' ' . $selectedShift->start_time);
             if ($now->gt($shiftStart)) {
-                $lateMinutes = (int) $shiftStart->diffInMinutes($now);
-                if ($lateMinutes > 0) {
-                    $status = 'late';
-                    if ($lateMinutes > 999) $lateMinutes = 999;
-                }
-            } else {
-                $lateMinutes = 0;
+                $lateMinutes = min(999, (int) $shiftStart->diffInMinutes($now));
+                $status      = $lateMinutes > 0 ? 'late' : 'present';
             }
         }
 
-        $log = AttendanceLog::updateOrCreate(
-            ['employee_id' => $employee->id, 'attendance_date' => $today],
-            [
-                'shift_id'     => $shiftId,
-                'holiday_id'   => $holidayId,
-                'work_setup'   => $request->work_setup,
-                'clock_in'     => $now,
-                'late_minutes' => $lateMinutes,
-                'status'       => $status,
-            ]
-        );
+        if ($isFirstSession) {
+            $todayHoliday = \App\Models\Holiday::whereDate('date', $today)->first();
+            $log = AttendanceLog::updateOrCreate(
+                ['employee_id' => $employee->id, 'attendance_date' => $today],
+                [
+                    'shift_id'     => $shiftId,
+                    'holiday_id'   => $todayHoliday?->id,
+                    'work_setup'   => $request->work_setup,
+                    'clock_in'     => $now,
+                    'late_minutes' => $lateMinutes,
+                    'status'       => $status,
+                ]
+            );
+        } else {
+            $log    = $existing;
+            $status = $existing->status;
+        }
+
+        $log->sessions()->create(['clock_in' => $now]);
 
         return response()->json([
             'message'      => 'Clocked in successfully.',
@@ -175,19 +174,26 @@ class HRAttendanceController extends Controller
         if (!$log->clock_in) {
             return response()->json(['message' => 'No clock-in record found for today.'], 422);
         }
-        if ($log->clock_out) {
-            return response()->json(['message' => 'Already clocked out today.'], 409);
+
+        $openSession = $log->sessions()->whereNull('clock_out')->first();
+        if (!$openSession) {
+            return response()->json(['message' => 'No active clock-in session found.'], 409);
         }
 
-        // Auto-end break if still active when clocking out
-        if ($log->break_start && !$log->break_end) {
-            $extraBreak = (int) Carbon::parse($log->break_start)->diffInMinutes($now);
-            $log->update(['break_end' => $now, 'break_minutes' => $log->break_minutes + $extraBreak]);
-            $log->refresh();
+        if ($openSession->break_start && !$openSession->break_end) {
+            $extraBreak = (int) Carbon::parse($openSession->break_start)->diffInMinutes($now);
+            $openSession->update(['break_end' => $now, 'break_minutes' => $openSession->break_minutes + $extraBreak]);
+            $openSession->refresh();
         }
 
-        $clockIn    = Carbon::parse($log->clock_in);
-        $totalHours = round(($clockIn->diffInMinutes($now) - $log->break_minutes) / 60, 2);
+        $openSession->update(['clock_out' => $now]);
+
+        $allSessions       = $log->sessions()->get();
+        $totalBreakMinutes = $allSessions->sum('break_minutes');
+        $totalWorkMinutes  = $allSessions
+            ->filter(fn($s) => $s->clock_out !== null)
+            ->sum(fn($s) => max(0, (int) Carbon::parse($s->clock_in)->diffInMinutes(Carbon::parse($s->clock_out)) - $s->break_minutes));
+        $totalHours = round($totalWorkMinutes / 60, 2);
 
         $overtimeMinutes  = 0;
         $undertimeMinutes = 0;
@@ -251,6 +257,7 @@ class HRAttendanceController extends Controller
 
         $log->update([
             'clock_out'         => $now,
+            'break_minutes'     => $totalBreakMinutes,
             'total_hours'       => $totalHours,
             'overtime_minutes'  => $overtimeMinutes,
             'undertime_minutes' => $undertimeMinutes,
@@ -318,11 +325,15 @@ class HRAttendanceController extends Controller
             ->whereDate('attendance_date', $today)
             ->firstOrFail();
 
-        if (!$log->clock_in)                      return response()->json(['message' => 'Not clocked in yet.'], 422);
-        if ($log->break_start && !$log->break_end) return response()->json(['message' => 'Already on break.'], 409);
-        if ($log->clock_out)                       return response()->json(['message' => 'Already clocked out.'], 409);
+        $openSession = $log->sessions()->whereNull('clock_out')->first();
+        if (!$openSession) {
+            return response()->json(['message' => 'Not clocked in.'], 422);
+        }
+        if ($openSession->break_start && !$openSession->break_end) {
+            return response()->json(['message' => 'Already on break.'], 409);
+        }
 
-        $log->update(['break_start' => $now, 'break_end' => null]);
+        $openSession->update(['break_start' => $now, 'break_end' => null]);
 
         $reminder = null;
         $shift = $log->shift_id ? \App\Models\Shift::find($log->shift_id) : null;

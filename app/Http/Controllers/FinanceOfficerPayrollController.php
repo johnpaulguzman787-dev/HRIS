@@ -76,9 +76,9 @@ class FinanceOfficerPayrollController extends Controller
         $period->update(['status' => 'Released']);
         Payslip::where('payroll_period_id', $id)->update(['status' => 'Released']);
 
-        // Notify all payroll officers
+        // Notify payroll officers and admins
         $recipients = DB::table('users')
-            ->where('role', 'payroll_officer')
+            ->whereIn('role', ['payroll_officer', 'admin'])
             ->pluck('id');
 
         $now = now();
@@ -105,16 +105,16 @@ class FinanceOfficerPayrollController extends Controller
     public function periodPayslips($id)
     {
         $period   = PayrollPeriod::findOrFail($id);
-        $payslips = Payslip::with('employee.department', 'employee.jobTitle')
+        $payslips = Payslip::with(['employee' => fn($q) => $q->withTrashed()->with(['department', 'jobTitle'])])
             ->where('payroll_period_id', $id)
             ->get();
 
         $data = $payslips->map(fn($p) => [
             'id'             => $p->id,
             'employeeId'     => $p->employee_id,
-            'employeeName'   => $p->employee->full_name,
-            'jobTitle'       => $p->employee->jobTitle->title ?? '—',
-            'department'     => $p->employee->department->name ?? '—',
+            'employeeName'   => $p->employee?->full_name ?? '—',
+            'jobTitle'       => $p->employee?->jobTitle?->title ?? '—',
+            'department'     => $p->employee?->department?->name ?? '—',
             'basicPay'       => (float) $p->basic_pay,
             'otPay'          => (float) $p->ot_pay,
             'benefits'       => (float) $p->benefits_total,

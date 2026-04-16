@@ -94,9 +94,9 @@
 
             {{-- TIME IN --}}
             <button @click="handleClock(); if(!clockedIn){ setTimeout(() => showAttendancePopup = false, 300) } else { showAttendancePopup = false }"
-                :disabled="clockedIn || clockedOut || onLeave"
+                :disabled="clockedIn || onLeave"
                 class="py-4 rounded-xl text-sm font-bold uppercase tracking-widest transition-all"
-                :class="(!clockedIn && !clockedOut && !onLeave)
+                :class="(!clockedIn && !onLeave)
                     ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
                 Time In
@@ -104,9 +104,9 @@
 
             {{-- BREAK --}}
             <button @click="handleBreak(); showAttendancePopup = false"
-                :disabled="!clockedIn || clockedOut || onBreak || onLeave"
+                :disabled="!clockedIn || onBreak || onLeave"
                 class="py-4 rounded-xl text-sm font-bold uppercase tracking-widest transition-all"
-                :class="(clockedIn && !clockedOut && !onBreak && !onLeave)
+                :class="(clockedIn && !onBreak && !onLeave)
                     ? 'bg-gray-700 text-white hover:bg-gray-800 shadow-sm'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
                 Break
@@ -114,9 +114,9 @@
 
             {{-- TIME OUT --}}
             <button @click="handleClockOut(); showAttendancePopup = false"
-                :disabled="!clockedIn || clockedOut || onLeave"
+                :disabled="!clockedIn || onLeave"
                 class="py-4 rounded-xl text-sm font-bold uppercase tracking-widest transition-all"
-                :class="(clockedIn && !clockedOut && !onLeave)
+                :class="(clockedIn && !onLeave)
                     ? 'bg-gray-700 text-white hover:bg-gray-800 shadow-sm'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
                 Time Out

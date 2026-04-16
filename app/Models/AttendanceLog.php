@@ -64,4 +64,9 @@ class AttendanceLog extends Model
     {
         return $this->hasMany(OvertimeRequest::class);
     }
+
+    public function sessions()
+    {
+        return $this->hasMany(AttendanceSession::class);
+    }
 }

@@ -248,6 +248,7 @@
     </div>
 </div>
 
+@php $openSession = $todayLog?->sessions()->whereNull('clock_out')->first(); @endphp
 <script>
 function attendancePage() {
     return {
@@ -256,19 +257,22 @@ function attendancePage() {
         assignedShiftId: {{ $employeeShift?->shift_id ?? 'null' }},
         breakAllowed: {{ $employeeShift?->shift?->break_schedule ? 'true' : 'false' }},
         onLeave:     {{ $todayLog?->status === 'on_leave' ? 'true' : 'false' }},
-        clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
-        clockedOut:  {{ $todayLog?->clock_out   ? 'true' : 'false' }},
-        onBreak:     {{ $todayLog?->break_start && !$todayLog?->break_end ? 'true' : 'false' }},
-        resumed:     {{ $todayLog?->break_end   ? 'true' : 'false' }},
-        breakTime:   '{{ $todayLog?->break_start ? \Carbon\Carbon::parse($todayLog->break_start)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
+        clockedIn:   {{ $openSession ? 'true' : 'false' }},
+        clockedOut:  {{ ($todayLog?->clock_out && !$openSession) ? 'true' : 'false' }},
+        onBreak:     {{ ($openSession?->break_start && !$openSession?->break_end) ? 'true' : 'false' }},
+        resumed:     {{ $openSession?->break_end ? 'true' : 'false' }},
+        breakTime:   '{{ $openSession?->break_start ? \Carbon\Carbon::parse($openSession->break_start)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         breakMinutes: {{ $todayLog?->break_minutes ?? 0 }},
-        clockInTime:  '{{ $todayLog?->clock_in  ? \Carbon\Carbon::parse($todayLog->clock_in)->setTimezone(config("app.timezone"))->format("h:i A")  : "" }}',
+        clockInTime:  '{{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock_out)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
-        clockInTimestamp: {{ $todayLog?->clock_in ? \Carbon\Carbon::parse($todayLog->clock_in)->valueOf() : 'null' }},
+        clockInTimestamp: {{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->valueOf() : 'null' }},
         liveTime: '', liveDate: '', elapsedSeconds: 0,
         rows: [], currentPage: 1, totalRecords: 0, perPage: 10,
         currentMonth: {{ $month }}, currentYear: {{ $year }},
         selectedMonth: {{ $month }},
+        errorMessage: '',
+
+        showError(msg) { this.errorMessage = msg; },
 
         get elapsedDisplay() {
             const h = String(Math.floor(this.elapsedSeconds/3600)).padStart(2,'0');
@@ -281,7 +285,7 @@ function attendancePage() {
             this.tick();
             setInterval(() => {
                 this.tick();
-                if (this.clockedIn && !this.clockedOut && !this.onBreak)
+                if (this.clockedIn && !this.onBreak)
                     this.elapsedSeconds = this.clockInTimestamp
                         ? Math.floor((Date.now() - this.clockInTimestamp) / 1000) - (this.breakMinutes * 60)
                         : 0;
@@ -302,7 +306,6 @@ function attendancePage() {
         },
 
         async handleClock() {
-            if (this.clockedOut) return;
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             if (this.onBreak) {
@@ -317,7 +320,7 @@ function attendancePage() {
                     this.resumed = true;
                     this.clockedIn = true;
                     this.breakMinutes = data.break_minutes;
-                } else { alert(data.message ?? 'Resume failed.'); }
+                } else { this.showError(data.message ?? 'Resume failed.'); }
                 return;
             }
 
@@ -330,15 +333,17 @@ function attendancePage() {
                 const data = await res.json();
                 if (res.ok) {
                     this.clockedIn = true;
+                    this.clockedOut = false;
+                    this.resumed = false;
                     this.clockInTime = data.clock_in;
                     this.clockInTimestamp = Date.now();
-                } else { alert(data.message ?? 'Clock-in failed.'); }
+                } else { this.showError(data.message ?? 'Clock-in failed.'); }
                 return;
             }
         },
 
         async handleBreak() {
-            if (!this.clockedIn || this.clockedOut || this.onBreak || this.resumed) return;
+            if (!this.clockedIn || this.onBreak || this.resumed) return;
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const res = await fetch('{{ route("employee.attendance.break") }}', {
                 method: 'POST',
@@ -349,11 +354,11 @@ function attendancePage() {
             if (res.ok) {
                 this.onBreak = true;
                 this.breakTime = data.break_start;
-            } else { alert(data.message ?? 'Break failed.'); }
+            } else { this.showError(data.message ?? 'Break failed.'); }
         },
 
         async handleClockOut() {
-            if (!this.clockedIn || this.clockedOut) return;
+            if (!this.clockedIn) return;
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const res = await fetch('{{ route("employee.attendance.clock-out") }}', {
                 method: 'POST',
@@ -362,11 +367,12 @@ function attendancePage() {
             });
             const data = await res.json();
             if (res.ok) {
+                this.clockedIn = false;
                 this.clockedOut = true;
                 this.clockOutTime = data.clock_out;
                 this.onBreak = false;
                 await this.loadRecords();
-            } else { alert(data.message ?? 'Clock-out failed.'); }
+            } else { this.showError(data.message ?? 'Clock-out failed.'); }
         },
 
         async loadRecords(page = 1) {
@@ -436,5 +442,6 @@ function attendancePage() {
 }
 </script>
 
+@include('partials.attendance-error-modal')
 </body>
 </html>

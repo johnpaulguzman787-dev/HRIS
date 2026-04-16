@@ -205,6 +205,7 @@
     </div>
 </div>
 
+@php $openSession = $todayLog?->sessions()->whereNull('clock_out')->first(); @endphp
 <script>
 function attendancePage() {
     return {
@@ -213,19 +214,22 @@ function attendancePage() {
         assignedShiftId: {{ $employeeShift?->shift_id ?? 'null' }},
         breakAllowed: {{ $employeeShift?->shift?->break_schedule ? 'true' : 'false' }},
         onLeave:     {{ $todayLog?->status === 'on_leave' ? 'true' : 'false' }},
-clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
-        clockedOut:  {{ $todayLog?->clock_out   ? 'true' : 'false' }},
-        onBreak:     {{ $todayLog?->break_start && !$todayLog?->break_end ? 'true' : 'false' }},
-        resumed:     {{ $todayLog?->break_end   ? 'true' : 'false' }},
-        breakTime:   '{{ $todayLog?->break_start ? \Carbon\Carbon::parse($todayLog->break_start)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
+        clockedIn:   {{ $openSession ? 'true' : 'false' }},
+        clockedOut:  {{ ($todayLog?->clock_out && !$openSession) ? 'true' : 'false' }},
+        onBreak:     {{ ($openSession?->break_start && !$openSession?->break_end) ? 'true' : 'false' }},
+        resumed:     {{ $openSession?->break_end ? 'true' : 'false' }},
+        breakTime:   '{{ $openSession?->break_start ? \Carbon\Carbon::parse($openSession->break_start)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         breakMinutes: {{ $todayLog?->break_minutes ?? 0 }},
-        clockInTime:  '{{ $todayLog?->clock_in  ? \Carbon\Carbon::parse($todayLog->clock_in)->setTimezone(config("app.timezone"))->format("h:i A")  : "" }}',
+        clockInTime:  '{{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock_out)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
-        clockInTimestamp: {{ $todayLog?->clock_in ? \Carbon\Carbon::parse($todayLog->clock_in)->valueOf() : 'null' }},
+        clockInTimestamp: {{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->valueOf() : 'null' }},
         liveTime: '', liveDate: '', elapsedSeconds: 0,
         rows: [], currentPage: 1, totalRecords: 0, perPage: 10,
         currentMonth: {{ $month }}, currentYear: {{ $year }},
         selectedMonth: {{ $month }},
+        errorMessage: '',
+
+        showError(msg) { this.errorMessage = msg; },
 
         get elapsedDisplay() {
             const h = String(Math.floor(this.elapsedSeconds/3600)).padStart(2,'0');
@@ -238,7 +242,7 @@ clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
             this.tick();
             setInterval(() => {
                 this.tick();
-                if (this.clockedIn && !this.clockedOut && !this.onBreak)
+                if (this.clockedIn && !this.onBreak)
                     this.elapsedSeconds = this.clockInTimestamp
                         ? Math.floor((Date.now() - this.clockInTimestamp) / 1000) - (this.breakMinutes * 60)
                         : 0;
@@ -259,11 +263,10 @@ clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
         },
 
         async handleClock() {
-            if (this.clockedOut) return;
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-            // RESUME FROM BREAK (2nd clock-in)
-            if (this.onBreak && !this.clockedIn) {
+            // RESUME FROM BREAK
+            if (this.onBreak) {
                 const res = await fetch('{{ route("supervisor.attendance.clock-in") }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
@@ -276,7 +279,7 @@ clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
                     this.clockedIn = true;
                     this.breakMinutes = data.break_minutes;
                 } else {
-                    alert(data.message ?? 'Resume failed.');
+                    this.showError(data.message ?? 'Resume failed.');
                 }
                 return;
             }
@@ -290,29 +293,17 @@ clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
                 const data = await res.json();
                 if (res.ok) {
                     this.clockedIn = true;
+                    this.clockedOut = false;
+                    this.resumed = false;
                     this.clockInTime = data.clock_in;
                     this.clockInTimestamp = Date.now();
                 } else {
-                    alert(data.message ?? 'Clock-in failed.');
-                }
-            } else {
-                const res = await fetch('{{ route("supervisor.attendance.clock-out") }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                    body: JSON.stringify({})
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    this.clockedOut = true;
-                    this.clockOutTime = data.clock_out;
-                    await this.loadRecords();
-                } else {
-                    alert(data.message ?? 'Clock-out failed.');
+                    this.showError(data.message ?? 'Clock-in failed.');
                 }
             }
         },
         async handleBreak() {
-            if (!this.clockedIn || this.clockedOut || this.onBreak || this.resumed) return;
+            if (!this.clockedIn || this.onBreak || this.resumed) return;
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const res = await fetch('{{ route("supervisor.attendance.break") }}', {
                 method: 'POST',
@@ -325,12 +316,12 @@ clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
                 this.breakTime = data.break_start;
                 this.breakStartTimestamp = Date.now();
             } else {
-                alert(data.message ?? 'Break failed.');
+                this.showError(data.message ?? 'Break failed.');
             }
         },
 
         async handleClockOut() {
-            if (!this.clockedIn || this.clockedOut) return;
+            if (!this.clockedIn) return;
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const res = await fetch('{{ route("supervisor.attendance.clock-out") }}', {
                 method: 'POST',
@@ -339,12 +330,13 @@ clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
             });
             const data = await res.json();
             if (res.ok) {
+                this.clockedIn = false;
                 this.clockedOut = true;
                 this.clockOutTime = data.clock_out;
                 this.onBreak = false;
                 await this.loadRecords();
             } else {
-                alert(data.message ?? 'Clock-out failed.');
+                this.showError(data.message ?? 'Clock-out failed.');
             }
         },
 
@@ -400,7 +392,8 @@ clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
             const sBg  = s=>({'Present':'#dcfce7','Late':'#fef3c7','Absent':'#fee2e2','On Leave':'#ede9fe','Undertime':'#fef9c3','Overtime':'#dbeafe'}[s]||'#f1f5f9');
             const sClr = s=>({'Present':'#16a34a','Late':'#d97706','Absent':'#dc2626','On Leave':'#4f46e5','Undertime':'#b45309','Overtime':'#1d4ed8'}[s]||'#64748b');
             const tbody = rows.map((r,i)=>`<tr style="background:${i%2===0?'#fff':'#f8faff'}"><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.date}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;"><span style="background:${r.setup==='WFH'?'#dbeafe':'#f1f5f9'};color:${r.setup==='WFH'?'#1d4ed8':'#475569'};padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;">${r.setup}</span></td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;">${r.shift}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.schedule}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:600;white-space:nowrap;">${r.clockIn}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.clockOut}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.overtime}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;"><span style="background:${sBg(r.status)};color:${sClr(r.status)};padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;">${r.status}</span></td></tr>`).join('');
-            return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Attendance – ${period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report</div><div class="badge">${period}</div></div><table><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></body></html>`;
+            return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Attendance – ${period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report</div><div class="badge">${period}</div></div><table><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div>@include('partials.attendance-error-modal')
+</body></html>`;
         },
 
         _printHtml(html) {
@@ -414,5 +407,6 @@ clockedIn:   {{ $todayLog?->clock_in    ? 'true' : 'false' }},
     }
 }
 </script>
+@include('partials.attendance-error-modal')
 </body>
 </html>

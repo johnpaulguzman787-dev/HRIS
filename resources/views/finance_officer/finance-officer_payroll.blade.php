@@ -1142,9 +1142,13 @@
                     const res  = await fetch(`/finance_officer/payroll/period/${id}/payslips`, {
                         headers: { 'X-Requested-With': 'XMLHttpRequest' }
                     });
+                    if (!res.ok) throw new Error(`Server error ${res.status}`);
                     const data = await res.json();
-                    this.pvPayslips = data.payslips;
-                } catch (e) { this.pvPayslips = []; }
+                    this.pvPayslips = data.payslips ?? [];
+                } catch (e) {
+                    this.pvPayslips = [];
+                    this.showAlert('error', 'Failed to Load Payslips', 'Could not load payslip data. Please try again.');
+                }
 
                 this.pvTotalCount      = this.pvPayslips.length;
                 this.pvSubmittedCount  = this.pvPayslips.filter(p => p.status === 'Submitted' || p.status === 'Released').length;

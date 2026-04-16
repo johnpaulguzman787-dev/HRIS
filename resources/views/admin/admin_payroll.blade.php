@@ -816,6 +816,45 @@
         </div>
     </div>
 
+    {{-- Submit Period Confirm --}}
+    <div x-show="showSubmitConfirm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showSubmitConfirm=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-8 text-center"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <p class="text-gray-700 font-semibold text-base mb-2">Submit for Approval?</p>
+            <p class="text-gray-400 text-sm mb-6">This will submit the payroll period for finance approval.</p>
+            <div class="flex justify-center gap-3">
+                <button @click="showSubmitConfirm=false" class="btn-outline px-8">Cancel</button>
+                <form :action="`/admin/payroll/period/${viewPeriod.id}/submit`" method="POST">
+                    @csrf
+                    <button type="submit" class="btn-primary px-8">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Submit Payslip Confirm --}}
+    <div x-show="showSubmitPayslipConfirm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showSubmitPayslipConfirm=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-8 text-center"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <p class="text-gray-700 font-semibold text-base mb-2">Submit Payslip?</p>
+            <p class="text-gray-400 text-sm mb-6">Submit payslip for <span class="font-medium text-gray-600" x-text="pvActive.employeeName"></span>?</p>
+            <div class="flex justify-center gap-3">
+                <button @click="showSubmitPayslipConfirm=false" class="btn-outline px-8">Cancel</button>
+                <button @click="adminSubmitPayslipConfirmed()" class="btn-primary px-8">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     {{-- Release Confirm --}}
     <div x-show="showReleaseConfirm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showReleaseConfirm=false">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-8 text-center"
@@ -1146,7 +1185,9 @@
             benefitStatusFilter: '', itemStatusFilter: '',
 
             showCreatePeriod:     false,
-            showReleaseConfirm:   false,
+            showSubmitConfirm:        false,
+            showSubmitPayslipConfirm: false,
+            showReleaseConfirm:       false,
             showAddItemModal:     false,
             showEditItemModal:    false,
             showAddBenefitModal:  false,
@@ -1247,8 +1288,12 @@
                 this.showEditPayslipModal = true;
             },
 
-            async adminSubmitPayslip() {
-                if (!confirm(`Submit payslip for ${this.pvActive.employeeName}?`)) return;
+            adminSubmitPayslip() {
+                this.showSubmitPayslipConfirm = true;
+            },
+
+            async adminSubmitPayslipConfirmed() {
+                this.showSubmitPayslipConfirm = false;
                 const csrf = document.querySelector('meta[name="csrf-token"]').content;
                 const res  = await fetch(`/admin/payroll/payslip/${this.pvActive.id}/submit`, {
                     method: 'POST',
@@ -1258,6 +1303,7 @@
                 if (data.success) {
                     const idx = this.pvPayslips.findIndex(p => p.id === this.pvActive.id);
                     if (idx !== -1) { this.pvPayslips[idx].status = 'Submitted'; this.pvActive.status = 'Submitted'; }
+                    this.pvSubmittedCount = this.pvPayslips.filter(p => p.status === 'Submitted' || p.status === 'Released').length;
                     this.showAlert('success', 'Payslip Submitted', 'Payslip marked as submitted.');
                 } else {
                     this.showAlert('error', 'Error', data.message || 'Could not submit payslip.');
@@ -1271,16 +1317,7 @@
                     this.showAlert('error', 'Cannot Submit', `All payslips must be submitted first (${submitted}/${total} done).`);
                     return;
                 }
-                if (!confirm('Submit this payroll period for approval?')) return;
-                const csrf = document.querySelector('meta[name="csrf-token"]').content;
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/admin/payroll/period/${this.viewPeriod.id}/submit`;
-                const token = document.createElement('input');
-                token.type = 'hidden'; token.name = '_token'; token.value = csrf;
-                form.appendChild(token);
-                document.body.appendChild(form);
-                form.submit();
+                this.showSubmitConfirm = true;
             },
 
             async saveEditPayslip() {

@@ -75,9 +75,9 @@ class AdminPayrollController extends Controller
         $period->update(['status' => 'Released']);
         Payslip::where('payroll_period_id', $id)->update(['status' => 'Released']);
 
-        // Notify all payroll officers
+        // Notify payroll officers and finance officers
         $recipients = DB::table('users')
-            ->where('role', 'payroll_officer')
+            ->whereIn('role', ['payroll_officer', 'finance_officer'])
             ->pluck('id');
 
         $now = now();
@@ -549,6 +549,27 @@ class AdminPayrollController extends Controller
 
         $period->update(['status' => 'Submitted']);
 
+        // Notify finance officers and payroll officers
+        $recipients = DB::table('users')
+            ->whereIn('role', ['finance_officer', 'payroll_officer'])
+            ->pluck('id');
+
+        $now = now();
+        $notifications = $recipients->map(fn($uid) => [
+            'user_id'    => $uid,
+            'title'      => 'Payroll Submitted for Approval',
+            'message'    => "Payroll period \"{$period->name}\" has been submitted by the admin and is awaiting finance approval.",
+            'icon'       => 'notice',
+            'link'       => null,
+            'is_read'    => false,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->all();
+
+        if ($notifications) {
+            DB::table('notifications')->insert($notifications);
+        }
+
         return redirect()->back()->with('success', 'Payroll period submitted for approval.');
     }
 
@@ -557,16 +578,16 @@ class AdminPayrollController extends Controller
     public function allPeriodPayslips($id)
     {
         $period   = PayrollPeriod::findOrFail($id);
-        $payslips = Payslip::with('employee.department', 'employee.jobTitle')
+        $payslips = Payslip::with(['employee' => fn($q) => $q->withTrashed()->with(['department', 'jobTitle'])])
             ->where('payroll_period_id', $id)
             ->get();
 
         $data = $payslips->map(fn($p) => [
             'id'             => $p->id,
             'employeeId'     => $p->employee_id,
-            'employeeName'   => $p->employee->full_name,
-            'jobTitle'       => $p->employee->jobTitle->title ?? '—',
-            'department'     => $p->employee->department->name ?? '—',
+            'employeeName'   => $p->employee?->full_name ?? '—',
+            'jobTitle'       => $p->employee?->jobTitle?->title ?? '—',
+            'department'     => $p->employee?->department?->name ?? '—',
             'basicPay'       => (float) $p->basic_pay,
             'otPay'          => (float) $p->ot_pay,
             'benefits'       => (float) $p->benefits_total,

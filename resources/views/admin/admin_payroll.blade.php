@@ -223,12 +223,6 @@
                                                 '{{ $period->end_date }}',
                                                 '{{ $period->status }}'
                                             )">View</button>
-                                        @if($period->status === 'Pending')
-                                        <form method="POST" action="{{ route('admin.payroll.period.submit', $period->id) }}" style="display:inline;" onsubmit="return confirm('Submit this period for approval?')">
-                                            @csrf
-                                            <button type="submit" style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#dbeafe;color:#1d4ed8;">Submit</button>
-                                        </form>
-                                        @endif
                                     </div>
                                 </td>
                             </tr>

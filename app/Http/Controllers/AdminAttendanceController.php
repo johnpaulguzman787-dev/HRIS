@@ -932,21 +932,25 @@ public function getLeaveRequest($id)
 
         $filterType   = $request->get('type', 'all');
         $filterStatus = $request->get('status', 'all');
+        $filterDept   = $request->get('department');
         $search       = $request->get('search');
 
         $allRequests = collect();
 
         if ($filterType === 'all' || $filterType === 'leave') {
-            $q = LeaveRequest::with(['leaveType', 'approver'])
+            $q = LeaveRequest::with(['leaveType', 'approver', 'employee.department', 'employee.jobTitle'])
                 ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'cancelled', 'supervisor_approved']);
-            if ($search) $q->where('ref_no', 'like', "%$search%");
+            if ($filterDept)             $q->whereHas('employee', fn($e) => $e->where('department_id', $filterDept));
+            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search)                 $q->whereHas('employee', fn($e) => $e->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%"));
             foreach ($q->get() as $r) {
                 $allRequests->push((object)[
                     'type'             => 'leave',
                     'id'               => $r->id,
                     'ref_no'           => $r->ref_no,
                     'status'           => $r->status,
+                    'employee'         => $r->employee,
                     'leaveType'        => $r->leaveType,
                     'start_date'       => $r->start_date,
                     'end_date'         => $r->end_date,
@@ -962,9 +966,12 @@ public function getLeaveRequest($id)
         }
 
         if ($filterType === 'all' || $filterType === 'overtime') {
-            $q = OvertimeRequest::where('employee_id', $employee->id)
+            $q = OvertimeRequest::with(['employee.department', 'employee.jobTitle'])
+                ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'supervisor_approved']);
-            if ($search) $q->where('ref_no', 'like', "%$search%");
+            if ($filterDept)             $q->whereHas('employee', fn($e) => $e->where('department_id', $filterDept));
+            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search)                 $q->whereHas('employee', fn($e) => $e->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%"));
             foreach ($q->get() as $r) {
                 $allRequests->push((object)[
                     'type'             => 'overtime',
@@ -986,10 +993,12 @@ public function getLeaveRequest($id)
         }
 
         if ($filterType === 'all' || $filterType === 'shift') {
-            $q = ShiftChangeRequest::with(['currentShift', 'requestedShift'])
+            $q = ShiftChangeRequest::with(['employee.department', 'employee.jobTitle', 'currentShift', 'requestedShift'])
                 ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'supervisor_approved']);
-            if ($search) $q->where('ref_no', 'like', "%$search%");
+            if ($filterDept)             $q->whereHas('employee', fn($e) => $e->where('department_id', $filterDept));
+            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search)                 $q->whereHas('employee', fn($e) => $e->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%"));
             foreach ($q->get() as $r) {
                 $allRequests->push((object)[
                     'type'             => 'shift',
@@ -1014,12 +1023,12 @@ public function getLeaveRequest($id)
         $requests      = $filterStatus !== 'all'
             ? $allRequests->where('status', $filterStatus)->sortByDesc('created_at')->values()
             : $allRequests->sortByDesc('created_at')->values();
-        $departments   = collect();
+        $departments = Department::orderBy('name')->get();
 
         return view('admin.admin_approved-requests', compact(
             'departments', 'requests',
             'approvedCount', 'rejectedCount',
-            'filterType', 'filterStatus', 'search'
+            'filterType', 'filterStatus', 'search', 'filterDept'
         ));
     }
 

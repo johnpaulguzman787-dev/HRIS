@@ -14,7 +14,7 @@ class AdminEmployeeController extends Controller
 {
 public function directory()
 {
-$departments = Department::withCount('employees')->with('jobTitles')->get()->map(function($d) {
+$departments = Department::withCount(['employees' => fn($q) => $q->whereHas('user', fn($u) => $u->whereNotNull('email_verified_at'))])->with('jobTitles')->get()->map(function($d) {
     return [
         'id'              => $d->id,
         'name'            => $d->name,
@@ -394,7 +394,7 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
             $message = null;
             DB::transaction(function () use ($id, &$message) {
                 $department = \App\Models\Department::lockForUpdate()->findOrFail($id);
-                if ($department->employees()->count() > 0) {
+                if ($department->employees()->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->count() > 0) {
                     $message = 'Cannot delete a department that has employees.';
                     return;
                 }

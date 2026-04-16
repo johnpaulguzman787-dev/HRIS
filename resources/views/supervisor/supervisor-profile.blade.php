@@ -238,7 +238,7 @@
                                 <button @click="openDoc(doc)" class="px-4 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200 hover:shadow-md">
                                     View
                                 </button>
-                                <button @click="window.location.href = doc.download_url" class="px-4 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200 hover:shadow-md">
+                                <button @click="window.open(doc.download_url, '_blank')" class="px-4 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200 hover:shadow-md">
                                     Download
                                 </button>
                             </div>
@@ -321,7 +321,7 @@
                     class="px-5 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-all duration-200 hover:scale-105">
                     Close
                 </button>
-                <button @click="activeDoc && (window.location.href = activeDoc.download_url)" class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2">
+                <button @click="activeDoc && window.open(activeDoc.download_url, '_blank')" class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>

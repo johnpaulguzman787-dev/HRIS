@@ -24,7 +24,7 @@ class SupervisorEmployeeController extends Controller
     {
         $authDeptId = $this->getAuthDeptId();
 
-        $departments = Department::withCount('employees')
+        $departments = Department::withCount(['employees' => fn($q) => $q->whereHas('user', fn($u) => $u->whereNotNull('email_verified_at'))])
             ->with('jobTitles')
             ->where('id', $authDeptId)
             ->get()

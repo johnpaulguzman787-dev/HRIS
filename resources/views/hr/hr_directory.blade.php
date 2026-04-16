@@ -1603,13 +1603,13 @@
 
             <!-- Department Summary Cards -->
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 mx-8">
-                @foreach($departments as $dept)
-                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
-                    <p class="text-sm text-gray-500 mb-1">{{ $dept['name'] }}</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ $dept['employees_count'] }}</p>
-                    <p class="text-xs text-gray-400 mt-1">Employees</p>
-                </div>
-                @endforeach
+                <template x-for="dept in departments" :key="dept.id">
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
+                        <p class="text-sm text-gray-500 mb-1" x-text="dept.name"></p>
+                        <p class="text-3xl font-bold text-gray-800" x-text="dept.employees_count"></p>
+                        <p class="text-xs text-gray-400 mt-1">Employees</p>
+                    </div>
+                </template>
             </div>
 
             <!-- Top Control Section -->

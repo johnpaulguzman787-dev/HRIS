@@ -116,8 +116,11 @@ $user = User::create([
         ];
 
         $prefix = $prefixMap[$user->role] ?? 'EMP';
-        $count  = User::where('role', $user->role)->count();
-        $code   = $prefix . str_pad($count, 3, '0', STR_PAD_LEFT);
+        $last = \App\Models\Employee::where('employee_code', 'like', $prefix . '%')
+            ->orderByRaw('CAST(SUBSTRING(employee_code, ' . (strlen($prefix) + 1) . ') AS UNSIGNED) DESC')
+            ->value('employee_code');
+        $nextNumber = $last ? ((int) substr($last, strlen($prefix))) + 1 : 1;
+        $code = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
         // Create employee
         Employee::create([
@@ -142,9 +145,10 @@ $user = User::create([
  });
     return response()->json(['success' => true, 'message' => 'Employee added successfully!']);
 } catch (\Exception $e) {
+    \Log::error($e->getMessage());
     return response()->json([
         'success' => false,
-        'message' => $e->getMessage()
+        'message' => 'Something went wrong. Please try again.'
     ], 500);
 }
 }
@@ -207,7 +211,14 @@ $user = User::create([
 
         return response()->json(['success' => true, 'message' => 'Employee updated successfully!']);
     } catch (\Exception $e) {
-        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        \Log::error($e->getMessage());
+$userMessage = match(true) {
+    str_contains($e->getMessage(), 'Duplicate entry') => 'This record already exists. Please check for duplicates.',
+    str_contains($e->getMessage(), 'foreign key constraint') => 'This record is linked to other data and cannot be modified.',
+    str_contains($e->getMessage(), 'unique_violation') => 'This record already exists. Please check for duplicates.',
+    default => 'Something went wrong. Please try again.',
+};
+return response()->json(['success' => false, 'message' => $userMessage], 500);
     }
 }
 
@@ -246,7 +257,14 @@ public function storeDepartment(Request $request)
             ],
         ]);
     } catch (\Exception $e) {
-        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        \Log::error($e->getMessage());
+$userMessage = match(true) {
+    str_contains($e->getMessage(), 'Duplicate entry') => 'This record already exists. Please check for duplicates.',
+    str_contains($e->getMessage(), 'foreign key constraint') => 'This record is linked to other data and cannot be modified.',
+    str_contains($e->getMessage(), 'unique_violation') => 'This record already exists. Please check for duplicates.',
+    default => 'Something went wrong. Please try again.',
+};
+return response()->json(['success' => false, 'message' => $userMessage], 500);
     }
 }
 public function updateDepartment(Request $request, $id)
@@ -301,7 +319,14 @@ return response()->json([
     ])->values(),
 ]);
     } catch (\Exception $e) {
-        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        \Log::error($e->getMessage());
+$userMessage = match(true) {
+    str_contains($e->getMessage(), 'Duplicate entry') => 'This record already exists. Please check for duplicates.',
+    str_contains($e->getMessage(), 'foreign key constraint') => 'This record is linked to other data and cannot be modified.',
+    str_contains($e->getMessage(), 'unique_violation') => 'This record already exists. Please check for duplicates.',
+    default => 'Something went wrong. Please try again.',
+};
+return response()->json(['success' => false, 'message' => $userMessage], 500);
     }
 }
     public function updateJobTitle(Request $request, $id)
@@ -331,7 +356,14 @@ return response()->json([
 
             return response()->json(['success' => true, 'message' => 'Job title updated successfully.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            \Log::error($e->getMessage());
+$userMessage = match(true) {
+    str_contains($e->getMessage(), 'Duplicate entry') => 'This record already exists. Please check for duplicates.',
+    str_contains($e->getMessage(), 'foreign key constraint') => 'This record is linked to other data and cannot be modified.',
+    str_contains($e->getMessage(), 'unique_violation') => 'This record already exists. Please check for duplicates.',
+    default => 'Something went wrong. Please try again.',
+};
+return response()->json(['success' => false, 'message' => $userMessage], 500);
         }
     }
 
@@ -374,7 +406,14 @@ return response()->json([
             }
             return response()->json(['success' => true, 'message' => 'Department deleted successfully.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            \Log::error($e->getMessage());
+$userMessage = match(true) {
+    str_contains($e->getMessage(), 'Duplicate entry') => 'This record already exists. Please check for duplicates.',
+    str_contains($e->getMessage(), 'foreign key constraint') => 'This record is linked to other data and cannot be modified.',
+    str_contains($e->getMessage(), 'unique_violation') => 'This record already exists. Please check for duplicates.',
+    default => 'Something went wrong. Please try again.',
+};
+return response()->json(['success' => false, 'message' => $userMessage], 500);
         }
     }
 

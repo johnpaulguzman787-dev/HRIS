@@ -755,21 +755,34 @@
                 {{-- Title + Submit Button --}}
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-800" x-text="viewPeriod.name"></h2>
-                    <template x-if="viewPeriod.status === 'Pending'">
-                        <button class="btn-primary"
-                                :disabled="pvSubmittedCount < pvTotalCount"
-                                :class="pvSubmittedCount < pvTotalCount ? 'opacity-50 cursor-not-allowed' : ''"
-                                :title="pvSubmittedCount < pvTotalCount ? 'All payslips must be submitted first (' + pvSubmittedCount + '/' + pvTotalCount + ' done)' : ''"
-                                @click="pvSubmittedCount >= pvTotalCount && (showSubmitConfirm=true)">
-                            Submit for Approval
-                        </button>
-                    </template>
-                    <template x-if="viewPeriod.status === 'Submitted'">
-                        <span class="px-4 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-700">Submitted</span>
-                    </template>
-                    <template x-if="viewPeriod.status === 'Released'">
-                        <span class="px-4 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-700">Released</span>
-                    </template>
+                    <div class="flex items-center gap-2">
+                        <template x-if="viewPeriod.status === 'Pending'">
+                            <button class="btn-primary"
+                                    :disabled="pvSubmittedCount < pvTotalCount"
+                                    :class="pvSubmittedCount < pvTotalCount ? 'opacity-50 cursor-not-allowed' : ''"
+                                    :title="pvSubmittedCount < pvTotalCount ? 'All payslips must be submitted first (' + pvSubmittedCount + '/' + pvTotalCount + ' done)' : ''"
+                                    @click="pvSubmittedCount >= pvTotalCount && (showSubmitConfirm=true)">
+                                Submit for Approval
+                            </button>
+                        </template>
+                        <template x-if="viewPeriod.status === 'Submitted'">
+                            <span class="px-4 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-700">Submitted</span>
+                        </template>
+                        <template x-if="viewPeriod.status === 'Released'">
+                            <span class="px-4 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-700">Released</span>
+                        </template>
+                        @canDo('Payroll', 'export')
+                        <template x-if="viewPeriod.status === 'Released'">
+                            <button @click="pvExportAllPayslips()"
+                                    :disabled="pvPayslips.length === 0"
+                                    :style="pvPayslips.length === 0 ? 'opacity:0.45;cursor:not-allowed;' : ''"
+                                    class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg border-none cursor-pointer transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 16v4a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 8.414V12M12 10v6m0 0l-3-3m3 3l3-3"/></svg>
+                                Export All PDF
+                            </button>
+                        </template>
+                        @endcanDo
+                    </div>
                 </div>
             </div>
 
@@ -1999,6 +2012,51 @@
             reloadTab() {
                 location.hash = this.activeTab;
                 location.reload();
+            },
+
+            pvExportAllPayslips() {
+                const slips = this.pvPayslips;
+                if (!slips.length) return;
+                const f = n => Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+                const period = this.viewPeriod.name || '—';
+                const pages = slips.map((ps, i) => {
+                    const pb = i < slips.length - 1 ? 'page-break-after:always;' : '';
+                    return `<div style="padding:40px 48px;max-width:620px;margin:0 auto;${pb}">
+<div style="margin-bottom:20px;"><div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div><div style="font-size:12px;color:#64748b;margin-top:2px;">${period}</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;background:#f8faff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+  <div><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Employee</div><div style="font-size:13px;font-weight:600;color:#1e293b;">${ps.employeeName||'—'}</div></div>
+  <div><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Job Title</div><div style="font-size:13px;font-weight:600;color:#1e293b;">${ps.jobTitle||'—'}</div></div>
+  <div><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Department</div><div style="font-size:13px;font-weight:600;color:#1e293b;">${ps.department||'—'}</div></div>
+</div>
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Earnings</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Basic Pay</span><span>₱ ${f(ps.basicPay)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>OT Pay</span><span>₱ ${f(ps.otPay)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Benefits</span><span>₱ ${f(ps.benefits)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Deductions</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>SSS</span><span style="color:#dc2626;">-₱ ${f(ps.sss)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>PhilHealth</span><span style="color:#dc2626;">-₱ ${f(ps.philhealth)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Pag-IBIG</span><span style="color:#dc2626;">-₱ ${f(ps.pagibig)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Withholding Tax</span><span style="color:#dc2626;">-₱ ${f(ps.withholdingTax)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Total Deductions</span><span style="color:#dc2626;">-₱ ${f(ps.totalDeductions)}</span></div>
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Summary</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Total Deductions</span><span style="color:#dc2626;">-₱ ${f(ps.totalDeductions)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Net Pay</span><span>₱ ${f(ps.netPay)}</span></div>
+<div style="margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;">This is a system-generated payslip from MediSource HRIS.</div>
+</div>`;
+                }).join('');
+                const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>All Payslips – ${period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{color:#1e293b;}@media print{@page{margin:.5cm;}}</style></head><body>${pages}</body></html>`;
+                this._printHtml(html);
+            },
+
+            _printHtml(html) {
+                const w = window.open('', '_blank', 'width=700,height=860,scrollbars=yes');
+                if (!w) { alert('Please allow pop-ups to export payslips.'); return; }
+                w.document.write(html);
+                w.document.close();
+                w.focus();
+                setTimeout(() => { w.print(); }, 400);
             },
 
             fmt(n) {

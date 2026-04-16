@@ -135,9 +135,13 @@
     </div>
 </div>
                     @canDo('Time & Attendance', 'export')
-                    <button class="export-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white">
+                    <button @click="exportPdf()"
+                            :disabled="totalRecords === 0"
+                            :class="totalRecords > 0 ? 'export-btn' : ''"
+                            :style="totalRecords > 0 ? '' : 'background:#d1d5db;cursor:not-allowed;'"
+                            class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white border-none">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        Export
+                        Export PDF
                     </button>
                     @endcanDo
                 </div>
@@ -361,7 +365,40 @@ function attendancePage() {
         },
 
         statusStyle(s){return{'Present':'background:rgba(34,197,94,0.12);color:#16a34a;','Late':'background:rgba(245,158,11,0.12);color:#d97706;','Absent':'background:rgba(239,68,68,0.12);color:#dc2626;','On Leave':'background:rgba(99,102,241,0.12);color:#4f46e5;','Undertime':'background:rgba(251,191,36,0.12);color:#b45309;','Overtime':'background:rgba(59,130,246,0.12);color:#1d4ed8;'}[s]||'background:#f1f5f9;color:#64748b;';},
-        dotStyle(s){return{'Present':'background:#22c55e;','Late':'background:#f59e0b;','Absent':'background:#ef4444;','On Leave':'background:#6366f1;','Undertime':'background:#fbbf24;','Overtime':'background:#3b82f6;'}[s]||'background:#94a3b8;';}
+        dotStyle(s){return{'Present':'background:#22c55e;','Late':'background:#f59e0b;','Absent':'background:#ef4444;','On Leave':'background:#6366f1;','Undertime':'background:#fbbf24;','Overtime':'background:#3b82f6;'}[s]||'background:#94a3b8;';},
+
+        async exportPdf() {
+            const res = await fetch(`{{ route("hr.attendance.records") }}?month=${this.currentMonth}&year=${this.currentYear}&per_page=500`);
+            const data = await res.json();
+            const allRows = (data.data || []).map(log => ({
+                date:     new Date(log.attendance_date).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),
+                setup:    log.work_setup ? log.work_setup.toUpperCase() : '—',
+                shift:    log.shift?.name ?? '—',
+                schedule: log.shift ? this.formatTime(log.shift.start_time)+' – '+this.formatTime(log.shift.end_time) : '—',
+                clockIn:  log.clock_in  ? new Date(log.clock_in).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})  : '—',
+                clockOut: log.clock_out ? new Date(log.clock_out).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true}) : '—',
+                overtime: log.overtime_minutes > 0 ? Math.floor(log.overtime_minutes/60)+'h '+String(log.overtime_minutes%60).padStart(2,'0')+'m' : '—',
+                status:   log.status ? log.status.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase()) : '—',
+            }));
+            const period = new Date(this.currentYear, this.currentMonth-1, 1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+            this._printHtml(this._buildAttendancePdfHtml(allRows, period));
+        },
+
+        _buildAttendancePdfHtml(rows, period) {
+            const sBg  = s=>({'Present':'#dcfce7','Late':'#fef3c7','Absent':'#fee2e2','On Leave':'#ede9fe','Undertime':'#fef9c3','Overtime':'#dbeafe'}[s]||'#f1f5f9');
+            const sClr = s=>({'Present':'#16a34a','Late':'#d97706','Absent':'#dc2626','On Leave':'#4f46e5','Undertime':'#b45309','Overtime':'#1d4ed8'}[s]||'#64748b');
+            const tbody = rows.map((r,i)=>`<tr style="background:${i%2===0?'#fff':'#f8faff'}"><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.date}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;"><span style="background:${r.setup==='WFH'?'#dbeafe':'#f1f5f9'};color:${r.setup==='WFH'?'#1d4ed8':'#475569'};padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;">${r.setup}</span></td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;">${r.shift}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.schedule}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:600;white-space:nowrap;">${r.clockIn}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.clockOut}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.overtime}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;"><span style="background:${sBg(r.status)};color:${sClr(r.status)};padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;">${r.status}</span></td></tr>`).join('');
+            return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Attendance – ${period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report</div><div class="badge">${period}</div></div><table><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></body></html>`;
+        },
+
+        _printHtml(html) {
+            const w = window.open('', '_blank', 'width=1050,height=820,scrollbars=yes');
+            if (!w) { alert('Please allow pop-ups to export.'); return; }
+            w.document.write(html);
+            w.document.close();
+            w.focus();
+            setTimeout(() => w.print(), 400);
+        },
     }
 }
 </script>

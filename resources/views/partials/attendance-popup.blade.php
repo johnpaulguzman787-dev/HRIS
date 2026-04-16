@@ -104,9 +104,9 @@
 
             {{-- BREAK --}}
             <button @click="handleBreak(); showAttendancePopup = false"
-                :disabled="!clockedIn || clockedOut || onBreak || resumed || onLeave"
+                :disabled="!clockedIn || clockedOut || onBreak || onLeave"
                 class="py-4 rounded-xl text-sm font-bold uppercase tracking-widest transition-all"
-                :class="(clockedIn && !clockedOut && !onBreak && !resumed && !onLeave)
+                :class="(clockedIn && !clockedOut && !onBreak && !onLeave)
                     ? 'bg-gray-700 text-white hover:bg-gray-800 shadow-sm'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
                 Break

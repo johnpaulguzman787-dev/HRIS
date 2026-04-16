@@ -113,6 +113,7 @@
         .close-btn{width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;flex-shrink:0;}
         .fsel-modal{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
         .doc-upload{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed #d1d5db;border-radius:10px;padding:24px 20px;background:#f9fafb;cursor:pointer;}
+            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -313,7 +314,7 @@
                      handleFile(e){ const f=e.target.files[0]; this.fileName=f?f.name:''; },
                      async submit(){
                          this.errorMsg='';
-                         if(!this.leaveTypeId||!this.startDate||!this.endDate||!this.reason){ this.errorMsg='Please fill in all required fields.'; return; }
+                         if(!this.leaveTypeId||!this.startDate||!this.endDate||!this.reason){ $root.resultType='error'; $root.resultTitle='Missing Fields'; $root.resultMessage='Please fill in all required fields.'; $root.showResult=true; return; }
                          this.saving=true;
                          const form=new FormData();
                          form.append('leave_type_id',this.leaveTypeId);
@@ -326,11 +327,10 @@
                          const res=await fetch('{{ route('hr.leave.file') }}',{method:'POST',body:form});
                          this.saving=false;
                          const data=await res.json();
-                         if(res.ok){ window.dispatchEvent(new CustomEvent('show-toast',{detail:{message:'Leave request filed!',type:'success'}})); setTimeout(()=>window.location.reload(),1500); }
-                         else{ this.errorMsg=data.message??'Something went wrong.'; }
+                         if(res.ok){ $root.showFileReq=false; $root.reqType=''; $root.resultType='success'; $root.resultTitle='Leave Request Filed'; $root.resultMessage='Your leave request has been submitted successfully.'; $root.showResult=true; setTimeout(()=>window.location.reload(),2500); }
+                         else{ $root.resultType='error'; $root.resultTitle='Submission Failed'; $root.resultMessage=data.message??'Something went wrong.'; $root.showResult=true; }
                      }
                  }">
-                <template x-if="errorMsg"><div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div></template>
                 <div style="margin-bottom:16px;">
                     <label class="flabel">Leave Type</label>
                     <select class="finput" x-model="leaveTypeId" style="appearance:none;width:100%;">
@@ -359,7 +359,7 @@
                 </div>
                 <div class="mactions">
                     <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
-                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving?'Submitting…':'Submit'"></button>
+                    <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
 
@@ -369,7 +369,7 @@
                      handleFile(e){ const f=e.target.files[0]; this.fileName=f?f.name:''; },
                      async submit(){
                          this.errorMsg='';
-                         if(!this.otDate||!this.otStart||!this.otEnd||!this.reason){ this.errorMsg='Please fill in all required fields.'; return; }
+                         if(!this.otDate||!this.otStart||!this.otEnd||!this.reason){ $root.resultType='error'; $root.resultTitle='Missing Fields'; $root.resultMessage='Please fill in all required fields.'; $root.showResult=true; return; }
                          this.saving=true;
                          const form=new FormData();
                          form.append('ot_date',this.otDate);
@@ -382,11 +382,10 @@
                          const res=await fetch('{{ route('hr.requests.overtime.file') }}',{method:'POST',body:form});
                          this.saving=false;
                          const data=await res.json();
-                         if(res.ok){ window.dispatchEvent(new CustomEvent('show-toast',{detail:{message:'Overtime request filed!',type:'success'}})); setTimeout(()=>window.location.reload(),1500); }
-                         else{ this.errorMsg=data.message??'Something went wrong.'; }
+                         if(res.ok){ $root.showFileReq=false; $root.reqType=''; $root.resultType='success'; $root.resultTitle='Overtime Request Filed'; $root.resultMessage='Your overtime request has been submitted successfully.'; $root.showResult=true; setTimeout(()=>window.location.reload(),2500); }
+                         else{ $root.resultType='error'; $root.resultTitle='Submission Failed'; $root.resultMessage=data.message??'Something went wrong.'; $root.showResult=true; }
                      }
                  }">
-                <template x-if="errorMsg"><div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div></template>
                 <div style="margin-bottom:16px;">
                     <label class="flabel">Date</label>
                     <input type="date" class="finput" x-model="otDate">
@@ -410,7 +409,7 @@
                 </div>
                 <div class="mactions">
                     <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
-                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving?'Submitting…':'Submit'"></button>
+                    <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
 
@@ -420,7 +419,7 @@
                      handleFile(e){ const f=e.target.files[0]; this.fileName=f?f.name:''; },
                      async submit(){
                          this.errorMsg='';
-                         if(!this.requestedShiftId||!this.effectiveFrom||!this.reason){ this.errorMsg='Please fill in all required fields.'; return; }
+                         if(!this.requestedShiftId||!this.effectiveFrom||!this.reason){ $root.resultType='error'; $root.resultTitle='Missing Fields'; $root.resultMessage='Please fill in all required fields.'; $root.showResult=true; return; }
                          this.saving=true;
                          const form=new FormData();
                          form.append('requested_shift_id',this.requestedShiftId);
@@ -433,11 +432,10 @@
                          const res=await fetch('{{ route('hr.requests.shift.file') }}',{method:'POST',body:form});
                          this.saving=false;
                          const data=await res.json();
-                         if(res.ok){ window.dispatchEvent(new CustomEvent('show-toast',{detail:{message:'Shift change request filed!',type:'success'}})); setTimeout(()=>window.location.reload(),1500); }
-                         else{ this.errorMsg=data.message??'Something went wrong.'; }
+                         if(res.ok){ $root.showFileReq=false; $root.reqType=''; $root.resultType='success'; $root.resultTitle='Shift Request Filed'; $root.resultMessage='Your shift change request has been submitted successfully.'; $root.showResult=true; setTimeout(()=>window.location.reload(),2500); }
+                         else{ $root.resultType='error'; $root.resultTitle='Submission Failed'; $root.resultMessage=data.message??'Something went wrong.'; $root.showResult=true; }
                      }
                  }">
-                <template x-if="errorMsg"><div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div></template>
                 <div style="margin-bottom:16px;">
                     <label class="flabel">Change Shift To</label>
                     <select class="finput" x-model="requestedShiftId" style="appearance:none;width:100%;">
@@ -466,7 +464,7 @@
                 </div>
                 <div class="mactions">
                     <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
-                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving?'Submitting…':'Submit'"></button>
+                    <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
 

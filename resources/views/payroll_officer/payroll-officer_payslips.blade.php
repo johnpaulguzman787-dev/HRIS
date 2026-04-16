@@ -222,6 +222,15 @@
                     <option value="{{ $y }}">{{ $y }}</option>
                     @endfor
                 </select>
+                @canDo('Payroll', 'export')
+                <button @click="exportAllPayslips()"
+                        :disabled="filteredAllPayslips.length === 0"
+                        :style="filteredAllPayslips.length === 0 ? 'background:#d1d5db;cursor:not-allowed;' : ''"
+                        class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl border-none cursor-pointer transition-colors whitespace-nowrap">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 16v4a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 8.414V12M12 10v6m0 0l-3-3m3 3l3-3"/></svg>
+                    Export All PDF
+                </button>
+                @endcanDo
             </div>
 
             {{-- Table + Panel --}}
@@ -348,6 +357,13 @@
                     <option value="{{ $y }}">{{ $y }}</option>
                     @endfor
                 </select>
+                <button @click="exportMyAllPayslips()"
+                        :disabled="filteredMyPayslips.length === 0"
+                        :style="filteredMyPayslips.length === 0 ? 'background:#d1d5db;cursor:not-allowed;' : ''"
+                        class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl border-none cursor-pointer transition-colors whitespace-nowrap">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Export All PDF
+                </button>
             </div>
 
             {{-- Table + Panel --}}
@@ -546,12 +562,84 @@
                 this._printHtml(html);
             },
 
+            exportAllPayslips() {
+                const slips = this.filteredAllPayslips;
+                if (!slips.length) return;
+                const f = n => Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+                const period = this.currentPeriodName || '—';
+                const pages = slips.map((ps, i) => {
+                    const pb = i < slips.length - 1 ? 'page-break-after:always;' : '';
+                    return `<div style="padding:40px 48px;max-width:620px;margin:0 auto;${pb}">
+<div style="margin-bottom:20px;"><div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div><div style="font-size:12px;color:#64748b;margin-top:2px;">${ps.period||period}</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;background:#f8faff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+  <div><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Employee</div><div style="font-size:13px;font-weight:600;color:#1e293b;">${ps.employeeName||'—'}</div></div>
+  <div><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Job Title</div><div style="font-size:13px;font-weight:600;color:#1e293b;">${ps.jobTitle||'—'}</div></div>
+  <div><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Department</div><div style="font-size:13px;font-weight:600;color:#1e293b;">${ps.department||'—'}</div></div>
+</div>
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Earnings</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Basic Pay</span><span>₱ ${f(ps.basicPay)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>OT Pay</span><span>₱ ${f(ps.otPay)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Benefits</span><span>₱ ${f(ps.benefits)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Deductions</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>SSS</span><span style="color:#dc2626;">-₱ ${f(ps.sss)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>PhilHealth</span><span style="color:#dc2626;">-₱ ${f(ps.philhealth)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Pag-IBIG</span><span style="color:#dc2626;">-₱ ${f(ps.pagibig)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Withholding Tax</span><span style="color:#dc2626;">-₱ ${f(ps.withholdingTax)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Total Deductions</span><span style="color:#dc2626;">-₱ ${f(ps.totalDeductions)}</span></div>
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Summary</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Total Deductions</span><span style="color:#dc2626;">-₱ ${f(ps.totalDeductions)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Net Pay</span><span>₱ ${f(ps.netPay)}</span></div>
+<div style="margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;">This is a system-generated payslip from MediSource HRIS.</div>
+</div>`;
+                }).join('');
+                const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>All Payslips – ${period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{color:#1e293b;}@media print{@page{margin:.5cm;}}</style></head><body>${pages}</body></html>`;
+                this._printHtml(html);
+            },
+
             exportMyPayslip() {
                 const ps = this.myActive;
                 const html = this._buildPayslipHtml(
                     this.myEmployeeName, this.myJobTitle, this.myDepartment,
                     ps.periodName, ps
                 );
+                this._printHtml(html);
+            },
+
+            exportMyAllPayslips() {
+                const slips = this.filteredMyPayslips;
+                if (!slips.length) return;
+                const f = n => Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+                const title = `${this.myEmployeeName||'My'} \u2013 Payslips ${this.myYearFilter}`;
+                const pages = slips.map((ps, i) => {
+                    const pb = i < slips.length - 1 ? 'page-break-after:always;' : '';
+                    return `<div style="padding:40px 48px;max-width:620px;margin:0 auto;${pb}">
+<div style="margin-bottom:28px;"><div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div><div style="font-size:12px;color:#64748b;margin-top:2px;">${ps.periodName||'—'}</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;background:#f8faff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:24px;">
+<div><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Employee</div><div style="font-size:13px;font-weight:600;color:#1e293b;">${this.myEmployeeName||'—'}</div></div>
+<div><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Job Title</div><div style="font-size:13px;font-weight:600;color:#1e293b;">${this.myJobTitle||'—'}</div></div>
+<div><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Department</div><div style="font-size:13px;font-weight:600;color:#1e293b;">${this.myDepartment||'—'}</div></div>
+</div>
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Earnings</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Basic Pay</span><span>&#8369; ${f(ps.basicPay)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>OT Pay</span><span>&#8369; ${f(ps.otPay)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Benefits</span><span>&#8369; ${f(ps.benefits)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 5px;margin-top:4px;border-top:2px solid #e2e8f0;"><span>Gross Pay</span><span>&#8369; ${f(ps.grossPay)}</span></div>
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Deductions</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>SSS</span><span style="color:#dc2626;">-&#8369; ${f(ps.sss)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>PhilHealth</span><span style="color:#dc2626;">-&#8369; ${f(ps.philhealth)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Pag-IBIG</span><span style="color:#dc2626;">-&#8369; ${f(ps.pagibig)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Withholding Tax</span><span style="color:#dc2626;">-&#8369; ${f(ps.withholdingTax)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 5px;margin-top:4px;border-top:2px solid #e2e8f0;"><span>Total Deductions</span><span style="color:#dc2626;">-&#8369; ${f(ps.totalDeductions)}</span></div>
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Summary</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Gross Pay</span><span>&#8369; ${f(ps.grossPay)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Total Deductions</span><span style="color:#dc2626;">-&#8369; ${f(ps.totalDeductions)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 5px;margin-top:4px;border-top:2px solid #e2e8f0;"><span>Net Pay</span><span>&#8369; ${f(ps.netPay)}</span></div>
+<div style="margin-top:32px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:12px;">This is a system-generated payslip from MediSource HRIS.</div>
+</div>`;
+                }).join('');
+                const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{color:#1e293b;}@media print{@page{margin:.5cm;}}</style></head><body>${pages}</body></html>`;
                 this._printHtml(html);
             },
 

@@ -10,7 +10,8 @@
         clockedIn: {{ $todayLog?->clock_in ? 'true' : 'false' }},
         clockedOut: {{ $todayLog?->clock_out ? 'true' : 'false' }},
         onBreak: {{ $todayLog?->break_start && !$todayLog?->break_end ? 'true' : 'false' }},
-        resumed: {{ $todayLog?->break_end ? 'true' : 'false' }},
+        resumed: false,
+        breakReminder: '',
         breakTime: '{{ $todayLog?->break_start ? \Carbon\Carbon::parse($todayLog->break_start)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         breakMinutes: {{ $todayLog?->break_minutes ?? 0 }},
         clockInTimestamp: {{ $todayLog?->clock_in ? \Carbon\Carbon::parse($todayLog->clock_in)->valueOf() : 'null' }},
@@ -19,7 +20,7 @@
         clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock_out)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         elapsedSeconds: 0,
         assignedShiftId: {{ $employeeShift?->shift_id ?? 'null' }},
-        breakAllowed: {{ $employeeShift?->shift?->break_schedule ? 'true' : 'false' }},
+        breakAllowed: true,
         currentTime: '',
         currentDate: '',
         mobileMenuOpen: false,
@@ -92,7 +93,7 @@
             this.updateTime();
             setInterval(() => {
                 this.updateTime();
-                if (this.clockedIn && !this.clockedOut && this.clockInTimestamp) {
+                if (this.clockedIn && !this.clockedOut && !this.onBreak && this.clockInTimestamp) {
                     this.elapsedSeconds = Math.floor((Date.now() - this.clockInTimestamp) / 1000) - (this.breakMinutes * 60);
                 }
             }, 1000);
@@ -131,13 +132,13 @@
             }
         },
         async handleBreak() {
-            if (!this.clockedIn || this.clockedOut || this.onBreak || this.resumed) return;
+            if (!this.clockedIn || this.clockedOut || this.onBreak) return;
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             const res = await fetch('{{ route("admin.attendance.break") }}', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify({})
             });
             const data = await res.json();
-            if (res.ok) { this.onBreak = true; this.breakTime = data.break_start; this.breakStartTimestamp = Date.now(); }
+            if (res.ok) { this.onBreak = true; this.breakTime = data.break_start; this.breakStartTimestamp = Date.now(); if (data.reminder) { this.breakReminder = data.reminder; setTimeout(() => { this.breakReminder = ''; }, 5000); } else { this.breakReminder = ''; } }
             else { alert(data.message ?? 'Break failed.'); }
         },
         async handleClockOut() {
@@ -353,15 +354,7 @@
                             </div>
                             <div class="flex items-center justify-between px-3 py-2 border-t border-gray-100">
                                 <span class="text-xs text-gray-400">Work Setup</span>
-                                {{-- Mobile: toggle buttons as shown in mockup --}}
-                                <div class="flex gap-1">
-                                    <button class="text-xs px-3 py-1 rounded-lg font-semibold transition-all"
-                                            :class="workSetup === 'office' ? 'bg-blue-100 text-blue-700' : 'text-gray-400 hover:bg-gray-100'"
-                                            @click="workSetup = 'office'">Office</button>
-                                    <button class="text-xs px-3 py-1 rounded-lg font-semibold transition-all"
-                                            :class="workSetup === 'wfh' ? 'bg-blue-100 text-blue-700' : 'text-gray-400 hover:bg-gray-100'"
-                                            @click="workSetup = 'wfh'">WFH</button>
-                                </div>
+                                <span class="text-xs font-semibold" style="color:#1d4ed8;">{{ strtoupper($employeeShift->work_setup ?? '—') }}</span>
                             </div>
                         </div>
                         @else
@@ -392,6 +385,7 @@
                         <p class="text-xs text-center font-medium" x-show="onBreak" style="color:#f59e0b;"> On break · timer paused</p>
                         <p class="text-xs text-center font-semibold" x-show="clockedOut" style="color:#22c55e;">✓ Attendance recorded · <span x-text="elapsedDisplay"></span></p>
                         <p x-show="onLeave" class="text-xs text-center font-semibold" style="color:#6366f1;">You are on approved leave today.</p>
+                        <p x-show="breakReminder" x-cloak x-text="breakReminder" class="text-xs text-center font-medium mt-1" style="color:#d97706;"></p>
                     </div>
                     <div class="mt-auto flex gap-2">
                         <button @click="handleClock()"
@@ -401,9 +395,9 @@
                             TIME IN
                         </button>
                         <button @click="handleBreak()"
-                                :disabled="!clockedIn || onBreak || resumed || clockedOut || !breakAllowed"
+                                :disabled="!clockedIn || onBreak || clockedOut || onLeave"
                                 class="clock-btn flex-1 py-3 font-bold text-xs tracking-widest uppercase"
-                                :style="!clockedIn || onBreak || resumed || clockedOut || !breakAllowed ? 'background:#94a3b8; color:white;' : 'background:#dbeafe; color:#1d4ed8;'">
+                                :style="!clockedIn || onBreak || clockedOut || onLeave ? 'background:#94a3b8; color:white;' : 'background:#dbeafe; color:#1d4ed8;'">
                             BREAK
                         </button>
                         <button @click="handleClockOut()"

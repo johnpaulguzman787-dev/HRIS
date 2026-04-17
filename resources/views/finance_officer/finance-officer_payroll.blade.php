@@ -1344,7 +1344,7 @@
             _printHtml(html) {
                 const w = window.open('', '_blank', 'width=700,height=860,scrollbars=yes');
                 if (!w) { this.showAlert('error', 'Pop-up Blocked', 'Please allow pop-ups to export payslips.'); return; }
-                w.document.write(html); w.document.close(); w.focus();
+                w.document.write(html); w.document.close(); w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove()); w.focus();
                 setTimeout(() => { w.print(); }, 400);
             },
 

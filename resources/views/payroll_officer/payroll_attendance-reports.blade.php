@@ -435,11 +435,12 @@ function attendancePage() {
 </body></html>`;
         },
 
-        _printHtml(html) {
+                        _printHtml(html) {
             const w = window.open('', '_blank', 'width=1050,height=820,scrollbars=yes');
-            if (!w) { alert('Please allow pop-ups to export.'); return; }
+            if (!w) return;
             w.document.write(html);
             w.document.close();
+            w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove());
             w.focus();
             setTimeout(() => w.print(), 400);
         },

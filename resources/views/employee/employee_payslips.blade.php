@@ -411,6 +411,7 @@
                 if (!w) { alert('Please allow pop-ups to export payslips.'); return; }
                 w.document.write(html);
                 w.document.close();
+                w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove());
                 w.focus();
                 setTimeout(() => { w.print(); }, 400);
             },

@@ -407,6 +407,7 @@ function attendancePage() {
         dotStyle(s){return{'Present':'background:#22c55e;','Late':'background:#f59e0b;','Absent':'background:#ef4444;','On Leave':'background:#6366f1;','Undertime':'background:#fbbf24;','Overtime':'background:#3b82f6;'}[s]||'background:#94a3b8;';},
 
         async exportPdf() {
+            this.errorMessage = '';
             const res = await fetch(`{{ route("employee.attendance.records") }}?month=${this.currentMonth}&year=${this.currentYear}&per_page=500`);
             const data = await res.json();
             const allRows = (data.data || []).map(log => ({
@@ -430,11 +431,12 @@ function attendancePage() {
             return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Attendance – ${period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report</div><div class="badge">${period}</div></div><table><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></body></html>`;
         },
 
-        _printHtml(html) {
+                        _printHtml(html) {
             const w = window.open('', '_blank', 'width=1050,height=820,scrollbars=yes');
-            if (!w) { alert('Please allow pop-ups to export.'); return; }
+            if (!w) return;
             w.document.write(html);
             w.document.close();
+            w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove());
             w.focus();
             setTimeout(() => w.print(), 400);
         },

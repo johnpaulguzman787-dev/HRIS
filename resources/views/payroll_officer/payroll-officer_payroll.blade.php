@@ -534,7 +534,9 @@
                                 <td class="text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         @canDo('Payroll', 'create')
+                                        @if($benefit->status === 'Active')
                                         <button class="btn-view" @click="openAssignBenefit({{ $benefit->id }}, '{{ addslashes($benefit->name) }}')">Assign</button>
+                                        @endif
                                         <button class="btn-view" @click="openEditBenefit({{ $benefit->id }}, '{{ addslashes($benefit->name) }}', '{{ $benefit->type }}', {{ $benefit->amount }}, '{{ $benefit->tax }}', '{{ $benefit->frequency }}', '{{ addslashes($benefit->eligibility) }}', '{{ $benefit->status }}')">Edit</button>
                                         <button class="btn-delete" @click="deleteBenefit({{ $benefit->id }})">Delete</button>
                                         @endcanDo

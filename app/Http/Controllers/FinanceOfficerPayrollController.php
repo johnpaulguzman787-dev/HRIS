@@ -45,8 +45,8 @@ class FinanceOfficerPayrollController extends Controller
 
         $payrollItems = PayrollItem::orderBy('name')->get();
         $salaryGrades = SalaryGrade::withCount('employees')->with('employees')->orderBy('grade_code')->get();
-        $benefits     = Benefit::orderBy('name')->get();
-        $employees    = Employee::whereNull('deleted_at')->orderBy('fname')->get();
+        $benefits     = Benefit::with('employees:id')->orderBy('name')->get();
+        $employees    = Employee::whereNull('deleted_at')->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->orderBy('fname')->get();
         $contrib      = DB::table('contribution_settings')->pluck('value', 'key');
         $sssRows      = DB::table('sss_contributions')->orderBy('salary_from')->get();
         $sssRowsForJs = $sssRows->map(fn($r) => [
@@ -435,6 +435,15 @@ class FinanceOfficerPayrollController extends Controller
         Benefit::findOrFail($id)->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    public function syncBenefitEmployees(Request $request, $id)
+    {
+        $benefit = Benefit::findOrFail($id);
+        $benefit->employees()->sync($request->input('employee_ids', []));
+
+        return redirect()->route('finance_officer.payroll', ['tab' => 'benefits'])
+            ->with('success', 'Benefit employees updated.');
     }
 
     // ── Contribution Settings ─────────────────────────────────────────────────

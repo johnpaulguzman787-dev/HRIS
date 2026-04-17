@@ -22,4 +22,9 @@ class Benefit extends Model
     protected $casts = [
         'amount' => 'decimal:2',
     ];
+
+    public function employees()
+    {
+        return $this->belongsToMany(Employee::class, 'employee_benefits');
+    }
 }

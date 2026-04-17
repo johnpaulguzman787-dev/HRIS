@@ -44,8 +44,8 @@ class AdminPayrollController extends Controller
 
         $payrollItems = PayrollItem::orderBy('name')->get();
         $salaryGrades = SalaryGrade::withCount('employees')->with('employees')->orderBy('grade_code')->get();
-        $benefits     = Benefit::orderBy('name')->get();
-        $employees    = Employee::whereNull('deleted_at')->orderBy('fname')->get();
+        $benefits     = Benefit::with('employees:id')->orderBy('name')->get();
+        $employees    = Employee::whereNull('deleted_at')->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->orderBy('fname')->get();
         $contrib      = DB::table('contribution_settings')->pluck('value', 'key');
         $sssRows      = DB::table('sss_contributions')->orderBy('salary_from')->get();
         $sssRowsForJs = $sssRows->map(fn($r) => [
@@ -436,6 +436,15 @@ class AdminPayrollController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function syncBenefitEmployees(Request $request, $id)
+    {
+        $benefit = Benefit::findOrFail($id);
+        $benefit->employees()->sync($request->input('employee_ids', []));
+
+        return redirect()->route('admin.payroll', ['tab' => 'benefits'])
+            ->with('success', 'Benefit employees updated.');
+    }
+
     // ── Contribution Settings ─────────────────────────────────────────────────
 
     public function updateContrib(Request $request)
@@ -661,8 +670,7 @@ class AdminPayrollController extends Controller
 
     private function generatePayslips(PayrollPeriod $period): void
     {
-        $employees     = Employee::with('salaryGrade')->whereNull('deleted_at')->get();
-        $benefitsTotal = Benefit::where('status', 'Active')->sum('amount');
+        $employees = Employee::with(['salaryGrade', 'benefits' => fn($q) => $q->where('status', 'Active')])->whereNull('deleted_at')->get();
 
         $c       = DB::table('contribution_settings')->pluck('value', 'key');
         $sssRows = DB::table('sss_contributions')->orderBy('salary_from')->get();
@@ -680,6 +688,7 @@ class AdminPayrollController extends Controller
                 ->sum('approved_hours');
             $otPay = round($otHours * $hourlyRate * 1.25, 2);
 
+            $benefitsTotal = $emp->benefits->sum('amount');
             $grossPay = $basicPay + $otPay + $benefitsTotal;
 
             // ── SSS: table-based lookup (fixed employee share per salary bracket) ──

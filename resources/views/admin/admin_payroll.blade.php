@@ -352,6 +352,7 @@
                                 <td><span class="px-3 py-1 rounded-full text-xs font-medium {{ $benefit->status==='Active' ? 'badge-active' : 'badge-inactive' }}">{{ $benefit->status }}</span></td>
                                 <td class="text-right">
                                     <div class="flex items-center justify-end gap-2">
+                                        <button class="btn-view" @click="openAssignBenefit({{ $benefit->id }}, '{{ addslashes($benefit->name) }}')">Assign</button>
                                         <button class="btn-view" @click="openEditBenefit({{ $benefit->id }}, '{{ addslashes($benefit->name) }}', '{{ $benefit->type }}', {{ $benefit->amount }}, '{{ $benefit->tax }}', '{{ $benefit->frequency }}', '{{ addslashes($benefit->eligibility) }}', '{{ $benefit->status }}')">Edit</button>
                                         <button class="btn-delete" @click="deleteBenefit({{ $benefit->id }})">Delete</button>
                                     </div>
@@ -986,6 +987,47 @@
         </div>
     </div>
 
+    {{-- Assign Benefit Employees --}}
+    <div x-show="showAssignBenefitModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showAssignBenefitModal=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-7"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold text-gray-800">Assign Employees — <span x-text="assignBenefit.name" class="text-blue-600"></span></h2>
+                <button @click="showAssignBenefitModal=false" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <form :action="`/admin/payroll/benefit/${assignBenefit.id}/assign`" method="POST" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Assigned Employees</label>
+                    <div class="flex flex-wrap gap-1.5 mb-2" x-show="benefitSelectedEmps.length > 0">
+                        <template x-for="s in benefitSelectedEmps" :key="s.id">
+                            <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                                <span x-text="s.name"></span>
+                                <button type="button" @click="benefitRemoveEmp(s.id)" class="hover:text-blue-900 font-bold ml-0.5">×</button>
+                                <input type="hidden" name="employee_ids[]" :value="s.id">
+                            </span>
+                        </template>
+                    </div>
+                    <div class="relative">
+                        <input type="text" x-model="benefitEmpSearch"
+                               @focus="benefitShowDrop=true" @blur="setTimeout(()=>{benefitShowDrop=false},200)"
+                               placeholder="Search and add employees…" class="ctrl w-full">
+                        <div x-show="benefitShowDrop && benefitFiltered.length > 0"
+                             class="absolute top-full left-0 right-0 mt-1 border border-gray-200 rounded-lg bg-white shadow-md max-h-44 overflow-y-auto z-20">
+                            <template x-for="opt in benefitFiltered" :key="opt.id">
+                                <div class="px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer" @mousedown.prevent="benefitAddEmp(opt)" x-text="opt.name"></div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" @click="showAssignBenefitModal=false" class="btn-outline">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     {{-- Add Salary Grade --}}
     <div x-show="showAddGradeModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showAddGradeModal=false">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-7"
@@ -1190,8 +1232,9 @@
             showReleaseConfirm:       false,
             showAddItemModal:     false,
             showEditItemModal:    false,
-            showAddBenefitModal:  false,
-            showEditBenefitModal: false,
+            showAddBenefitModal:    false,
+            showEditBenefitModal:   false,
+            showAssignBenefitModal: false,
             showAddGradeModal:    false,
             showEditGradeModal:   false,
             showEditContribModal: false,
@@ -1206,7 +1249,10 @@
             editPayslip: {},
 
             editItem:    { id: null, name: '', multiplier: '', type: '', basis: '', status: '' },
-            editBenefit: { id: null, name: '', type: '', amount: '', tax: '', frequency: '', eligibility: '', status: '' },
+            editBenefit:   { id: null, name: '', type: '', amount: '', tax: '', frequency: '', eligibility: '', status: '' },
+            assignBenefit: { id: null, name: '' },
+            assignedBenefitEmpMap: @json($benefits->mapWithKeys(fn($b) => [$b->id => $b->employees->pluck('id')->toArray()])),
+            benefitSelectedEmps: [], benefitEmpSearch: '', benefitShowDrop: false,
             editGrade:   { id: null, gradeCode: '', levelName: '', monthlySalary: 0 },
 
             gradeSelectedEmps: [], gradeEmpSearch: '', gradeShowDrop: false,
@@ -1230,6 +1276,13 @@
                     !this.gradeSelectedEmps.find(s => s.id === e.id) &&
                     !takenIds.includes(e.id) &&
                     e.name.toLowerCase().includes(this.gradeEmpSearch.toLowerCase())
+                );
+            },
+
+            get benefitFiltered() {
+                return this.allEmps.filter(e =>
+                    !this.benefitSelectedEmps.find(s => s.id === e.id) &&
+                    e.name.toLowerCase().includes(this.benefitEmpSearch.toLowerCase())
                 );
             },
 
@@ -1350,6 +1403,15 @@
             // ── Grade helpers ──
             gradeAddEmp(emp) { this.gradeSelectedEmps.push(emp); this.gradeEmpSearch = ''; this.gradeShowDrop = false; },
             gradeRemoveEmp(id) { this.gradeSelectedEmps = this.gradeSelectedEmps.filter(e => e.id !== id); },
+            benefitAddEmp(emp) { this.benefitSelectedEmps.push(emp); this.benefitEmpSearch = ''; this.benefitShowDrop = false; },
+            benefitRemoveEmp(id) { this.benefitSelectedEmps = this.benefitSelectedEmps.filter(e => e.id !== id); },
+            openAssignBenefit(id, name) {
+                this.assignBenefit = { id, name };
+                const assignedIds = this.assignedBenefitEmpMap[id] || [];
+                this.benefitSelectedEmps = this.allEmps.filter(e => assignedIds.includes(e.id));
+                this.benefitEmpSearch = ''; this.benefitShowDrop = false;
+                this.showAssignBenefitModal = true;
+            },
             openAddGrade() {
                 this.gradeSelectedEmps = []; this.gradeEmpSearch = '';
                 this.addGradeCode = ''; this.addGradeCodeError = '';

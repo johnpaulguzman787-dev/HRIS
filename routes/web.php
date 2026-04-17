@@ -331,6 +331,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/payroll/benefit/{id}/deactivate',[\App\Http\Controllers\AdminPayrollController::class, 'deactivateBenefit'])->name('admin.payroll.benefit.deactivate');
     Route::delete('/admin/payroll/benefit/{id}/delete',  [\App\Http\Controllers\AdminPayrollController::class, 'deleteBenefit'])->name('admin.payroll.benefit.delete');
     Route::get('/admin/payroll/benefit/{id}',            [\App\Http\Controllers\AdminPayrollController::class, 'getBenefit'])->name('admin.payroll.benefit.get');
+    Route::post('/admin/payroll/benefit/{id}/assign',    [\App\Http\Controllers\AdminPayrollController::class, 'syncBenefitEmployees'])->name('admin.payroll.benefit.assign');
 
     // ── Admin Contribution Settings ──────────────────────────────────────────
     Route::post('/admin/payroll/contrib/update',         [\App\Http\Controllers\AdminPayrollController::class, 'updateContrib'])->name('admin.payroll.contrib.update');
@@ -417,6 +418,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/payroll_officer/payroll/benefit/{id}/deactivate', [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'deactivateBenefit'])->name('payroll_officer.payroll.benefit.deactivate');
     Route::delete('/payroll_officer/payroll/benefit/{id}/delete',   [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'deleteBenefit'])->name('payroll_officer.payroll.benefit.delete');
     Route::get('/payroll_officer/payroll/benefit/{id}',             [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'getBenefit'])->name('payroll_officer.payroll.benefit.get');
+    Route::post('/payroll_officer/payroll/benefit/{id}/assign',     [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'syncBenefitEmployees'])->name('payroll_officer.payroll.benefit.assign');
 
     // ══════════════════════════════════════════════════════════════════════
     // ── FINANCE OFFICER ROUTES ─────────────────────────────────────────────
@@ -454,6 +456,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/finance_officer/payroll/benefit/{id}/deactivate',[\App\Http\Controllers\FinanceOfficerPayrollController::class, 'deactivateBenefit'])->name('finance_officer.payroll.benefit.deactivate');
     Route::delete('/finance_officer/payroll/benefit/{id}/delete',  [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'deleteBenefit'])->name('finance_officer.payroll.benefit.delete');
     Route::get('/finance_officer/payroll/benefit/{id}',            [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'getBenefit'])->name('finance_officer.payroll.benefit.get');
+    Route::post('/finance_officer/payroll/benefit/{id}/assign',    [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'syncBenefitEmployees'])->name('finance_officer.payroll.benefit.assign');
 
     // ── Finance Officer Contributions ─────────────────────────────────────────
     Route::post('/finance_officer/payroll/contrib/update',         [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'updateContrib'])->name('finance_officer.payroll.contrib.update');

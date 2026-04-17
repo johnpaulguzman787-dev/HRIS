@@ -39,13 +39,12 @@ class LoginController extends Controller
             ])->withInput();
         }
 
-        // Step 3: Successful login
-       // Step 3: Check email verification
+        // Step 3: Check email verification
 if (!Auth::user()->hasVerifiedEmail()) {
     Auth::logout();
     return back()->withErrors([
         'email' => 'Your account is not yet verified. Please check your email for the verification link.',
-    ])->withInput();
+    ])->with('unverified_email', $request->email)->withInput();
 }
 
 // Step 4: Successful login
@@ -76,6 +75,24 @@ return $this->redirectToRole(Auth::user());
                     'email' => 'Your account role is not recognized.'
                 ]);
         }
+    }
+
+    // Resend verification email from login page
+    public function resendVerificationFromLogin(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return back()->withErrors(['email' => 'No account found with this email.'])->withInput();
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return back()->with('resend_success', 'Your email is already verified. You can log in now.');
+        }
+
+        $user->sendEmailVerificationNotification();
+        return back()->with('resend_success', 'Verification email resent! Please check your inbox.')->withInput();
     }
 
     // Logout

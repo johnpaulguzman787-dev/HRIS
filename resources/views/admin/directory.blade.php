@@ -20,6 +20,7 @@
         this.$watch('searchQuery', () => { this.currentPage = 1; });
         this.$watch('selectedDepartments', () => { this.currentPage = 1; });
         this.$watch('selectedSort', () => { this.currentPage = 1; });
+        this.$watch('verificationFilter', () => { this.currentPage = 1; });
     },
     mobileMenuOpen: false,
     showAddEmployee: false,
@@ -36,6 +37,7 @@
     searchQuery: '',
     selectedDepartments: [],
     selectedSort: '',
+    verificationFilter: '',
     currentPage: 1,
     perPage: 10,
 
@@ -325,6 +327,11 @@
                 this.selectedDepartments.includes(emp.department)
             );
         }
+        if (this.verificationFilter === 'verified') {
+            result = result.filter(e => e.is_verified);
+        } else if (this.verificationFilter === 'unverified') {
+            result = result.filter(e => !e.is_verified);
+        }
         if (this.selectedSort) {
             result.sort((a, b) => {
                 switch(this.selectedSort) {
@@ -344,7 +351,7 @@
         return this.filteredEmployees.slice(start, start + this.perPage);
     },
     get resultCount() { return this.filteredEmployees.length; },
-    get activeFilterCount() { return this.selectedDepartments.length + (this.selectedSort ? 1 : 0); },
+    get activeFilterCount() { return this.selectedDepartments.length + (this.selectedSort ? 1 : 0) + (this.verificationFilter ? 1 : 0); },
     resetDepartmentForm() { this.departmentForm = { name: '', jobTitles: [], newJobTitle: '' }; },
 
     async saveDepartment() {
@@ -401,6 +408,27 @@
         }
     },
 
+    isResendingVerification: false,
+
+    async resendVerificationEmail() {
+        if (!this.selectedEmployee) return;
+        this.isResendingVerification = true;
+        try {
+            const res = await fetch(`/employees/${this.selectedEmployee.id}/resend-verification`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                }
+            });
+            const data = await res.json();
+            this.showToast(data.message || (res.ok ? 'Verification email sent!' : 'Failed to send.'), res.ok ? 'success' : 'error');
+        } catch(e) {
+            this.showToast('Network error. Please try again.', 'error');
+        }
+        this.isResendingVerification = false;
+    },
+
     viewEmployee(employee) {
         this.selectedEmployee = {
             id:                employee.id,
@@ -421,6 +449,7 @@
             address:           employee.address || '',
             employment_type:   employee.employment_type || 'Full-time',
             employment_status: employee.employment_status || 'Active',
+            is_verified:       employee.is_verified ?? true,
         };
         this.isEditMode = false;
         this.empTab = 'basic';
@@ -476,12 +505,14 @@
                 if (empIdx !== -1) {
                     const newJobTitle = this.jobTitles.find(j => j.id == this.selectedEmployee.job_title_id);
                     const dept = this.departments.find(d => d.id == this.selectedEmployee.department_id);
+                    const emailChanged = this.employees[empIdx].email !== this.selectedEmployee.email;
                     this.employees[empIdx].first_name   = this.selectedEmployee.first_name;
                     this.employees[empIdx].last_name    = this.selectedEmployee.last_name;
                     this.employees[empIdx].mi           = this.selectedEmployee.mi;
                     this.employees[empIdx].suffix       = this.selectedEmployee.suffix;
                     this.employees[empIdx].email        = this.selectedEmployee.email;
                     this.employees[empIdx].contact_no   = this.selectedEmployee.contact_number;
+                    if (emailChanged) { this.employees[empIdx].is_verified = false; this.selectedEmployee.is_verified = false; }
                     this.employees[empIdx].department_id = this.selectedEmployee.department_id;
                     this.employees[empIdx].department   = dept ? dept.name : this.employees[empIdx].department;
                     this.employees[empIdx].job_title_id = this.selectedEmployee.job_title_id;
@@ -571,30 +602,40 @@
         });
     },
 
-    async deleteDepartment(dept) {
+    deleteDepartment(dept) {
         if (dept.employees_count > 0) {
-            this.showAlert('Employees still exist in this department. Reassign their department and job titles first before deleting this department.', 'error');
+            this.showAlert('This department still has verified employees. Please reassign them to another department before deleting.', 'error');
             return;
         }
-        if (!confirm('Delete department: ' + dept.name + '?')) return;
-        try {
-            const res = await fetch(`/employees/departments/${dept.id}`, {
-                method: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'), 'Accept': 'application/json' }
-            });
-            const data = await res.json();
-            if (res.ok && data.success) {
-                this.departments = this.departments.filter(d => d.id !== dept.id);
-                this.jobTitles   = this.jobTitles.filter(j => !dept.job_titles.some(jt => jt.id === j.id));
-                this.showAlert('Department deleted successfully.', 'success');
-            } else {
-                this.showAlert(data.message || 'Could not delete department.', 'error');
-            }
-        } catch (e) { this.showAlert('Network error. Please try again.', 'error'); }
+        this.showConfirm('Delete department: ' + dept.name + '? Any unverified employees in this department will have their department cleared.', async () => {
+            try {
+                const res = await fetch(`/employees/departments/${dept.id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'), 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.departments = this.departments.filter(d => d.id !== dept.id);
+                    this.jobTitles   = this.jobTitles.filter(j => !dept.job_titles.some(jt => jt.id === j.id));
+                    // Clear dept from any unverified employees shown in the list
+                    this.employees.forEach(e => {
+                        if (!e.is_verified && e.department_id === dept.id) {
+                            e.department_id = null;
+                            e.department = '';
+                            e.job_title_id = null;
+                            e.job_title = '';
+                        }
+                    });
+                    this.showAlert('Department deleted successfully.', 'success');
+                } else {
+                    this.showAlert(data.message || 'Could not delete department.', 'error');
+                }
+            } catch (e) { this.showAlert('Network error. Please try again.', 'error'); }
+        });
     },
 
     clearSearch() { this.searchQuery = ''; },
-    clearFilters() { this.selectedDepartments = []; this.selectedSort = ''; },
+    clearFilters() { this.selectedDepartments = []; this.selectedSort = ''; this.verificationFilter = ''; },
     applyFilters() { this.showFilters = false; },
 
     alertModal: { show: false, message: '', type: 'success' },
@@ -1487,6 +1528,17 @@
                                             class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                                         <p x-show="isEditMode && hasError('email')" x-text="fieldError('email')" class="text-xs text-red-500 mt-1"></p>
                                         <p x-show="isEditMode && !hasError('email')" class="text-xs text-yellow-600 mt-1">⚠ Changing email will send a new verification link.</p>
+                                        <div x-show="!isEditMode && selectedEmployee && !selectedEmployee.is_verified" class="mt-2 flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                                            <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                            </svg>
+                                            <span class="text-xs text-amber-700 flex-1">Email not yet verified.</span>
+                                            <button @click="resendVerificationEmail()"
+                                                :disabled="isResendingVerification"
+                                                class="text-xs font-semibold text-blue-600 hover:text-blue-800 disabled:opacity-50 underline whitespace-nowrap"
+                                                x-text="isResendingVerification ? 'Sending...' : 'Resend Link'">
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div>
@@ -1787,6 +1839,20 @@
                                 </div>
 
                                 <div>
+                                    <p class="text-xs font-medium text-gray-400 mb-2">Verification</p>
+                                    <div class="space-y-1">
+                                        <label class="flex items-center gap-3 py-1 cursor-pointer">
+                                            <input type="radio" name="verif" value="verified" x-model="verificationFilter" class="w-4 h-4 border-gray-300 text-blue-600 focus:ring-0 focus:ring-offset-0">
+                                            <span class="text-sm text-gray-700">Verified</span>
+                                        </label>
+                                        <label class="flex items-center gap-3 py-1 cursor-pointer">
+                                            <input type="radio" name="verif" value="unverified" x-model="verificationFilter" class="w-4 h-4 border-gray-300 text-blue-600 focus:ring-0 focus:ring-offset-0">
+                                            <span class="text-sm text-gray-700">Unverified</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div>
                                     <p class="text-xs font-medium text-gray-400 mb-2">Sort</p>
                                     <div class="space-y-1">
                                         <label class="flex items-center gap-3 py-1 cursor-pointer">
@@ -1838,7 +1904,7 @@
             </div>
 
             <!-- Active Filters -->
-            <div x-show="selectedDepartments.length > 0 || selectedSort" class="mb-4 flex flex-wrap items-center gap-2 mx-4 sm:mx-8">
+            <div x-show="selectedDepartments.length > 0 || selectedSort || verificationFilter" class="mb-4 flex flex-wrap items-center gap-2 mx-4 sm:mx-8">
                 <span class="text-xs text-gray-500">Active filters:</span>
                 <template x-for="dept in selectedDepartments" :key="dept">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
@@ -1851,6 +1917,12 @@
                 <span x-show="selectedSort" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
                     <span>Sort: <span x-text="selectedSort"></span></span>
                     <button @click="selectedSort = ''" class="ml-1.5 hover:text-blue-900">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </span>
+                <span x-show="verificationFilter" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                    <span x-text="verificationFilter === 'verified' ? 'Verified only' : 'Unverified only'"></span>
+                    <button @click="verificationFilter = ''" class="ml-1.5 hover:text-blue-900">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </span>
@@ -1886,7 +1958,10 @@
                                                 <span x-text="employee.avatar"></span>
                                             </div>
                                             <div class="min-w-0">
-                                                <p class="font-medium text-gray-800 group-hover:text-blue-600 transition-colors duration-300 truncate" x-text="employee.name"></p>
+                                                <div class="flex items-center gap-1.5">
+                                                    <p class="font-medium text-gray-800 group-hover:text-blue-600 transition-colors duration-300 truncate" x-text="employee.name"></p>
+                                                    <span x-show="!employee.is_verified" class="flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700">Unverified</span>
+                                                </div>
                                                 <p class="text-xs text-gray-500 truncate" x-text="employee.email"></p>
                                             </div>
                                         </div>
@@ -1932,7 +2007,10 @@
                                 <div class="flex-1">
                                     <div class="flex items-start justify-between flex-wrap gap-2">
                                         <div class="flex-1">
-                                            <p class="font-medium text-gray-800" x-text="employee.name"></p>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <p class="font-medium text-gray-800" x-text="employee.name"></p>
+                                                <span x-show="!employee.is_verified" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700">Unverified</span>
+                                            </div>
                                             <p class="text-xs text-gray-500" x-text="employee.email"></p>
                                         </div>
                                         <span class="px-2 py-1 text-xs font-medium rounded-full"

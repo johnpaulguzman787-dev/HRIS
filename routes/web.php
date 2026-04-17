@@ -37,6 +37,7 @@ Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
 // Login
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
+Route::post('/login/resend-verification', [LoginController::class, 'resendVerificationFromLogin'])->name('login.resend_verification');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Forgot Password
@@ -115,6 +116,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/documents/{docId}', [AdminEmployeeController::class, 'deleteDocument'])->name('documents.destroy');
         Route::put('/{id}', [AdminEmployeeController::class, 'update'])->name('update');
         Route::put('/job-title/{id}', [AdminEmployeeController::class, 'updateJobTitle'])->name('job_title.update');
+        Route::post('/{id}/resend-verification', [AdminEmployeeController::class, 'resendVerification'])->name('resend_verification')->whereNumber('id');
     });
 
     // ── HR EMPLOYEE ROUTES ─────────────────────────────────────────────────

@@ -25,7 +25,7 @@ $departments = Department::withCount(['employees' => fn($q) => $q->whereHas('use
 $jobTitles = \App\Models\JobTitle::all();
 
     $employees = Employee::with(['department', 'jobTitle', 'user'])
-    ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))
+    ->whereHas('user')
     ->get()
         ->map(function($e) {
             return [
@@ -51,6 +51,7 @@ $jobTitles = \App\Models\JobTitle::all();
 'address'           => $e->address ?? '',
 'employment_type'   => $e->employment_type ?? '',
 'employment_status' => $e->employment_status ?? '',
+'is_verified'       => !is_null($e->user->email_verified_at ?? null),
 ];
         });
 
@@ -367,6 +368,23 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
         }
     }
 
+    public function resendVerification($id)
+    {
+        $employee = Employee::with('user')->findOrFail($id);
+
+        if (!$employee->user) {
+            return response()->json(['success' => false, 'message' => 'No user account found.'], 404);
+        }
+
+        if ($employee->user->hasVerifiedEmail()) {
+            return response()->json(['success' => false, 'message' => 'Email is already verified.'], 422);
+        }
+
+        $employee->user->sendEmailVerificationNotification();
+
+        return response()->json(['success' => true, 'message' => 'Verification email sent to ' . $employee->user->email]);
+    }
+
     public function profile()
     {
         $user = auth()->user();
@@ -394,10 +412,17 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
             $message = null;
             DB::transaction(function () use ($id, &$message) {
                 $department = \App\Models\Department::lockForUpdate()->findOrFail($id);
-                if ($department->employees()->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->count() > 0) {
-                    $message = 'Cannot delete a department that has employees.';
+                $verifiedCount = $department->employees()
+                    ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))
+                    ->count();
+                if ($verifiedCount > 0) {
+                    $message = 'Cannot delete a department that still has active employees.';
                     return;
                 }
+                // Null out department/job title for any unverified employees in this dept
+                $department->employees()
+                    ->whereHas('user', fn($q) => $q->whereNull('email_verified_at'))
+                    ->update(['department_id' => null, 'job_title_id' => null]);
                 \App\Models\JobTitle::where('department_id', $department->id)->delete();
                 $department->delete();
             });

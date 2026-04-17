@@ -320,8 +320,8 @@
                         <select class="ctrl" x-model="periodStatusFilter">
                             <option value="">Status</option>
                             <option value="Pending">Pending</option>
-                            <option value="Completed">Completed</option>
                             <option value="Submitted">Submitted</option>
+                            <option value="Released">Released</option>
                         </select>
                         <select class="ctrl" x-model="periodYearFilter">
                             @for($y = now()->year; $y >= now()->year - 3; $y--)
@@ -360,7 +360,7 @@
                                         @if($period->status==='Pending') badge-pending
                                         @elseif($period->status==='Released') badge-released
                                         @elseif($period->status==='Submitted') badge-submitted
-                                        @else badge-submitted @endif">
+                                        @else badge-released @endif">
                                         {{ $period->status }}
                                     </span>
                                 </td>
@@ -831,10 +831,12 @@
                             <div>
                                 <div class="flex justify-between mb-1">
                                     <span class="text-sm text-gray-500">Payroll Release</span>
-                                    <span class="text-sm font-medium text-gray-700">0/1</span>
+                                    <span class="text-sm font-medium text-gray-700"
+                                        x-text="viewPeriod.status === 'Released' ? '1/1' : '0/1'">
+                                    </span>
                                 </div>
                                 <div class="progress-track">
-                                    <div class="progress-fill" style="width:0%"></div>
+                                    <div class="progress-fill" :style="'width:' + (viewPeriod.status === 'Released' ? 100 : 0) + '%'"></div>
                                 </div>
                             </div>
                         </div>
@@ -1831,7 +1833,7 @@
                 }
 
                 this.pvTotalCount      = this.pvPayslips.length;
-                this.pvSubmittedCount  = this.pvPayslips.filter(p => p.status === 'Submitted').length;
+                this.pvSubmittedCount  = this.pvPayslips.filter(p => p.status === 'Submitted' || p.status === 'Released').length;
                 this.pvGrossPayroll    = this.pvPayslips.reduce((s, p) => s + p.grossPay, 0);
                 this.pvTotalDeductions = this.pvPayslips.reduce((s, p) => s + p.totalDeductions, 0);
                 this.pvNetPayroll      = this.pvPayslips.reduce((s, p) => s + p.netPay, 0);

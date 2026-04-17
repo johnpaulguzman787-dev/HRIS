@@ -164,17 +164,13 @@
 
                 {{-- Toolbar --}}
                 <div class="flex items-center justify-between gap-3 mb-4">
-                    <button class="btn-primary" @click="showCreatePeriod=true">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        Create Payroll Period
-                    </button>
                     <div class="search-wrap flex-1 max-w-xs">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>
                         <input type="text" placeholder="Search" class="ctrl w-full" x-model="periodSearch">
                     </div>
                     <div class="flex items-center gap-3">
                         <select class="ctrl" x-model="periodStatusFilter">
-                            <option value="">All Status</option>
+                            <option value="">Status</option>
                             <option value="Pending">Pending</option>
                             <option value="Submitted">Submitted</option>
                             <option value="Released">Released</option>
@@ -184,6 +180,10 @@
                             <option value="{{ $y }}">{{ $y }}</option>
                             @endfor
                         </select>
+                        <button class="btn-primary" @click="showCreatePeriod=true">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Create Payroll Period
+                        </button>
                     </div>
                 </div>
 

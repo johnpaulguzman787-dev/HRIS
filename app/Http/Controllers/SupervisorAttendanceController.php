@@ -436,7 +436,7 @@ class SupervisorAttendanceController extends Controller
             }
 
             $records  = $query->paginate(15);
-            $totalEmp = Employee::where('id', '!=', $authEmpId)->where('department_id', $authDeptId)->count();
+            $totalEmp = Employee::where('id', '!=', $authEmpId)->where('department_id', $authDeptId)->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->count();
 
             $presentCount = AttendanceLog::whereDate('attendance_date', $date)->whereIn('status', ['present', 'late', 'overtime', 'undertime'])->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId)->where('department_id', $authDeptId))->count();
             $lateCount    = AttendanceLog::whereDate('attendance_date', $date)->where('late_minutes', '>', 0)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId)->where('department_id', $authDeptId))->count();
@@ -489,7 +489,7 @@ class SupervisorAttendanceController extends Controller
         });
 
         $date         = now()->toDateString();
-        $totalEmp     = Employee::where('id', '!=', $authEmpId)->where('department_id', $authDeptId)->count();
+        $totalEmp     = Employee::where('id', '!=', $authEmpId)->where('department_id', $authDeptId)->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->count();
         $presentCount = AttendanceLog::whereDate('attendance_date', $date)->whereIn('status', ['present', 'late', 'overtime', 'undertime'])->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId)->where('department_id', $authDeptId))->count();
         $lateCount    = AttendanceLog::whereDate('attendance_date', $date)->where('late_minutes', '>', 0)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId)->where('department_id', $authDeptId))->count();
         $absentCount  = $totalEmp - $presentCount;
@@ -532,6 +532,7 @@ class SupervisorAttendanceController extends Controller
         $employees = Employee::with('department')
             ->where('department_id', $authDeptId)
             ->where('employment_status', 'Active')
+            ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))
             ->get();
 
         $allShifts = EmployeeShift::with('shift')
@@ -626,6 +627,7 @@ class SupervisorAttendanceController extends Controller
         $employees    = Employee::with('department')
             ->where('department_id', $authDeptId)
             ->where('employment_status', 'Active')
+            ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))
             ->orderBy('fname')
             ->get();
 
@@ -895,6 +897,7 @@ class SupervisorAttendanceController extends Controller
 
         $employees = Employee::where('department_id', $authDeptId)
             ->where('employment_status', 'Active')
+            ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))
             ->get(['id', 'fname', 'lname']);
 
         return response()->json($employees);

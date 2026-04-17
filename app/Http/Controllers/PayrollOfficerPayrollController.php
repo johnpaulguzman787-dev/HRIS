@@ -771,6 +771,8 @@ class PayrollOfficerPayrollController extends Controller
 
         $records = DB::table('payslips as ps')
             ->join('employees as e', 'ps.employee_id', '=', 'e.id')
+            ->join('users as u', 'e.user_id', '=', 'u.id')
+            ->whereNotNull('u.email_verified_at')
             ->where('ps.payroll_period_id', $id)
             ->select(
                 'e.fname',

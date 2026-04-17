@@ -467,10 +467,10 @@ class AdminAttendanceController extends Controller
             }
 
             $records      = $query->paginate(15);
-            $totalEmp     = Employee::where('id', '!=', $authEmpId)->count();
+            $totalEmp     = Employee::where('id', '!=', $authEmpId)->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->count();
             $presentCount = AttendanceLog::whereDate('attendance_date', $date)
                 ->whereIn('status', ['present', 'late', 'overtime', 'undertime'])
-                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId)->whereHas('user', fn($q2) => $q2->whereNotNull('email_verified_at')))
                 ->count();
             $lateCount    = AttendanceLog::whereDate('attendance_date', $date)
                 ->where('late_minutes', '>', 0)
@@ -515,7 +515,8 @@ class AdminAttendanceController extends Controller
         [$year, $month] = explode('-', $selectedMonth);
 
         $empQuery = Employee::with('department')
-            ->where('id', '!=', $authEmpId);
+            ->where('id', '!=', $authEmpId)
+            ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'));
 
         if ($request->filled('department')) {
             $empQuery->where('department_id', $request->department);
@@ -545,7 +546,7 @@ class AdminAttendanceController extends Controller
 
         // stat cards for monthly view use today's date
         $date         = now()->toDateString();
-        $totalEmp     = Employee::where('id', '!=', $authEmpId)->count();
+        $totalEmp     = Employee::where('id', '!=', $authEmpId)->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->count();
         $presentCount = AttendanceLog::whereDate('attendance_date', $date)
             ->whereIn('status', ['present', 'late', 'overtime', 'undertime'])
             ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
@@ -1193,6 +1194,7 @@ public function getLeaveRequest($id)
 
         $employees = Employee::with('department')
             ->where('employment_status', 'Active')
+            ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))
             ->get();
 
         $allShifts = EmployeeShift::with('shift')
@@ -1312,6 +1314,7 @@ public function getLeaveRequest($id)
 
         $employees = Employee::where('department_id', $request->department_id)
             ->where('employment_status', 'Active')
+            ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))
             ->get(['id', 'fname', 'lname']);
 
         return response()->json($employees);

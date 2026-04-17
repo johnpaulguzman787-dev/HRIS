@@ -441,7 +441,7 @@ class HRAttendanceController extends Controller
             }
 
             $records      = $query->paginate(15);
-            $totalEmp     = Employee::where('id', '!=', $authEmpId)->count();
+            $totalEmp     = Employee::where('id', '!=', $authEmpId)->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->count();
             $presentCount = AttendanceLog::whereDate('attendance_date', $date)->whereIn('status', ['present', 'late', 'overtime', 'undertime'])->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->count();
             $lateCount    = AttendanceLog::whereDate('attendance_date', $date)->where('late_minutes', '>', 0)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->count();
             $absentCount  = $totalEmp - $presentCount;
@@ -468,7 +468,7 @@ class HRAttendanceController extends Controller
         $selectedMonth = $request->get('month', now()->format('Y-m'));
         [$year, $month] = explode('-', $selectedMonth);
 
-        $empQuery = Employee::with('department')->where('id', '!=', $authEmpId);
+        $empQuery = Employee::with('department')->where('id', '!=', $authEmpId)->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'));
         if ($request->filled('department')) {
             $empQuery->where('department_id', $request->department);
         }
@@ -495,7 +495,7 @@ class HRAttendanceController extends Controller
         });
 
         $date         = now()->toDateString();
-        $totalEmp     = Employee::where('id', '!=', $authEmpId)->count();
+        $totalEmp     = Employee::where('id', '!=', $authEmpId)->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->count();
         $presentCount = AttendanceLog::whereDate('attendance_date', $date)->whereIn('status', ['present', 'late', 'overtime', 'undertime'])->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->count();
         $lateCount    = AttendanceLog::whereDate('attendance_date', $date)->where('late_minutes', '>', 0)->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))->count();
         $absentCount  = $totalEmp - $presentCount;
@@ -534,6 +534,7 @@ class HRAttendanceController extends Controller
 
         $employees = Employee::with('department')
             ->where('employment_status', 'Active')
+            ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))
             ->get();
 
         $allShifts = EmployeeShift::with('shift')
@@ -657,6 +658,7 @@ class HRAttendanceController extends Controller
 
         $employees = Employee::where('department_id', $request->department_id)
             ->where('employment_status', 'Active')
+            ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))
             ->get(['id', 'fname', 'lname']);
 
         return response()->json($employees);
@@ -875,7 +877,7 @@ class HRAttendanceController extends Controller
     {
         $activeTab   = $request->get('tab', 'my-leave');
         $departments = Department::orderBy('name')->get();
-        $employees   = Employee::with('department')->orderBy('fname')->get();
+        $employees   = Employee::with('department')->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->orderBy('fname')->get();
         $currentYear = (int) $request->get('year', now()->year);
         $leaveTypes  = LeaveType::where('is_active', true)->orderBy('name')->get();
 

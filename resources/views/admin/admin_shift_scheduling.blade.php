@@ -870,8 +870,8 @@
                             <div><div style="font-size:11px;color:#9ca3af;">Shift</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.shift_name ?? '—'"></div></div>
                             <div><div style="font-size:11px;color:#9ca3af;">Work Setup</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.work_setup ? currentInfo.work_setup.toUpperCase() : '—'"></div></div>
                             <div><div style="font-size:11px;color:#9ca3af;">Day Off</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.days_off ? JSON.parse(currentInfo.days_off).join(', ') : '—'"></div></div>
-                            <div><div style="font-size:11px;color:#9ca3af;">Effective From</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.effective_date ?? '—'"></div></div>
-                            <div><div style="font-size:11px;color:#9ca3af;">Effective Until</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.end_date ?? 'Ongoing'"></div></div>
+                            <div><div style="font-size:11px;color:#9ca3af;">Effective From</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.effective_date ? new Date(currentInfo.effective_date).toLocaleDateString('en-PH', {year:'numeric',month:'long',day:'numeric'}) : '—'"></div></div>
+                            <div><div style="font-size:11px;color:#9ca3af;">Effective Until</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.end_date ? new Date(currentInfo.end_date).toLocaleDateString('en-PH', {year:'numeric',month:'long',day:'numeric'}) : 'Ongoing'"></div></div>
                             <div><div style="font-size:11px;color:#9ca3af;">Schedule</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.schedule ?? '—'"></div></div>
                         </div>
                     </div>

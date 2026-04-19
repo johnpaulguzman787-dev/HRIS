@@ -18,13 +18,10 @@ class LoginController extends Controller
     // Handle login
     public function login(Request $request)
     {
-        // Validate inputs
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        // Step 1: Validate email only first
+        $request->validate(['email' => 'required|email']);
 
-        // Step 1: Check if email exists
+        // Step 2: Check if email exists
         $user = User::where('email', $request->email)->first();
         if (!$user) {
             return back()->withErrors([
@@ -32,14 +29,16 @@ class LoginController extends Controller
             ])->withInput();
         }
 
-        // Step 2: Check email verification before password
-        if (!$user->hasVerifiedEmail()) {
+        // Step 3: Check verification before asking for password
+        if (is_null($user->email_verified_at)) {
             return back()->withErrors([
                 'email' => 'Your account is not yet verified. Please check your email for the verification link.',
             ])->with('unverified_email', $request->email)->withInput();
         }
 
-        // Step 3: Attempt login
+        // Step 4: Now validate password and attempt login
+        $request->validate(['password' => 'required']);
+
         if (!Auth::attempt($request->only('email', 'password'))) {
             return back()->withErrors([
                 'password' => 'Incorrect password.',

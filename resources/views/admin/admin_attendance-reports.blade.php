@@ -18,7 +18,7 @@
 <head>
     <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>My Attendance – MEDISOURCE Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -55,54 +55,119 @@
         .clock-btn:disabled { opacity:0.6; cursor:not-allowed; }
         .setup-btn { transition: all 0.2s ease; }
         ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:#f1f5f9} ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+        
+        /* Mobile responsiveness */
+        @media (max-width: 1024px) {
+            .desktop-sidebar { display: none !important; }
+            .main-content-margin { margin-left: 0 !important; }
+            .grid-cols-6 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.75rem !important; }
+            .stat-card { padding: 0.75rem !important; }
+            .stat-card div p:first-child { font-size: 1.5rem !important; }
+            .p-6 { padding: 1rem !important; }
+            header .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+            header h1 { font-size: 1.2rem !important; }
+            .overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { min-width: 640px; }
+            th, td { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+            .border-t.flex.items-center.justify-between { flex-direction: column; gap: 0.75rem; align-items: center; }
+            .inline-flex.items-center.gap-1\\.5 { padding: 0.25rem 0.6rem !important; font-size: 0.7rem !important; }
+            header.sticky { margin-left: 0.75rem; margin-right: 0.75rem; margin-top: 0.75rem; }
+        }
+        
+        @media (max-width: 480px) {
+            .stat-card div p:first-child { font-size: 1.25rem !important; }
+        }
     </style>
 </head>
-<body class="bg-gray-100" x-data="attendancePage()" x-init="init()">
+<body class="bg-gray-100" x-data="attendancePage()" x-init="init()" style="overflow-x: hidden;">
 
-{{-- ═══════════ ADMIN SIDEBAR ═══════════ --}}
-@include('admin.admin_sidebar')
-{{-- ═══════════ MAIN CONTENT ═══════════ --}}
-<div id="main-content" class="min-h-screen bg-gray-100"
-     :style="sidebarCollapsed ? 'margin-left:5rem' : 'margin-left:16rem'"
-     style="transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1);">
+<div class="flex h-screen overflow-hidden bg-gray-100">
 
-   {{-- Blue Header --}}
-<header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
-    <div class="flex items-center justify-between px-8 py-4">
-        <h1 class="text-white font-bold text-xl">My Attendance</h1>
-        <x-notification-bell />
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- DESKTOP SIDEBAR (hidden on mobile)      --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div class="hidden lg:block desktop-sidebar">
+        @include('admin.admin_sidebar')
     </div>
-</header>
 
-    <div class="p-6 space-y-5">
-
-        {{-- STAT CARDS --}}
-        <div class="grid grid-cols-6 gap-3 mb-6">
-            <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8f0d8; animation-delay:0.08s;">
-                <p class="text-xs font-bold uppercase tracking-wider" style="color:#14532d;">Total Days Present</p>
-                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#2563eb;">{{ $stats['present'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#15803d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-            </div>
-            <div class="stat-card p-4 flex flex-col justify-between" style="background:#fde8c8; animation-delay:0.11s;">
-                <p class="text-xs font-bold uppercase tracking-wider" style="color:#92400e;">Late</p>
-                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['late'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#b45309;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-            </div>
-            <div class="stat-card p-4 flex flex-col justify-between" style="background:#fbc8c8; animation-delay:0.14s;">
-                <p class="text-xs font-bold uppercase tracking-wider" style="color:#991b1b;">Absent</p>
-                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['absent'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#dc2626;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-            </div>
-            <div class="stat-card p-4 flex flex-col justify-between" style="background:#f9c8e8; animation-delay:0.17s;">
-                <p class="text-xs font-bold uppercase tracking-wider" style="color:#831843;">Leave</p>
-                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['on_leave'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#be185d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-            </div>
-            <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.20s;">
-                <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Overtime</p>
-                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['overtime'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-            </div>
-            <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.23s;">
-                <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Undertime</p>
-                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['undertime'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-            </div>
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- MOBILE SLIDE-OUT DRAWER                 --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 lg:hidden"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+            @include('admin.admin_sidebar')
         </div>
+    </div>
+
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- MAIN CONTENT                            --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div class="flex-1 overflow-y-auto min-h-screen w-full main-content-margin"
+        :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
+        style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
+
+        {{-- Blue Header with Hamburger on mobile --}}
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
+            <div class="flex items-center justify-between px-8 py-4">
+                <div class="flex items-center gap-3">
+                    {{-- Hamburger button (mobile only) --}}
+                    <button @click="mobileMenuOpen = true"
+                            class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h1 class="text-white font-bold text-xl">My Attendance</h1>
+                </div>
+                <x-notification-bell />
+            </div>
+        </header>
+
+        <div class="p-6 space-y-5">
+
+            {{-- STAT CARDS --}}
+            <div class="grid grid-cols-6 gap-3 mb-6">
+                <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8f0d8; animation-delay:0.08s;">
+                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#14532d;">Total Days Present</p>
+                    <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#2563eb;">{{ $stats['present'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#15803d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                </div>
+                <div class="stat-card p-4 flex flex-col justify-between" style="background:#fde8c8; animation-delay:0.11s;">
+                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#92400e;">Late</p>
+                    <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['late'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#b45309;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                </div>
+                <div class="stat-card p-4 flex flex-col justify-between" style="background:#fbc8c8; animation-delay:0.14s;">
+                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#991b1b;">Absent</p>
+                    <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['absent'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#dc2626;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                </div>
+                <div class="stat-card p-4 flex flex-col justify-between" style="background:#f9c8e8; animation-delay:0.17s;">
+                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#831843;">Leave</p>
+                    <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['on_leave'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#be185d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                </div>
+                <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.20s;">
+                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Overtime</p>
+                    <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['overtime'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                </div>
+                <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.23s;">
+                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Undertime</p>
+                    <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['undertime'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                </div>
+            </div>
 
         {{-- TABLE --}}
         <div class="anim-up bg-white rounded-2xl overflow-hidden" style="animation-delay:0.26s; box-shadow:0 1px 12px rgba(0,0,0,0.07);">
@@ -200,6 +265,7 @@
             </div>
         </div>
 
+        </div>
     </div>
 </div>
 
@@ -208,6 +274,7 @@
 function attendancePage() {
     return {
         sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+        mobileMenuOpen: false,
         workSetup: '{{ $todayLog?->work_setup ?? ($employeeShift?->work_setup ?? "wfh") }}',
         assignedShiftId: {{ $employeeShift?->shift_id ?? 'null' }},
         breakAllowed: {{ $employeeShift?->shift?->break_schedule ? 'true' : 'false' }},
@@ -250,7 +317,7 @@ function attendancePage() {
             await this.loadRecords();
         },
 
-       tick() {
+        tick() {
             const n = new Date();
             this.liveTime = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
             this.liveDate = n.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -342,25 +409,25 @@ async handleClockOut() {
     }
 },
         async loadRecords(page = 1) {
-    try {
-        const res = await fetch(`{{ route("admin.attendance.records") }}?month=${this.currentMonth}&year=${this.currentYear}&page=${page}`);
-        const data = await res.json();
-        if (!data.data) { this.rows = []; this.totalRecords = 0; return; }
-        this.rows = data.data.map(log => ({
-            date:     new Date(log.attendance_date).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),
-            setup:    log.work_setup ? log.work_setup.toUpperCase() : '—',
-            shift:    log.shift?.name ?? '—',
-            schedule: log.shift ? this.formatTime(log.shift.start_time) + ' – ' + this.formatTime(log.shift.end_time) : '—',
-            clockIn:  log.clock_in  ? new Date(log.clock_in).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})  : '—',
-            clockOut: log.clock_out ? new Date(log.clock_out).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true}) : '—',
-            overtime: log.overtime_minutes > 0 ? Math.floor(log.overtime_minutes/60)+'h '+String(log.overtime_minutes%60).padStart(2,'0')+'m' : '00h 00m',
-            status:   log.status ? log.status.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase()) : '—',
-        }));
-        this.totalRecords = data.total;
-        this.perPage      = data.per_page;
-        this.currentPage  = data.current_page;
-    } catch(e) { console.error('loadRecords error:', e); }
-},
+            try {
+                const res = await fetch(`{{ route("admin.attendance.records") }}?month=${this.currentMonth}&year=${this.currentYear}&page=${page}`);
+                const data = await res.json();
+                if (!data.data) { this.rows = []; this.totalRecords = 0; return; }
+                this.rows = data.data.map(log => ({
+                    date:     new Date(log.attendance_date).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),
+                    setup:    log.work_setup ? log.work_setup.toUpperCase() : '—',
+                    shift:    log.shift?.name ?? '—',
+                    schedule: log.shift ? this.formatTime(log.shift.start_time) + ' – ' + this.formatTime(log.shift.end_time) : '—',
+                    clockIn:  log.clock_in  ? new Date(log.clock_in).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})  : '—',
+                    clockOut: log.clock_out ? new Date(log.clock_out).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true}) : '—',
+                    overtime: log.overtime_minutes > 0 ? Math.floor(log.overtime_minutes/60)+'h '+String(log.overtime_minutes%60).padStart(2,'0')+'m' : '00h 00m',
+                    status:   log.status ? log.status.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase()) : '—',
+                }));
+                this.totalRecords = data.total;
+                this.perPage      = data.per_page;
+                this.currentPage  = data.current_page;
+            } catch(e) { console.error('loadRecords error:', e); }
+        },
 
         formatTime(t) {
             if (!t) return '—';
@@ -412,6 +479,3 @@ async handleClockOut() {
 @include('partials.attendance-error-modal')
 </body>
 </html>
-
-        
-   

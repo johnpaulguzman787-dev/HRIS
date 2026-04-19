@@ -41,7 +41,7 @@
 <head>
     <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Employee Attendance</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -359,9 +359,94 @@
         .total-cell:last-child { border-right: none; }
         .total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 4px; }
         .total-value { font-size: 18px; font-weight: 800; color: #111827; }
+
+        /* ========== MOBILE RESPONSIVENESS ========== */
+        @media (max-width: 1024px) {
+            .desktop-sidebar { display: none !important; }
+
+            /* ── Stat Cards: single column, full-width ── */
+            .stat-cards-grid {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+                margin-bottom: 16px !important;
+            }
+            .stat-card {
+                padding: 16px 18px !important;
+                border-radius: 12px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                position: relative !important;
+            }
+            .stat-card .sc-icon {
+                display: none !important;
+            }
+            .stat-card .sc-label {
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                letter-spacing: .6px !important;
+                margin-bottom: 2px !important;
+            }
+            .stat-card .sc-value {
+                font-size: 32px !important;
+                font-weight: 800 !important;
+                line-height: 1.1 !important;
+                margin-bottom: 0 !important;
+            }
+            .stat-card .sc-sub {
+                font-size: 11px !important;
+                font-weight: 500 !important;
+                opacity: .75 !important;
+                text-align: right !important;
+                margin-top: 6px !important;
+            }
+
+            /* ── Table toolbar stacks properly ── */
+            .table-toolbar {
+                flex-direction: column;
+                align-items: stretch !important;
+                padding: 14px 14px 12px !important;
+            }
+            .toolbar-right {
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                gap: 8px !important;
+            }
+            .search-box { flex: 1; min-width: 0; }
+            .search-box input { width: 100% !important; }
+            .date-picker { flex: 1; min-width: 0; }
+            .dept-select { flex: 1; min-width: 0; }
+
+            /* ── Tables: horizontal scroll ── */
+            .att-table, .monthly-table, .detail-table { min-width: 700px; }
+            .overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+            /* ── Header padding ── */
+            header .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+
+            /* ── Content area padding ── */
+            .main-content-padding { padding: 14px !important; }
+
+            /* ── Profile card ── */
+            .profile-card { flex-direction: column; text-align: center; }
+
+            /* ── Totals row: 2 columns ── */
+            .totals-row { grid-template-columns: repeat(2, 1fr) !important; }
+            .total-cell { border-right: none !important; border-bottom: 1px solid var(--border); }
+            .total-cell:nth-child(odd) { border-right: 1px solid var(--border) !important; }
+            .total-cell:last-child { border-bottom: none; }
+            .total-cell:nth-last-child(2) { border-bottom: none; }
+        }
+
+        @media (max-width: 640px) {
+            .stat-cards-grid { gap: 8px !important; }
+            .stat-card .sc-value { font-size: 28px !important; }
+            .breadcrumb .sep,
+            .breadcrumb .crumb-current:not(:last-child) { display: none; }
+        }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, collapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+     x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })">
 
 {{-- ══════════ SIDEBAR ══════════ --}}
 @php
@@ -377,21 +462,55 @@
     $isAttendanceSection = in_array($currentRoute, ['admin.attendance.reports','admin.attendance.employee','admin.attendance.today','admin.attendance.records']);
     $isEmployeesSection  = in_array($currentRoute, ['employees.directory','employees.profile']);
 @endphp
-{{-- ═══════════ ADMIN SIDEBAR ═══════════ --}}
-@include('admin.admin_sidebar')
+
+{{-- DESKTOP SIDEBAR (visible on large screens) --}}
+<div class="hidden lg:block desktop-sidebar">
+    @include('admin.admin_sidebar')
+</div>
+
+{{-- MOBILE SLIDE-OUT DRAWER --}}
+<div x-show="mobileMenuOpen"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-50 lg:hidden"
+     style="display:none;">
+    <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="-translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="-translate-x-full"
+         class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+        @include('admin.admin_sidebar')
+    </div>
+</div>
 
 {{-- ══════════ MAIN CONTENT ══════════ --}}
 <div x-data="{ collapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
      x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })"
-     :style="collapsed ? 'margin-left:5rem' : 'margin-left:16rem'"
+     :style="window.innerWidth >= 1024 ? (collapsed ? 'margin-left:5rem' : 'margin-left:16rem') : 'margin-left:0'"
+     x-on:resize.window="$el.style.marginLeft = window.innerWidth >= 1024 ? (collapsed ? '5rem' : '16rem') : '0'"
      style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1); min-height:100vh;">
 
-    {{-- ✅ FIXED: Removed overflow-hidden so notification dropdown is not clipped --}}
     <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
         <div class="flex items-center justify-between px-8 py-[22px]">
-            <div>
-                <h1 class="text-white text-[22px] font-bold tracking-[0.3px] m-0">Employee Attendance</h1>
-                <p class="text-white/65 text-[13px] mt-[3px] mb-0">Track and manage workforce attendance records</p>
+            <div class="flex items-center gap-3">
+                {{-- Hamburger: only visible on mobile --}}
+                <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="text-white text-[22px] font-bold tracking-[0.3px] m-0">Employee Attendance</h1>
+                    <p class="text-white/65 text-[13px] mt-[3px] mb-0">Track and manage workforce attendance records</p>
+                </div>
             </div>
             <div class="flex items-center gap-2.5">
                 <x-notification-bell />
@@ -399,7 +518,7 @@
         </div>
     </header>
 
-    <div style="padding:24px 32px;">
+    <div class="main-content-padding" style="padding:24px 32px;">
 
         @if($viewingDetail)
         {{-- ══════════ EMPLOYEE DETAIL VIEW ══════════ --}}
@@ -458,7 +577,7 @@
                 </div>
             </div>
 
-            <div style="overflow-x:auto;">
+            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
                 <table class="detail-table">
                     <thead>
                         <tr>
@@ -647,7 +766,7 @@
                 </div>
             </div>
 
-            <div style="overflow-x:auto;">
+            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
 
                 @if($currentView === 'daily')
                 {{-- ── DAILY TABLE ── --}}
@@ -784,16 +903,27 @@
 </div>
 
 <script>
-    function setView(v) {
-        document.getElementById('viewInput').value = v;
-        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
+    function setView(viewType) {
+        document.getElementById('viewInput').value = viewType;
+        const btns = document.querySelectorAll('.toggle-btn');
+        btns.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.innerText.toLowerCase() === viewType) {
+                btn.classList.add('active');
+            }
+        });
         document.getElementById('filterForm').submit();
     }
-    function setPeriod(p) {
-        document.getElementById('periodInput').value = p;
-        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
+
+    function setPeriod(periodValue) {
+        document.getElementById('periodInput').value = periodValue;
+        const btns = document.querySelectorAll('.period-btn');
+        btns.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.innerText === 'Period ' + periodValue) {
+                btn.classList.add('active');
+            }
+        });
         document.getElementById('detailForm').submit();
     }
 

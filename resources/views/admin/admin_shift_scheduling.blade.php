@@ -20,7 +20,7 @@
 <head>
     <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Shift Scheduling — MEDISOURCE</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -46,60 +46,88 @@
         .nav-item    { transition: background 0.15s, color 0.15s; }
         .chevron-icon { transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); }
 
+        /* ── TAB NAV ── */
         .tab-nav {
-            display: flex; gap: 0; border-bottom: 2px solid var(--border);
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--border);
             margin-bottom: 24px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
         }
+        .tab-nav::-webkit-scrollbar { display: none; }
         .tab-btn {
-            padding: 10px 24px; font-size: 14px; font-weight: 500;
-            color: var(--muted); border: none; background: none;
-            cursor: pointer; font-family: inherit;
-            border-bottom: 3px solid transparent; margin-bottom: -2px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--muted);
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-family: inherit;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
             transition: color .15s, border-color .15s;
-            text-decoration: none; display: inline-block;
+            text-decoration: none;
+            display: inline-block;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .tab-btn:hover { color: #374151; }
         .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
 
+        /* ── BUTTONS ── */
         .btn-outline {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 16px; border-radius: 8px; font-size: 13px;
+            padding: 8px 14px; border-radius: 8px; font-size: 13px;
             font-weight: 600; font-family: inherit; cursor: pointer;
             border: 1.5px solid #bfdbfe; background: var(--blue-light);
             color: var(--blue-dark); transition: all .15s; text-decoration: none;
+            white-space: nowrap;
         }
         .btn-outline:hover { background: #dbeafe; border-color: #93c5fd; }
-        .btn-outline svg { width: 14px; height: 14px; }
+        .btn-outline svg { width: 14px; height: 14px; flex-shrink: 0; }
 
         .btn-primary {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 16px; border-radius: 8px; font-size: 13px;
+            padding: 8px 14px; border-radius: 8px; font-size: 13px;
             font-weight: 600; font-family: inherit; cursor: pointer;
             border: none; background: var(--blue); color: #fff;
             transition: background .15s; text-decoration: none;
+            white-space: nowrap;
         }
         .btn-primary:hover { background: var(--blue-dark); }
-        .btn-primary svg { width: 14px; height: 14px; }
+        .btn-primary svg { width: 14px; height: 14px; flex-shrink: 0; }
 
+        /* ── TOOLBAR ── */
         .toolbar {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 20px; gap: 12px; flex-wrap: wrap;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
-        .toolbar-left  { display: flex; align-items: center; gap: 10px; }
-        .toolbar-right { display: flex; align-items: center; gap: 10px; }
+        .toolbar-left  { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .toolbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
+        /* ── SEARCH ── */
         .search-box {
             display: flex; align-items: center; gap: 7px;
             background: #f9fafb; border: 1px solid var(--border);
             border-radius: 8px; padding: 7px 13px;
+            min-width: 0;
         }
         .search-box svg { color: var(--muted); width: 14px; height: 14px; flex-shrink: 0; }
         .search-box input {
             border: none; background: transparent; outline: none;
-            font-size: 13px; color: #111827; width: 180px; font-family: inherit;
+            font-size: 13px; color: #111827; width: 100%; font-family: inherit;
+            min-width: 0;
         }
         .search-box input::placeholder { color: var(--muted); }
 
+        /* ── SELECT ── */
         .dept-select {
             appearance: none; background: #f9fafb; border: 1px solid var(--border);
             border-radius: 8px; padding: 7px 28px 7px 12px; font-size: 13px;
@@ -108,74 +136,97 @@
             background-repeat: no-repeat; background-position: right 10px center;
         }
 
-        .week-nav { display: flex; align-items: center; gap: 8px; }
-        .week-label { font-size: 20px; font-weight: 800; color: #111827; min-width: 160px; }
+        /* ── WEEK NAV ── */
+        .week-nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .week-label { font-size: 18px; font-weight: 800; color: #111827; white-space: nowrap; }
         .week-btn {
             display: inline-flex; align-items: center; gap: 5px;
             padding: 6px 12px; border-radius: 7px; font-size: 12.5px;
             font-weight: 500; font-family: inherit; cursor: pointer;
             border: 1px solid var(--border); background: #fff; color: #374151;
-            transition: background .15s; text-decoration: none;
+            transition: background .15s; text-decoration: none; white-space: nowrap;
         }
         .week-btn:hover { background: #f9fafb; }
         .week-btn svg { width: 12px; height: 12px; }
 
+        /* ── SCHEDULE TABLE ── */
         .schedule-card {
             background: #fff; border-radius: 14px; border: 1px solid var(--border);
             overflow: hidden; box-shadow: 0 1px 8px rgba(0,0,0,.04);
         }
-        .schedule-table { width: 100%; border-collapse: collapse; }
+        .schedule-scroll-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .schedule-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .schedule-table th {
-            padding: 10px 12px; font-size: 11px; font-weight: 700;
+            padding: 10px 10px; font-size: 11px; font-weight: 700;
             color: var(--muted); text-align: center; border-bottom: 1px solid var(--border);
             background: #f9fafb; letter-spacing: .5px; text-transform: uppercase;
             white-space: nowrap;
         }
-        .schedule-table th.emp-col { text-align: left; min-width: 160px; }
+        .schedule-table th.emp-col {
+            text-align: left;
+            min-width: 130px;
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            background: #f9fafb;
+            box-shadow: 2px 0 4px rgba(0,0,0,.04);
+        }
         .schedule-table td {
-            padding: 10px 12px; border-bottom: 1px solid #f3f4f6;
+            padding: 10px 10px; border-bottom: 1px solid #f3f4f6;
             vertical-align: middle; text-align: center;
         }
-        .schedule-table td.emp-cell { text-align: left; }
+        .schedule-table td.emp-cell {
+            text-align: left;
+            position: sticky;
+            left: 0;
+            background: #fff;
+            z-index: 1;
+            box-shadow: 2px 0 4px rgba(0,0,0,.04);
+        }
+        .schedule-table tbody tr:hover td { background: #fafafa; }
+        .schedule-table tbody tr:hover td.emp-cell { background: #fafafa; }
         .schedule-table tr:last-child td { border-bottom: none; }
-        .schedule-table tbody tr:hover { background: #fafafa; }
 
-        .emp-info .emp-name { font-size: 13px; font-weight: 600; color: #111827; }
+        .emp-info .emp-name { font-size: 13px; font-weight: 600; color: #111827; white-space: nowrap; }
         .emp-info .emp-dept { font-size: 11.5px; color: var(--muted); }
 
         .shift-cell { display: flex; flex-direction: column; gap: 4px; align-items: center; }
 
         .pill-setup {
-            display: inline-block; padding: 3px 10px; border-radius: 5px;
-            font-size: 11px; font-weight: 600; min-width: 54px; text-align: center;
+            display: inline-block; padding: 3px 8px; border-radius: 5px;
+            font-size: 10px; font-weight: 600; min-width: 44px; text-align: center;
         }
         .pill-wfh    { background: #dbeafe; color: #1d4ed8; }
         .pill-office { background: #dcfce7; color: #15803d; }
 
         .pill-shift {
-            display: inline-block; padding: 3px 10px; border-radius: 5px;
-            font-size: 11px; font-weight: 600; min-width: 54px; text-align: center;
+            display: inline-block; padding: 3px 8px; border-radius: 5px;
+            font-size: 10px; font-weight: 600; min-width: 44px; text-align: center;
         }
         .pill-day   { background: #fef9c3; color: #a16207; }
         .pill-night { background: #fce7f3; color: #be185d; }
         .pill-mid   { background: #ede9fe; color: #6d28d9; }
 
         .pill-leave {
-            display: inline-block; padding: 6px 10px; border-radius: 5px;
-            font-size: 11.5px; font-weight: 600; min-width: 54px; text-align: center;
+            display: inline-block; padding: 6px 8px; border-radius: 5px;
+            font-size: 11px; font-weight: 600; min-width: 44px; text-align: center;
             background: #fce7f3; color: #be185d;
         }
-        .day-off-text { font-size: 12px; color: #9ca3af; font-weight: 500; }
+        .day-off-text { font-size: 11px; color: #9ca3af; font-weight: 500; }
 
+        /* ── DATA TABLE ── */
         .data-table { width: 100%; border-collapse: collapse; }
         .data-table thead tr { background: #f9fafb; }
         .data-table th {
-            padding: 11px 16px; font-size: 11.5px; font-weight: 600;
+            padding: 11px 14px; font-size: 11px; font-weight: 600;
             color: var(--muted); text-align: left; border-bottom: 1px solid var(--border);
             white-space: nowrap; letter-spacing: .4px; text-transform: uppercase;
         }
         .data-table td {
-            padding: 14px 16px; font-size: 13px; color: #111827;
+            padding: 13px 14px; font-size: 13px; color: #111827;
             border-bottom: 1px solid #f3f4f6; vertical-align: middle;
         }
         .data-table tr:last-child td { border-bottom: none; }
@@ -189,24 +240,27 @@
 
         .edit-btn {
             display: inline-flex; align-items: center; gap: 4px;
-            padding: 5px 14px; border-radius: 7px; font-size: 12px;
+            padding: 5px 12px; border-radius: 7px; font-size: 12px;
             font-weight: 600; font-family: inherit; cursor: pointer;
             border: 1.5px solid #bfdbfe; background: var(--blue-light);
-            color: var(--blue-dark); transition: all .15s;
+            color: var(--blue-dark); transition: all .15s; white-space: nowrap;
         }
         .edit-btn:hover { background: #dbeafe; }
 
+        /* ── HOLIDAY STATS ── */
         .holiday-stat-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 16px; margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
         }
         .holiday-stat-card {
-            border-radius: 12px; padding: 20px 22px;
+            border-radius: 12px; padding: 18px 16px;
             border: 1px solid transparent;
         }
-        .hsc-label { font-size: 10.5px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; margin-bottom: 8px; }
-        .hsc-value { font-size: 36px; font-weight: 800; line-height: 1; }
-        .hsc-sub   { font-size: 11.5px; font-weight: 500; margin-top: 6px; opacity: .7; }
+        .hsc-label { font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; margin-bottom: 8px; }
+        .hsc-value { font-size: 32px; font-weight: 800; line-height: 1; }
+        .hsc-sub   { font-size: 11px; font-weight: 500; margin-top: 6px; opacity: .7; }
 
         .hsc-regular { background: #dbeafe; border-color: #bfdbfe; }
         .hsc-regular .hsc-label { color: #1d4ed8; }
@@ -224,75 +278,262 @@
         .hsc-local   .hsc-sub   { color: #9d174d; }
 
         .type-badge {
-            display: inline-block; padding: 3px 12px; border-radius: 20px;
-            font-size: 12px; font-weight: 600;
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 12px; font-weight: 600; white-space: nowrap;
         }
         .tb-regular { background: #dbeafe; color: #1d4ed8; }
         .tb-special { background: #dcfce7; color: #15803d; }
         .tb-local   { background: #fce7f3; color: #be185d; }
 
+        /* ── MODAL ── */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,.4);
-            display: flex; align-items: center; justify-content: center; z-index: 999;
+            display: flex; align-items: flex-end; justify-content: center;
+            z-index: 999;
+            padding: 0;
         }
         .modal-box {
-            background: #fff; border-radius: 16px; padding: 28px 32px;
-            width: 480px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,.15);
+            background: #fff;
+            border-radius: 20px 20px 0 0;
+            padding: 24px 20px 32px;
+            width: 100%;
+            max-width: 520px;
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 -8px 40px rgba(0,0,0,.15);
+        }
+        /* Drag indicator */
+        .modal-box::before {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            margin: 0 auto 20px;
         }
         .modal-title { font-size: 17px; font-weight: 800; color: #111827; margin-bottom: 20px; }
         .form-label { font-size: 12px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; display: block; }
         .form-input {
             width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
-            padding: 9px 13px; font-size: 13px; font-family: inherit; outline: none;
+            padding: 10px 13px; font-size: 14px; font-family: inherit; outline: none;
             color: #111827; transition: border-color .15s;
         }
         .form-input:focus { border-color: var(--blue); }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
         .btn-cancel {
-            padding: 8px 18px; border-radius: 8px; font-size: 13px;
+            padding: 10px 18px; border-radius: 8px; font-size: 13px;
             font-weight: 600; font-family: inherit; cursor: pointer;
             border: 1.5px solid var(--border); background: #fff; color: #374151;
         }
         .btn-save {
-            padding: 8px 20px; border-radius: 8px; font-size: 13px;
+            flex: 1; padding: 10px 20px; border-radius: 8px; font-size: 13px;
             font-weight: 600; font-family: inherit; cursor: pointer;
             border: none; background: var(--blue); color: #fff;
         }
 
+        /* ── TABLE CARD ── */
         .table-card {
             background: #fff; border-radius: 14px; border: 1px solid var(--border);
             overflow: hidden; box-shadow: 0 1px 8px rgba(0,0,0,.04);
         }
         .table-toolbar {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 16px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap;
+            padding: 14px 16px; border-bottom: 1px solid var(--border);
+            gap: 10px; flex-wrap: wrap;
+        }
+
+        /* ── HEADER TABS + ACTIONS AREA ── */
+        .header-actions-row {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            gap: 8px;
+        }
+        .action-btns {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 2px;
+            padding-left: 12px;
+            flex-shrink: 0;
+        }
+
+        /* ========== MOBILE RESPONSIVENESS ========== */
+        @media (max-width: 1024px) {
+            .desktop-sidebar { display: none !important; }
+
+            /* Table containers */
+            .schedule-scroll-wrap {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .schedule-table { min-width: 700px; }
+
+            .data-table { min-width: 600px; }
+            .overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+            /* Header padding */
+            header .px-6 { padding-left: 1rem !important; padding-right: 1rem !important; }
+
+            /* Content area padding */
+            .main-content-padding { padding: 14px !important; }
+
+            /* Holiday stats: single column */
+            .holiday-stat-grid {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+            .holiday-stat-card {
+                padding: 14px 16px !important;
+            }
+            .hsc-value { font-size: 28px !important; }
+
+            /* Toolbar stacking */
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .toolbar-left, .toolbar-right {
+                width: 100%;
+            }
+            .toolbar-right {
+                flex-wrap: wrap;
+            }
+            .search-box {
+                flex: 1;
+                min-width: 0;
+            }
+            .dept-select {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .table-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .table-toolbar .toolbar-right {
+                flex-wrap: wrap;
+                width: 100%;
+            }
+            .table-toolbar .search-box {
+                flex: 1;
+            }
+
+            .header-actions-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .action-btns {
+                justify-content: flex-start;
+                padding-left: 0;
+                margin-top: 4px;
+            }
+            .action-btns .btn-outline span,
+            .action-btns .btn-primary span {
+                display: inline;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .week-label { font-size: 15px; }
+            .week-btn { padding: 6px 10px; font-size: 12px; }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-actions {
+                flex-direction: column-reverse;
+            }
+            .btn-cancel { text-align: center; }
+
+            .data-table th,
+            .data-table td {
+                padding: 10px 10px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, collapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+     x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })">
 
-@include('admin.admin_sidebar')
+{{-- ══════════ SIDEBAR ══════════ --}}
+@php
+    $sidebarUser     = auth()->user();
+    $sidebarEmployee = $sidebarUser ? \App\Models\Employee::with('jobTitle')->where('user_id', $sidebarUser->id)->first() : null;
+    $sidebarInitials = $sidebarEmployee
+        ? strtoupper(substr($sidebarEmployee->fname, 0, 1) . substr($sidebarEmployee->lname, 0, 1))
+        : ($sidebarUser ? strtoupper(substr($sidebarUser->email, 0, 2)) : 'U');
+    $sidebarName = $sidebarEmployee
+        ? trim($sidebarEmployee->fname . ' ' . $sidebarEmployee->lname)
+        : ($sidebarUser?->email ?? 'User');
+    $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
+    $isAttendanceSection = in_array($currentRoute, ['admin.attendance.reports','admin.attendance.employee','admin.attendance.today','admin.attendance.records']);
+    $isEmployeesSection  = in_array($currentRoute, ['employees.directory','employees.profile']);
+@endphp
 
+{{-- DESKTOP SIDEBAR (visible on large screens) --}}
+<div class="hidden lg:block desktop-sidebar">
+    @include('admin.admin_sidebar')
+</div>
+
+{{-- MOBILE SLIDE-OUT DRAWER --}}
+<div x-show="mobileMenuOpen"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-50 lg:hidden"
+     style="display:none;">
+    <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="-translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="-translate-x-full"
+         class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+        @include('admin.admin_sidebar')
+    </div>
+</div>
+
+{{-- ══════════ MAIN CONTENT ══════════ --}}
 <div x-data="{ collapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
      x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })"
-     :style="collapsed ? 'margin-left:5rem' : 'margin-left:16rem'"
+     :style="window.innerWidth >= 1024 ? (collapsed ? 'margin-left:5rem' : 'margin-left:16rem') : 'margin-left:0'"
+     x-on:resize.window="$el.style.marginLeft = window.innerWidth >= 1024 ? (collapsed ? '5rem' : '16rem') : '0'"
      style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1); min-height:100vh;">
 
-    {{-- Blue Header --}}
+    {{-- Blue Header with Hamburger --}}
     <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
-        <div class="flex items-center justify-between px-8 py-4">
-            <h1 class="text-white font-bold text-xl">Shift Scheduling</h1>
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex items-center gap-3">
+                {{-- Hamburger: only visible on mobile --}}
+                <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <h1 class="text-white font-bold text-lg">Shift Scheduling</h1>
+            </div>
             <x-notification-bell />
         </div>
     </header>
 
     <!-- Page Content -->
-    <div style="padding:24px 32px;" x-data="{ showEditShiftModal: false, showAssignShiftModal: false, showAddShiftTypeModal: false, showAddHolidayModal: false }">
+    <div class="main-content-padding" style="padding:20px 16px;" x-data="{ showEditShiftModal: false, showAssignShiftModal: false, showAddShiftTypeModal: false, showAddHolidayModal: false }">
 
         <!-- Tab Nav + Action Buttons -->
-        <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:4px;">
-            <div class="tab-nav" style="margin-bottom:0; flex:1;">
+        <div class="header-actions-row">
+            <div class="tab-nav" style="margin-bottom:0; flex:1; min-width:0;">
                 <a href="{{ route('admin.shift.scheduling', ['tab' => 'weekly']) }}"
                    class="tab-btn {{ $activeTab === 'weekly' ? 'active' : '' }}">Weekly Schedule</a>
                 <a href="{{ route('admin.shift.scheduling', ['tab' => 'shift-types']) }}"
@@ -300,18 +541,18 @@
                 <a href="{{ route('admin.shift.scheduling', ['tab' => 'holidays']) }}"
                    class="tab-btn {{ $activeTab === 'holidays' ? 'active' : '' }}">Holiday Calendar</a>
             </div>
-            <div style="display:flex; gap:10px; margin-bottom:2px; padding-left:20px;">
+            <div class="action-btns">
                 <button class="btn-outline" @click="showEditShiftModal = true">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                    Edit Shift
+                    <span>Edit Shift</span>
                 </button>
                 <button class="btn-primary" @click="showAssignShiftModal = true">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    Assign Shift
+                    <span>Assign Shift</span>
                 </button>
             </div>
         </div>
-        <div style="border-bottom:2px solid #e5e7eb; margin-bottom:24px;"></div>
+        <div style="border-bottom:2px solid #e5e7eb; margin-bottom:20px;"></div>
 
         {{-- ══════════ TAB: WEEKLY SCHEDULE ══════════ --}}
         @if($activeTab === 'weekly')
@@ -327,14 +568,14 @@
             }
         }">
         <div class="toolbar">
-            <div class="toolbar-left">
+            <div class="toolbar-left" style="width:100%;">
                 <div class="week-nav">
                     <a href="{{ route('admin.shift.scheduling', ['tab' => 'weekly', 'week_start' => $selectedWeekStart->copy()->subWeek()->format('Y-m-d')]) }}"
                        class="week-btn">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                         Previous
                     </a>
-                    <span class="week-label">{{ $selectedWeekStart->format('F j') }}–{{ $selectedWeekEnd->format('j') }}</span>
+                    <span class="week-label">{{ $selectedWeekStart->format('M j') }}–{{ $selectedWeekEnd->format('j') }}</span>
                     <a href="{{ route('admin.shift.scheduling', ['tab' => 'weekly', 'week_start' => $selectedWeekStart->copy()->addWeek()->format('Y-m-d')]) }}"
                        class="week-btn">
                         Next
@@ -342,12 +583,12 @@
                     </a>
                 </div>
             </div>
-            <div class="toolbar-right">
-                <div class="search-box">
+            <div class="toolbar-right" style="width:100%;">
+                <div class="search-box" style="flex:1;">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input type="text" placeholder="Search employee…" x-model="search">
                 </div>
-                <select class="dept-select" x-model="deptFilter">
+                <select class="dept-select" style="flex:1;" x-model="deptFilter">
                     <option value="">All Departments</option>
                     @foreach($departments ?? [] as $dept)
                         <option value="{{ strtolower($dept->name) }}">{{ $dept->name }}</option>
@@ -357,7 +598,7 @@
         </div>
 
         <div class="schedule-card">
-            <div style="overflow-x:auto;">
+            <div class="schedule-scroll-wrap">
                 <table class="schedule-table">
                     <thead>
                         <tr>
@@ -365,7 +606,7 @@
                             @foreach($weekDays as $day)
                             <th style="{{ $day->isWeekend() ? 'background:#f3f4f6;' : '' }}">
                                 <div>{{ strtoupper($day->format('D')) }}</div>
-                                <div style="font-size:12px; font-weight:700; color:#111827; letter-spacing:0;">{{ $day->format('M j') }}</div>
+                                <div style="font-size:11px; font-weight:700; color:#111827; letter-spacing:0;">{{ $day->format('M j') }}</div>
                             </th>
                             @endforeach
                         </tr>
@@ -391,7 +632,7 @@
                             @endphp
                             <td style="{{ $cellType === 'day_off' ? 'background:#f9fafb;' : '' }}">
                                 @if($cellType === 'day_off')
-                                    <span class="day-off-text">Day Off</span>
+                                    <span class="day-off-text">Off</span>
                                 @elseif($cellType === 'leave')
                                     <span class="pill-leave">Leave</span>
                                 @elseif($cellType === 'shift')
@@ -476,16 +717,16 @@
             }
         }">
             <div class="table-toolbar">
-                <div class="toolbar-left">
-                    <div class="search-box">
+                <div class="toolbar-left" style="width:100%;">
+                    <div class="search-box" style="flex:1;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         <input type="text" placeholder="Search…" x-model="shiftSearch">
                     </div>
                 </div>
-                <div class="toolbar-right">
-                    <form method="GET" action="{{ route('admin.shift.scheduling') }}" id="shiftTypeFilterForm" style="display:contents;">
+                <div class="toolbar-right" style="width:100%;">
+                    <form method="GET" action="{{ route('admin.shift.scheduling') }}" id="shiftTypeFilterForm" style="flex:1; display:flex;">
                         <input type="hidden" name="tab" value="shift-types">
-                        <select class="dept-select" name="department" onchange="document.getElementById('shiftTypeFilterForm').submit()">
+                        <select class="dept-select" style="flex:1;" name="department" onchange="document.getElementById('shiftTypeFilterForm').submit()">
                             <option value="">All Departments</option>
                             @foreach($departments ?? [] as $dept)
                                 <option value="{{ $dept->id }}" {{ request('department') == $dept->id ? 'selected' : '' }}>
@@ -494,21 +735,21 @@
                             @endforeach
                         </select>
                     </form>
-                    <button class="btn-primary" @click="showAddShiftTypeModal = true">
+                    <button class="btn-primary" @click="showAddShiftTypeModal = true" style="flex-shrink:0;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Add Shift Type
                     </button>
                 </div>
             </div>
-            <div style="overflow-x:auto;">
-                <table class="data-table">
+            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+                <table class="data-table" style="min-width:560px;">
                     <thead>
                         <tr>
                             <th>Shift Name</th>
                             <th>Time In</th>
                             <th>Break</th>
                             <th>Time Out</th>
-                            <th>Work Hours</th>
+                            <th>Hours</th>
                             <th>Night Diff</th>
                             <th>Assigned</th>
                             <th></th>
@@ -527,7 +768,7 @@
                                 <span style="font-size:11px;color:#9ca3af;font-weight:400;">({{ $shift->code }})</span>
                             </td>
                             <td>{{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }}</td>
-                            <td>
+                            <td style="white-space:nowrap;">
                                 {{ isset($bs['start'], $bs['end'])
                                     ? \Carbon\Carbon::parse($bs['start'])->format('g:i A') . ' – ' . \Carbon\Carbon::parse($bs['end'])->format('g:i A')
                                     : '—' }}
@@ -553,25 +794,25 @@
 
             {{-- Edit Shift Type Modal --}}
             <div x-show="showEditShiftTypeModal" class="modal-overlay" x-cloak @click.self="showEditShiftTypeModal = false">
-                <div class="modal-box" style="width:520px;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+                <div class="modal-box">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
                         <div class="modal-title" style="margin-bottom:0;">Edit Shift Type</div>
-                        <button @click="showEditShiftTypeModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;">
+                        <button @click="showEditShiftTypeModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;flex-shrink:0;">
                             <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     </div>
                     <template x-if="errorMsg">
                         <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
                     </template>
-                    <div style="margin-bottom:16px;">
+                    <div style="margin-bottom:14px;">
                         <label class="form-label">Shift Name</label>
                         <input type="text" class="form-input" x-model="editShift.name" placeholder="e.g. Day Shift">
                     </div>
-                    <div style="margin-bottom:16px;">
+                    <div style="margin-bottom:14px;">
                         <label class="form-label">Shift Code</label>
                         <input type="text" class="form-input" x-model="editShift.code" placeholder="e.g. DS-001">
                     </div>
-                    <div class="form-row" style="margin-bottom:16px;">
+                    <div class="form-row" style="margin-bottom:14px;">
                         <div>
                             <label class="form-label">Time In</label>
                             <input type="time" class="form-input" x-model="editShift.start_time">
@@ -581,7 +822,7 @@
                             <input type="time" class="form-input" x-model="editShift.end_time">
                         </div>
                     </div>
-                    <div class="form-row" style="margin-bottom:16px;">
+                    <div class="form-row" style="margin-bottom:14px;">
                         <div>
                             <label class="form-label">Break Start</label>
                             <input type="time" class="form-input" x-model="editShift.break_start">
@@ -591,7 +832,7 @@
                             <input type="time" class="form-input" x-model="editShift.break_end">
                         </div>
                     </div>
-                    <div style="margin-bottom:16px;">
+                    <div style="margin-bottom:14px;">
                         <label class="form-label">Night Differential</label>
                         <input type="text" class="form-input" value="None" disabled style="background:#f9fafb;color:#9ca3af;cursor:not-allowed;">
                     </div>
@@ -673,26 +914,26 @@
             }
         }">
             <div class="table-toolbar">
-                <div style="font-size:15px; font-weight:800; color:#111827;">{{ $currentYear }} HOLIDAYS</div>
-                <div class="toolbar-right">
-                    <div class="search-box">
+                <div style="font-size:15px; font-weight:800; color:#111827; white-space:nowrap;">{{ $currentYear }} HOLIDAYS</div>
+                <div class="toolbar-right" style="width:100%;">
+                    <div class="search-box" style="flex:1;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         <input type="text" placeholder="Search holiday…" x-model="holidaySearch">
                     </div>
-                    <select class="dept-select" x-model="typeFilter">
+                    <select class="dept-select" style="flex-shrink:0;" x-model="typeFilter">
                         <option value="">All Types</option>
                         <option value="regular">Regular</option>
                         <option value="special">Special Non-Working</option>
                         <option value="local">Local</option>
                     </select>
-                    <button class="btn-primary" @click="showAddHolidayModal = true">
+                    <button class="btn-primary" @click="showAddHolidayModal = true" style="flex-shrink:0;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Add Holiday
                     </button>
                 </div>
             </div>
-            <div style="overflow-x:auto;">
-                <table class="data-table">
+            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+                <table class="data-table" style="min-width:500px;">
                     <thead>
                         <tr>
                             <th>Holiday Name</th>
@@ -709,7 +950,7 @@
                         @php $ht = strtolower($holiday->type ?? 'regular'); @endphp
                         <tr x-show="visible('{{ addslashes($holiday->name) }}', '{{ $ht }}')">
                             <td style="font-weight:600;">{{ $holiday->name }}</td>
-                            <td>{{ \Carbon\Carbon::parse($holiday->date)->format('M j') }}</td>
+                            <td style="white-space:nowrap;">{{ \Carbon\Carbon::parse($holiday->date)->format('M j') }}</td>
                             <td>{{ \Carbon\Carbon::parse($holiday->date)->format('D') }}</td>
                             <td>
                                 <span class="type-badge {{ $ht === 'special' ? 'tb-special' : ($ht === 'local' ? 'tb-local' : 'tb-regular') }}">
@@ -722,7 +963,7 @@
                                     {{ $holiday->yearly ? 'Yes' : 'No' }}
                                 </span>
                             </td>
-                            <td style="display:flex; gap:6px;">
+                            <td style="display:flex; gap:6px; flex-wrap:wrap;">
                                 <button class="edit-btn" @click="openEdit({{ $holiday->id }})">Edit</button>
                                 <button class="edit-btn" style="border-color:#fecaca; background:#fef2f2; color:#dc2626;"
                                     @click="deleteHoliday({{ $holiday->id }})">Delete</button>
@@ -741,45 +982,45 @@
 
             {{-- Edit Holiday Modal --}}
             <div x-show="showEditHolidayModal" class="modal-overlay" x-cloak @click.self="showEditHolidayModal = false">
-                <div class="modal-box" style="width:520px;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+                <div class="modal-box">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
                         <div class="modal-title" style="margin-bottom:0;">Edit Holiday</div>
-                        <button @click="showEditHolidayModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;">
+                        <button @click="showEditHolidayModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;flex-shrink:0;">
                             <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     </div>
                     <template x-if="errorMsg">
                         <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
                     </template>
-                    <div style="margin-bottom:16px;">
+                    <div style="margin-bottom:14px;">
                         <label class="form-label">Holiday Name</label>
                         <input type="text" class="form-input" x-model="editHoliday.name" placeholder="Enter holiday name">
                     </div>
-                    <div style="margin-bottom:16px;">
+                    <div style="margin-bottom:14px;">
                         <label class="form-label">Date</label>
                         <input type="date" class="form-input" x-model="editHoliday.date">
                     </div>
-                    <div style="margin-bottom:16px;">
+                    <div style="margin-bottom:14px;">
                         <label class="form-label">Type</label>
-                        <select class="form-input dept-select" style="width:100%;" x-model="editHoliday.type">
+                        <select class="form-input dept-select" style="width:100%;padding-right:32px;" x-model="editHoliday.type">
                             <option value="regular">Regular</option>
                             <option value="special">Special Non-Working</option>
                             <option value="local">Local</option>
                         </select>
                     </div>
-                    <div style="margin-bottom:16px;">
+                    <div style="margin-bottom:14px;">
                         <label class="form-label">Pay Rate</label>
-                        <select class="form-input dept-select" style="width:100%;" x-model="editHoliday.pay_rate">
+                        <select class="form-input dept-select" style="width:100%;padding-right:32px;" x-model="editHoliday.pay_rate">
                             <option value="200%">200%</option>
                             <option value="130%">130%</option>
                             <option value="100%">100%</option>
                         </select>
                     </div>
-                    <div style="margin-bottom:16px;">
+                    <div style="margin-bottom:14px;">
                         <label class="form-label">Region (for local holidays)</label>
                         <input type="text" class="form-input" x-model="editHoliday.region" placeholder="e.g. Pangasinan">
                     </div>
-                    <div style="margin-bottom:16px;">
+                    <div style="margin-bottom:14px;">
                         <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;cursor:pointer;">
                             <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;" x-model="editHoliday.yearly">
                             Repeat Yearly
@@ -844,19 +1085,19 @@
                      else { this.errorMsg = data.message ?? 'Something went wrong.'; }
                  }
              }">
-            <div class="modal-box" style="width:520px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+            <div class="modal-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
                     <div class="modal-title" style="margin-bottom:0;">Edit Shift</div>
-                    <button @click="showEditShiftModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;">
+                    <button @click="showEditShiftModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;flex-shrink:0;">
                         <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
                 <template x-if="errorMsg">
                     <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
                 </template>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Employee</label>
-                    <select class="form-input dept-select" style="width:100%;" x-model="empId" @change="onEmpChange()">
+                    <select class="form-input dept-select" style="width:100%;padding-right:32px;" x-model="empId" @change="onEmpChange()">
                         <option value="">Choose employee</option>
                         @foreach($employees ?? [] as $emp)
                             <option value="{{ $emp->id }}">{{ trim($emp->fname . ' ' . $emp->lname) }}</option>
@@ -864,9 +1105,9 @@
                     </select>
                 </div>
                 <template x-if="currentInfo">
-                    <div style="background:#f0f9ff;border-radius:8px;padding:14px 16px;margin-bottom:18px;">
+                    <div style="background:#f0f9ff;border-radius:8px;padding:14px 16px;margin-bottom:16px;">
                         <div style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:8px;">Current Shift Assignment</div>
-                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
                             <div><div style="font-size:11px;color:#9ca3af;">Shift</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.shift_name ?? '—'"></div></div>
                             <div><div style="font-size:11px;color:#9ca3af;">Work Setup</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.work_setup ? currentInfo.work_setup.toUpperCase() : '—'"></div></div>
                             <div><div style="font-size:11px;color:#9ca3af;">Day Off</div><div style="font-size:13px;font-weight:600;color:#111827;" x-text="currentInfo.days_off ? JSON.parse(currentInfo.days_off).join(', ') : '—'"></div></div>
@@ -876,9 +1117,9 @@
                         </div>
                     </div>
                 </template>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Change Shift Type</label>
-                    <select class="form-input dept-select" style="width:100%;" x-model="shiftId">
+                    <select class="form-input dept-select" style="width:100%;padding-right:32px;" x-model="shiftId">
                         <option value="">Choose shift type</option>
                         @foreach($shiftTypes ?? [] as $shift)
                             <option value="{{ $shift->id }}">
@@ -887,15 +1128,15 @@
                         @endforeach
                     </select>
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Change Work Setup</label>
-                    <select class="form-input dept-select" style="width:100%;" x-model="workSetup">
+                    <select class="form-input dept-select" style="width:100%;padding-right:32px;" x-model="workSetup">
                         <option value="">Choose work setup</option>
                         <option value="wfh">WFH</option>
                         <option value="office">Office</option>
                     </select>
                 </div>
-                <div class="form-row" style="margin-bottom:16px;">
+                <div class="form-row" style="margin-bottom:14px;">
                     <div>
                         <label class="form-label">Effective From</label>
                         <input type="date" class="form-input" x-model="effectiveDate">
@@ -905,9 +1146,9 @@
                         <input type="date" class="form-input" x-model="endDate">
                     </div>
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Day Off</label>
-                    <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;">
+                    <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;">
                         @foreach(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as $d)
                         <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:#374151;cursor:pointer;">
                             <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;"
@@ -964,28 +1205,28 @@
                      else { this.errorMsg = data.message ?? 'Something went wrong.'; }
                  }
              }">
-            <div class="modal-box" style="width:520px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+            <div class="modal-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
                     <div class="modal-title" style="margin-bottom:0;">Assign Shift</div>
-                    <button @click="showAssignShiftModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;">
+                    <button @click="showAssignShiftModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;flex-shrink:0;">
                         <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
                 <template x-if="errorMsg">
                     <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
                 </template>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Department</label>
-                    <select class="form-input dept-select" style="width:100%;" x-model="deptId" @change="onDeptChange()">
+                    <select class="form-input dept-select" style="width:100%;padding-right:32px;" x-model="deptId" @change="onDeptChange()">
                         <option value="">Choose department</option>
                         @foreach($departments ?? [] as $dept)
                             <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Employee</label>
-                    <select class="form-input dept-select" style="width:100%;" x-model="empId"
+                    <select class="form-input dept-select" style="width:100%;padding-right:32px;" x-model="empId"
                         :disabled="!deptId || empList.length === 0"
                         :style="!deptId ? 'opacity:0.5; cursor:not-allowed;' : ''">
                         <option value="">Choose a department first</option>
@@ -995,9 +1236,9 @@
                     </select>
                     <p x-show="!deptId" style="font-size:11.5px;color:#9ca3af;margin-top:4px;">Select a department to load employees.</p>
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Shift Type</label>
-                    <select class="form-input dept-select" style="width:100%;" x-model="shiftId">
+                    <select class="form-input dept-select" style="width:100%;padding-right:32px;" x-model="shiftId">
                         <option value="">Choose shift type</option>
                         @foreach($shiftTypes ?? [] as $shift)
                             <option value="{{ $shift->id }}">
@@ -1006,15 +1247,15 @@
                         @endforeach
                     </select>
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Work Setup</label>
-                    <select class="form-input dept-select" style="width:100%;" x-model="workSetup">
+                    <select class="form-input dept-select" style="width:100%;padding-right:32px;" x-model="workSetup">
                         <option value="">Choose work setup</option>
                         <option value="wfh">WFH</option>
                         <option value="office">Office</option>
                     </select>
                 </div>
-                <div class="form-row" style="margin-bottom:16px;">
+                <div class="form-row" style="margin-bottom:14px;">
                     <div>
                         <label class="form-label">Effective From</label>
                         <input type="date" class="form-input" x-model="effectiveDate">
@@ -1024,9 +1265,9 @@
                         <input type="date" class="form-input" x-model="endDate">
                     </div>
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Day Off</label>
-                    <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;">
+                    <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;">
                         @foreach(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as $d)
                         <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:#374151;cursor:pointer;">
                             <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;"
@@ -1071,25 +1312,25 @@
                      else { this.errorMsg = data.message ?? 'Something went wrong.'; }
                  }
              }">
-            <div class="modal-box" style="width:520px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+            <div class="modal-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
                     <div class="modal-title" style="margin-bottom:0;">Add Shift Type</div>
-                    <button @click="showAddShiftTypeModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;">
+                    <button @click="showAddShiftTypeModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;flex-shrink:0;">
                         <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
                 <template x-if="errorMsg">
                     <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
                 </template>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Shift Name</label>
                     <input type="text" class="form-input" x-model="name" placeholder="e.g. Early Morning Shift">
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Shift Code</label>
                     <input type="text" class="form-input" x-model="code" placeholder="e.g. EMS-001">
                 </div>
-                <div class="form-row" style="margin-bottom:16px;">
+                <div class="form-row" style="margin-bottom:14px;">
                     <div>
                         <label class="form-label">Time In</label>
                         <input type="time" class="form-input" x-model="start_time">
@@ -1099,7 +1340,7 @@
                         <input type="time" class="form-input" x-model="end_time">
                     </div>
                 </div>
-                <div class="form-row" style="margin-bottom:16px;">
+                <div class="form-row" style="margin-bottom:14px;">
                     <div>
                         <label class="form-label">Break Start</label>
                         <input type="time" class="form-input" x-model="break_start">
@@ -1109,7 +1350,7 @@
                         <input type="time" class="form-input" x-model="break_end">
                     </div>
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Night Differential</label>
                     <input type="text" class="form-input" value="None" disabled style="background:#f9fafb;color:#9ca3af;cursor:not-allowed;">
                 </div>
@@ -1145,47 +1386,47 @@
                      else { this.errorMsg = data.message ?? 'Something went wrong.'; }
                  }
              }">
-            <div class="modal-box" style="width:520px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+            <div class="modal-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
                     <div class="modal-title" style="margin-bottom:0;">Add Holiday</div>
-                    <button @click="showAddHolidayModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;">
+                    <button @click="showAddHolidayModal = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;flex-shrink:0;">
                         <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
                 <template x-if="errorMsg">
                     <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
                 </template>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Holiday Name</label>
                     <input type="text" class="form-input" x-model="name" placeholder="Enter holiday name">
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Date</label>
                     <input type="date" class="form-input" x-model="date">
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Type</label>
-                    <select class="form-input dept-select" style="width:100%;" x-model="type">
+                    <select class="form-input dept-select" style="width:100%;padding-right:32px;" x-model="type">
                         <option value="">Choose type</option>
                         <option value="regular">Regular</option>
                         <option value="special">Special Non-Working</option>
                         <option value="local">Local</option>
                     </select>
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Pay Rate</label>
-                    <select class="form-input dept-select" style="width:100%;" x-model="pay_rate">
+                    <select class="form-input dept-select" style="width:100%;padding-right:32px;" x-model="pay_rate">
                         <option value="">Choose rate</option>
                         <option value="200%">200%</option>
                         <option value="130%">130%</option>
                         <option value="100%">100%</option>
                     </select>
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label class="form-label">Region (for local holidays)</label>
                     <input type="text" class="form-input" x-model="region" placeholder="e.g. Pangasinan">
                 </div>
-                <div style="margin-bottom:16px;">
+                <div style="margin-bottom:14px;">
                     <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;cursor:pointer;">
                         <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;" x-model="yearly">
                         Repeat Yearly
@@ -1201,5 +1442,27 @@
     </div>
 </div>
 
+<script>
+    // Fix sidebar margin on load and resize
+    (function() {
+        var mainEl = document.querySelector('[x-on\\:resize\\.window]');
+        if (!mainEl) return;
+        function updateMargin() {
+            var collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (window.innerWidth < 1024) {
+                mainEl.style.marginLeft = '0';
+            } else {
+                mainEl.style.marginLeft = collapsed ? '5rem' : '16rem';
+            }
+        }
+        updateMargin();
+        window.addEventListener('resize', updateMargin);
+        window.addEventListener('sidebar-toggle', function(e) {
+            if (window.innerWidth >= 1024) {
+                mainEl.style.marginLeft = e.detail.collapsed ? '5rem' : '16rem';
+            }
+        });
+    })();
+</script>
 </body>
 </html>

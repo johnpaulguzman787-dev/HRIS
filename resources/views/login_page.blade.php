@@ -4,6 +4,7 @@
     <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>MediSource - Sign In</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -305,22 +306,18 @@
                         class="form-input @error('email') input-error shake @enderror">
                     @error('email')
                         <span style="font-size:13px; color:#EF4444; font-weight:300;">{{ $message }}</span>
-                        @if(session('unverified_email') || old('email'))
+                        @if(str_contains($message, 'not yet verified'))
                             @php $unverifiedEmail = session('unverified_email') ?: old('email'); @endphp
-                            @if(str_contains($message, 'not yet verified'))
-                            <form method="POST" action="{{ route('login.resend_verification') }}" style="margin-top:6px;">
-                                @csrf
-                                <input type="hidden" name="email" value="{{ $unverifiedEmail }}">
-                                <button type="submit" style="font-size:13px; color:#2563EB; background:none; border:none; padding:0; cursor:pointer; text-decoration:underline; font-weight:500;">
+                            <div style="margin-top:6px; display:flex; align-items:center; gap:8px;">
+                                <button type="button" id="resend-btn"
+                                    onclick="resendVerification('{{ $unverifiedEmail }}')"
+                                    style="font-size:13px; color:#2563EB; background:none; border:none; padding:0; cursor:pointer; text-decoration:underline; font-weight:500;">
                                     Resend verification email
                                 </button>
-                            </form>
-                            @endif
+                                <span id="resend-msg" style="font-size:13px; display:none;"></span>
+                            </div>
                         @endif
                     @enderror
-                    @if(session('resend_success'))
-                        <span style="font-size:13px; color:#16A34A; font-weight:400;">{{ session('resend_success') }}</span>
-                    @endif
                 </div>
 
                 <!-- Password -->
@@ -364,6 +361,42 @@
 </div>
 
 <script>
+    async function resendVerification(email) {
+        const btn = document.getElementById('resend-btn');
+        const msg = document.getElementById('resend-msg');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        msg.style.display = 'none';
+
+        try {
+            const res = await fetch('{{ route("login.resend_verification") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                },
+                body: JSON.stringify({ email: email })
+            });
+            const data = await res.json();
+            msg.textContent = data.message;
+            msg.style.color = res.ok ? '#16A34A' : '#EF4444';
+            msg.style.display = 'inline';
+            if (res.ok) {
+                btn.style.display = 'none';
+            } else {
+                btn.disabled = false;
+                btn.textContent = 'Resend verification email';
+            }
+        } catch (e) {
+            msg.textContent = 'Network error. Please try again.';
+            msg.style.color = '#EF4444';
+            msg.style.display = 'inline';
+            btn.disabled = false;
+            btn.textContent = 'Resend verification email';
+        }
+    }
+
     function togglePassword() {
         const input = document.getElementById('password');
         const icon = document.getElementById('eye-icon');

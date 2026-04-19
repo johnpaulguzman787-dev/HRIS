@@ -32,20 +32,19 @@ class LoginController extends Controller
             ])->withInput();
         }
 
-        // Step 2: Attempt login
+        // Step 2: Check email verification before password
+        if (!$user->hasVerifiedEmail()) {
+            return back()->withErrors([
+                'email' => 'Your account is not yet verified. Please check your email for the verification link.',
+            ])->with('unverified_email', $request->email)->withInput();
+        }
+
+        // Step 3: Attempt login
         if (!Auth::attempt($request->only('email', 'password'))) {
             return back()->withErrors([
                 'password' => 'Incorrect password.',
             ])->withInput();
         }
-
-        // Step 3: Check email verification
-if (!Auth::user()->hasVerifiedEmail()) {
-    Auth::logout();
-    return back()->withErrors([
-        'email' => 'Your account is not yet verified. Please check your email for the verification link.',
-    ])->with('unverified_email', $request->email)->withInput();
-}
 
 // Step 4: Successful login
 $request->session()->regenerate();
@@ -84,15 +83,21 @@ return $this->redirectToRole(Auth::user());
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return back()->withErrors(['email' => 'No account found with this email.'])->withInput();
+            return response()->json(['success' => false, 'message' => 'No account found with this email.'], 404);
         }
 
-        if ($user->hasVerifiedEmail()) {
-            return back()->with('resend_success', 'Your email is already verified. You can log in now.');
+        if (!is_null($user->email_verified_at)) {
+            return response()->json(['success' => false, 'message' => 'This email is already verified. You can log in now.'], 422);
         }
 
-        $user->sendEmailVerificationNotification();
-        return back()->with('resend_success', 'Verification email resent! Please check your inbox.')->withInput();
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Exception $e) {
+            \Log::error('Resend verification failed: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to send email. Please try again.'], 500);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Verification email resent! Please check your inbox.']);
     }
 
     // Logout

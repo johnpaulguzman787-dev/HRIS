@@ -45,14 +45,21 @@ class FinanceOfficerPayrollController extends Controller
 
         $payrollItems = PayrollItem::orderBy('name')->get();
         $salaryGrades = SalaryGrade::withCount('employees')->with('employees')->orderBy('grade_code')->get();
-        $benefits     = Benefit::orderBy('name')->get();
-        $employees    = Employee::whereNull('deleted_at')->orderBy('fname')->get();
+        $benefits     = Benefit::with('employees:id')->orderBy('name')->get();
+        $employees    = Employee::whereNull('deleted_at')->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->orderBy('fname')->get();
         $contrib      = DB::table('contribution_settings')->pluck('value', 'key');
+        $sssRows      = DB::table('sss_contributions')->orderBy('salary_from')->get();
+        $sssRowsForJs = $sssRows->map(fn($r) => [
+            'salary_from'    => $r->salary_from,
+            'salary_to'      => $r->salary_to,
+            'employee_share' => $r->employee_share,
+            'employer_share' => $r->employer_share,
+        ])->values()->all();
 
         return view('finance_officer.finance-officer_payroll', compact(
             'periods', 'grossPayroll', 'netPay', 'totalDeductions',
             'latestPeriod', 'activePeriod', 'year', 'daysToCutoff',
-            'payrollItems', 'salaryGrades', 'benefits', 'employees', 'contrib'
+            'payrollItems', 'salaryGrades', 'benefits', 'employees', 'contrib', 'sssRows', 'sssRowsForJs'
         ));
     }
 
@@ -69,9 +76,9 @@ class FinanceOfficerPayrollController extends Controller
         $period->update(['status' => 'Released']);
         Payslip::where('payroll_period_id', $id)->update(['status' => 'Released']);
 
-        // Notify all payroll officers
+        // Notify payroll officers and admins
         $recipients = DB::table('users')
-            ->where('role', 'payroll_officer')
+            ->whereIn('role', ['payroll_officer', 'admin'])
             ->pluck('id');
 
         $now = now();
@@ -98,16 +105,16 @@ class FinanceOfficerPayrollController extends Controller
     public function periodPayslips($id)
     {
         $period   = PayrollPeriod::findOrFail($id);
-        $payslips = Payslip::with('employee.department', 'employee.jobTitle')
+        $payslips = Payslip::with(['employee' => fn($q) => $q->withTrashed()->with(['department', 'jobTitle'])])
             ->where('payroll_period_id', $id)
             ->get();
 
         $data = $payslips->map(fn($p) => [
             'id'             => $p->id,
             'employeeId'     => $p->employee_id,
-            'employeeName'   => $p->employee->full_name,
-            'jobTitle'       => $p->employee->jobTitle->title ?? '—',
-            'department'     => $p->employee->department->name ?? '—',
+            'employeeName'   => $p->employee?->full_name ?? '—',
+            'jobTitle'       => $p->employee?->jobTitle?->title ?? '—',
+            'department'     => $p->employee?->department?->name ?? '—',
             'basicPay'       => (float) $p->basic_pay,
             'otPay'          => (float) $p->ot_pay,
             'benefits'       => (float) $p->benefits_total,
@@ -430,6 +437,15 @@ class FinanceOfficerPayrollController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function syncBenefitEmployees(Request $request, $id)
+    {
+        $benefit = Benefit::findOrFail($id);
+        $benefit->employees()->sync($request->input('employee_ids', []));
+
+        return redirect()->route('finance_officer.payroll', ['tab' => 'benefits'])
+            ->with('success', 'Benefit employees updated.');
+    }
+
     // ── Contribution Settings ─────────────────────────────────────────────────
 
     public function updateContrib(Request $request)
@@ -443,6 +459,31 @@ class FinanceOfficerPayrollController extends Controller
             DB::table('contribution_settings')
                 ->where('key', $key)
                 ->update(['value' => $data['values'][$i]]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function saveSssTable(Request $request)
+    {
+        $data = $request->validate([
+            'rows'                   => 'required|array',
+            'rows.*.salary_from'     => 'required|numeric|min:0',
+            'rows.*.salary_to'       => 'nullable|numeric|min:0',
+            'rows.*.employee_share'  => 'required|numeric|min:0',
+            'rows.*.employer_share'  => 'required|numeric|min:0',
+        ]);
+
+        DB::table('sss_contributions')->truncate();
+        foreach ($data['rows'] as $row) {
+            DB::table('sss_contributions')->insert([
+                'salary_from'    => $row['salary_from'],
+                'salary_to'      => $row['salary_to'] !== '' ? $row['salary_to'] : null,
+                'employee_share' => $row['employee_share'],
+                'employer_share' => $row['employer_share'],
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
         }
 
         return response()->json(['success' => true]);
@@ -510,6 +551,8 @@ class FinanceOfficerPayrollController extends Controller
 
         $records = DB::table('payslips as ps')
             ->join('employees as e', 'ps.employee_id', '=', 'e.id')
+            ->join('users as u', 'e.user_id', '=', 'u.id')
+            ->whereNotNull('u.email_verified_at')
             ->where('ps.payroll_period_id', $id)
             ->select(
                 'e.fname',

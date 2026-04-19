@@ -164,17 +164,13 @@
 
                 {{-- Toolbar --}}
                 <div class="flex items-center justify-between gap-3 mb-4">
-                    <button class="btn-primary" @click="showCreatePeriod=true">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        Create Payroll Period
-                    </button>
                     <div class="search-wrap flex-1 max-w-xs">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>
                         <input type="text" placeholder="Search" class="ctrl w-full" x-model="periodSearch">
                     </div>
                     <div class="flex items-center gap-3">
                         <select class="ctrl" x-model="periodStatusFilter">
-                            <option value="">All Status</option>
+                            <option value="">Status</option>
                             <option value="Pending">Pending</option>
                             <option value="Submitted">Submitted</option>
                             <option value="Released">Released</option>
@@ -184,6 +180,10 @@
                             <option value="{{ $y }}">{{ $y }}</option>
                             @endfor
                         </select>
+                        <button class="btn-primary" @click="showCreatePeriod=true">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Create Payroll Period
+                        </button>
                     </div>
                 </div>
 
@@ -223,12 +223,6 @@
                                                 '{{ $period->end_date }}',
                                                 '{{ $period->status }}'
                                             )">View</button>
-                                        @if($period->status === 'Pending')
-                                        <form method="POST" action="{{ route('admin.payroll.period.submit', $period->id) }}" style="display:inline;" onsubmit="return confirm('Submit this period for approval?')">
-                                            @csrf
-                                            <button type="submit" style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#dbeafe;color:#1d4ed8;">Submit</button>
-                                        </form>
-                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -358,6 +352,9 @@
                                 <td><span class="px-3 py-1 rounded-full text-xs font-medium {{ $benefit->status==='Active' ? 'badge-active' : 'badge-inactive' }}">{{ $benefit->status }}</span></td>
                                 <td class="text-right">
                                     <div class="flex items-center justify-end gap-2">
+                                        @if($benefit->status === 'Active')
+                                        <button class="btn-view" @click="openAssignBenefit({{ $benefit->id }}, '{{ addslashes($benefit->name) }}')">Assign</button>
+                                        @endif
                                         <button class="btn-view" @click="openEditBenefit({{ $benefit->id }}, '{{ addslashes($benefit->name) }}', '{{ $benefit->type }}', {{ $benefit->amount }}, '{{ $benefit->tax }}', '{{ $benefit->frequency }}', '{{ addslashes($benefit->eligibility) }}', '{{ $benefit->status }}')">Edit</button>
                                         <button class="btn-delete" @click="deleteBenefit({{ $benefit->id }})">Delete</button>
                                     </div>
@@ -378,20 +375,24 @@
                 <div class="grid grid-cols-4 gap-4">
                     {{-- SSS --}}
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-                        <div class="flex items-center justify-between mb-4">
-                            <h4 class="text-sm font-bold text-gray-700">SSS Rates</h4>
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wide">SSS Rates</h4>
                             <button @click="openEditContrib('sss')" class="text-gray-400 hover:text-blue-500 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                             </button>
                         </div>
-                        <div class="space-y-2.5 text-sm">
-                            <div class="flex justify-between"><span class="text-gray-500">Employee Share</span><span class="font-medium text-gray-700">{{ $contrib['sss_employee_rate'] }}%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">Employer Share</span><span class="font-medium text-gray-700">{{ $contrib['sss_employer_rate'] }}%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">Total Rate</span><span class="font-medium text-gray-700">{{ $contrib['sss_employee_rate'] + $contrib['sss_employer_rate'] }}%</span></div>
-                            <div class="flex justify-between pt-2.5 border-t border-gray-100">
-                                <span class="text-gray-500 text-xs leading-tight">Max Monthly<br>Salary Credit Range</span>
-                                <span class="font-medium text-gray-700">₱{{ number_format($contrib['sss_max_msc']) }}</span>
+                        <div class="space-y-1.5 text-xs max-h-36 overflow-y-auto pr-1">
+                            @forelse($sssRows as $row)
+                            <div class="flex justify-between items-center py-0.5">
+                                <span class="text-gray-500">
+                                    ₱{{ number_format($row->salary_from, 2) }} –
+                                    {{ $row->salary_to !== null ? '₱'.number_format($row->salary_to, 2) : 'above' }}
+                                </span>
+                                <span class="font-semibold text-orange-500">₱{{ number_format($row->employee_share, 2) }}</span>
                             </div>
+                            @empty
+                            <p class="text-gray-400 text-xs italic">No SSS brackets found. Click edit to add.</p>
+                            @endforelse
                         </div>
                     </div>
 
@@ -415,32 +416,33 @@
                     {{-- Pag-IBIG --}}
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
                         <div class="flex items-center justify-between mb-4">
-                            <h4 class="text-sm font-bold text-gray-700">Pag-IBIG</h4>
+                            <h4 class="text-sm font-bold text-gray-700">PAG-IBIG</h4>
                             <button @click="openEditContrib('pagibig')" class="text-gray-400 hover:text-blue-500 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                             </button>
                         </div>
                         <div class="space-y-2.5 text-sm">
-                            <div class="flex justify-between items-start"><span class="text-gray-500 text-xs leading-tight">Employee<br>(salary ≤ ₱1,500)</span><span class="font-medium text-gray-700">{{ $contrib['pagibig_low_rate'] }}%</span></div>
-                            <div class="flex justify-between items-start"><span class="text-gray-500 text-xs leading-tight">Employee<br>(salary &gt; ₱1,500)</span><span class="font-medium text-gray-700 text-right text-xs leading-tight">{{ $contrib['pagibig_high_rate'] }}%, max<br>₱{{ number_format($contrib['pagibig_max']) }}/mo</span></div>
-                            <div class="flex justify-between items-start pt-2.5 border-t border-gray-100"><span class="text-gray-500">Employer match</span><span class="font-medium text-gray-700 text-right text-xs leading-tight">{{ $contrib['pagibig_high_rate'] }}%, max<br>₱{{ number_format($contrib['pagibig_max']) }}/mo</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-500 text-xs">Below ₱{{ number_format($contrib['pagibig_threshold']) }}:</span><span class="font-medium text-orange-500">₱{{ number_format($contrib['pagibig_low_amount']) }}/mo</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-500 text-xs">₱{{ number_format($contrib['pagibig_threshold']) }} &amp; above:</span><span class="font-medium text-orange-500">₱{{ number_format($contrib['pagibig_high_amount']) }}/mo</span></div>
+                            <div class="flex justify-between items-center pt-2.5 border-t border-gray-100"><span class="text-gray-500 text-xs">Threshold</span><span class="font-medium text-gray-700">₱{{ number_format($contrib['pagibig_threshold']) }}.00</span></div>
                         </div>
                     </div>
 
                     {{-- W/Tax --}}
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
                         <div class="flex items-center justify-between mb-4">
-                            <h4 class="text-sm font-bold text-gray-700">W/Tax</h4>
+                            <h4 class="text-sm font-bold text-gray-700">WITHHOLDING TAX</h4>
                             <button @click="openEditContrib('wtax')" class="text-gray-400 hover:text-blue-500 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                             </button>
                         </div>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between"><span class="text-gray-500">Up to ₱{{ number_format($contrib['wtax_bracket_1']) }}/Year</span><span class="font-medium text-gray-700">0%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_1']) }} – ₱{{ number_format($contrib['wtax_bracket_2']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_1'] }}%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_2']) }} – ₱{{ number_format($contrib['wtax_bracket_3']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_2'] }}%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_3']) }} – ₱{{ number_format($contrib['wtax_bracket_4']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_3'] }}%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_4']) }}+</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_4'] }}%</span></div>
+                        <div class="space-y-1.5 text-xs max-h-36 overflow-y-auto pr-1">
+                            <div class="flex justify-between"><span class="text-gray-500">₱0 – ₱{{ number_format($contrib['wtax_bracket_1']) }}</span><span class="font-medium text-gray-700">₱0.00 + 0%</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_1']) }} – ₱{{ number_format($contrib['wtax_bracket_2']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_1'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_1']) }})</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_2']) }} – ₱{{ number_format($contrib['wtax_bracket_3']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_2'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_2']) }})</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_3']) }} – ₱{{ number_format($contrib['wtax_bracket_4']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_3'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_3']) }})</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_4']) }} – ₱{{ number_format($contrib['wtax_bracket_5']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_4'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_4']) }})</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_5']) }}+</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_5'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_5']) }})</span></div>
                         </div>
                     </div>
                 </div>
@@ -461,25 +463,37 @@
                             <tbody>
                                 @forelse($salaryGrades as $grade)
                                 @php
-                                    $sal     = (float) $grade->monthly_basic_salary;
-                                    $msc     = min($sal, (float) $contrib['sss_max_msc']);
-                                    $sssEmp  = round($msc * ((float) $contrib['sss_employee_rate'] / 100), 2);
-                                    $sssEmr  = round($msc * ((float) $contrib['sss_employer_rate'] / 100), 2);
-                                    $phBase  = max((float) $contrib['philhealth_floor'], min($sal, (float) $contrib['philhealth_ceiling']));
-                                    $ph      = round($phBase * ((float) $contrib['philhealth_rate'] / 100 / 2), 2);
-                                    $pagRate = $sal <= 1500 ? (float) $contrib['pagibig_low_rate'] / 100 : (float) $contrib['pagibig_high_rate'] / 100;
-                                    $pi      = round(min($sal * $pagRate, (float) $contrib['pagibig_max']), 2);
+                                    $sal    = (float) $grade->monthly_basic_salary;
+
+                                    // SSS — table-based lookup
+                                    $sssRow = $sssRows->first(fn($r) => $sal >= $r->salary_from && ($r->salary_to === null || $sal <= $r->salary_to));
+                                    $sssEmp = $sssRow ? (float) $sssRow->employee_share : 0;
+                                    $sssEmr = $sssRow ? (float) $sssRow->employer_share : 0;
+
+                                    // PhilHealth — percentage, employee half, monthly
+                                    $phBase = max((float) $contrib['philhealth_floor'], min($sal, (float) $contrib['philhealth_ceiling']));
+                                    $ph     = round($phBase * ((float) $contrib['philhealth_rate'] / 100 / 2), 2);
+
+                                    // Pag-IBIG — threshold-based fixed monthly amount
+                                    $pi = $sal < (float) $contrib['pagibig_threshold']
+                                        ? (float) $contrib['pagibig_low_amount']
+                                        : (float) $contrib['pagibig_high_amount'];
+
+                                    // W/Tax — TRAIN Law 6-bracket annualized
                                     $b1 = (float) $contrib['wtax_bracket_1']; $b2 = (float) $contrib['wtax_bracket_2'];
                                     $b3 = (float) $contrib['wtax_bracket_3']; $b4 = (float) $contrib['wtax_bracket_4'];
+                                    $b5 = (float) $contrib['wtax_bracket_5'];
                                     $r1 = (float) $contrib['wtax_rate_1']/100; $r2 = (float) $contrib['wtax_rate_2']/100;
                                     $r3 = (float) $contrib['wtax_rate_3']/100; $r4 = (float) $contrib['wtax_rate_4']/100;
-                                    $annualDeductions = ($sssEmp + $ph + $pi) * 24;
+                                    $r5 = (float) $contrib['wtax_rate_5']/100;
+                                    $annualDeductions = ($sssEmp + $ph + $pi) * 12;
                                     $annualTaxable    = max(0, ($sal * 12) - $annualDeductions);
                                     if ($annualTaxable <= $b1)      $wt = 0;
                                     elseif ($annualTaxable <= $b2)  $wt = ($annualTaxable - $b1) * $r1;
                                     elseif ($annualTaxable <= $b3)  $wt = ($b2-$b1)*$r1 + ($annualTaxable-$b2)*$r2;
                                     elseif ($annualTaxable <= $b4)  $wt = ($b2-$b1)*$r1 + ($b3-$b2)*$r2 + ($annualTaxable-$b3)*$r3;
-                                    else                            $wt = ($b2-$b1)*$r1 + ($b3-$b2)*$r2 + ($b4-$b3)*$r3 + ($annualTaxable-$b4)*$r4;
+                                    elseif ($annualTaxable <= $b5)  $wt = ($b2-$b1)*$r1 + ($b3-$b2)*$r2 + ($b4-$b3)*$r3 + ($annualTaxable-$b4)*$r4;
+                                    else                            $wt = ($b2-$b1)*$r1 + ($b3-$b2)*$r2 + ($b4-$b3)*$r3 + ($b5-$b4)*$r4 + ($annualTaxable-$b5)*$r5;
                                     $wt = round($wt / 12, 2);
                                     $totalMonth = $sssEmp + $ph + $pi + $wt;
                                 @endphp
@@ -531,16 +545,27 @@
 
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-800" x-text="viewPeriod.name"></h2>
-                    <template x-if="viewPeriod.status === 'Pending'">
-                        <button class="btn-primary" @click="adminSubmitPeriod()">
-                            Submit for Approval
-                        </button>
-                    </template>
-                    <template x-if="viewPeriod.status === 'Submitted'">
-                        <button class="btn-primary" @click="showReleaseConfirm=true">
-                            Release Payroll
-                        </button>
-                    </template>
+                    <div class="flex items-center gap-2">
+                        <template x-if="viewPeriod.status === 'Pending'">
+                            <button class="btn-primary" @click="adminSubmitPeriod()">
+                                Submit for Approval
+                            </button>
+                        </template>
+                        <template x-if="viewPeriod.status === 'Submitted'">
+                            <button class="btn-primary" @click="showReleaseConfirm=true">
+                                Release Payroll
+                            </button>
+                        </template>
+                        <template x-if="viewPeriod.status === 'Released'">
+                            <button @click="pvExportAllPayslips()"
+                                    :disabled="pvPayslips.length === 0"
+                                    :style="pvPayslips.length === 0 ? 'opacity:0.45;cursor:not-allowed;' : ''"
+                                    class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg border-none cursor-pointer transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 16v4a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 8.414V12M12 10v6m0 0l-3-3m3 3l3-3"/></svg>
+                                Export All PDF
+                            </button>
+                        </template>
+                    </div>
                 </div>
             </div>
 
@@ -794,6 +819,45 @@
         </div>
     </div>
 
+    {{-- Submit Period Confirm --}}
+    <div x-show="showSubmitConfirm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showSubmitConfirm=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-8 text-center"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <p class="text-gray-700 font-semibold text-base mb-2">Submit for Approval?</p>
+            <p class="text-gray-400 text-sm mb-6">This will submit the payroll period for finance approval.</p>
+            <div class="flex justify-center gap-3">
+                <button @click="showSubmitConfirm=false" class="btn-outline px-8">Cancel</button>
+                <form :action="`/admin/payroll/period/${viewPeriod.id}/submit`" method="POST">
+                    @csrf
+                    <button type="submit" class="btn-primary px-8">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Submit Payslip Confirm --}}
+    <div x-show="showSubmitPayslipConfirm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showSubmitPayslipConfirm=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-8 text-center"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <p class="text-gray-700 font-semibold text-base mb-2">Submit Payslip?</p>
+            <p class="text-gray-400 text-sm mb-6">Submit payslip for <span class="font-medium text-gray-600" x-text="pvActive.employeeName"></span>?</p>
+            <div class="flex justify-center gap-3">
+                <button @click="showSubmitPayslipConfirm=false" class="btn-outline px-8">Cancel</button>
+                <button @click="adminSubmitPayslipConfirmed()" class="btn-primary px-8">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     {{-- Release Confirm --}}
     <div x-show="showReleaseConfirm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showReleaseConfirm=false">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-8 text-center"
@@ -925,6 +989,47 @@
         </div>
     </div>
 
+    {{-- Assign Benefit Employees --}}
+    <div x-show="showAssignBenefitModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showAssignBenefitModal=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-7"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold text-gray-800">Assign Employees — <span x-text="assignBenefit.name" class="text-blue-600"></span></h2>
+                <button @click="showAssignBenefitModal=false" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <form :action="`/admin/payroll/benefit/${assignBenefit.id}/assign`" method="POST" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Assigned Employees</label>
+                    <div class="flex flex-wrap gap-1.5 mb-2" x-show="benefitSelectedEmps.length > 0">
+                        <template x-for="s in benefitSelectedEmps" :key="s.id">
+                            <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                                <span x-text="s.name"></span>
+                                <button type="button" @click="benefitRemoveEmp(s.id)" class="hover:text-blue-900 font-bold ml-0.5">×</button>
+                                <input type="hidden" name="employee_ids[]" :value="s.id">
+                            </span>
+                        </template>
+                    </div>
+                    <div class="relative">
+                        <input type="text" x-model="benefitEmpSearch"
+                               @focus="benefitShowDrop=true" @blur="setTimeout(()=>{benefitShowDrop=false},200)"
+                               placeholder="Search and add employees…" class="ctrl w-full">
+                        <div x-show="benefitShowDrop && benefitFiltered.length > 0"
+                             class="absolute top-full left-0 right-0 mt-1 border border-gray-200 rounded-lg bg-white shadow-md max-h-44 overflow-y-auto z-20">
+                            <template x-for="opt in benefitFiltered" :key="opt.id">
+                                <div class="px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer" @mousedown.prevent="benefitAddEmp(opt)" x-text="opt.name"></div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" @click="showAssignBenefitModal=false" class="btn-outline">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     {{-- Add Salary Grade --}}
     <div x-show="showAddGradeModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showAddGradeModal=false">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-7"
@@ -1032,17 +1137,29 @@
                 <h2 class="text-lg font-bold text-gray-800" x-text="{ sss:'Edit SSS Rates', philhealth:'Edit PhilHealth Rates', pagibig:'Edit Pag-IBIG Rates', wtax:'Edit W/Tax Brackets' }[editContribType]"></h2>
                 <button @click="showEditContribModal=false" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
             </div>
-            <div x-show="editContribType==='sss'" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employee Share (%)</label><input type="number" step="0.01" x-model="contrib.sss_employee_rate" class="ctrl w-full"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employer Share (%)</label><input type="number" step="0.01" x-model="contrib.sss_employer_rate" class="ctrl w-full"></div>
+            <div x-show="editContribType==='sss'" class="space-y-3">
+                <p class="text-xs text-gray-400 uppercase font-semibold tracking-wider">Salary Brackets → Fixed Monthly Contribution</p>
+                <div class="max-h-64 overflow-y-auto space-y-2 pr-1">
+                    <template x-for="(row, i) in sssRows" :key="i">
+                        <div class="grid grid-cols-5 gap-1.5 items-center">
+                            <input type="number" step="0.01" x-model="row.salary_from" placeholder="From" class="ctrl col-span-1 text-xs">
+                            <input type="number" step="0.01" x-model="row.salary_to"   placeholder="To (blank=∞)" class="ctrl col-span-1 text-xs">
+                            <input type="number" step="0.01" x-model="row.employee_share" placeholder="Employee" class="ctrl col-span-1 text-xs">
+                            <input type="number" step="0.01" x-model="row.employer_share" placeholder="Employer" class="ctrl col-span-1 text-xs">
+                            <button type="button" @click="sssRows.splice(i,1)" class="text-red-400 hover:text-red-600 text-xs font-bold">✕</button>
+                        </div>
+                    </template>
                 </div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Max Monthly Salary Credit (₱)</label><input type="number" step="0.01" x-model="contrib.sss_max_msc" class="ctrl w-full"></div>
+                <div class="grid grid-cols-5 gap-1.5 items-center text-xs text-gray-400 font-medium px-0.5">
+                    <span>Salary From</span><span>Salary To</span><span>Emp. Share</span><span>Emr. Share</span><span></span>
+                </div>
+                <button type="button" @click="sssRows.push({salary_from:'',salary_to:'',employee_share:'',employer_share:''})"
+                        class="text-xs text-blue-500 hover:text-blue-700 font-medium">+ Add Row</button>
             </div>
             <div x-show="editContribType==='philhealth'" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employee Share (%)</label><input type="number" step="0.01" x-model="contrib.philhealth_rate" class="ctrl w-full"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employer Share (%)</label><input type="number" step="0.01" value="2.5" class="ctrl w-full"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Total Rate (%)</label><input type="number" step="0.01" x-model="contrib.philhealth_rate" class="ctrl w-full"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employer Share (%)</label><input type="number" step="0.01" value="2.5" class="ctrl w-full" disabled></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Floor (₱)</label><input type="number" step="0.01" x-model="contrib.philhealth_floor" class="ctrl w-full"></div>
@@ -1050,20 +1167,20 @@
                 </div>
             </div>
             <div x-show="editContribType==='pagibig'" class="space-y-4">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employee Rate — Salary ≤ ₱1,500 (%)</label><input type="number" step="0.01" x-model="contrib.pagibig_low_rate" class="ctrl w-full"></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employee Rate — Salary &gt; ₱1,500 (%)</label><input type="number" step="0.01" x-model="contrib.pagibig_high_rate" class="ctrl w-full"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Threshold (₱) — below this = low amount</label><input type="number" step="0.01" x-model="contrib.pagibig_threshold" class="ctrl w-full"></div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Employer Match Rate (%)</label><input type="number" step="0.01" value="2" class="ctrl w-full"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Max Contribution (₱)</label><input type="number" step="0.01" x-model="contrib.pagibig_max" class="ctrl w-full"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Below Threshold (₱/month)</label><input type="number" step="0.01" x-model="contrib.pagibig_low_amount" class="ctrl w-full"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">At/Above Threshold (₱/month)</label><input type="number" step="0.01" x-model="contrib.pagibig_high_amount" class="ctrl w-full"></div>
                 </div>
             </div>
             <div x-show="editContribType==='wtax'" class="space-y-3">
-                <p class="text-xs text-gray-400 uppercase font-semibold tracking-wider">Annual Income Brackets</p>
-                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">Up to ₱250K</span><input type="number" step="0.01" value="0" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
-                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">₱250K – ₱400K</span><input type="number" step="0.01" x-model="contrib.wtax_rate_1" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
-                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">₱400K – ₱800K</span><input type="number" step="0.01" x-model="contrib.wtax_rate_2" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
-                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">₱800K – ₱2M</span><input type="number" step="0.01" x-model="contrib.wtax_rate_3" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
-                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-36">₱2M+</span><input type="number" step="0.01" x-model="contrib.wtax_rate_4" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <p class="text-xs text-gray-400 uppercase font-semibold tracking-wider">Annual Income Brackets (TRAIN Law)</p>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-40">Up to ₱250K</span><input type="number" step="0.01" value="0" class="ctrl flex-1" disabled><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-40">₱250K – ₱400K</span><input type="number" step="0.01" x-model="contrib.wtax_rate_1" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-40">₱400K – ₱800K</span><input type="number" step="0.01" x-model="contrib.wtax_rate_2" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-40">₱800K – ₱2M</span><input type="number" step="0.01" x-model="contrib.wtax_rate_3" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-40">₱2M – ₱8M</span><input type="number" step="0.01" x-model="contrib.wtax_rate_4" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
+                <div class="flex items-center gap-3"><span class="text-sm text-gray-600 w-40">₱8M+</span><input type="number" step="0.01" x-model="contrib.wtax_rate_5" class="ctrl flex-1"><span class="text-sm text-gray-400">%</span></div>
             </div>
             <div class="flex justify-end gap-3 pt-5">
                 <button type="button" @click="showEditContribModal=false" class="btn-outline">Cancel</button>
@@ -1112,16 +1229,20 @@
             benefitStatusFilter: '', itemStatusFilter: '',
 
             showCreatePeriod:     false,
-            showReleaseConfirm:   false,
+            showSubmitConfirm:        false,
+            showSubmitPayslipConfirm: false,
+            showReleaseConfirm:       false,
             showAddItemModal:     false,
             showEditItemModal:    false,
-            showAddBenefitModal:  false,
-            showEditBenefitModal: false,
+            showAddBenefitModal:    false,
+            showEditBenefitModal:   false,
+            showAssignBenefitModal: false,
             showAddGradeModal:    false,
             showEditGradeModal:   false,
             showEditContribModal: false,
             editContribType: '',
             contrib: @json($contrib),
+            sssRows: @json($sssRowsForJs),
 
             alertModal: { show: false, type: 'error', title: '', message: '' },
             confirmModal: { show: false, title: '', message: '', action: null, danger: true },
@@ -1130,7 +1251,10 @@
             editPayslip: {},
 
             editItem:    { id: null, name: '', multiplier: '', type: '', basis: '', status: '' },
-            editBenefit: { id: null, name: '', type: '', amount: '', tax: '', frequency: '', eligibility: '', status: '' },
+            editBenefit:   { id: null, name: '', type: '', amount: '', tax: '', frequency: '', eligibility: '', status: '' },
+            assignBenefit: { id: null, name: '' },
+            assignedBenefitEmpMap: @json($benefits->mapWithKeys(fn($b) => [$b->id => $b->employees->pluck('id')->toArray()])),
+            benefitSelectedEmps: [], benefitEmpSearch: '', benefitShowDrop: false,
             editGrade:   { id: null, gradeCode: '', levelName: '', monthlySalary: 0 },
 
             gradeSelectedEmps: [], gradeEmpSearch: '', gradeShowDrop: false,
@@ -1154,6 +1278,13 @@
                     !this.gradeSelectedEmps.find(s => s.id === e.id) &&
                     !takenIds.includes(e.id) &&
                     e.name.toLowerCase().includes(this.gradeEmpSearch.toLowerCase())
+                );
+            },
+
+            get benefitFiltered() {
+                return this.allEmps.filter(e =>
+                    !this.benefitSelectedEmps.find(s => s.id === e.id) &&
+                    e.name.toLowerCase().includes(this.benefitEmpSearch.toLowerCase())
                 );
             },
 
@@ -1212,8 +1343,12 @@
                 this.showEditPayslipModal = true;
             },
 
-            async adminSubmitPayslip() {
-                if (!confirm(`Submit payslip for ${this.pvActive.employeeName}?`)) return;
+            adminSubmitPayslip() {
+                this.showSubmitPayslipConfirm = true;
+            },
+
+            async adminSubmitPayslipConfirmed() {
+                this.showSubmitPayslipConfirm = false;
                 const csrf = document.querySelector('meta[name="csrf-token"]').content;
                 const res  = await fetch(`/admin/payroll/payslip/${this.pvActive.id}/submit`, {
                     method: 'POST',
@@ -1223,6 +1358,7 @@
                 if (data.success) {
                     const idx = this.pvPayslips.findIndex(p => p.id === this.pvActive.id);
                     if (idx !== -1) { this.pvPayslips[idx].status = 'Submitted'; this.pvActive.status = 'Submitted'; }
+                    this.pvSubmittedCount = this.pvPayslips.filter(p => p.status === 'Submitted' || p.status === 'Released').length;
                     this.showAlert('success', 'Payslip Submitted', 'Payslip marked as submitted.');
                 } else {
                     this.showAlert('error', 'Error', data.message || 'Could not submit payslip.');
@@ -1236,16 +1372,7 @@
                     this.showAlert('error', 'Cannot Submit', `All payslips must be submitted first (${submitted}/${total} done).`);
                     return;
                 }
-                if (!confirm('Submit this payroll period for approval?')) return;
-                const csrf = document.querySelector('meta[name="csrf-token"]').content;
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/admin/payroll/period/${this.viewPeriod.id}/submit`;
-                const token = document.createElement('input');
-                token.type = 'hidden'; token.name = '_token'; token.value = csrf;
-                form.appendChild(token);
-                document.body.appendChild(form);
-                form.submit();
+                this.showSubmitConfirm = true;
             },
 
             async saveEditPayslip() {
@@ -1278,6 +1405,15 @@
             // ── Grade helpers ──
             gradeAddEmp(emp) { this.gradeSelectedEmps.push(emp); this.gradeEmpSearch = ''; this.gradeShowDrop = false; },
             gradeRemoveEmp(id) { this.gradeSelectedEmps = this.gradeSelectedEmps.filter(e => e.id !== id); },
+            benefitAddEmp(emp) { this.benefitSelectedEmps.push(emp); this.benefitEmpSearch = ''; this.benefitShowDrop = false; },
+            benefitRemoveEmp(id) { this.benefitSelectedEmps = this.benefitSelectedEmps.filter(e => e.id !== id); },
+            openAssignBenefit(id, name) {
+                this.assignBenefit = { id, name };
+                const assignedIds = this.assignedBenefitEmpMap[id] || [];
+                this.benefitSelectedEmps = this.allEmps.filter(e => assignedIds.includes(e.id));
+                this.benefitEmpSearch = ''; this.benefitShowDrop = false;
+                this.showAssignBenefitModal = true;
+            },
             openAddGrade() {
                 this.gradeSelectedEmps = []; this.gradeEmpSearch = '';
                 this.addGradeCode = ''; this.addGradeCodeError = '';
@@ -1342,14 +1478,19 @@
             // ── Contribution helpers ──
             openEditContrib(type) { this.editContribType = type; this.showEditContribModal = true; },
             async saveContrib() {
-                const csrf   = document.querySelector('meta[name="csrf-token"]').content;
-                const keys   = Object.keys(this.contrib);
-                const values = Object.values(this.contrib);
-                await fetch('/admin/payroll/contrib/update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' },
-                    body: JSON.stringify({ keys, values }),
-                });
+                const csrf = document.querySelector('meta[name="csrf-token"]').content;
+                const headers = { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' };
+                if (this.editContribType === 'sss') {
+                    await fetch('/admin/payroll/sss/save', {
+                        method: 'POST', headers, body: JSON.stringify({ rows: this.sssRows }),
+                    });
+                } else {
+                    const keys   = Object.keys(this.contrib);
+                    const values = Object.values(this.contrib);
+                    await fetch('/admin/payroll/contrib/update', {
+                        method: 'POST', headers, body: JSON.stringify({ keys, values }),
+                    });
+                }
                 this.reloadTab();
             },
 
@@ -1367,6 +1508,42 @@
             // ── PDF Export ──
             exportPayslip(ps) {
                 this._printHtml(this._buildPayslipHtml(ps.employeeName, ps.jobTitle, ps.department, ps.period || this.viewPeriod.name, ps));
+            },
+
+            pvExportAllPayslips() {
+                const slips = this.pvPayslips;
+                if (!slips.length) return;
+                const f = n => Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+                const period = this.viewPeriod.name || '—';
+                const pages = slips.map((ps, i) => {
+                    const pb = i < slips.length - 1 ? 'page-break-after:always;' : '';
+                    return `<div style="padding:40px 48px;max-width:620px;margin:0 auto;${pb}">
+<div style="margin-bottom:20px;"><div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div><div style="font-size:12px;color:#64748b;margin-top:2px;">${period}</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;background:#f8faff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+  <div><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Employee</div><div style="font-size:13px;font-weight:600;color:#1e293b;">${ps.employeeName||'—'}</div></div>
+  <div><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Job Title</div><div style="font-size:13px;font-weight:600;color:#1e293b;">${ps.jobTitle||'—'}</div></div>
+  <div><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Department</div><div style="font-size:13px;font-weight:600;color:#1e293b;">${ps.department||'—'}</div></div>
+</div>
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Earnings</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Basic Pay</span><span>₱ ${f(ps.basicPay)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>OT Pay</span><span>₱ ${f(ps.otPay)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Benefits</span><span>₱ ${f(ps.benefits)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Deductions</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>SSS</span><span style="color:#dc2626;">-₱ ${f(ps.sss)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>PhilHealth</span><span style="color:#dc2626;">-₱ ${f(ps.philhealth)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Pag-IBIG</span><span style="color:#dc2626;">-₱ ${f(ps.pagibig)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Withholding Tax</span><span style="color:#dc2626;">-₱ ${f(ps.withholdingTax)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Total Deductions</span><span style="color:#dc2626;">-₱ ${f(ps.totalDeductions)}</span></div>
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Summary</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Total Deductions</span><span style="color:#dc2626;">-₱ ${f(ps.totalDeductions)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Net Pay</span><span>₱ ${f(ps.netPay)}</span></div>
+<div style="margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;">This is a system-generated payslip from MediSource HRIS.</div>
+</div>`;
+                }).join('');
+                const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>All Payslips – ${period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{color:#1e293b;}@media print{@page{margin:.5cm;}}</style></head><body>${pages}</body></html>`;
+                this._printHtml(html);
             },
 
             _buildPayslipHtml(name, jobTitle, department, period, ps) {
@@ -1399,7 +1576,7 @@
             _printHtml(html) {
                 const w = window.open('', '_blank', 'width=700,height=860,scrollbars=yes');
                 if (!w) { this.showAlert('error', 'Pop-up Blocked', 'Please allow pop-ups to export payslips.'); return; }
-                w.document.write(html); w.document.close(); w.focus();
+                w.document.write(html); w.document.close(); w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove()); w.focus();
                 setTimeout(() => { w.print(); }, 400);
             },
 

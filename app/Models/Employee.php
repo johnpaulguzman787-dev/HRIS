@@ -86,6 +86,11 @@ class Employee extends Model
         return $this->hasMany(Payslip::class);
     }
 
+    public function benefits()
+    {
+        return $this->belongsToMany(Benefit::class, 'employee_benefits');
+    }
+
     // ── Accessors ──────────────────────────────────
 
     public function getFullNameAttribute(): string

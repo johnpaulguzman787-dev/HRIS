@@ -3,6 +3,7 @@
 @section('title', 'Employee Profile - Medisource HRMS')
 
 @section('content')
+<script>window._profileDocs = @json($documents);</script>
 <div x-data="{
     sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
     init() { window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; }); },
@@ -30,7 +31,7 @@ employee: {
     end_date: '{{ $employee?->end_date ? \Carbon\Carbon::parse($employee->end_date)->format("m/d/Y") : "" }}',
 },
 
-    documents: [],
+    documents: window._profileDocs,
 
     // Document Preview Modal
     showDocModal: false,
@@ -279,7 +280,7 @@ employee: {
                                 <button @click="openDoc(doc)" class="px-2 py-1 lg:px-4 lg:py-1.5 text-[10px] lg:text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200">
                                     View
                                 </button>
-                                <button class="px-2 py-1 lg:px-4 lg:py-1.5 text-[10px] lg:text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200">
+                                <button @click="window.open(doc.download_url, '_blank')" class="px-2 py-1 lg:px-4 lg:py-1.5 text-[10px] lg:text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200">
                                     Download
                                 </button>
                             </div>
@@ -404,7 +405,7 @@ employee: {
                     class="px-3 py-1.5 lg:px-5 lg:py-2 text-xs lg:text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-all duration-200">
                     Close
                 </button>
-                <button class="px-3 py-1.5 lg:px-5 lg:py-2 text-xs lg:text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all duration-200 flex items-center gap-2">
+                <button @click="activeDoc && window.open(activeDoc.download_url, '_blank')" class="px-3 py-1.5 lg:px-5 lg:py-2 text-xs lg:text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all duration-200 flex items-center gap-2">
                     <svg class="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>

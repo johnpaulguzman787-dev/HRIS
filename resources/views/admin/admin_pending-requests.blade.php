@@ -113,6 +113,7 @@
         .doc-upload{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed #d1d5db;border-radius:10px;padding:24px 20px;background:#f9fafb;cursor:pointer;}
         .btn-primary{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:var(--blue);color:#fff;transition:background .15s;white-space:nowrap;}
         .btn-primary:hover{background:var(--blue-dark);}
+            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
         /* DESKTOP SIDEBAR */
         .desktop-sidebar { display: none; }
@@ -540,7 +541,7 @@
                 </div>
                 <div class="mactions">
                     <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
-                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving?'Submitting…':'Submit'"></button>
+                    <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
 
@@ -591,7 +592,7 @@
                 </div>
                 <div class="mactions">
                     <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
-                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving?'Submitting…':'Submit'"></button>
+                    <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
 
@@ -647,7 +648,7 @@
                 </div>
                 <div class="mactions">
                     <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
-                    <button class="btn-save" @click="submit()" :disabled="saving" x-text="saving?'Submitting…':'Submit'"></button>
+                    <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
 

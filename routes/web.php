@@ -37,6 +37,7 @@ Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
 // Login
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
+Route::post('/login/resend-verification', [LoginController::class, 'resendVerificationFromLogin'])->name('login.resend_verification');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Forgot Password
@@ -115,6 +116,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/documents/{docId}', [AdminEmployeeController::class, 'deleteDocument'])->name('documents.destroy');
         Route::put('/{id}', [AdminEmployeeController::class, 'update'])->name('update');
         Route::put('/job-title/{id}', [AdminEmployeeController::class, 'updateJobTitle'])->name('job_title.update');
+        Route::post('/{id}/resend-verification', [AdminEmployeeController::class, 'resendVerification'])->name('resend_verification')->whereNumber('id');
     });
 
     // ── HR EMPLOYEE ROUTES ─────────────────────────────────────────────────
@@ -151,11 +153,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/supervisor',         [SupervisorDashboardController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/employee/dashboard', [EmployeeDashboardController::class, 'index'])->name('employee.dashboard');
     Route::get('/employee/profile',   [App\Http\Controllers\EmployeeProfileController::class, 'profile'])->name('employee.profile');
+    Route::get('/profile/documents/{docId}/download', [App\Http\Controllers\EmployeeProfileController::class, 'downloadDocument'])->name('profile.documents.download');
 
     // ── EMPLOYEE ATTENDANCE ────────────────────────────────────────────────
     Route::get('/employee/attendance/reports',  [EmployeeAttendanceController::class, 'index'])->name('employee.attendance.reports');
     Route::get('/employee/attendance/today',    [EmployeeAttendanceController::class, 'today'])->name('employee.attendance.today');
     Route::get('/employee/attendance/records',  [EmployeeAttendanceController::class, 'records'])->name('employee.attendance.records');
+    Route::get('/employee/attendance/export',   [EmployeeAttendanceController::class, 'exportCsv'])->name('employee.attendance.export');
     Route::post('/employee/attendance/clock-in',[EmployeeAttendanceController::class, 'clockIn'])->name('employee.attendance.clock-in');
     Route::post('/employee/attendance/clock-out',[EmployeeAttendanceController::class, 'clockOut'])->name('employee.attendance.clock-out');
     Route::post('/employee/attendance/break',   [EmployeeAttendanceController::class, 'breakStart'])->name('employee.attendance.break');
@@ -177,6 +181,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/hr/attendance/reports',        [HRAttendanceController::class, 'index'])->name('hr.attendance.reports');
     Route::get('/hr/attendance/today',          [HRAttendanceController::class, 'today'])->name('hr.attendance.today');
     Route::get('/hr/attendance/records',        [HRAttendanceController::class, 'records'])->name('hr.attendance.records');
+    Route::get('/hr/attendance/export',         [HRAttendanceController::class, 'exportCsv'])->name('hr.attendance.export');
     Route::post('/hr/attendance/clock-in',      [HRAttendanceController::class, 'clockIn'])->name('hr.attendance.clock-in');
     Route::post('/hr/attendance/clock-out',     [HRAttendanceController::class, 'clockOut'])->name('hr.attendance.clock-out');
     Route::post('/hr/attendance/break',         [HRAttendanceController::class, 'breakStart'])->name('hr.attendance.break');
@@ -221,6 +226,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/supervisor/attendance/reports',        [SupervisorAttendanceController::class, 'index'])->name('supervisor.attendance.reports');
     Route::get('/supervisor/attendance/today',          [SupervisorAttendanceController::class, 'today'])->name('supervisor.attendance.today');
     Route::get('/supervisor/attendance/records',        [SupervisorAttendanceController::class, 'records'])->name('supervisor.attendance.records');
+    Route::get('/supervisor/attendance/export',         [SupervisorAttendanceController::class, 'exportCsv'])->name('supervisor.attendance.export');
     Route::post('/supervisor/attendance/clock-in',      [SupervisorAttendanceController::class, 'clockIn'])->name('supervisor.attendance.clock-in');
     Route::post('/supervisor/attendance/clock-out',     [SupervisorAttendanceController::class, 'clockOut'])->name('supervisor.attendance.clock-out');
     Route::post('/supervisor/attendance/break',         [SupervisorAttendanceController::class, 'breakStart'])->name('supervisor.attendance.break');
@@ -249,6 +255,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/attendance/reports',             [AdminAttendanceController::class, 'index'])->name('admin.attendance.reports');
     Route::get('/admin/attendance/today',               [AdminAttendanceController::class, 'today'])->name('admin.attendance.today');
     Route::get('/admin/attendance/records',             [AdminAttendanceController::class, 'records'])->name('admin.attendance.records');
+    Route::get('/admin/attendance/export',              [AdminAttendanceController::class, 'exportCsv'])->name('admin.attendance.export');
     Route::post('/admin/attendance/clock-in',           [AdminAttendanceController::class, 'clockIn'])->name('admin.attendance.clock-in');
     Route::post('/admin/attendance/clock-out',          [AdminAttendanceController::class, 'clockOut'])->name('admin.attendance.clock-out');
     Route::post('/admin/attendance/break',              [AdminAttendanceController::class, 'breakStart'])->name('admin.attendance.break');
@@ -326,9 +333,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/payroll/benefit/{id}/deactivate',[\App\Http\Controllers\AdminPayrollController::class, 'deactivateBenefit'])->name('admin.payroll.benefit.deactivate');
     Route::delete('/admin/payroll/benefit/{id}/delete',  [\App\Http\Controllers\AdminPayrollController::class, 'deleteBenefit'])->name('admin.payroll.benefit.delete');
     Route::get('/admin/payroll/benefit/{id}',            [\App\Http\Controllers\AdminPayrollController::class, 'getBenefit'])->name('admin.payroll.benefit.get');
+    Route::post('/admin/payroll/benefit/{id}/assign',    [\App\Http\Controllers\AdminPayrollController::class, 'syncBenefitEmployees'])->name('admin.payroll.benefit.assign');
 
     // ── Admin Contribution Settings ──────────────────────────────────────────
     Route::post('/admin/payroll/contrib/update',         [\App\Http\Controllers\AdminPayrollController::class, 'updateContrib'])->name('admin.payroll.contrib.update');
+    Route::post('/admin/payroll/sss/save',               [\App\Http\Controllers\AdminPayrollController::class, 'saveSssTable'])->name('admin.payroll.sss.save');
 
     // ── Admin Payslips AJAX ──────────────────────────────────────────────────
     Route::get('/admin/payslips/period/{id}',            [\App\Http\Controllers\AdminPayrollController::class, 'releasedPeriodPayslips'])->name('admin.payslips.period');
@@ -357,6 +366,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payroll_officer/attendance/reports',   [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'index'])->name('payroll_officer.attendance.reports');
     Route::get('/payroll_officer/attendance/today',     [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'today'])->name('payroll_officer.attendance.today');
     Route::get('/payroll_officer/attendance/records',   [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'records'])->name('payroll_officer.attendance.records');
+    Route::get('/payroll_officer/attendance/export',    [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'exportCsv'])->name('payroll_officer.attendance.export');
     Route::post('/payroll_officer/attendance/clock-in', [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'clockIn'])->name('payroll_officer.attendance.clock-in');
     Route::post('/payroll_officer/attendance/clock-out',[\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'clockOut'])->name('payroll_officer.attendance.clock-out');
     Route::post('/payroll_officer/attendance/break',    [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'breakStart'])->name('payroll_officer.attendance.break');
@@ -402,6 +412,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/payroll_officer/payroll/grade/{id}/update',        [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'updateGrade'])->name('payroll_officer.payroll.grade.update');
     Route::delete('/payroll_officer/payroll/grade/{id}/delete',     [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'deleteGrade'])->name('payroll_officer.payroll.grade.delete');
     Route::post('/payroll_officer/payroll/contrib/update',          [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'updateContrib'])->name('payroll_officer.payroll.contrib.update');
+    Route::post('/payroll_officer/payroll/sss/save',                [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'saveSssTable'])->name('payroll_officer.payroll.sss.save');
 
     // ── Benefits ───────────────────────────────────────────────────────────
     Route::post('/payroll_officer/payroll/benefit/store',           [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'storeBenefit'])->name('payroll_officer.payroll.benefit.store');
@@ -409,6 +420,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/payroll_officer/payroll/benefit/{id}/deactivate', [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'deactivateBenefit'])->name('payroll_officer.payroll.benefit.deactivate');
     Route::delete('/payroll_officer/payroll/benefit/{id}/delete',   [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'deleteBenefit'])->name('payroll_officer.payroll.benefit.delete');
     Route::get('/payroll_officer/payroll/benefit/{id}',             [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'getBenefit'])->name('payroll_officer.payroll.benefit.get');
+    Route::post('/payroll_officer/payroll/benefit/{id}/assign',     [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'syncBenefitEmployees'])->name('payroll_officer.payroll.benefit.assign');
 
     // ══════════════════════════════════════════════════════════════════════
     // ── FINANCE OFFICER ROUTES ─────────────────────────────────────────────
@@ -446,14 +458,17 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/finance_officer/payroll/benefit/{id}/deactivate',[\App\Http\Controllers\FinanceOfficerPayrollController::class, 'deactivateBenefit'])->name('finance_officer.payroll.benefit.deactivate');
     Route::delete('/finance_officer/payroll/benefit/{id}/delete',  [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'deleteBenefit'])->name('finance_officer.payroll.benefit.delete');
     Route::get('/finance_officer/payroll/benefit/{id}',            [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'getBenefit'])->name('finance_officer.payroll.benefit.get');
+    Route::post('/finance_officer/payroll/benefit/{id}/assign',    [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'syncBenefitEmployees'])->name('finance_officer.payroll.benefit.assign');
 
     // ── Finance Officer Contributions ─────────────────────────────────────────
     Route::post('/finance_officer/payroll/contrib/update',         [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'updateContrib'])->name('finance_officer.payroll.contrib.update');
+    Route::post('/finance_officer/payroll/sss/save',               [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'saveSssTable'])->name('finance_officer.payroll.sss.save');
 
     // ── Finance Officer Attendance ─────────────────────────────────────────
     Route::get('/finance_officer/attendance/reports',   [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'index'])->name('finance_officer.attendance.reports');
     Route::get('/finance_officer/attendance/today',     [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'today'])->name('finance_officer.attendance.today');
     Route::get('/finance_officer/attendance/records',   [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'records'])->name('finance_officer.attendance.records');
+    Route::get('/finance_officer/attendance/export',    [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'exportCsv'])->name('finance_officer.attendance.export');
     Route::post('/finance_officer/attendance/clock-in', [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'clockIn'])->name('finance_officer.attendance.clock-in');
     Route::post('/finance_officer/attendance/clock-out',[\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'clockOut'])->name('finance_officer.attendance.clock-out');
     Route::post('/finance_officer/attendance/break',    [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'breakStart'])->name('finance_officer.attendance.break');

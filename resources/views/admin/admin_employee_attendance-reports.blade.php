@@ -568,13 +568,12 @@
                         </div>
                     </form>
 
-                    <a href="{{ route('admin.attendance.employee', ['view' => 'monthly', 'employee_id' => request('employee_id'), 'month' => $selectedMonth, 'period' => $selectedPeriod, 'export' => 1]) }}"
-                       class="export-btn">
+                    <button onclick="exportAttendancePdf()" class="export-btn" style="border:none;cursor:pointer;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
                         Export
-                    </a>
+                    </button>
                 </div>
             </div>
 
@@ -928,26 +927,47 @@
         document.getElementById('detailForm').submit();
     }
 
-    // Fix sidebar margin on load and resize
-    (function() {
-        var mainEl = document.querySelector('[x-on\\:resize\\.window]');
-        if (!mainEl) return;
-        function updateMargin() {
-            var collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (window.innerWidth < 1024) {
-                mainEl.style.marginLeft = '0';
-            } else {
-                mainEl.style.marginLeft = collapsed ? '5rem' : '16rem';
-            }
-        }
-        updateMargin();
-        window.addEventListener('resize', updateMargin);
-        window.addEventListener('sidebar-toggle', function(e) {
-            if (window.innerWidth >= 1024) {
-                mainEl.style.marginLeft = e.detail.collapsed ? '5rem' : '16rem';
-            }
-        });
-    })();
+    @if($viewingDetail)
+    @php
+        $pdfRows = $dailyRecords->map(fn($r) => [
+            'date'     => \Carbon\Carbon::parse($r->date)->format('F j, Y'),
+            'setup'    => $r->work_setup,
+            'shift'    => $r->shift_type,
+            'schedule' => $r->schedule,
+            'clockIn'  => $r->time_in  ? \Carbon\Carbon::parse($r->time_in)->format('g:i A')  : '—',
+            'clockOut' => $r->time_out ? \Carbon\Carbon::parse($r->time_out)->format('g:i A') : '—',
+            'overtime' => $r->overtime_formatted,
+            'status'   => ucfirst($r->status ?? '—'),
+        ]);
+        $pdfPeriod = \Carbon\Carbon::parse($selectedMonth . '-01')->format('F Y');
+    @endphp
+    const _attendanceRows = @json($pdfRows);
+    const _empName  = @json($empName);
+    const _period   = @json($pdfPeriod);
+
+    function exportAttendancePdf() {
+        const sBg  = s=>({'Present':'#dcfce7','Late':'#fef3c7','Absent':'#fee2e2','On Leave':'#ede9fe','Undertime':'#fef9c3','Overtime':'#dbeafe'}[s]||'#f1f5f9');
+        const sClr = s=>({'Present':'#16a34a','Late':'#d97706','Absent':'#dc2626','On Leave':'#4f46e5','Undertime':'#b45309','Overtime':'#1d4ed8'}[s]||'#64748b');
+        const tbody = _attendanceRows.map((r,i) => `<tr style="background:${i%2===0?'#fff':'#f8faff'}">
+            <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.date}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;"><span style="background:${r.setup==='WFH'?'#dbeafe':'#f1f5f9'};color:${r.setup==='WFH'?'#1d4ed8':'#475569'};padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;">${r.setup}</span></td>
+            <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;">${r.shift}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.schedule}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:600;white-space:nowrap;">${r.clockIn}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.clockOut}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.overtime}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;"><span style="background:${sBg(r.status)};color:${sClr(r.status)};padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;">${r.status}</span></td>
+        </tr>`).join('');
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_empName} – ${_period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report — ${_empName}</div><div class="badge">${_period}</div></div><table><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></body></html>`;
+        const w = window.open('', '_blank', 'width=1050,height=820,scrollbars=yes');
+        if (!w) return;
+        w.document.write(html);
+        w.document.close();
+        w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove());
+        w.focus();
+        setTimeout(() => w.print(), 400);
+    }
+    @endif
 </script>
 </body>
 </html>

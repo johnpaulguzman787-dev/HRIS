@@ -86,27 +86,28 @@ class AdminAttendanceController extends Controller
         return response()->json(['message' => 'You are on approved leave today.'], 409);
     }
 
-    if ($existing && $existing->clock_in && $existing->break_start && !$existing->break_end && !$existing->clock_out) {
-        $breakMinutes = (int) Carbon::parse($existing->break_start)->diffInMinutes($now);
-        $existing->update([
-            'break_end'     => $now,
-            'break_minutes' => $breakMinutes,
-        ]);
+    $openSession = $existing ? $existing->sessions()->whereNull('clock_out')->first() : null;
+
+    if ($openSession && $openSession->break_start && !$openSession->break_end) {
+        $newBreakMinutes   = (int) Carbon::parse($openSession->break_start)->diffInMinutes($now);
+        $totalBreakMinutes = $openSession->break_minutes + $newBreakMinutes;
+        $openSession->update(['break_end' => $now, 'break_minutes' => $totalBreakMinutes]);
+        $existing->update(['break_minutes' => $existing->sessions()->sum('break_minutes')]);
         return response()->json([
             'message'       => 'Break ended, resumed work.',
             'break_end'     => $now->format('h:i A'),
-            'break_minutes' => $breakMinutes,
+            'break_minutes' => $totalBreakMinutes,
         ]);
+    }
+
+    if ($openSession) {
+        return response()->json(['message' => 'Already clocked in.'], 409);
     }
 
     $request->validate([
         'work_setup' => 'required|in:office,wfh',
         'shift_id'   => 'nullable|exists:shifts,id',
     ]);
-
-        if ($existing && $existing->clock_in) {
-            return response()->json(['message' => 'Already clocked in today.'], 409);
-        }
 
         // Get active shift for today
         $employeeShift = EmployeeShift::with('shift')
@@ -119,40 +120,40 @@ class AdminAttendanceController extends Controller
             ->latest('effective_date')
             ->first();
 
-        $shiftId     = $request->shift_id ?? $employeeShift?->shift_id;
-        $lateMinutes = 0;
-        $status      = 'present';
-
-        // Compute late minutes using the SELECTED shift (from request), not just employee's default shift
+        $shiftId       = $request->shift_id ?? $employeeShift?->shift_id;
         $selectedShift = $shiftId ? \App\Models\Shift::find($shiftId) : $employeeShift?->shift;
 
-        if ($selectedShift) {
+        $isFirstSession = !$existing;
+        $lateMinutes    = 0;
+        $status         = 'present';
+
+        if ($isFirstSession && $selectedShift) {
             $shiftStart = Carbon::createFromTimeString(
                 Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
             );
-
-           if ($now->gt($shiftStart)) {
-    $lateMinutes = (int) $shiftStart->diffInMinutes($now);
-    if ($lateMinutes > 0) {
-        $status = 'late';
-        if ($lateMinutes > 999) $lateMinutes = 999;
-    }
-} else {
-    // Clock-in is BEFORE shift start = early/on time, always 0
-    $lateMinutes = 0;
-}
+            if ($now->gt($shiftStart)) {
+                $lateMinutes = min(999, (int) $shiftStart->diffInMinutes($now));
+                $status      = $lateMinutes > 0 ? 'late' : 'present';
+            }
         }
 
-        $log = AttendanceLog::updateOrCreate(
-            ['employee_id' => $employee->id, 'attendance_date' => $today],
-            [
-                'shift_id'     => $shiftId,
-                'work_setup'   => $request->work_setup,
-                'clock_in'     => $now,
-                'late_minutes' => $lateMinutes,
-                'status'       => $status,
-            ]
-        );
+        if ($isFirstSession) {
+            $log = AttendanceLog::updateOrCreate(
+                ['employee_id' => $employee->id, 'attendance_date' => $today],
+                [
+                    'shift_id'     => $shiftId,
+                    'work_setup'   => $request->work_setup,
+                    'clock_in'     => $now,
+                    'late_minutes' => $lateMinutes,
+                    'status'       => $status,
+                ]
+            );
+        } else {
+            $log    = $existing;
+            $status = $existing->status;
+        }
+
+        $log->sessions()->create(['clock_in' => $now]);
 
         return response()->json([
             'message'      => 'Clocked in successfully.',
@@ -184,12 +185,25 @@ class AdminAttendanceController extends Controller
             return response()->json(['message' => 'No clock-in record found for today.'], 422);
         }
 
-        if ($log->clock_out) {
-            return response()->json(['message' => 'Already clocked out today.'], 409);
+        $openSession = $log->sessions()->whereNull('clock_out')->first();
+        if (!$openSession) {
+            return response()->json(['message' => 'No active clock-in session found.'], 409);
         }
 
-        $clockIn    = Carbon::parse($log->clock_in);
-        $totalHours = round(($clockIn->diffInMinutes($now) - $log->break_minutes) / 60, 2);
+        if ($openSession->break_start && !$openSession->break_end) {
+            $extraBreak = (int) Carbon::parse($openSession->break_start)->diffInMinutes($now);
+            $openSession->update(['break_end' => $now, 'break_minutes' => $openSession->break_minutes + $extraBreak]);
+            $openSession->refresh();
+        }
+
+        $openSession->update(['clock_out' => $now]);
+
+        $allSessions       = $log->sessions()->get();
+        $totalBreakMinutes = $allSessions->sum('break_minutes');
+        $totalWorkMinutes  = $allSessions
+            ->filter(fn($s) => $s->clock_out !== null)
+            ->sum(fn($s) => max(0, (int) Carbon::parse($s->clock_in)->diffInMinutes(Carbon::parse($s->clock_out)) - $s->break_minutes));
+        $totalHours = round($totalWorkMinutes / 60, 2);
 
         $overtimeMinutes  = 0;
         $undertimeMinutes = 0;
@@ -257,6 +271,7 @@ class AdminAttendanceController extends Controller
 
         $log->update([
             'clock_out'         => $now,
+            'break_minutes'     => $totalBreakMinutes,
             'total_hours'       => $totalHours,
             'overtime_minutes'  => $overtimeMinutes,
             'undertime_minutes' => $undertimeMinutes,
@@ -292,7 +307,7 @@ class AdminAttendanceController extends Controller
             ->whereMonth('attendance_date', $month)
             ->whereYear('attendance_date', $year)
             ->orderByDesc('attendance_date')
-            ->paginate(10);
+            ->paginate(min((int)$request->get('per_page', 10), 500));
 
         return response()->json($logs);
     }
@@ -331,42 +346,33 @@ class AdminAttendanceController extends Controller
         ->whereDate('attendance_date', $today)
         ->firstOrFail();
 
-    if (!$log->clock_in) {
-        return response()->json(['message' => 'Not clocked in yet.'], 422);
+    $openSession = $log->sessions()->whereNull('clock_out')->first();
+    if (!$openSession) {
+        return response()->json(['message' => 'Not clocked in.'], 422);
     }
-
-    if ($log->break_start) {
+    if ($openSession->break_start && !$openSession->break_end) {
         return response()->json(['message' => 'Already on break.'], 409);
     }
 
-    if ($log->clock_out) {
-        return response()->json(['message' => 'Already clocked out.'], 409);
-    }
+    $openSession->update(['break_start' => $now, 'break_end' => null]);
 
+    $reminder = null;
     $shift = $log->shift_id ? \App\Models\Shift::find($log->shift_id) : null;
-    if (!$shift || !$shift->break_schedule) {
-        return response()->json(['message' => 'No break schedule defined for your shift.'], 422);
+    if ($shift && $shift->break_schedule) {
+        $bs = json_decode($shift->break_schedule, true);
+        if (!empty($bs['start']) && !empty($bs['end'])) {
+            $bStart = Carbon::createFromTimeString(Carbon::today()->toDateString() . ' ' . $bs['start']);
+            $bEnd   = Carbon::createFromTimeString(Carbon::today()->toDateString() . ' ' . $bs['end']);
+            if ($now->lt($bStart) || $now->gt($bEnd)) {
+                $reminder = 'Your scheduled break is ' . $bStart->format('g:i A') . ' – ' . $bEnd->format('g:i A') . '.';
+            }
+        }
     }
-
-    $breakSchedule = json_decode($shift->break_schedule, true);
-    if (empty($breakSchedule['start']) || empty($breakSchedule['end'])) {
-        return response()->json(['message' => 'No break schedule defined for your shift.'], 422);
-    }
-
-    $breakStart = Carbon::createFromTimeString(Carbon::today()->toDateString() . ' ' . $breakSchedule['start']);
-    $breakEnd   = Carbon::createFromTimeString(Carbon::today()->toDateString() . ' ' . $breakSchedule['end']);
-
-    if ($now->lt($breakStart) || $now->gt($breakEnd)) {
-        return response()->json([
-            'message' => 'Break is only allowed between ' . $breakStart->format('g:i A') . ' and ' . $breakEnd->format('g:i A') . '.',
-        ], 422);
-    }
-
-    $log->update(['break_start' => $now]);
 
     return response()->json([
         'message'      => 'Break started.',
         'break_start'  => $now->format('h:i A'),
+        'reminder'     => $reminder,
     ]);
 }
 
@@ -461,10 +467,10 @@ class AdminAttendanceController extends Controller
             }
 
             $records      = $query->paginate(15);
-            $totalEmp     = Employee::where('id', '!=', $authEmpId)->count();
+            $totalEmp     = Employee::where('id', '!=', $authEmpId)->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->count();
             $presentCount = AttendanceLog::whereDate('attendance_date', $date)
                 ->whereIn('status', ['present', 'late', 'overtime', 'undertime'])
-                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
+                ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId)->whereHas('user', fn($q2) => $q2->whereNotNull('email_verified_at')))
                 ->count();
             $lateCount    = AttendanceLog::whereDate('attendance_date', $date)
                 ->where('late_minutes', '>', 0)
@@ -509,7 +515,8 @@ class AdminAttendanceController extends Controller
         [$year, $month] = explode('-', $selectedMonth);
 
         $empQuery = Employee::with('department')
-            ->where('id', '!=', $authEmpId);
+            ->where('id', '!=', $authEmpId)
+            ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'));
 
         if ($request->filled('department')) {
             $empQuery->where('department_id', $request->department);
@@ -539,7 +546,7 @@ class AdminAttendanceController extends Controller
 
         // stat cards for monthly view use today's date
         $date         = now()->toDateString();
-        $totalEmp     = Employee::where('id', '!=', $authEmpId)->count();
+        $totalEmp     = Employee::where('id', '!=', $authEmpId)->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->count();
         $presentCount = AttendanceLog::whereDate('attendance_date', $date)
             ->whereIn('status', ['present', 'late', 'overtime', 'undertime'])
             ->whereHas('employee', fn($q) => $q->where('id', '!=', $authEmpId))
@@ -670,7 +677,7 @@ public function fileLeave(Request $request)
 {
     $request->validate([
         'leave_type_id' => 'required|exists:leave_types,id',
-        'start_date'    => 'required|date|after_or_equal:today',
+        'start_date'    => 'required|date',
         'end_date'      => 'required|date|after_or_equal:start_date',
         'reason'        => 'required|string|max:500',
         'document'      => 'nullable|file|mimes:pdf,docx|max:10240',
@@ -929,21 +936,25 @@ public function getLeaveRequest($id)
 
         $filterType   = $request->get('type', 'all');
         $filterStatus = $request->get('status', 'all');
+        $filterDept   = $request->get('department');
         $search       = $request->get('search');
 
         $allRequests = collect();
 
         if ($filterType === 'all' || $filterType === 'leave') {
-            $q = LeaveRequest::with(['leaveType', 'approver'])
+            $q = LeaveRequest::with(['leaveType', 'approver', 'employee.department', 'employee.jobTitle'])
                 ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'cancelled', 'supervisor_approved']);
-            if ($search) $q->where('ref_no', 'like', "%$search%");
+            if ($filterDept)             $q->whereHas('employee', fn($e) => $e->where('department_id', $filterDept));
+            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search)                 $q->whereHas('employee', fn($e) => $e->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%"));
             foreach ($q->get() as $r) {
                 $allRequests->push((object)[
                     'type'             => 'leave',
                     'id'               => $r->id,
                     'ref_no'           => $r->ref_no,
                     'status'           => $r->status,
+                    'employee'         => $r->employee,
                     'leaveType'        => $r->leaveType,
                     'start_date'       => $r->start_date,
                     'end_date'         => $r->end_date,
@@ -959,9 +970,12 @@ public function getLeaveRequest($id)
         }
 
         if ($filterType === 'all' || $filterType === 'overtime') {
-            $q = OvertimeRequest::where('employee_id', $employee->id)
+            $q = OvertimeRequest::with(['employee.department', 'employee.jobTitle'])
+                ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'supervisor_approved']);
-            if ($search) $q->where('ref_no', 'like', "%$search%");
+            if ($filterDept)             $q->whereHas('employee', fn($e) => $e->where('department_id', $filterDept));
+            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search)                 $q->whereHas('employee', fn($e) => $e->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%"));
             foreach ($q->get() as $r) {
                 $allRequests->push((object)[
                     'type'             => 'overtime',
@@ -983,10 +997,12 @@ public function getLeaveRequest($id)
         }
 
         if ($filterType === 'all' || $filterType === 'shift') {
-            $q = ShiftChangeRequest::with(['currentShift', 'requestedShift'])
+            $q = ShiftChangeRequest::with(['employee.department', 'employee.jobTitle', 'currentShift', 'requestedShift'])
                 ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'supervisor_approved']);
-            if ($search) $q->where('ref_no', 'like', "%$search%");
+            if ($filterDept)             $q->whereHas('employee', fn($e) => $e->where('department_id', $filterDept));
+            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search)                 $q->whereHas('employee', fn($e) => $e->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%"));
             foreach ($q->get() as $r) {
                 $allRequests->push((object)[
                     'type'             => 'shift',
@@ -1011,12 +1027,12 @@ public function getLeaveRequest($id)
         $requests      = $filterStatus !== 'all'
             ? $allRequests->where('status', $filterStatus)->sortByDesc('created_at')->values()
             : $allRequests->sortByDesc('created_at')->values();
-        $departments   = collect();
+        $departments = Department::orderBy('name')->get();
 
         return view('admin.admin_approved-requests', compact(
             'departments', 'requests',
             'approvedCount', 'rejectedCount',
-            'filterType', 'filterStatus', 'search'
+            'filterType', 'filterStatus', 'search', 'filterDept'
         ));
     }
 
@@ -1049,7 +1065,7 @@ public function getLeaveRequest($id)
             return response()->json(['message' => 'Shift change request cancelled.']);
         }
 
-        return response()->json(['message' => 'Request not found.'], 404);
+        return response()->json(['message' => 'Request not found.']);
     }
 
     public function fileOvertimeRequest(Request $request)
@@ -1178,6 +1194,7 @@ public function getLeaveRequest($id)
 
         $employees = Employee::with('department')
             ->where('employment_status', 'Active')
+            ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))
             ->get();
 
         $allShifts = EmployeeShift::with('shift')
@@ -1297,6 +1314,7 @@ public function getLeaveRequest($id)
 
         $employees = Employee::where('department_id', $request->department_id)
             ->where('employment_status', 'Active')
+            ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))
             ->get(['id', 'fname', 'lname']);
 
         return response()->json($employees);
@@ -1820,6 +1838,60 @@ public function getLeaveRequest($id)
             ]);
 
         return response()->json($credits);
+    }
+
+    public function exportCsv(Request $request)
+    {
+        $user     = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) abort(404);
+
+        $month = (int) $request->get('month', Carbon::now()->month);
+        $year  = (int) $request->get('year',  Carbon::now()->year);
+
+        $logs = AttendanceLog::with('shift')
+            ->where('employee_id', $employee->id)
+            ->whereMonth('attendance_date', $month)
+            ->whereYear('attendance_date', $year)
+            ->orderBy('attendance_date')
+            ->get();
+
+        $name     = trim($employee->fname . '_' . $employee->lname);
+        $filename = 'attendance_' . $name . '_' . Carbon::create($year, $month)->format('F_Y') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ];
+
+        $callback = function () use ($logs) {
+            $h = fopen('php://output', 'w');
+            fputcsv($h, ['Date', 'Work Setup', 'Shift', 'Schedule', 'Clock In', 'Clock Out', 'Break Start', 'Break (min)', 'Total Hours', 'Overtime (min)', 'Undertime (min)', 'Status']);
+            foreach ($logs as $log) {
+                $shift    = $log->shift;
+                $schedule = $shift ? Carbon::parse($shift->start_time)->format('g:i A') . ' - ' . Carbon::parse($shift->end_time)->format('g:i A') : '';
+                fputcsv($h, [
+                    Carbon::parse($log->attendance_date)->format('Y-m-d'),
+                    $log->work_setup ? strtoupper($log->work_setup) : '',
+                    $shift->name ?? '',
+                    $schedule,
+                    $log->clock_in  ? Carbon::parse($log->clock_in)->format('h:i A')  : '',
+                    $log->clock_out ? Carbon::parse($log->clock_out)->format('h:i A') : '',
+                    $log->break_start ? Carbon::parse($log->break_start)->format('h:i A') : '',
+                    $log->break_minutes ?? 0,
+                    $log->total_hours ?? '',
+                    $log->overtime_minutes ?? 0,
+                    $log->undertime_minutes ?? 0,
+                    $log->status ? ucwords(str_replace('_', ' ', $log->status)) : '',
+                ]);
+            }
+            fclose($h);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
 }

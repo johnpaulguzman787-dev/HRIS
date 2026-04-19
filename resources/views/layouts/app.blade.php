@@ -22,9 +22,14 @@
         * {
             font-family: 'Inter', sans-serif;
         }
-        
-        [x-cloak] { 
-            display: none !important; 
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        @@keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
         }
     </style>
     

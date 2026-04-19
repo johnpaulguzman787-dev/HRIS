@@ -14,7 +14,7 @@ class HREmployeeController extends Controller
 {
     public function directory()
     {
-        $departments = Department::withCount('employees')->with('jobTitles')->get()->map(function($d) {
+        $departments = Department::withCount(['employees' => fn($q) => $q->whereHas('user', fn($u) => $u->whereNotNull('email_verified_at'))])->with('jobTitles')->get()->map(function($d) {
             return [
                 'id'              => $d->id,
                 'name'            => $d->name,
@@ -69,7 +69,7 @@ class HREmployeeController extends Controller
             'mi'                => 'nullable|string|max:5',
             'suffix'            => 'nullable|string|max:20',
             'email'             => 'required|email:rfc,dns|unique:users,email',
-            'contact_no'        => ['required', 'regex:/^(09|\+639)[0-9]{9}$/'],
+            'contact_no'        => ['required', 'regex:/^\+?[\d\s\-\(\)]{7,20}$/'],
             'gender'            => 'required|string',
             'date_of_birth'     => 'required|date',
             'address'           => ['required', 'string', 'regex:/[a-zA-Z]/'],
@@ -114,8 +114,11 @@ class HREmployeeController extends Controller
                 ];
 
                 $prefix = $prefixMap[$user->role] ?? 'EMP';
-                $count  = User::where('role', $user->role)->count();
-                $code   = $prefix . str_pad($count, 3, '0', STR_PAD_LEFT);
+                $last = \App\Models\Employee::where('employee_code', 'like', $prefix . '%')
+                    ->orderByRaw('CAST(SUBSTRING(employee_code, ' . (strlen($prefix) + 1) . ') AS UNSIGNED) DESC')
+                    ->value('employee_code');
+                $nextNumber = $last ? ((int) substr($last, strlen($prefix))) + 1 : 1;
+                $code = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
                 Employee::create([
                     'user_id'           => $user->id,
@@ -140,7 +143,8 @@ class HREmployeeController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Employee added successfully!']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            \Log::error($e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Something went wrong. Please try again.'], 500);
         }
     }
 
@@ -202,7 +206,14 @@ class HREmployeeController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Employee updated successfully!']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            \Log::error($e->getMessage());
+$userMessage = match(true) {
+    str_contains($e->getMessage(), 'Duplicate entry') => 'This record already exists. Please check for duplicates.',
+    str_contains($e->getMessage(), 'foreign key constraint') => 'This record is linked to other data and cannot be modified.',
+    str_contains($e->getMessage(), 'unique_violation') => 'This record already exists. Please check for duplicates.',
+    default => 'Something went wrong. Please try again.',
+};
+return response()->json(['success' => false, 'message' => $userMessage], 500);
         }
     }
 
@@ -241,7 +252,14 @@ class HREmployeeController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            \Log::error($e->getMessage());
+$userMessage = match(true) {
+    str_contains($e->getMessage(), 'Duplicate entry') => 'This record already exists. Please check for duplicates.',
+    str_contains($e->getMessage(), 'foreign key constraint') => 'This record is linked to other data and cannot be modified.',
+    str_contains($e->getMessage(), 'unique_violation') => 'This record already exists. Please check for duplicates.',
+    default => 'Something went wrong. Please try again.',
+};
+return response()->json(['success' => false, 'message' => $userMessage], 500);
         }
     }
 
@@ -297,19 +315,37 @@ class HREmployeeController extends Controller
                 ])->values(),
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            \Log::error($e->getMessage());
+$userMessage = match(true) {
+    str_contains($e->getMessage(), 'Duplicate entry') => 'This record already exists. Please check for duplicates.',
+    str_contains($e->getMessage(), 'foreign key constraint') => 'This record is linked to other data and cannot be modified.',
+    str_contains($e->getMessage(), 'unique_violation') => 'This record already exists. Please check for duplicates.',
+    default => 'Something went wrong. Please try again.',
+};
+return response()->json(['success' => false, 'message' => $userMessage], 500);
         }
     }
 
     public function profile()
-{
-    $user = auth()->user();
-    $employee = \App\Models\Employee::with(['department', 'jobTitle'])
-        ->where('user_id', $user->id)
-        ->first();
+    {
+        $user = auth()->user();
+        $employee = \App\Models\Employee::with(['department', 'jobTitle'])
+            ->where('user_id', $user->id)
+            ->first();
 
-    return view('hr.hr-profile', compact('user', 'employee'));
-}
+        $documents = $employee
+            ? $employee->documents()->orderByDesc('created_at')->get()->map(fn($d) => [
+                'id'           => $d->id,
+                'name'         => $d->file_name,
+                'file_type'    => strtolower($d->file_type),
+                'file_size'    => $d->formatted_size,
+                'created_at'   => $d->created_at->format('M j, Y'),
+                'download_url' => route('hr.employees.documents.download', $d->id),
+              ])->values()
+            : collect();
+
+        return view('hr.hr-profile', compact('user', 'employee', 'documents'));
+    }
 
     public function destroyDepartment($id)
     {
@@ -317,7 +353,7 @@ class HREmployeeController extends Controller
             $message = null;
             DB::transaction(function () use ($id, &$message) {
                 $department = \App\Models\Department::lockForUpdate()->findOrFail($id);
-                if ($department->employees()->count() > 0) {
+                if ($department->employees()->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))->count() > 0) {
                     $message = 'Cannot delete a department that has employees.';
                     return;
                 }
@@ -329,7 +365,14 @@ class HREmployeeController extends Controller
             }
             return response()->json(['success' => true, 'message' => 'Department deleted successfully.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            \Log::error($e->getMessage());
+$userMessage = match(true) {
+    str_contains($e->getMessage(), 'Duplicate entry') => 'This record already exists. Please check for duplicates.',
+    str_contains($e->getMessage(), 'foreign key constraint') => 'This record is linked to other data and cannot be modified.',
+    str_contains($e->getMessage(), 'unique_violation') => 'This record already exists. Please check for duplicates.',
+    default => 'Something went wrong. Please try again.',
+};
+return response()->json(['success' => false, 'message' => $userMessage], 500);
         }
     }
 

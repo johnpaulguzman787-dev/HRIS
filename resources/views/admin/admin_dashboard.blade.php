@@ -3,28 +3,32 @@
 @section('title', 'Dashboard')
 
 @section('content')
+@php $openSession = $todayLog?->sessions()->whereNull('clock_out')->first(); @endphp
 <div x-data="{
         sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
         workSetup: '{{ $todayLog?->work_setup ?? ($employeeShift?->work_setup ?? "wfh") }}',
         onLeave: {{ $todayLog?->status === 'on_leave' ? 'true' : 'false' }},
-        clockedIn: {{ $todayLog?->clock_in ? 'true' : 'false' }},
-        clockedOut: {{ $todayLog?->clock_out ? 'true' : 'false' }},
-        onBreak: {{ $todayLog?->break_start && !$todayLog?->break_end ? 'true' : 'false' }},
-        resumed: {{ $todayLog?->break_end ? 'true' : 'false' }},
-        breakTime: '{{ $todayLog?->break_start ? \Carbon\Carbon::parse($todayLog->break_start)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
+        clockedIn: {{ $openSession ? 'true' : 'false' }},
+        clockedOut: {{ ($todayLog?->clock_out && !$openSession) ? 'true' : 'false' }},
+        onBreak: {{ ($openSession?->break_start && !$openSession?->break_end) ? 'true' : 'false' }},
+        resumed: false,
+        breakReminder: '',
+        breakTime: '{{ $openSession?->break_start ? \Carbon\Carbon::parse($openSession->break_start)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         breakMinutes: {{ $todayLog?->break_minutes ?? 0 }},
-        clockInTimestamp: {{ $todayLog?->clock_in ? \Carbon\Carbon::parse($todayLog->clock_in)->valueOf() : 'null' }},
-        breakStartTimestamp: {{ $todayLog?->break_start && !$todayLog?->break_end ? \Carbon\Carbon::parse($todayLog->break_start)->valueOf() : 'null' }},
-        clockInTime:  '{{ $todayLog?->clock_in  ? \Carbon\Carbon::parse($todayLog->clock_in)->setTimezone(config("app.timezone"))->format("h:i A")  : "" }}',
+        clockInTimestamp: {{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->valueOf() : 'null' }},
+        breakStartTimestamp: {{ ($openSession?->break_start && !$openSession?->break_end) ? \Carbon\Carbon::parse($openSession->break_start)->valueOf() : 'null' }},
+        clockInTime:  '{{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock_out)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
+        errorMessage: '',
+        showError(msg) { this.errorMessage = msg; },
         elapsedSeconds: 0,
         assignedShiftId: {{ $employeeShift?->shift_id ?? 'null' }},
-        breakAllowed: {{ $employeeShift?->shift?->break_schedule ? 'true' : 'false' }},
+        breakAllowed: true,
         currentTime: '',
         currentDate: '',
         mobileMenuOpen: false,
 
-        showAttendancePopup: {{ ($employeeShift && !in_array($todayLog?->status ?? '', ['on_leave', 'holiday']) && !$todayLog?->clock_in) ? 'true' : 'false' }},
+        showAttendancePopup: {{ $employeeShift ? 'true' : 'false' }},
 
         showAnnouncement: false,
         annType: '',
@@ -92,7 +96,7 @@
             this.updateTime();
             setInterval(() => {
                 this.updateTime();
-                if (this.clockedIn && !this.clockedOut && this.clockInTimestamp) {
+                if (this.clockedIn && !this.onBreak && this.clockInTimestamp) {
                     this.elapsedSeconds = Math.floor((Date.now() - this.clockInTimestamp) / 1000) - (this.breakMinutes * 60);
                 }
             }, 1000);
@@ -108,7 +112,6 @@
             this.currentDate = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
         },
         async handleClock() {
-            if (this.clockedOut) return;
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             if (this.onBreak) {
                 const res = await fetch('{{ route("admin.attendance.clock-in") }}', {
@@ -117,7 +120,7 @@
                 });
                 const data = await res.json();
                 if (res.ok) { this.onBreak = false; this.resumed = true; this.clockedIn = true; this.breakMinutes = data.break_minutes; }
-                else { alert(data.message ?? 'Resume failed.'); }
+                else { this.showError(data.message ?? 'Resume failed.'); }
                 return;
             }
             if (!this.clockedIn) {
@@ -126,29 +129,29 @@
                     body: JSON.stringify({ work_setup: this.workSetup, shift_id: this.assignedShiftId })
                 });
                 const data = await res.json();
-                if (res.ok) { this.clockedIn = true; this.clockInTime = data.clock_in; this.clockInTimestamp = Date.now(); }
-                else { alert(data.message ?? 'Clock-in failed.'); }
+                if (res.ok) { this.clockedIn = true; this.clockedOut = false; this.resumed = false; this.clockInTime = data.clock_in; this.clockInTimestamp = Date.now(); }
+                else { this.showError(data.message ?? 'Clock-in failed.'); }
             }
         },
         async handleBreak() {
-            if (!this.clockedIn || this.clockedOut || this.onBreak || this.resumed) return;
+            if (!this.clockedIn || this.onBreak) return;
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             const res = await fetch('{{ route("admin.attendance.break") }}', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify({})
             });
             const data = await res.json();
-            if (res.ok) { this.onBreak = true; this.breakTime = data.break_start; this.breakStartTimestamp = Date.now(); }
-            else { alert(data.message ?? 'Break failed.'); }
+            if (res.ok) { this.onBreak = true; this.breakTime = data.break_start; this.breakStartTimestamp = Date.now(); if (data.reminder) { this.breakReminder = data.reminder; setTimeout(() => { this.breakReminder = ''; }, 5000); } else { this.breakReminder = ''; } }
+            else { this.showError(data.message ?? 'Break failed.'); }
         },
         async handleClockOut() {
-            if (!this.clockedIn || this.clockedOut) return;
+            if (!this.clockedIn) return;
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             const res = await fetch('{{ route("admin.attendance.clock-out") }}', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify({})
             });
             const data = await res.json();
-            if (res.ok) { this.clockedOut = true; this.clockOutTime = data.clock_out; this.onBreak = false; }
-            else { alert(data.message ?? 'Clock-out failed.'); }
+            if (res.ok) { this.clockedIn = false; this.clockedOut = true; this.clockOutTime = data.clock_out; this.onBreak = false; }
+            else { this.showError(data.message ?? 'Clock-out failed.'); }
         }
     }"
     x-init="initClock()"
@@ -353,15 +356,7 @@
                             </div>
                             <div class="flex items-center justify-between px-3 py-2 border-t border-gray-100">
                                 <span class="text-xs text-gray-400">Work Setup</span>
-                                {{-- Mobile: toggle buttons as shown in mockup --}}
-                                <div class="flex gap-1">
-                                    <button class="text-xs px-3 py-1 rounded-lg font-semibold transition-all"
-                                            :class="workSetup === 'office' ? 'bg-blue-100 text-blue-700' : 'text-gray-400 hover:bg-gray-100'"
-                                            @click="workSetup = 'office'">Office</button>
-                                    <button class="text-xs px-3 py-1 rounded-lg font-semibold transition-all"
-                                            :class="workSetup === 'wfh' ? 'bg-blue-100 text-blue-700' : 'text-gray-400 hover:bg-gray-100'"
-                                            @click="workSetup = 'wfh'">WFH</button>
-                                </div>
+                                <span class="text-xs font-semibold" style="color:#1d4ed8;">{{ strtoupper($employeeShift->work_setup ?? '—') }}</span>
                             </div>
                         </div>
                         @else
@@ -388,28 +383,29 @@
                             </div>
                         </div>
                         <p class="text-xs text-center text-gray-400 font-medium" x-show="!clockedIn"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
-                        <p class="text-xs text-center font-medium" x-show="clockedIn && !clockedOut" style="color:#3b82f6;"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
+                        <p class="text-xs text-center font-medium" x-show="clockedIn && !onBreak" style="color:#3b82f6;"><span class="mr-1">⏱</span><span x-text="elapsedDisplay"></span></p>
                         <p class="text-xs text-center font-medium" x-show="onBreak" style="color:#f59e0b;"> On break · timer paused</p>
                         <p class="text-xs text-center font-semibold" x-show="clockedOut" style="color:#22c55e;">✓ Attendance recorded · <span x-text="elapsedDisplay"></span></p>
                         <p x-show="onLeave" class="text-xs text-center font-semibold" style="color:#6366f1;">You are on approved leave today.</p>
+                        <p x-show="breakReminder" x-cloak x-text="breakReminder" class="text-xs text-center font-medium mt-1" style="color:#d97706;"></p>
                     </div>
                     <div class="mt-auto flex gap-2">
                         <button @click="handleClock()"
-                                :disabled="onLeave || (clockedIn && !onBreak) || clockedOut || !assignedShiftId"
+                                :disabled="onLeave || (clockedIn && !onBreak) || !assignedShiftId"
                                 class="clock-btn flex-1 py-3 text-white font-bold text-xs tracking-widest uppercase"
-                                :style="onLeave || (clockedIn && !onBreak) || clockedOut || !assignedShiftId ? 'background:#94a3b8;' : 'background:#3b82f6;'">
+                                :style="onLeave || (clockedIn && !onBreak) || !assignedShiftId ? 'background:#94a3b8;' : 'background:#3b82f6;'">
                             TIME IN
                         </button>
                         <button @click="handleBreak()"
-                                :disabled="!clockedIn || onBreak || resumed || clockedOut || !breakAllowed"
+                                :disabled="!clockedIn || onBreak || onLeave"
                                 class="clock-btn flex-1 py-3 font-bold text-xs tracking-widest uppercase"
-                                :style="!clockedIn || onBreak || resumed || clockedOut || !breakAllowed ? 'background:#94a3b8; color:white;' : 'background:#dbeafe; color:#1d4ed8;'">
+                                :style="!clockedIn || onBreak || onLeave ? 'background:#94a3b8; color:white;' : 'background:#dbeafe; color:#1d4ed8;'">
                             BREAK
                         </button>
                         <button @click="handleClockOut()"
-                                :disabled="!clockedIn || clockedOut"
+                                :disabled="!clockedIn"
                                 class="clock-btn flex-1 py-3 text-white font-bold text-xs tracking-widest uppercase"
-                                :style="!clockedIn || clockedOut ? 'background:#94a3b8;' : 'background:#3b82f6;'">
+                                :style="!clockedIn ? 'background:#94a3b8;' : 'background:#3b82f6;'">
                             TIME OUT
                         </button>
                     </div>
@@ -691,4 +687,5 @@ function filterAttendanceSummary(deptId) {
     });
 }
 </script>
+@include('partials.attendance-error-modal')
 @endsection

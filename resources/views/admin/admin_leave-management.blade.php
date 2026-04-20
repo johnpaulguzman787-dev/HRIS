@@ -662,7 +662,8 @@
              days_entitled: '',
              is_paid: true,
              requires_document: false,
-             applicable_to: ''
+             applicable_to: '',
+             carry_over: false
          },
          // File Leave form data
          fileLeave: {
@@ -725,6 +726,29 @@
              formData.append('_token', document.querySelector('meta[name=csrf-token]').content);
              
              const res = await fetch('{{ route('admin.leave.file') }}', { method: 'POST', body: formData });
+             this.saving = false;
+             const data = await res.json();
+             if (res.ok) { window.location.reload(); }
+             else { this.errorMsg = data.message ?? 'Something went wrong.'; }
+         },
+         showEditLeaveType: false,
+         editLt: { id: null, name: '', code: '', days_entitled: '', is_paid: true, requires_document: false, applicable_to: '', carry_over: false },
+         async openEditLeaveType(id) {
+             const res = await fetch(`/admin/leave/types/${id}`, {
+                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+             });
+             const data = await res.json();
+             if (res.ok) { this.editLt = data; this.showEditLeaveType = true; }
+         },
+         async submitEditLeaveType() {
+             this.errorMsg = '';
+             if (!this.editLt.name || !this.editLt.code) { this.errorMsg = 'Name and code are required.'; return; }
+             this.saving = true;
+             const res = await fetch(`/admin/leave/types/${this.editLt.id}/update`, {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                 body: JSON.stringify(this.editLt)
+             });
              this.saving = false;
              const data = await res.json();
              if (res.ok) { window.location.reload(); }
@@ -796,8 +820,8 @@
             <div class="leave-card">
                 <span class="leave-badge" style="background:#dbeafe;color:#1d4ed8;">{{ $lt->code }}</span>
                 <div class="leave-card-label">{{ $lt->name }}</div>
-                <div class="leave-card-value">{{ $myLeaveStats[$key.'_used'] ?? 0 }}</div>
-                <div class="leave-card-sub">{{ $myLeaveStats[$key.'_remaining'] ?? 0 }} remaining</div>
+                <div class="leave-card-value">{{ $creditStats[$key.'_used'] ?? 0 }}</div>
+                <div class="leave-card-sub">{{ $creditStats[$key.'_remaining'] ?? 0 }} remaining of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
             </div>
             @endforeach
             <div class="leave-card">
@@ -886,24 +910,27 @@
 
         <div style="margin-bottom:10px;">
             <label style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:6px;display:block;">View credits for:</label>
-            <select class="credits-filter-select" style="width:100%;margin-bottom:10px;">
-                <option>Select Employee</option>
-                @foreach($employees ?? [] as $emp)
-                    <option value="{{ $emp->id }}">{{ trim($emp->fname.' '.$emp->lname) }}</option>
-                @endforeach
-            </select>
-            <div style="display:flex;gap:10px;">
-                <select class="credits-filter-select" style="flex:1;">
-                    <option>All Departments</option>
-                    @foreach($departments ?? [] as $dept)
-                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+            <form method="GET" action="{{ route('admin.leave.management') }}" id="creditsFilterForm">
+                <input type="hidden" name="tab" value="leave-credits">
+                <select class="credits-filter-select" name="employee_id" style="width:100%;margin-bottom:10px;" onchange="document.getElementById('creditsFilterForm').submit()">
+                    <option value="">Select Employee</option>
+                    @foreach($employees ?? [] as $emp)
+                        <option value="{{ $emp->id }}" {{ request('employee_id') == $emp->id ? 'selected' : '' }}>{{ trim($emp->fname.' '.$emp->lname) }}</option>
                     @endforeach
                 </select>
-                <select class="credits-filter-select" style="flex:1;max-width:110px;">
-                    <option>{{ $currentYear }}</option>
-                    <option>{{ $currentYear - 1 }}</option>
-                </select>
-            </div>
+                <div style="display:flex;gap:10px;">
+                    <select class="credits-filter-select" name="department" style="flex:1;" onchange="document.getElementById('creditsFilterForm').submit()">
+                        <option value="">All Departments</option>
+                        @foreach($departments ?? [] as $dept)
+                            <option value="{{ $dept->id }}" {{ request('department') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                        @endforeach
+                    </select>
+                    <select class="credits-filter-select" name="year" style="flex:1;max-width:110px;" onchange="document.getElementById('creditsFilterForm').submit()">
+                        <option value="{{ $currentYear }}" {{ request('year', now()->year) == $currentYear ? 'selected' : '' }}>{{ $currentYear }}</option>
+                        <option value="{{ $currentYear - 1 }}" {{ request('year') == $currentYear - 1 ? 'selected' : '' }}>{{ $currentYear - 1 }}</option>
+                    </select>
+                </div>
+            </form>
         </div>
 
         <div class="leave-cards" style="margin-top:18px;">
@@ -912,8 +939,8 @@
             <div class="leave-card">
                 <span class="leave-badge" style="background:#dbeafe;color:#1d4ed8;">{{ $lt->code }}</span>
                 <div class="leave-card-label">{{ $lt->name }}</div>
-                <div class="leave-card-value">{{ $myLeaveStats[$key.'_used'] ?? 0 }}</div>
-                <div class="leave-card-sub">{{ $myLeaveStats[$key.'_remaining'] ?? 0 }} remaining</div>
+                <div class="leave-card-value">{{ $creditStats[$key.'_used'] ?? 0 }}</div>
+                <div class="leave-card-sub">{{ $creditStats[$key.'_remaining'] ?? 0 }} remaining of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
             </div>
             @endforeach
         </div>
@@ -951,7 +978,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    @forelse($myLeaveRequests as $req)
+                    @forelse($leaveHistory as $req)
                     <tr>
                         <td style="font-weight:600;color:#6b7280;white-space:nowrap;">{{ $req->ref_no }}</td>
                         <td>
@@ -1100,7 +1127,7 @@
                         </td>
                         <td style="color:#6b7280;font-size:12px;">{{ $lt->applicable_to ?? 'All employees' }}</td>
                         <td>
-                            <button class="btn-outline-sm">Edit</button>
+                            <button class="btn-outline-sm" @click="openEditLeaveType({{ $lt->id }})">Edit</button>
                         </td>
                     </tr>
                     @endforeach
@@ -1131,7 +1158,7 @@
                     @else
                         <span class="doc-not">Not Required</span>
                     @endif
-                    <button class="btn-outline-sm" style="margin-left:auto;">Edit</button>
+                    <button class="btn-outline-sm" style="margin-left:auto;" @click="openEditLeaveType({{ $lt->id }})">Edit</button>
                 </div>
             </div>
             @endforeach
@@ -1198,59 +1225,75 @@
         {{-- ADD LEAVE TYPE MODAL --}}
         <div x-show="showAddLeaveType" class="modal-overlay" x-cloak @click.self="showAddLeaveType = false">
             <div class="modal-box">
-                <div class="modal-title">Add Leave Type</div>
-                
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+                    <div class="modal-title" style="margin-bottom:0;">Add Leave Type</div>
+                    <button @click="showAddLeaveType = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;flex-shrink:0;">
+                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
                 <template x-if="errorMsg">
-                    <div style="background:#fee2e2;color:#b91c1c;border-radius:12px;padding:12px;font-size:13px;margin-bottom:16px;" x-text="errorMsg"></div>
+                    <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
                 </template>
 
-                <div style="margin-bottom:18px;">
-                    <label class="form-label">Leave Type</label>
-                    <input type="text" class="form-input" x-model="newLeaveType.name" placeholder="Enter leave type name">
+                <div class="form-row" style="margin-bottom:16px;">
+                    <div>
+                        <label class="form-label">Leave Type Name</label>
+                        <input type="text" class="form-input" x-model="newLeaveType.name" placeholder="e.g. Vacation Leave">
+                    </div>
+                    <div>
+                        <label class="form-label">Code</label>
+                        <input type="text" class="form-input" x-model="newLeaveType.code" placeholder="e.g. VL">
+                    </div>
                 </div>
 
-                <div style="margin-bottom:18px;">
-                    <label class="form-label">Code</label>
-                    <input type="text" class="form-input" x-model="newLeaveType.code" placeholder="Enter leave type code">
-                </div>
-
-                <div style="margin-bottom:18px;">
+                <div style="margin-bottom:16px;">
                     <label class="form-label">Days Entitled</label>
-                    <input type="number" class="form-input" x-model="newLeaveType.days_entitled" placeholder="Enter how many days entitled" min="1" max="365">
+                    <select class="form-input" x-model="newLeaveType.days_entitled" style="appearance:none;width:100%;">
+                        <option value="">No fixed limit</option>
+                        @for($d = 1; $d <= 120; $d++)
+                            <option value="{{ $d }}">{{ $d }}</option>
+                        @endfor
+                    </select>
                 </div>
 
-                <div style="margin-bottom:18px;">
-                    <label class="form-label">Pay</label>
-                    <div class="checkbox-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" x-model="newLeaveType.is_paid" :checked="newLeaveType.is_paid"> Paid
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" x-model="newLeaveType.is_unpaid" x-bind:checked="!newLeaveType.is_paid" @click="newLeaveType.is_paid = false; newLeaveType.is_unpaid = true"> Unpaid
-                        </label>
+                <div class="form-row" style="margin-bottom:16px;">
+                    <div>
+                        <label class="form-label">Pay Type</label>
+                        <div style="display:flex;gap:16px;margin-top:8px;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#374151;cursor:pointer;">
+                                <input type="radio" name="add_is_paid" style="accent-color:#3b82f6;" :checked="newLeaveType.is_paid" @change="newLeaveType.is_paid = true"> Paid
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#374151;cursor:pointer;">
+                                <input type="radio" name="add_is_paid" style="accent-color:#3b82f6;" :checked="!newLeaveType.is_paid" @change="newLeaveType.is_paid = false"> Unpaid
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">Document Required</label>
+                        <div style="display:flex;gap:16px;margin-top:8px;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#374151;cursor:pointer;">
+                                <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;" x-model="newLeaveType.requires_document"> Required
+                            </label>
+                        </div>
                     </div>
                 </div>
 
-                <div style="margin-bottom:18px;">
-                    <label class="form-label">Document</label>
-                    <div class="checkbox-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" x-model="newLeaveType.requires_document"> Required
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" x-model="newLeaveType.no_document" x-bind:checked="!newLeaveType.requires_document" @click="newLeaveType.requires_document = false; newLeaveType.no_document = true"> Not Required
-                        </label>
-                    </div>
-                </div>
-
-                <div style="margin-bottom:18px;">
+                <div style="margin-bottom:16px;">
                     <label class="form-label">Applicable To</label>
-                    <input type="text" class="form-input" x-model="newLeaveType.applicable_to" placeholder="Enter who the leave type is applicable to">
+                    <input type="text" class="form-input" x-model="newLeaveType.applicable_to" placeholder="e.g. All regular employees">
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;cursor:pointer;">
+                        <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;" x-model="newLeaveType.carry_over">
+                        Allow carry over to next year
+                    </label>
                 </div>
 
                 <div class="modal-actions">
                     <button class="btn-cancel" @click="showAddLeaveType = false">Cancel</button>
-                    <button class="btn-save" @click="submitAddLeaveType()" :disabled="saving" x-text="saving ? 'Saving...' : 'Submit'"></button>
+                    <button class="btn-save" @click="submitAddLeaveType()" :disabled="saving" x-text="saving ? 'Saving…' : 'Add Leave Type'"></button>
                 </div>
             </div>
         </div>
@@ -1307,6 +1350,58 @@
                 </div>
             </div>
         </div>
+
+        {{-- EDIT LEAVE TYPE MODAL --}}
+        <div x-show="showEditLeaveType" class="modal-overlay" x-cloak @click.self="showEditLeaveType = false">
+            <div class="modal-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+                    <div class="modal-title" style="margin-bottom:0;">Edit Leave Type</div>
+                    <button @click="showEditLeaveType = false" style="width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;flex-shrink:0;">
+                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <template x-if="errorMsg">
+                    <div style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;" x-text="errorMsg"></div>
+                </template>
+
+                <div class="form-row" style="margin-bottom:16px;">
+                    <div>
+                        <label class="form-label">Leave Type Name</label>
+                        <input type="text" class="form-input" x-model="editLt.name">
+                    </div>
+                    <div>
+                        <label class="form-label">Code</label>
+                        <input type="text" class="form-input" x-model="editLt.code">
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <label class="form-label">Days Entitled</label>
+                    <select class="form-input" x-model="editLt.days_entitled" style="appearance:none;width:100%;">
+                        <option value="">No fixed limit</option>
+                        @for($d = 1; $d <= 120; $d++)
+                            <option value="{{ $d }}">{{ $d }}</option>
+                        @endfor
+                    </select>
+                </div>
+
+                <div class="form-row" style="margin-bottom:16px;">
+                    <div>
+                        <label class="form-label">Pay Type</label>
+                        <div style="display:flex;gap:16px;margin-top:8px;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#374151;cursor:pointer;">
+                                <input type="radio" name="edit_is_paid" style="accent-color:#3b82f6;" :checked="editLt.is_paid" @change="editLt.is_paid = true"> Paid
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#374151;cursor:pointer;">
+                                <input type="radio" name="edit_is_paid" style="accent-color:#3b82f6;" :checked="!editLt.is_paid" @change="editLt.is_paid = false"> Unpaid
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">Document Required</label>
+                        <div style="display:flex;gap:16px;margin-top:8px;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#374151;cursor:pointer;">
 
     </div>
 </div>

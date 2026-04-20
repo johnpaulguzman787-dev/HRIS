@@ -241,9 +241,6 @@
                                 <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700 transition-colors duration-200" x-text="doc.name"></span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <button @click="openDoc(doc)" class="px-4 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200 hover:shadow-md">
-                                    View
-                                </button>
                                 <button @click="window.open(doc.download_url, '_blank')" class="px-4 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200 hover:shadow-md">
                                     Download
                                 </button>

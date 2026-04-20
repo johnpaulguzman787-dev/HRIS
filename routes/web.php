@@ -346,14 +346,20 @@ Route::middleware(['auth'])->group(function () {
     // ── HR PAYROLL ─────────────────────────────────────────────────────────
     Route::get('/hr/payslips', [\App\Http\Controllers\EmployeePayrollController::class, 'payslips'])->name('hr.payslips');
     Route::get('/hr/govpay',   [\App\Http\Controllers\EmployeePayrollController::class, 'govpay'])->name('hr.govpay');
+    Route::get('/hr/settings',          [\App\Http\Controllers\UserSettingsController::class, 'show'])->name('hr.settings');
+    Route::post('/hr/settings/password', [\App\Http\Controllers\UserSettingsController::class, 'changePassword'])->name('hr.settings.password');
 
     // ── SUPERVISOR PAYROLL ─────────────────────────────────────────────────
     Route::get('/supervisor/payslips', [\App\Http\Controllers\EmployeePayrollController::class, 'payslips'])->name('supervisor.payslips');
     Route::get('/supervisor/govpay',   [\App\Http\Controllers\EmployeePayrollController::class, 'govpay'])->name('supervisor.govpay');
+    Route::get('/supervisor/settings',           [\App\Http\Controllers\UserSettingsController::class, 'show'])->name('supervisor.settings');
+    Route::post('/supervisor/settings/password', [\App\Http\Controllers\UserSettingsController::class, 'changePassword'])->name('supervisor.settings.password');
 
     // ── EMPLOYEE PAYROLL ───────────────────────────────────────────────────
     Route::get('/employee/payslips', [\App\Http\Controllers\EmployeePayrollController::class, 'payslips'])->name('employee.payslips');
     Route::get('/employee/govpay',   [\App\Http\Controllers\EmployeePayrollController::class, 'govpay'])->name('employee.govpay');
+    Route::get('/employee/settings',           [\App\Http\Controllers\UserSettingsController::class, 'show'])->name('employee.settings');
+    Route::post('/employee/settings/password', [\App\Http\Controllers\UserSettingsController::class, 'changePassword'])->name('employee.settings.password');
 
     // ══════════════════════════════════════════════════════════════════════
     // ── PAYROLL OFFICER ROUTES ─────────────────────────────────────────────
@@ -361,10 +367,14 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/payroll_officer/dashboard', [\App\Http\Controllers\PayrollOfficerDashboardController::class, 'index'])->name('payroll_officer.dashboard');
     Route::get('/payroll_officer/profile',   [\App\Http\Controllers\PayrollOfficerProfileController::class, 'profile'])->name('payroll_officer.profile');
+    Route::get('/payroll_officer/employees/directory', [\App\Http\Controllers\ViewOnlyDirectoryController::class, 'payroll'])->name('payroll_officer.employees.directory');
+    Route::get('/payroll_officer/settings',           [\App\Http\Controllers\UserSettingsController::class, 'show'])->name('payroll_officer.settings');
+    Route::post('/payroll_officer/settings/password', [\App\Http\Controllers\UserSettingsController::class, 'changePassword'])->name('payroll_officer.settings.password');
     Route::post('/payroll_officer/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('payroll_officer.announcements.store');
 
     // ── Payroll Officer Attendance ─────────────────────────────────────────
     Route::get('/payroll_officer/attendance/reports',   [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'index'])->name('payroll_officer.attendance.reports');
+    Route::get('/payroll_officer/attendance/employee',  [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'employeeAttendance'])->name('payroll_officer.attendance.employee');
     Route::get('/payroll_officer/attendance/today',     [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'today'])->name('payroll_officer.attendance.today');
     Route::get('/payroll_officer/attendance/records',   [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'records'])->name('payroll_officer.attendance.records');
     Route::get('/payroll_officer/attendance/export',    [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'exportCsv'])->name('payroll_officer.attendance.export');
@@ -430,6 +440,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/finance_officer/dashboard', [\App\Http\Controllers\FinanceOfficerDashboardController::class, 'index'])->name('finance_officer.dashboard');
     Route::get('/finance_officer/profile',   [\App\Http\Controllers\FinanceOfficerProfileController::class, 'profile'])->name('finance_officer.profile');
+    Route::get('/finance_officer/employees/directory', [\App\Http\Controllers\ViewOnlyDirectoryController::class, 'finance'])->name('finance_officer.employees.directory');
+    Route::get('/finance_officer/settings',           [\App\Http\Controllers\UserSettingsController::class, 'show'])->name('finance_officer.settings');
+    Route::post('/finance_officer/settings/password', [\App\Http\Controllers\UserSettingsController::class, 'changePassword'])->name('finance_officer.settings.password');
     Route::post('/finance_officer/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('finance_officer.announcements.store');
 
     Route::get('/finance_officer/payroll',  [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'index'])->name('finance_officer.payroll');
@@ -469,6 +482,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Finance Officer Attendance ─────────────────────────────────────────
     Route::get('/finance_officer/attendance/reports',   [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'index'])->name('finance_officer.attendance.reports');
+    Route::get('/finance_officer/attendance/employee',  [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'employeeAttendance'])->name('finance_officer.attendance.employee');
     Route::get('/finance_officer/attendance/today',     [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'today'])->name('finance_officer.attendance.today');
     Route::get('/finance_officer/attendance/records',   [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'records'])->name('finance_officer.attendance.records');
     Route::get('/finance_officer/attendance/export',    [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'exportCsv'])->name('finance_officer.attendance.export');

@@ -1544,7 +1544,7 @@
 
     {{-- Edit Contribution Rate --}}
     <div x-show="showEditContribModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showEditContribModal=false">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-7"
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-7"
              x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
              x-transition:leave="transition ease-in duration-150"  x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
             <div class="flex items-center justify-between mb-6">
@@ -1561,17 +1561,17 @@
                 <p class="text-xs text-gray-400 uppercase font-semibold tracking-wider">Salary Brackets → Fixed Monthly Contribution</p>
                 <div class="max-h-64 overflow-y-auto space-y-2 pr-1">
                     <template x-for="(row, i) in sssRows" :key="i">
-                        <div class="grid grid-cols-5 gap-1.5 items-center">
-                            <input type="number" step="0.01" x-model="row.salary_from" placeholder="From" class="ctrl col-span-1 text-xs">
-                            <input type="number" step="0.01" x-model="row.salary_to"   placeholder="To (blank=∞)" class="ctrl col-span-1 text-xs">
-                            <input type="number" step="0.01" x-model="row.employee_share" placeholder="Employee" class="ctrl col-span-1 text-xs">
-                            <input type="number" step="0.01" x-model="row.employer_share" placeholder="Employer" class="ctrl col-span-1 text-xs">
+                        <div class="flex gap-2 items-center">
+                            <input type="number" step="0.01" x-model="row.salary_from" placeholder="From" class="ctrl text-xs px-2 py-1.5 min-w-0 flex-1">
+                            <input type="number" step="0.01" x-model="row.salary_to"   placeholder="To (blank=∞)" class="ctrl text-xs px-2 py-1.5 min-w-0 flex-1">
+                            <input type="number" step="0.01" x-model="row.employee_share" placeholder="Employee" class="ctrl text-xs px-2 py-1.5 min-w-0 flex-1">
+                            <input type="number" step="0.01" x-model="row.employer_share" placeholder="Employer" class="ctrl text-xs px-2 py-1.5 min-w-0 flex-1">
                             <button type="button" @click="sssRows.splice(i,1)" class="text-red-400 hover:text-red-600 text-xs font-bold">✕</button>
                         </div>
                     </template>
                 </div>
-                <div class="grid grid-cols-5 gap-1.5 items-center text-xs text-gray-400 font-medium px-0.5">
-                    <span>Salary From</span><span>Salary To</span><span>Emp. Share</span><span>Emr. Share</span><span></span>
+                <div class="flex gap-2 items-center text-xs text-gray-400 font-medium px-0.5">
+                    <span class="flex-1 text-center">Salary From</span><span class="flex-1 text-center">Salary To</span><span class="flex-1 text-center">Emp. Share</span><span class="flex-1 text-center">Emr. Share</span><span class="w-4"></span>
                 </div>
                 <button type="button" @click="sssRows.push({salary_from:'',salary_to:'',employee_share:'',employer_share:''})"
                         class="text-xs text-blue-500 hover:text-blue-700 font-medium">+ Add Row</button>

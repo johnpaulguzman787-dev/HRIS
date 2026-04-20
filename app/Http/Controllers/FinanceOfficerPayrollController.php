@@ -63,6 +63,29 @@ class FinanceOfficerPayrollController extends Controller
         ));
     }
 
+    public function updatePeriod(Request $request, $id)
+    {
+        $period = PayrollPeriod::findOrFail($id);
+
+        $rules = ['name' => 'required|string|max:255'];
+        if ($period->status === 'Pending') {
+            $rules['start_date']  = 'required|date';
+            $rules['end_date']    = 'required|date|after_or_equal:start_date';
+            $rules['payout_date'] = 'required|date';
+        }
+        $request->validate($rules);
+
+        $period->name = $request->name;
+        if ($period->status === 'Pending') {
+            $period->start_date  = $request->start_date;
+            $period->end_date    = $request->end_date;
+            $period->payout_date = $request->payout_date;
+        }
+        $period->save();
+
+        return response()->json(['success' => true, 'message' => 'Payroll period updated successfully.']);
+    }
+
     // ── Release Payroll ──────────────────────────────────────────────────────
 
     public function releasePayroll($id)

@@ -223,6 +223,15 @@
                                                 '{{ $period->end_date }}',
                                                 '{{ $period->status }}'
                                             )">View</button>
+                                        <button class="btn-view"
+                                            @click="openEditPeriod(
+                                                {{ $period->id }},
+                                                '{{ addslashes($period->name) }}',
+                                                '{{ $period->start_date }}',
+                                                '{{ $period->end_date }}',
+                                                '{{ $period->payout_date }}',
+                                                '{{ $period->status }}'
+                                            )">Edit</button>
                                     </div>
                                 </td>
                             </tr>
@@ -779,6 +788,52 @@
         </div>
     </div>
 
+    {{-- Edit Payroll Period --}}
+    <div x-show="showEditPeriodModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showEditPeriodModal=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-900">Edit Payroll Period</h3>
+                <button @click="showEditPeriodModal=false" class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Period Name</label>
+                    <input type="text" class="ctrl w-full" x-model="editPeriod.name" placeholder="e.g. April 2026 – 1st Half" required maxlength="200">
+                </div>
+                <template x-if="editPeriod.status === 'Pending'">
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 mb-1">Start Date</label>
+                                <input type="date" class="ctrl w-full" x-model="editPeriod.startDate">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 mb-1">End Date</label>
+                                <input type="date" class="ctrl w-full" x-model="editPeriod.endDate">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Payout Date</label>
+                            <input type="date" class="ctrl w-full" x-model="editPeriod.payoutDate">
+                        </div>
+                    </div>
+                </template>
+                <template x-if="editPeriod.status !== 'Pending'">
+                    <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        Start date, end date, and payout date cannot be changed once the period has been submitted or released.
+                    </p>
+                </template>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" @click="showEditPeriodModal=false" class="btn-outline">Cancel</button>
+                <button type="button" @click="savePeriodEdit()" class="btn-primary" :disabled="!editPeriod.name.trim()" :class="{ 'opacity-50 cursor-not-allowed': !editPeriod.name.trim() }">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     {{-- Create Payroll Period --}}
     <div x-show="showCreatePeriod" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showCreatePeriod=false">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8"
@@ -1000,7 +1055,14 @@
             <form :action="`/admin/payroll/benefit/${assignBenefit.id}/assign`" method="POST" class="space-y-4">
                 @csrf
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Assigned Employees</label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-sm font-medium text-gray-700">Assigned Employees</label>
+                        <button type="button"
+                            @click="benefitSelectedEmps = [...allEmps]"
+                            class="text-xs text-blue-600 hover:text-blue-800 font-semibold border border-blue-200 rounded-lg px-2.5 py-1 hover:bg-blue-50 transition">
+                            Assign to All
+                        </button>
+                    </div>
                     <div class="flex flex-wrap gap-1.5 mb-2" x-show="benefitSelectedEmps.length > 0">
                         <template x-for="s in benefitSelectedEmps" :key="s.id">
                             <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-1 rounded-full">
@@ -1241,6 +1303,8 @@
             showEditGradeModal:   false,
             showEditContribModal: false,
             editContribType: '',
+            showEditPeriodModal: false,
+            editPeriod: { id: null, name: '', startDate: '', endDate: '', payoutDate: '', status: '' },
             contrib: @json($contrib),
             sssRows: @json($sssRowsForJs),
 
@@ -1333,6 +1397,32 @@
             closePeriodView() {
                 this.page = 'list'; this.pvSelectedId = null; this.pvActive = {};
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+
+            openEditPeriod(id, name, startDate, endDate, payoutDate, status) {
+                this.editPeriod = { id, name, startDate, endDate, payoutDate, status };
+                this.showEditPeriodModal = true;
+            },
+
+            async savePeriodEdit() {
+                const ep = this.editPeriod;
+                if (!ep.name.trim()) return;
+                const body = { name: ep.name };
+                if (ep.status === 'Pending') {
+                    body.start_date  = ep.startDate;
+                    body.end_date    = ep.endDate;
+                    body.payout_date = ep.payoutDate;
+                }
+                try {
+                    const res  = await fetch(`/admin/payroll/period/${ep.id}/update`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                        body: JSON.stringify(body)
+                    });
+                    const data = await res.json();
+                    if (res.ok) { this.showEditPeriodModal = false; window.location.reload(); }
+                    else { this.showAlert('error', 'Error', data.message ?? 'Could not update period.'); }
+                } catch (e) { this.showAlert('error', 'Error', 'Network error. Please try again.'); }
             },
 
             pvSelectPayslip(ps) { this.pvSelectedId = ps.id; this.pvActive = { ...ps }; },

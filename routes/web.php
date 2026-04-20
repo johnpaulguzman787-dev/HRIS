@@ -307,6 +307,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Admin Payroll Actions ────────────────────────────────────────────────
     Route::post('/admin/payroll/period/store',                 [\App\Http\Controllers\AdminPayrollController::class, 'storePeriod'])->name('admin.payroll.period.store');
+    Route::post('/admin/payroll/period/{id}/update',           [\App\Http\Controllers\AdminPayrollController::class, 'updatePeriod'])->name('admin.payroll.period.update');
     Route::post('/admin/payroll/period/{id}/release',          [\App\Http\Controllers\AdminPayrollController::class, 'releasePayroll'])->name('admin.payroll.period.release');
     Route::post('/admin/payroll/period/{id}/submit',           [\App\Http\Controllers\AdminPayrollController::class, 'submitForApproval'])->name('admin.payroll.period.submit');
     Route::get('/admin/payroll/period/{id}/payslips',          [\App\Http\Controllers\AdminPayrollController::class, 'periodPayslips'])->name('admin.payroll.period.payslips');
@@ -392,6 +393,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Payroll Period ─────────────────────────────────────────────────────
     Route::post('/payroll_officer/payroll/period/store',                 [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'storePeriod'])->name('payroll_officer.payroll.period.store');
+    Route::post('/payroll_officer/payroll/period/{id}/update',           [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'updatePeriod'])->name('payroll_officer.payroll.period.update');
     Route::get('/payroll_officer/payroll/period/{id}/payslips',          [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'periodPayslips'])->name('payroll_officer.payroll.period.payslips');
     Route::get('/payroll_officer/payroll/period/{id}/all-payslips',      [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'allPeriodPayslips'])->name('payroll_officer.payroll.period.all-payslips');
     Route::post('/payroll_officer/payroll/period/{id}/submit',           [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'submitForApproval'])->name('payroll_officer.payroll.period.submit');
@@ -436,6 +438,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/finance_officer/govpay/{id}',   [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'govpayView'])->name('finance_officer.govpay.view');
 
     // ── Finance Officer Payroll Actions ───────────────────────────────────────
+    Route::post('/finance_officer/payroll/period/{id}/update',         [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'updatePeriod'])->name('finance_officer.payroll.period.update');
     Route::post('/finance_officer/payroll/period/{id}/release',       [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'releasePayroll'])->name('finance_officer.payroll.period.release');
     Route::get('/finance_officer/payroll/period/{id}/payslips',       [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'periodPayslips'])->name('finance_officer.payroll.period.payslips');
     Route::get('/finance_officer/payroll/period/{id}/released-payslips', [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'releasedPeriodPayslips'])->name('finance_officer.payroll.period.released-payslips');

@@ -116,8 +116,34 @@
                 padding: 1rem !important;
             }
         }
+        .btn-view {
+            display: inline-block;
+            background: #eff6ff; color: #2563eb;
+            border: 1.5px solid #93c5fd;
+            padding: 5px 18px; border-radius: 7px;
+            font-size: 0.775rem; font-weight: 600;
+            cursor: pointer; text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .btn-view:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
     </style>
 </head>
+@php
+    $exportData = collect($myContributions)->map(fn($r) => [
+        'period'     => $r->period_name,
+        'sss'        => number_format($r->sss ?? 0, 2),
+        'philhealth' => number_format($r->philhealth ?? 0, 2),
+        'pagibig'    => number_format($r->pagibig ?? 0, 2),
+        'tax'        => number_format($r->tax ?? 0, 2),
+        'status'     => ucfirst($r->status ?? 'Pending'),
+    ])->values()->toArray();
+    $exportTotals = [
+        'sss'        => number_format(collect($myContributions)->sum('sss'), 2),
+        'philhealth' => number_format(collect($myContributions)->sum('philhealth'), 2),
+        'pagibig'    => number_format(collect($myContributions)->sum('pagibig'), 2),
+        'tax'        => number_format(collect($myContributions)->sum('tax'), 2),
+    ];
+@endphp
 
 <body x-data="hrGovpayApp()" x-init="init()" class="flex h-screen overflow-hidden">
 
@@ -174,13 +200,19 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">My Government Contributions</span>
-                    <form method="GET" action="{{ route('hr.govpay') }}">
-                        <select name="year" class="year-select" onchange="this.form.submit()">
-                            @foreach($years as $y)
-                                <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
-                            @endforeach
-                        </select>
-                    </form>
+                    <div class="flex items-center gap-3">
+                        <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;display:inline-flex;align-items:center;gap:6px;">
+                            <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Export PDF
+                        </button>
+                        <form method="GET" action="{{ route('hr.govpay') }}">
+                            <select name="year" class="year-select" onchange="this.form.submit()">
+                                @foreach($years as $y)
+                                    <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                @endforeach
+                            </select>
+                        </form>
+                    </div>
                 </div>
                 <div class="table-wrapper">
                     <table class="contrib-table">
@@ -222,6 +254,42 @@
     </div>
 
     <script>
+        const _exportData   = @json($exportData);
+        const _exportTotals = @json($exportTotals);
+        const _exportYear   = @json($year);
+
+        function exportGovpay() {
+            const f = v => '₱ ' + v;
+            const rows = _exportData.map(r =>
+                `<tr><td>${r.period}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td></tr>`
+            ).join('');
+            const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
+                <td>TOTAL</td><td>${f(_exportTotals.sss)}</td><td>${f(_exportTotals.philhealth)}</td><td>${f(_exportTotals.pagibig)}</td><td>${f(_exportTotals.tax)}</td><td></td></tr>`;
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>My Contributions ${_exportYear}</title>
+<style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
+h1{font-size:18px;font-weight:700;color:#2563eb;margin-bottom:4px;}
+.sub{font-size:12px;color:#64748b;margin-bottom:24px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
+td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
+tr:hover td{background:#f8faff;}
+.footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
+@media print{@page{margin:.8cm;}body{padding:20px;}}</style>
+</head><body>
+<div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
+<div class="sub">My Government Contributions – ${_exportYear}</div>
+<table><thead><tr><th>Period</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr></thead>
+<tbody>${rows}${totalsRow}</tbody></table>
+<div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
+</body></html>`;
+            const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
+            if (!w) return;
+            w.document.write(html);
+            w.document.close();
+            w.focus();
+            setTimeout(() => w.print(), 400);
+        }
+
         function hrGovpayApp() {
             return {
                 sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',

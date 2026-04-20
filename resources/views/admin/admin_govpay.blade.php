@@ -55,7 +55,7 @@
         }
         .card-title { font-size: 1.05rem; font-weight: 700; color: #111827; }
 
-        /* ── Table ── */
+        /* ── Table wrapper (mobile horizontal scroll) ── */
         .table-wrapper {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -149,6 +149,7 @@
         .breadcrumb .sep { color: #d1d5db; }
         .breadcrumb .current { font-weight: 600; color: #374151; }
 
+        /* ── Transition for margin ── */
         .transition-margin {
             transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -166,9 +167,11 @@
                 display: flex;
                 flex-wrap: nowrap;
                 gap: 8px;
+                justify-content: space-between;
             }
             .card-header .flex.items-center.gap-3 button,
             .card-header .flex.items-center.gap-3 form {
+                flex: 1;
                 min-width: 0;
             }
             .year-select {

@@ -226,6 +226,20 @@
             'pagibig'    => number_format(collect($contributions)->sum('pagibig_total'), 2),
             'tax'        => number_format(collect($contributions)->sum('tax_total'), 2),
         ];
+        $exportMyContributions = collect($myContributions)->map(fn($r) => [
+            'period'     => $r->period_name,
+            'sss'        => number_format($r->sss ?? 0, 2),
+            'philhealth' => number_format($r->philhealth ?? 0, 2),
+            'pagibig'    => number_format($r->pagibig ?? 0, 2),
+            'tax'        => number_format($r->tax ?? 0, 2),
+            'status'     => ucfirst($r->status ?? 'Pending'),
+        ])->values()->toArray();
+        $exportMyTotals = [
+            'sss'        => number_format(collect($myContributions)->sum('sss'), 2),
+            'philhealth' => number_format(collect($myContributions)->sum('philhealth'), 2),
+            'pagibig'    => number_format(collect($myContributions)->sum('pagibig'), 2),
+            'tax'        => number_format(collect($myContributions)->sum('tax'), 2),
+        ];
     }
 @endphp
 
@@ -439,6 +453,49 @@
                                 @endforeach
                             </select>
                         </form>
+            {{-- MY CONTRIBUTIONS --}}
+            <div id="panelMine" style="display:none;">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">My Contribution Summary</span>
+                        <button onclick="exportMyGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;display:inline-flex;align-items:center;gap:6px;">
+                            <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Export PDF
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="contrib-table">
+                            <thead>
+                                <tr>
+                                    <th class="text-left">Period Name</th>
+                                    <th class="td-center">SSS</th>
+                                    <th class="td-center">PhilHealth</th>
+                                    <th class="td-center">Pag-IBIG</th>
+                                    <th class="td-center">W/ Tax</th>
+                                    <th class="td-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($myContributions as $row)
+                                <tr>
+                                    <td class="td-name">{{ $row->period_name }}</td>
+                                    <td class="td-center">₱{{ number_format($row->sss ?? 0, 2) }}</td>
+                                    <td class="td-center">₱{{ number_format($row->philhealth ?? 0, 2) }}</td>
+                                    <td class="td-center">₱{{ number_format($row->pagibig ?? 0, 2) }}</td>
+                                    <td class="td-center">₱{{ number_format($row->tax ?? 0, 2) }}</td>
+                                    <td class="td-center">
+                                        <span class="{{ strtolower($row->status ?? '') === 'released' ? 'badge-released' : 'badge-pending' }}">
+                                            {{ ucfirst($row->status ?? 'Pending') }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-12 text-gray-400 text-sm">No personal contributions found for {{ $year }}.</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 <div class="table-wrapper">
@@ -488,44 +545,110 @@
         const _records      = @json($isView ? $exportRecords : $exportContributions);
         const _totals       = @json($exportTotals);
 
-        function exportGovpay() {
-            const f  = v => '₱ ' + v;
-            const isDetail = _isView;
-            const rows = _records.map(r => {
-                const cols = isDetail
-                    ? `<td>${r.name}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td>`
-                    : `<td>${r.period}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td>`;
-                return `<tr>${cols}</tr>`;
-            }).join('');
-            const header = isDetail
-                ? `<tr><th>Employee</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr>`
-                : `<tr><th>Period</th><th>SSS Total</th><th>PhilHealth Total</th><th>Pag-IBIG Total</th><th>W/ Tax Total</th><th>Status</th></tr>`;
-            const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
-                <td>TOTAL</td><td>${f(_totals.sss)}</td><td>${f(_totals.philhealth)}</td><td>${f(_totals.pagibig)}</td><td>${f(_totals.tax)}</td><td></td>
-            </tr>`;
-            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_periodName}</title>
-    <style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
-    h1{font-size:18px;font-weight:700;color:#2563eb;margin-bottom:4px;}
-    .sub{font-size:12px;color:#64748b;margin-bottom:24px;}
-    table{width:100%;border-collapse:collapse;font-size:13px;}
-    th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
-    td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
-    tr:hover td{background:#f8faff;}
-    .footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
-    @media print{@page{margin:.8cm;}body{padding:20px;}}</style>
-    </head><body>
-    <div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
-    <div class="sub">${_periodName}</div>
-    <table><thead>${header}</thead><tbody>${rows}${totalsRow}</tbody></table>
-    <div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
-    </body></html>`;
-            const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
-            if (!w) return;
-            w.document.write(html);
-            w.document.close();
-            w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove());
-            w.focus();
-            setTimeout(() => w.print(), 400);
+<script>
+    const _isView       = @json($isView);
+    const _periodName   = @json($isView ? $periodName : ('Government Contributions ' . $year));
+    const _records      = @json($isView ? $exportRecords : $exportContributions);
+    const _totals       = @json($exportTotals);
+    const _myRecords    = @json($isView ? [] : $exportMyContributions);
+    const _myTotals     = @json($isView ? [] : $exportMyTotals);
+    const _year         = @json($year);
+
+    function exportMyGovpay() {
+        const f = v => '₱ ' + v;
+        const rows = _myRecords.map(r =>
+            `<tr><td>${r.period}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td></tr>`
+        ).join('');
+        const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
+            <td>TOTAL</td><td>${f(_myTotals.sss)}</td><td>${f(_myTotals.philhealth)}</td><td>${f(_myTotals.pagibig)}</td><td>${f(_myTotals.tax)}</td><td></td></tr>`;
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>My Contributions ${_year}</title>
+<style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
+.sub{font-size:12px;color:#64748b;margin-bottom:24px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
+td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
+.footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
+@media print{@page{margin:.8cm;}body{padding:20px;}}</style>
+</head><body>
+<div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
+<div class="sub">My Government Contributions – ${_year}</div>
+<table><thead><tr><th>Period</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr></thead>
+<tbody>${rows}${totalsRow}</tbody></table>
+<div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
+</body></html>`;
+        const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
+        if (!w) return;
+        w.document.write(html);
+        w.document.close();
+        w.focus();
+        setTimeout(() => w.print(), 400);
+    }
+
+    function exportGovpay() {
+        const f  = v => '₱ ' + v;
+        const isDetail = _isView;
+        const rows = _records.map(r => {
+            const cols = isDetail
+                ? `<td>${r.name}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td>`
+                : `<td>${r.period}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td>`;
+            return `<tr>${cols}</tr>`;
+        }).join('');
+        const header = isDetail
+            ? `<tr><th>Employee</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr>`
+            : `<tr><th>Period</th><th>SSS Total</th><th>PhilHealth Total</th><th>Pag-IBIG Total</th><th>W/ Tax Total</th><th>Status</th></tr>`;
+        const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
+            <td>TOTAL</td><td>${f(_totals.sss)}</td><td>${f(_totals.philhealth)}</td><td>${f(_totals.pagibig)}</td><td>${f(_totals.tax)}</td><td></td></tr>`;
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_periodName}</title>
+<style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
+.sub{font-size:12px;color:#64748b;margin-bottom:24px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
+td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
+tr:hover td{background:#f8faff;}
+.footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
+@media print{@page{margin:.8cm;}body{padding:20px;}}</style>
+</head><body>
+<div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
+<div class="sub">${_periodName}</div>
+<table><thead>${header}</thead><tbody>${rows}${totalsRow}</tbody></table>
+<div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
+</body></html>`;
+        const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
+        if (!w) return;
+        w.document.write(html);
+        w.document.close();
+        w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove());
+        w.focus();
+        setTimeout(() => w.print(), 400);
+    }
+
+    function financeGovpayApp() {
+        return {
+            sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+
+            init() {
+                window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
+            },
+        };
+    }
+
+    // ── Tab switch (list view only) ──
+    function switchTab(tab) {
+        const panelAll  = document.getElementById('panelAll');
+        const panelMine = document.getElementById('panelMine');
+        const tabAll    = document.getElementById('tabAll');
+        const tabMine   = document.getElementById('tabMine');
+        if (!panelAll) return;
+        if (tab === 'all') {
+            panelAll.style.display  = 'block';
+            panelMine.style.display = 'none';
+            if (tabAll)  tabAll.classList.add('active');
+            if (tabMine) tabMine.classList.remove('active');
+        } else {
+            panelAll.style.display  = 'none';
+            panelMine.style.display = 'block';
+            if (tabAll)  tabAll.classList.remove('active');
+            if (tabMine) tabMine.classList.add('active');
         }
 
         function financeGovpayApp() {

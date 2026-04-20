@@ -10,7 +10,7 @@
         : ($sidebarUser?->email ?? 'User');
     $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
 
-    $attendanceRoutes = ['payroll_officer.attendance.reports', 'payroll_officer.attendance.shift', 'payroll_officer.attendance.leave', 'payroll_officer.leave.management'];
+    $attendanceRoutes = ['payroll_officer.attendance.reports', 'payroll_officer.attendance.employee', 'payroll_officer.attendance.shift', 'payroll_officer.attendance.leave', 'payroll_officer.leave.management'];
     $payrollRoutes    = ['payroll_officer.payroll', 'payroll_officer.payslips', 'payroll_officer.govpay'];
     $requestRoutes    = ['payroll_officer.requests.pending', 'payroll_officer.requests.approved'];
 @endphp
@@ -109,6 +109,17 @@
             <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Employee Profile</span>
         </a>
 
+        <!-- Employee Directory -->
+        <a href="{{ route('payroll_officer.employees.directory') }}"
+            class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg
+                {{ $currentRoute === 'payroll_officer.employees.directory' ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}"
+            style="{{ $currentRoute === 'payroll_officer.employees.directory' ? 'background:#3b82f6;' : '' }}">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span x-show="!sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Employee Directory</span>
+        </a>
+
         <!-- Time & Attendance -->
         <div>
             <button @click="sidebarCollapsed ? window.location='{{ route('payroll_officer.attendance.reports') }}' : attendanceOpen = !attendanceOpen"
@@ -140,6 +151,11 @@
                         <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0" style="background:#3b82f6;"></span>
                     @endif
                     My Attendance
+                </a>
+                <a href="{{ route('payroll_officer.attendance.employee') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
+                       {{ $currentRoute === 'payroll_officer.attendance.employee' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                    Employee Attendance
                 </a>
                 <a href="{{ route('payroll_officer.leave.management') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
@@ -235,7 +251,7 @@
             <p x-show="!sidebarCollapsed"
                class="text-xs text-gray-400 font-semibold px-3 py-2 uppercase tracking-widest">Others</p>
 
-            <a href="#" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 group">
+            <a href="{{ route('payroll_officer.settings') }}" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ $currentRoute === 'payroll_officer.settings' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50' }} group">
                 <svg class="w-5 h-5 flex-shrink-0 settings-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>

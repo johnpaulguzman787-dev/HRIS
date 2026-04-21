@@ -621,16 +621,12 @@
                         </div>
                         <div class="space-y-2.5 text-sm">
                             <div class="flex justify-between items-center">
-                                <span class="text-gray-500 text-xs">Below ₱{{ number_format($contrib['pagibig_threshold']) }}:</span>
-                                <span class="font-medium text-orange-500">₱{{ number_format($contrib['pagibig_low_amount']) }}/mo</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-500 text-xs">₱{{ number_format($contrib['pagibig_threshold']) }} &amp; above:</span>
+                                <span class="text-gray-500 text-xs">Fixed Amount:</span>
                                 <span class="font-medium text-orange-500">₱{{ number_format($contrib['pagibig_high_amount']) }}/mo</span>
                             </div>
                             <div class="flex justify-between items-center pt-2.5 border-t border-gray-100">
-                                <span class="text-gray-500 text-xs">Threshold</span>
-                                <span class="font-medium text-gray-700">₱{{ number_format($contrib['pagibig_threshold']) }}.00</span>
+                                <span class="text-gray-500 text-xs">Per Payslip</span>
+                                <span class="font-medium text-gray-700">₱{{ number_format($contrib['pagibig_high_amount'] / 2, 2) }}</span>
                             </div>
                         </div>
                     </div>
@@ -688,10 +684,8 @@
                                     $phBase = max((float) $contrib['philhealth_floor'], min($sal, (float) $contrib['philhealth_ceiling']));
                                     $ph     = round($phBase * ((float) $contrib['philhealth_rate'] / 100 / 2), 2);
 
-                                    // Pag-IBIG — threshold-based fixed monthly amount
-                                    $pi = $sal < (float) $contrib['pagibig_threshold']
-                                        ? (float) $contrib['pagibig_low_amount']
-                                        : (float) $contrib['pagibig_high_amount'];
+                                    // Pag-IBIG — flat fixed monthly amount
+                                    $pi = (float) $contrib['pagibig_high_amount'];
 
                                     // W/Tax — TRAIN Law 6-bracket annualized
                                     $b1 = (float) $contrib['wtax_bracket_1'];
@@ -1654,11 +1648,7 @@
 
             {{-- Pag-IBIG Fields --}}
             <div x-show="editContribType==='pagibig'" class="space-y-4">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Threshold (₱) — below this = low amount</label><input type="number" step="0.01" x-model="contrib.pagibig_threshold" class="ctrl w-full"></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Below Threshold (₱/month)</label><input type="number" step="0.01" x-model="contrib.pagibig_low_amount" class="ctrl w-full"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">At/Above Threshold (₱/month)</label><input type="number" step="0.01" x-model="contrib.pagibig_high_amount" class="ctrl w-full"></div>
-                </div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Fixed Amount (₱/month)</label><input type="number" step="0.01" x-model="contrib.pagibig_high_amount" class="ctrl w-full"></div>
             </div>
 
             {{-- W/Tax Fields --}}

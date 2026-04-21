@@ -118,18 +118,27 @@
             background-repeat: no-repeat; background-position: right 10px center; background-size: 15px;
         }
         .year-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-
-        /* ── View button ── */
-        .btn-view {
-            display: inline-block;
-            background: #eff6ff; color: #2563eb;
+            .btn-view {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff !important;
+            color: #2563eb !important;
             border: 1.5px solid #93c5fd;
-            padding: 5px 18px; border-radius: 7px;
-            font-size: 0.775rem; font-weight: 600;
-            cursor: pointer; text-decoration: none; white-space: nowrap;
+            padding: 8px 18px;
+            border-radius: 7px;
+            font-size: 0.775rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
             transition: background 0.15s, color 0.15s, border-color 0.15s;
         }
-        .btn-view:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .btn-view:hover {
+            background: #2563eb !important;
+            color: #fff !important;
+            border-color: #2563eb !important;
+        }
 
         /* ── Back button ── */
         .btn-back {
@@ -167,12 +176,6 @@
                 display: flex;
                 flex-wrap: nowrap;
                 gap: 8px;
-                justify-content: space-between;
-            }
-            .card-header .flex.items-center.gap-3 button,
-            .card-header .flex.items-center.gap-3 form {
-                flex: 1;
-                min-width: 0;
             }
             .year-select {
                 width: 100%;

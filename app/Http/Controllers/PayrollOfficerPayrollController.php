@@ -650,11 +650,8 @@ class PayrollOfficerPayrollController extends Controller
             $phBase     = max((float) $c['philhealth_floor'], min($monthlySalary, (float) $c['philhealth_ceiling']));
             $philhealth = round($phBase * ((float) $c['philhealth_rate'] / 100 / 2) / 2, 2);
 
-            // ── Pag-IBIG: fixed ₱100 or ₱200/month based on salary threshold ─────
-            $pagibigMonthly = $monthlySalary < (float) $c['pagibig_threshold']
-                ? (float) $c['pagibig_low_amount']
-                : (float) $c['pagibig_high_amount'];
-            $pagibig = round($pagibigMonthly / 2, 2);
+            // ── Pag-IBIG: flat fixed monthly amount ──────────────────────────────
+            $pagibig = round((float) $c['pagibig_high_amount'] / 2, 2);
 
             // ── Withholding tax: TRAIN Law 6-bracket, annualized projection ───────
             $annualDeductions = ($sss + $philhealth + $pagibig) * 24;

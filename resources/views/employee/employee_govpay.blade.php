@@ -130,15 +130,26 @@
             }
         }
         .btn-view {
-            display: inline-block;
-            background: #eff6ff; color: #2563eb;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff !important;
+            color: #2563eb !important;
             border: 1.5px solid #93c5fd;
-            padding: 5px 18px; border-radius: 7px;
-            font-size: 0.775rem; font-weight: 600;
-            cursor: pointer; text-decoration: none; white-space: nowrap;
+            padding: 8px 18px;
+            border-radius: 7px;
+            font-size: 0.775rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
             transition: background 0.15s, color 0.15s, border-color 0.15s;
         }
-        .btn-view:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .btn-view:hover {
+            background: #2563eb !important;
+            color: #fff !important;
+            border-color: #2563eb !important;
+        }
     </style>
 </head>
 @php

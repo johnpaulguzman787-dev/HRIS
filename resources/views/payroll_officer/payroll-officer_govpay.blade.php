@@ -55,8 +55,15 @@
         }
         .card-title { font-size: 1.05rem; font-weight: 700; color: #111827; }
 
-        /* ── Table ── */
-        .contrib-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .contrib-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
         .contrib-table thead tr { background: #f9fafb; }
         .contrib-table thead th {
             padding: 13px 24px;
@@ -111,42 +118,78 @@
         }
         .year-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
 
-        /* ── View button ── */
         .btn-view {
-            display: inline-block;
-            background: #eff6ff; color: #2563eb;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff !important;
+            color: #2563eb !important;
             border: 1.5px solid #93c5fd;
-            padding: 5px 18px; border-radius: 7px;
-            font-size: 0.775rem; font-weight: 600;
-            cursor: pointer; text-decoration: none; white-space: nowrap;
+            padding: 8px 18px;
+            border-radius: 7px;
+            font-size: 0.775rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
             transition: background 0.15s, color 0.15s, border-color 0.15s;
         }
-        .btn-view:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .btn-view:hover {
+            background: #2563eb !important;
+            color: #fff !important;
+            border-color: #2563eb !important;
+        }
 
         /* ── Back button ── */
         .btn-back {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: #f8fafc; border: 1.5px solid #e2e8f0;
-            border-radius: 9px; padding: 8px 18px;
-            color: #374151; font-size: 0.84rem; font-weight: 500;
-            cursor: pointer; white-space: nowrap; text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 9px;
+            padding: 8px 18px;
+            color: #374151;
+            font-size: 0.84rem;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            text-decoration: none;
             transition: background 0.15s, color 0.15s;
         }
-        .btn-back:hover { background: #e2e8f0; color: #1d4ed8; }
+        .btn-back:hover {
+            background: #e2e8f0;
+            color: #1d4ed8;
+        }
 
         /* ── Breadcrumb ── */
-        .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 0.875rem; }
-        .breadcrumb a { color: #9ca3af; text-decoration: none; }
-        .breadcrumb a:hover { color: #6b7280; }
-        .breadcrumb .sep { color: #d1d5db; }
-        .breadcrumb .current { font-weight: 600; color: #374151; }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.875rem;
+        }
+        .breadcrumb a {
+            color: #9ca3af;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            color: #6b7280;
+        }
+        .breadcrumb .sep {
+            color: #d1d5db;
+        }
+        .breadcrumb .current {
+            font-weight: 600;
+            color: #374151;
+        }
 
         /* ── Transition for margin ── */
         .transition-margin {
             transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* ── Mobile responsiveness (padding, font adjustments) ── */
+        /* ── Mobile responsiveness ── */
         @media (max-width: 768px) {
             .card-header {
                 flex-direction: column;
@@ -161,9 +204,7 @@
                 font-size: 0.95rem;
             }
             .year-select {
-                width: auto;
-                flex: 1;
-                min-width: 100px;
+                width: 100%;
             }
             .tabs-wrapper {
                 padding: 0 16px;
@@ -180,7 +221,7 @@
                 font-size: 0.75rem;
             }
             .p-8 {
-                padding: 1rem !important;
+                padding: 1rem;
             }
         }
     </style>
@@ -305,8 +346,8 @@
                     <div class="card">
                         <div class="card-header">
                             <span class="card-title">Contribution Summary</span>
-                            <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                                <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;display:inline-flex;align-items:center;gap:6px;">
+                            <div class="flex items-center gap-3">
+                                <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;">
                                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                                     Export PDF
                                 </button>
@@ -319,7 +360,7 @@
                                 </form>
                             </div>
                         </div>
-                        <div class="overflow-x-auto">
+                        <div class="table-wrapper">
                             <table class="contrib-table">
                                 <thead>
                                     <tr>
@@ -365,8 +406,14 @@
                     <div class="card">
                         <div class="card-header">
                             <span class="card-title">My Contribution Summary</span>
+                            <div class="flex items-center gap-3">
+                                <button onclick="exportMyGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;">
+                                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    Export PDF
+                                </button>
+                            </div>
                         </div>
-                        <div class="overflow-x-auto">
+                        <div class="table-wrapper">
                             <table class="contrib-table">
                                 <thead>
                                     <tr>
@@ -393,7 +440,7 @@
                                         </td>
                                     </tr>
                                     @empty
-                                    <tr>
+                                    <td>
                                         <td colspan="6" class="text-center py-12 text-gray-400 text-sm">No personal contributions found for {{ $year }}.</td>
                                     </tr>
                                     @endforelse
@@ -432,8 +479,8 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">Employee Contributions - {{ $periodName }}</span>
-                    <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                        <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;display:inline-flex;align-items:center;gap:6px;">
+                    <div class="flex items-center gap-3">
+                        <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;">
                             <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Export PDF
                         </button>
@@ -444,52 +491,9 @@
                                 @endforeach
                             </select>
                         </form>
-            {{-- MY CONTRIBUTIONS --}}
-            <div id="panelMine" style="display:none;">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">My Contribution Summary</span>
-                        <button onclick="exportMyGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;display:inline-flex;align-items:center;gap:6px;">
-                            <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            Export PDF
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="contrib-table">
-                            <thead>
-                                <tr>
-                                    <th class="text-left">Period Name</th>
-                                    <th class="td-center">SSS</th>
-                                    <th class="td-center">PhilHealth</th>
-                                    <th class="td-center">Pag-IBIG</th>
-                                    <th class="td-center">W/ Tax</th>
-                                    <th class="td-center">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($myContributions as $row)
-                                <tr>
-                                    <td class="td-name">{{ $row->period_name }}</td>
-                                    <td class="td-center">₱{{ number_format($row->sss ?? 0, 2) }}</td>
-                                    <td class="td-center">₱{{ number_format($row->philhealth ?? 0, 2) }}</td>
-                                    <td class="td-center">₱{{ number_format($row->pagibig ?? 0, 2) }}</td>
-                                    <td class="td-center">₱{{ number_format($row->tax ?? 0, 2) }}</td>
-                                    <td class="td-center">
-                                        <span class="{{ strtolower($row->status ?? '') === 'released' ? 'badge-released' : 'badge-pending' }}">
-                                            {{ ucfirst($row->status ?? 'Pending') }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="6" class="text-center py-12 text-gray-400 text-sm">No personal contributions found for {{ $year }}.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
                     </div>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="table-wrapper">
                     <table class="contrib-table">
                         <thead>
                             <tr>
@@ -535,6 +539,9 @@
         const _periodName   = @json($isView ? $periodName : ('Government Contributions ' . $year));
         const _records      = @json($isView ? $exportRecords : $exportContributions);
         const _totals       = @json($exportTotals);
+        const _myRecords    = @json($isView ? [] : $exportMyContributions);
+        const _myTotals     = @json($isView ? [] : $exportMyTotals);
+        const _year         = @json($year);
 
         function exportGovpay() {
             const f  = v => '₱ ' + v;
@@ -564,7 +571,7 @@
     </head><body>
     <div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
     <div class="sub">${_periodName}</div>
-    <table><thead>${header}</thead><tbody>${rows}${totalsRow}</tbody></table>
+    <table><thead>${header}</thead><tbody>${rows}${totalsRow}</tbody></td>
     <div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
     </body></html>`;
             const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
@@ -574,111 +581,39 @@
             w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove());
             w.focus();
             setTimeout(() => w.print(), 400);
-<script>
-    const _isView       = @json($isView);
-    const _periodName   = @json($isView ? $periodName : ('Government Contributions ' . $year));
-    const _records      = @json($isView ? $exportRecords : $exportContributions);
-    const _totals       = @json($exportTotals);
-    const _myRecords    = @json($isView ? [] : $exportMyContributions);
-    const _myTotals     = @json($isView ? [] : $exportMyTotals);
-    const _year         = @json($year);
+        }
 
-    function exportGovpay() {
-        const f  = v => '₱ ' + v;
-        const isDetail = _isView;
-        const rows = _records.map(r => {
-            const cols = isDetail
-                ? `<td>${r.name}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td>`
-                : `<td>${r.period}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td>`;
-            return `<tr>${cols}</tr>`;
-        }).join('');
-        const header = isDetail
-            ? `<tr><th>Employee</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr>`
-            : `<tr><th>Period</th><th>SSS Total</th><th>PhilHealth Total</th><th>Pag-IBIG Total</th><th>W/ Tax Total</th><th>Status</th></tr>`;
-        const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
-            <td>TOTAL</td><td>${f(_totals.sss)}</td><td>${f(_totals.philhealth)}</td><td>${f(_totals.pagibig)}</td><td>${f(_totals.tax)}</td><td></td></tr>`;
-        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_periodName}</title>
-<style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
-h1{font-size:18px;font-weight:700;color:#2563eb;margin-bottom:4px;}
-.sub{font-size:12px;color:#64748b;margin-bottom:24px;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
-td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
-tr:hover td{background:#f8faff;}
-.footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
-@media print{@page{margin:.8cm;}body{padding:20px;}}</style>
-</head><body>
-<div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
-<div class="sub">${_periodName}</div>
-<table><thead>${header}</thead><tbody>${rows}${totalsRow}</tbody></table>
-<div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
-</body></html>`;
-        const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
-        if (!w) return;
-        w.document.write(html);
-        w.document.close();
-        w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove());
-        w.focus();
-        setTimeout(() => w.print(), 400);
-    }
-
-    function exportMyGovpay() {
-        const f = v => '₱ ' + v;
-        const rows = _myRecords.map(r =>
-            `<tr><td>${r.period}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td></tr>`
-        ).join('');
-        const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
-            <td>TOTAL</td><td>${f(_myTotals.sss)}</td><td>${f(_myTotals.philhealth)}</td><td>${f(_myTotals.pagibig)}</td><td>${f(_myTotals.tax)}</td><td></td></tr>`;
-        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>My Contributions ${_year}</title>
-<style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
-.sub{font-size:12px;color:#64748b;margin-bottom:24px;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
-td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
-.footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
-@media print{@page{margin:.8cm;}body{padding:20px;}}</style>
-</head><body>
-<div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
-<div class="sub">My Government Contributions – ${_year}</div>
-<table><thead><tr><th>Period</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr></thead>
-<tbody>${rows}${totalsRow}</tbody></table>
-<div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
-</body></html>`;
-        const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
-        if (!w) return;
-        w.document.write(html);
-        w.document.close();
-        w.focus();
-        setTimeout(() => w.print(), 400);
-    }
-
-    function govpayApp() {
-        return {
-            sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
-
-            init() {
-                window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
-            },
-        };
-    }
-
-    // ── Tab switch (list view only) ──
-    function switchTab(tab) {
-        const panelAll  = document.getElementById('panelAll');
-        const panelMine = document.getElementById('panelMine');
-        const tabAll    = document.getElementById('tabAll');
-        const tabMine   = document.getElementById('tabMine');
-        if (!panelAll) return;
-        if (tab === 'all') {
-            panelAll.style.display  = 'block';
-            panelMine.style.display = 'none';
-            if (tabAll)  tabAll.classList.add('active');
-            if (tabMine) tabMine.classList.remove('active');
-        } else {
-            panelAll.style.display  = 'none';
-            panelMine.style.display = 'block';
-            if (tabAll)  tabAll.classList.remove('active');
-            if (tabMine) tabMine.classList.add('active');
+        function exportMyGovpay() {
+            const f = v => '₱ ' + v;
+            const rows = _myRecords.map(r =>
+                `<tr><td class="td-name">${r.period}</td><td class="td-center">${f(r.sss)}</td><td class="td-center">${f(r.philhealth)}</td><td class="td-center">${f(r.pagibig)}</td><td class="td-center">${f(r.tax)}</td><td class="td-center">${r.status}</td></tr>`
+            ).join('');
+            const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
+                <td>TOTAL</td><td>${f(_myTotals.sss)}</td><td>${f(_myTotals.philhealth)}</td><td>${f(_myTotals.pagibig)}</td><td>${f(_myTotals.tax)}</td><td></td>
+            </tr>`;
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>My Contributions ${_year}</title>
+    <style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
+    h1{font-size:18px;font-weight:700;color:#2563eb;margin-bottom:4px;}
+    .sub{font-size:12px;color:#64748b;margin-bottom:24px;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
+    td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
+    tr:hover td{background:#f8faff;}
+    .footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
+    @media print{@page{margin:.8cm;}body{padding:20px;}}</style>
+    </head><body>
+    <div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
+    <div class="sub">My Government Contributions – ${_year}</div>
+    <tr><thead><tr><th>Period</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr></thead>
+    <tbody>${rows}${totalsRow}</tbody></table>
+    <div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
+    </body></html>`;
+            const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
+            if (!w) return;
+            w.document.write(html);
+            w.document.close();
+            w.focus();
+            setTimeout(() => w.print(), 400);
         }
 
         function govpayApp() {
@@ -687,7 +622,9 @@ td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
                 mobileMenuOpen: false,
 
                 init() {
-                    window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
+                    window.addEventListener('sidebar-toggle', e => {
+                        this.sidebarCollapsed = e.detail.collapsed;
+                    });
                 },
 
                 toggleSidebar() {

@@ -78,7 +78,6 @@
             padding: 4px 14px; border-radius: 9999px;
             font-size: 0.73rem; font-weight: 600; white-space: nowrap;
         }
-
         .year-select {
             appearance: none; -webkit-appearance: none;
             background: #f8fafc;
@@ -91,11 +90,33 @@
             background-repeat: no-repeat; background-position: right 10px center; background-size: 15px;
         }
         .year-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .btn-view {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff !important;
+            color: #2563eb !important;
+            border: 1.5px solid #93c5fd;
+            padding: 8px 18px;
+            border-radius: 7px;
+            font-size: 0.775rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .btn-view:hover {
+            background: #2563eb !important;
+            color: #fff !important;
+            border-color: #2563eb !important;
+        }
 
         .transition-margin {
             transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* ── Mobile responsiveness ── */
         @media (max-width: 768px) {
             .card-header {
                 flex-direction: column;
@@ -103,17 +124,17 @@
                 gap: 12px;
                 padding: 16px 20px;
             }
-            .card-header form {
-                width: auto;
-            }
-            .year-select {
+            .card-header .flex.items-center.gap-3 {
                 width: 100%;
             }
             .card-title {
                 font-size: 0.95rem;
             }
+            .year-select {
+                width: 100%;
+            }
             .p-8 {
-                padding: 1rem !important;
+                padding: 1rem;
             }
         }
     </style>
@@ -191,7 +212,7 @@
                 <div class="card-header">
                     <span class="card-title">My Government Contributions</span>
                     <div class="flex items-center gap-3">
-                        <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;display:inline-flex;align-items:center;gap:6px;">
+                        <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;">
                             <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Export PDF
                         </button>
@@ -251,27 +272,28 @@
         function exportGovpay() {
             const f = v => '₱ ' + v;
             const rows = _exportData.map(r =>
-                `<tr><td>${r.period}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td></tr>`
+                `<tr><td class="td-name">${r.period}</td><td class="td-center">${f(r.sss)}</td><td class="td-center">${f(r.philhealth)}</td><td class="td-center">${f(r.pagibig)}</td><td class="td-center">${f(r.tax)}</td><td class="td-center">${r.status}</td></tr>`
             ).join('');
             const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
-                <td>TOTAL</td><td>${f(_exportTotals.sss)}</td><td>${f(_exportTotals.philhealth)}</td><td>${f(_exportTotals.pagibig)}</td><td>${f(_exportTotals.tax)}</td><td></td></tr>`;
+                <td>TOTAL</td><td>${f(_exportTotals.sss)}</td><td>${f(_exportTotals.philhealth)}</td><td>${f(_exportTotals.pagibig)}</td><td>${f(_exportTotals.tax)}</td><td></td>
+            </tr>`;
             const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>My Contributions ${_exportYear}</title>
-<style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
-h1{font-size:18px;font-weight:700;color:#2563eb;margin-bottom:4px;}
-.sub{font-size:12px;color:#64748b;margin-bottom:24px;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
-td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
-tr:hover td{background:#f8faff;}
-.footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
-@media print{@page{margin:.8cm;}body{padding:20px;}}</style>
-</head><body>
-<div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
-<div class="sub">My Government Contributions – ${_exportYear}</div>
-<table><thead><tr><th>Period</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr></thead>
-<tbody>${rows}${totalsRow}</tbody></table>
-<div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
-</body></html>`;
+    <style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
+    h1{font-size:18px;font-weight:700;color:#2563eb;margin-bottom:4px;}
+    .sub{font-size:12px;color:#64748b;margin-bottom:24px;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
+    td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
+    tr:hover td{background:#f8faff;}
+    .footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
+    @media print{@page{margin:.8cm;}body{padding:20px;}}</style>
+    </head><body>
+    <div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
+    <div class="sub">My Government Contributions – ${_exportYear}</div>
+    <table><thead><tr><th>Period</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr></thead>
+    <tbody>${rows}${totalsRow}</tbody></td>
+    <div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
+    </body></html>`;
             const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
             if (!w) return;
             w.document.write(html);

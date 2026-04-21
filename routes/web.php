@@ -186,6 +186,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/hr/attendance/clock-out',     [HRAttendanceController::class, 'clockOut'])->name('hr.attendance.clock-out');
     Route::post('/hr/attendance/break',         [HRAttendanceController::class, 'breakStart'])->name('hr.attendance.break');
     Route::get('/hr/attendance/employee',       [HRAttendanceController::class, 'employeeAttendance'])->name('hr.attendance.employee');
+    Route::put('/hr/attendance/log/{id}/update', [HRAttendanceController::class, 'updateAttendanceLog'])->name('hr.attendance.log.update');
     Route::get('/hr/shift/scheduling',          [HRAttendanceController::class, 'shiftScheduling'])->name('hr.shift.scheduling');
     Route::post('/hr/shift/assign',             [HRAttendanceController::class, 'assignShift'])->name('hr.shift.assign');
     Route::post('/hr/shift/update',             [HRAttendanceController::class, 'updateShift'])->name('hr.shift.update');
@@ -231,6 +232,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/supervisor/attendance/clock-out',     [SupervisorAttendanceController::class, 'clockOut'])->name('supervisor.attendance.clock-out');
     Route::post('/supervisor/attendance/break',         [SupervisorAttendanceController::class, 'breakStart'])->name('supervisor.attendance.break');
     Route::get('/supervisor/attendance/employee',       [SupervisorAttendanceController::class, 'employeeAttendance'])->name('supervisor.attendance.employee');
+    Route::put('/supervisor/attendance/log/{id}/update', [SupervisorAttendanceController::class, 'updateAttendanceLog'])->name('supervisor.attendance.log.update');
     Route::get('/supervisor/shift/scheduling',          [SupervisorAttendanceController::class, 'shiftScheduling'])->name('supervisor.shift.scheduling');
     Route::get('/supervisor/leave/management',          [SupervisorAttendanceController::class, 'leaveManagement'])->name('supervisor.leave.management');
 

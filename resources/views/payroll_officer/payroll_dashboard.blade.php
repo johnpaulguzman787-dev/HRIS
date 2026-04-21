@@ -3,7 +3,14 @@
 @section('title', 'Dashboard')
 
 @section('content')
-@php $openSession = $todayLog?->sessions()->whereNull('clock_out')->first(); @endphp
+@php
+    $openSession = $todayLog?->sessions()->whereNull('clock_out')->first();
+    $completedWorkSeconds = $todayLog
+        ? (int) $todayLog->sessions()->whereNotNull('clock_out')->get()->sum(function($s) {
+            return max(0, \Carbon\Carbon::parse($s->clock_in)->diffInSeconds(\Carbon\Carbon::parse($s->clock_out)) - ($s->break_minutes * 60));
+          })
+        : 0;
+@endphp
 <div x-data="{
         sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
         workSetup: '{{ $todayLog?->work_setup ?? ($employeeShift?->work_setup ?? "wfh") }}',
@@ -17,9 +24,11 @@
         breakReminder: '',
         breakTime:   '{{ $openSession?->break_start ? \Carbon\Carbon::parse($openSession->break_start)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         breakMinutes: {{ $todayLog?->break_minutes ?? 0 }},
-        clockInTime:  '{{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
+        clockInTime:  '{{ $todayLog?->clock_in ? \Carbon\Carbon::parse($todayLog->clock_in)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock_out)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
-        clockInTimestamp: {{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->valueOf() : 'null' }},
+        completedWorkSeconds: {{ $completedWorkSeconds }},
+        currentSessionStart: {{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->valueOf() : 'null' }},
+        currentSessionBreakMinutes: {{ $openSession?->break_minutes ?? 0 }},
         errorMessage: '',
         showError(msg) { this.errorMessage = msg; },
         elapsedSeconds: 0,
@@ -107,8 +116,10 @@
             this.updateTime();
             setInterval(() => {
                 this.updateTime();
-                if (this.clockedIn && !this.onBreak && this.clockInTimestamp) {
-                    this.elapsedSeconds = Math.floor((Date.now() - this.clockInTimestamp) / 1000) - (this.breakMinutes * 60);
+                if (this.clockedIn && !this.onBreak) {
+                    this.elapsedSeconds = this.currentSessionStart
+                        ? this.completedWorkSeconds + Math.floor((Date.now() - this.currentSessionStart) / 1000) - (this.currentSessionBreakMinutes * 60)
+                        : this.completedWorkSeconds;
                 }
             }, 1000);
             window.addEventListener('sidebar-toggle', e => {
@@ -142,6 +153,7 @@
                     this.resumed = true;
                     this.clockedIn = true;
                     this.breakMinutes = data.break_minutes;
+                    this.currentSessionBreakMinutes = data.break_minutes;
                 } else { this.showError(data.message ?? 'Resume failed.'); }
                 return;
             }
@@ -157,7 +169,9 @@
                     this.clockedOut = false;
                     this.resumed = false;
                     this.clockInTime = data.clock_in;
-                    this.clockInTimestamp = Date.now();
+                    this.completedWorkSeconds = 0;
+                    this.currentSessionStart = Date.now();
+                    this.currentSessionBreakMinutes = 0;
                 } else { this.showError(data.message ?? 'Clock-in failed.'); }
                 return;
             }
@@ -405,7 +419,7 @@
                         <div class="flex flex-col sm:flex-row gap-2 mb-2">
                             <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
                                 <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">TIME IN</p>
-                                <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedIn ? clockInTime : '–'"></p>
+                                <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockInTime || '–'"></p>
                             </div>
                             <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
                                 <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">BREAK</p>
@@ -413,7 +427,7 @@
                             </div>
                             <div class="flex-1 border border-gray-200 rounded-xl px-3 py-3 bg-gray-50 text-center">
                                 <p class="text-xs text-gray-400 font-semibold tracking-wider mb-1.5">TIME OUT</p>
-                                <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockedOut ? clockOutTime : '–'"></p>
+                                <p class="text-sm font-bold text-gray-700 border-b border-gray-300 pb-0.5" x-text="clockOutTime || '–'"></p>
                             </div>
                         </div>
                         <p class="text-xs text-center text-gray-400 font-medium" x-show="!clockedIn"><span class="mr-1"></span><span x-text="elapsedDisplay"></span></p>

@@ -76,15 +76,15 @@
             <div class="grid grid-cols-3 gap-3">
                 <div class="border border-gray-200 rounded-xl py-4 text-center bg-gray-50">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Time In</p>
-                    <p class="text-lg font-bold text-gray-700" x-text="clockedIn ? clockInTime : '–'"></p>
+                    <p class="text-lg font-bold text-gray-700" x-text="clockInTime || '–'"></p>
                 </div>
                 <div class="border border-gray-200 rounded-xl py-4 text-center bg-gray-50">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Break</p>
-                    <p class="text-lg font-bold text-gray-700" x-text="onBreak ? breakTime : '–'"></p>
+                    <p class="text-lg font-bold text-gray-700" x-text="breakTime || '–'"></p>
                 </div>
                 <div class="border border-gray-200 rounded-xl py-4 text-center bg-gray-50">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Time Out</p>
-                    <p class="text-lg font-bold text-gray-700" x-text="clockedOut ? clockOutTime : '–'"></p>
+                    <p class="text-lg font-bold text-gray-700" x-text="clockOutTime || '–'"></p>
                 </div>
             </div>
         </div>
@@ -92,32 +92,32 @@
         {{-- Action Buttons --}}
         <div class="grid grid-cols-3 gap-3">
 
-            {{-- TIME IN --}}
-            <button @click="handleClock(); if(!clockedIn){ setTimeout(() => showAttendancePopup = false, 300) } else { showAttendancePopup = false }"
-                :disabled="clockedIn || onLeave"
+            {{-- TIME IN / RESUME --}}
+            <button @click="handleClock().then(() => { showAttendancePopup = false })"
+                :disabled="onLeave || (clockedIn && !onBreak) || !assignedShiftId"
                 class="py-4 rounded-xl text-sm font-bold uppercase tracking-widest transition-all"
-                :class="(!clockedIn && !onLeave)
+                :class="(!onLeave && (!clockedIn || onBreak) && assignedShiftId)
                     ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
-                Time In
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'"
+                x-text="onBreak ? 'Resume' : 'Time In'">
             </button>
 
             {{-- BREAK --}}
-            <button @click="handleBreak(); showAttendancePopup = false"
-                :disabled="!clockedIn || onBreak || onLeave"
+            <button @click="handleBreak().then(() => { showAttendancePopup = false })"
+                :disabled="!clockedIn || onBreak || onLeave || resumed"
                 class="py-4 rounded-xl text-sm font-bold uppercase tracking-widest transition-all"
-                :class="(clockedIn && !onBreak && !onLeave)
+                :class="(clockedIn && !onBreak && !onLeave && !resumed)
                     ? 'bg-gray-700 text-white hover:bg-gray-800 shadow-sm'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
                 Break
             </button>
 
             {{-- TIME OUT --}}
-            <button @click="handleClockOut(); showAttendancePopup = false"
+            <button @click="handleClockOut().then(() => { showAttendancePopup = false })"
                 :disabled="!clockedIn || onLeave"
                 class="py-4 rounded-xl text-sm font-bold uppercase tracking-widest transition-all"
                 :class="(clockedIn && !onLeave)
-                    ? 'bg-gray-700 text-white hover:bg-gray-800 shadow-sm'
+                    ? 'bg-red-600 text-white hover:bg-red-700 shadow-sm'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
                 Time Out
             </button>

@@ -385,6 +385,7 @@ class HRAttendanceController extends Controller
 
             $dailyRecords = $logs->map(function ($log) use ($fmt) {
                 return (object) [
+                    'id'                  => $log->id,
                     'date'                => $log->attendance_date,
                     'work_setup'          => $log->work_setup ? strtoupper($log->work_setup) : '—',
                     'shift_type'          => $log->shift?->name ?? '—',
@@ -1807,6 +1808,59 @@ class HRAttendanceController extends Controller
         ]);
 
         return response()->json(['message' => 'Shift change request rejected.']);
+    }
+
+    public function updateAttendanceLog(Request $request, $id)
+    {
+        $log = AttendanceLog::with('shift')->findOrFail($id);
+
+        if (Carbon::parse($log->attendance_date)->isToday()) {
+            return response()->json(['message' => "Cannot edit today's attendance."], 422);
+        }
+
+        $request->validate([
+            'clock_in'  => 'required|date_format:H:i',
+            'clock_out' => 'nullable|date_format:H:i',
+        ]);
+
+        $date     = Carbon::parse($log->attendance_date)->toDateString();
+        $clockIn  = Carbon::createFromFormat('Y-m-d H:i', "$date {$request->clock_in}");
+        $clockOut = $request->clock_out
+            ? Carbon::createFromFormat('Y-m-d H:i', "$date {$request->clock_out}")
+            : null;
+
+        if ($clockOut && $clockOut->lte($clockIn)) {
+            return response()->json(['message' => 'Clock-out must be after clock-in.'], 422);
+        }
+
+        $breakMin     = $log->break_minutes ?? 0;
+        $totalWorkMin = $clockOut ? max(0, (int) $clockIn->diffInMinutes($clockOut) - $breakMin) : 0;
+        $lateMinutes  = $log->late_minutes ?? 0;
+        $status       = $log->status;
+
+        if ($log->shift) {
+            $shiftStart  = Carbon::createFromTimeString("$date {$log->shift->start_time}");
+            $shiftEnd    = Carbon::createFromTimeString("$date {$log->shift->end_time}");
+            $lateMinutes = $clockIn->gt($shiftStart) ? min(999, (int) $shiftStart->diffInMinutes($clockIn)) : 0;
+            $isLate      = $lateMinutes > 0;
+            if ($clockOut) {
+                if ($clockOut->lt($shiftEnd))      $status = $isLate ? 'late' : 'undertime';
+                elseif ($clockOut->gt($shiftEnd))  $status = $isLate ? 'late' : 'overtime';
+                else                               $status = $isLate ? 'late' : 'present';
+            } else {
+                $status = $isLate ? 'late' : 'present';
+            }
+        }
+
+        $log->update([
+            'clock_in'     => $clockIn,
+            'clock_out'    => $clockOut,
+            'total_hours'  => round($totalWorkMin / 60, 2),
+            'late_minutes' => $lateMinutes,
+            'status'       => $status,
+        ]);
+
+        return response()->json(['success' => true]);
     }
 
     public function exportCsv(Request $request)

@@ -31,8 +31,15 @@
         }
         .card-title { font-size: 1.05rem; font-weight: 700; color: #111827; }
 
-        /* ── Table ── */
-        .contrib-table { width: 100%; border-collapse: collapse; }
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .contrib-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
         .contrib-table thead tr { background: #f9fafb; }
         .contrib-table thead th {
             padding: 13px 24px;
@@ -71,8 +78,6 @@
             padding: 4px 14px; border-radius: 9999px;
             font-size: 0.73rem; font-weight: 600; white-space: nowrap;
         }
-
-        /* ── Year select ── */
         .year-select {
             appearance: none; -webkit-appearance: none;
             background: #f8fafc;
@@ -85,20 +90,119 @@
             background-repeat: no-repeat; background-position: right 10px center; background-size: 15px;
         }
         .year-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .btn-view {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff !important;
+            color: #2563eb !important;
+            border: 1.5px solid #93c5fd;
+            padding: 8px 18px;
+            border-radius: 7px;
+            font-size: 0.775rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .btn-view:hover {
+            background: #2563eb !important;
+            color: #fff !important;
+            border-color: #2563eb !important;
+        }
+
+        .transition-margin {
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ── Mobile responsiveness ── */
+        @media (max-width: 768px) {
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 16px 20px;
+            }
+            .card-header .flex.items-center.gap-3 {
+                width: 100%;
+            }
+            .card-title {
+                font-size: 0.95rem;
+            }
+            .year-select {
+                width: 100%;
+            }
+            .p-8 {
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
+@php
+    $exportData = collect($myContributions)->map(fn($r) => [
+        'period'     => $r->period_name,
+        'sss'        => number_format($r->sss ?? 0, 2),
+        'philhealth' => number_format($r->philhealth ?? 0, 2),
+        'pagibig'    => number_format($r->pagibig ?? 0, 2),
+        'tax'        => number_format($r->tax ?? 0, 2),
+        'status'     => ucfirst($r->status ?? 'Pending'),
+    ])->values()->toArray();
+    $exportTotals = [
+        'sss'        => number_format(collect($myContributions)->sum('sss'), 2),
+        'philhealth' => number_format(collect($myContributions)->sum('philhealth'), 2),
+        'pagibig'    => number_format(collect($myContributions)->sum('pagibig'), 2),
+        'tax'        => number_format(collect($myContributions)->sum('tax'), 2),
+    ];
+@endphp
 
-<body x-data="supervisorGovpayApp()" x-init="init()">
+<body x-data="supervisorGovpayApp()" x-init="init()" class="flex h-screen overflow-hidden">
 
-    @include('supervisor.supervisor_sidebar')
+    <!-- ===================== DESKTOP SIDEBAR ===================== -->
+    <div class="hidden lg:block">
+        @include('supervisor.supervisor_sidebar')
+    </div>
 
-    <div class="min-h-screen transition-all duration-300"
-         :style="'margin-left: ' + (sidebarCollapsed ? '80px' : '256px')">
+    <!-- ===================== MOBILE DRAWER ===================== -->
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 lg:hidden"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+            @include('supervisor.supervisor_sidebar')
+        </div>
+    </div>
 
-        <!-- Header -->
+    <!-- ===================== MAIN CONTENT ===================== -->
+    <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin"
+         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
+         style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
+
+        <!-- Header with Hamburger -->
         <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-40 shadow-lg mt-4 mx-4 rounded-2xl">
             <div class="flex items-center justify-between px-8 py-4">
-                <h1 class="text-white font-bold text-xl">My Contributions</h1>
+                <div class="flex items-center gap-3">
+                    <button @click="mobileMenuOpen = true"
+                            class="lg:hidden p-2 rounded-lg hover:bg-white/20 transition-colors">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h1 class="text-white font-bold text-xl">My Contributions</h1>
+                </div>
                 <x-notification-bell />
             </div>
         </header>
@@ -107,15 +211,21 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">My Government Contributions</span>
-                    <form method="GET" action="{{ route('supervisor.govpay') }}">
-                        <select name="year" class="year-select" onchange="this.form.submit()">
-                            @foreach($years as $y)
-                                <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
-                            @endforeach
-                        </select>
-                    </form>
+                    <div class="flex items-center gap-3">
+                        <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;">
+                            <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Export PDF
+                        </button>
+                        <form method="GET" action="{{ route('supervisor.govpay') }}">
+                            <select name="year" class="year-select" onchange="this.form.submit()">
+                                @foreach($years as $y)
+                                    <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                @endforeach
+                            </select>
+                        </form>
+                    </div>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="table-wrapper">
                     <table class="contrib-table">
                         <thead>
                             <tr>
@@ -155,12 +265,61 @@
     </div>
 
     <script>
+        const _exportData   = @json($exportData);
+        const _exportTotals = @json($exportTotals);
+        const _exportYear   = @json($year);
+
+        function exportGovpay() {
+            const f = v => '₱ ' + v;
+            const rows = _exportData.map(r =>
+                `<tr><td class="td-name">${r.period}</td><td class="td-center">${f(r.sss)}</td><td class="td-center">${f(r.philhealth)}</td><td class="td-center">${f(r.pagibig)}</td><td class="td-center">${f(r.tax)}</td><td class="td-center">${r.status}</td></tr>`
+            ).join('');
+            const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
+                <td>TOTAL</td><td>${f(_exportTotals.sss)}</td><td>${f(_exportTotals.philhealth)}</td><td>${f(_exportTotals.pagibig)}</td><td>${f(_exportTotals.tax)}</td><td></td>
+            </tr>`;
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>My Contributions ${_exportYear}</title>
+    <style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
+    h1{font-size:18px;font-weight:700;color:#2563eb;margin-bottom:4px;}
+    .sub{font-size:12px;color:#64748b;margin-bottom:24px;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
+    td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
+    tr:hover td{background:#f8faff;}
+    .footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
+    @media print{@page{margin:.8cm;}body{padding:20px;}}</style>
+    </head><body>
+    <div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
+    <div class="sub">My Government Contributions – ${_exportYear}</div>
+    <table><thead><tr><th>Period</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr></thead>
+    <tbody>${rows}${totalsRow}</tbody></td>
+    <div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
+    </body></html>`;
+            const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
+            if (!w) return;
+            w.document.write(html);
+            w.document.close();
+            w.focus();
+            setTimeout(() => w.print(), 400);
+        }
+
         function supervisorGovpayApp() {
             return {
                 sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+                mobileMenuOpen: false,
+
                 init() {
-                    window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
+                    window.addEventListener('sidebar-toggle', e => {
+                        this.sidebarCollapsed = e.detail.collapsed;
+                    });
                 },
+
+                toggleSidebar() {
+                    this.sidebarCollapsed = !this.sidebarCollapsed;
+                    localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed);
+                    window.dispatchEvent(new CustomEvent('sidebar-toggle', {
+                        detail: { collapsed: this.sidebarCollapsed }
+                    }));
+                }
             };
         }
     </script>

@@ -25,12 +25,9 @@ class SettingsController extends Controller
             'icon'  => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
             'color' => 'blue',
             'actions' => [
-                'can_view'    => 'View Employee Directory',
-                'can_create'  => 'Add Employee',
-                'can_edit'    => 'Edit Employee Info',
-                'can_archive' => 'Archive Employee',
-                'can_import'  => 'Import Employees',
-                'can_export'  => 'Export Employee List',
+                'can_view'   => 'View Employee Directory',
+                'can_create' => 'Add Employee',
+                'can_edit'   => 'Edit Employee Info',
             ],
         ],
         'Time & Attendance' => [
@@ -38,8 +35,6 @@ class SettingsController extends Controller
             'color' => 'green',
             'actions' => [
                 'can_view'   => 'View Attendance Reports',
-                'can_create' => 'Manual Attendance Entry',
-                'can_edit'   => 'Edit Attendance Records',
                 'can_export' => 'Export Attendance Report',
             ],
         ],
@@ -50,7 +45,6 @@ class SettingsController extends Controller
                 'can_view'   => 'View Leave Records',
                 'can_create' => 'File Leave Request',
                 'can_edit'   => 'Approve / Reject Leave',
-                'can_export' => 'Export Leave Report',
             ],
         ],
         'Requests & Approval' => [
@@ -60,7 +54,6 @@ class SettingsController extends Controller
                 'can_view'   => 'View Requests',
                 'can_create' => 'File OT / Shift Request',
                 'can_edit'   => 'Approve / Reject Requests',
-                'can_export' => 'Export Request Logs',
             ],
         ],
         'Payroll' => [

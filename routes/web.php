@@ -186,6 +186,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/hr/attendance/clock-out',     [HRAttendanceController::class, 'clockOut'])->name('hr.attendance.clock-out');
     Route::post('/hr/attendance/break',         [HRAttendanceController::class, 'breakStart'])->name('hr.attendance.break');
     Route::get('/hr/attendance/employee',       [HRAttendanceController::class, 'employeeAttendance'])->name('hr.attendance.employee');
+    Route::put('/hr/attendance/log/{id}/update', [HRAttendanceController::class, 'updateAttendanceLog'])->name('hr.attendance.log.update');
     Route::get('/hr/shift/scheduling',          [HRAttendanceController::class, 'shiftScheduling'])->name('hr.shift.scheduling');
     Route::post('/hr/shift/assign',             [HRAttendanceController::class, 'assignShift'])->name('hr.shift.assign');
     Route::post('/hr/shift/update',             [HRAttendanceController::class, 'updateShift'])->name('hr.shift.update');
@@ -231,6 +232,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/supervisor/attendance/clock-out',     [SupervisorAttendanceController::class, 'clockOut'])->name('supervisor.attendance.clock-out');
     Route::post('/supervisor/attendance/break',         [SupervisorAttendanceController::class, 'breakStart'])->name('supervisor.attendance.break');
     Route::get('/supervisor/attendance/employee',       [SupervisorAttendanceController::class, 'employeeAttendance'])->name('supervisor.attendance.employee');
+    Route::put('/supervisor/attendance/log/{id}/update', [SupervisorAttendanceController::class, 'updateAttendanceLog'])->name('supervisor.attendance.log.update');
     Route::get('/supervisor/shift/scheduling',          [SupervisorAttendanceController::class, 'shiftScheduling'])->name('supervisor.shift.scheduling');
     Route::get('/supervisor/leave/management',          [SupervisorAttendanceController::class, 'leaveManagement'])->name('supervisor.leave.management');
 
@@ -307,6 +309,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Admin Payroll Actions ────────────────────────────────────────────────
     Route::post('/admin/payroll/period/store',                 [\App\Http\Controllers\AdminPayrollController::class, 'storePeriod'])->name('admin.payroll.period.store');
+    Route::post('/admin/payroll/period/{id}/update',           [\App\Http\Controllers\AdminPayrollController::class, 'updatePeriod'])->name('admin.payroll.period.update');
     Route::post('/admin/payroll/period/{id}/release',          [\App\Http\Controllers\AdminPayrollController::class, 'releasePayroll'])->name('admin.payroll.period.release');
     Route::post('/admin/payroll/period/{id}/submit',           [\App\Http\Controllers\AdminPayrollController::class, 'submitForApproval'])->name('admin.payroll.period.submit');
     Route::get('/admin/payroll/period/{id}/payslips',          [\App\Http\Controllers\AdminPayrollController::class, 'periodPayslips'])->name('admin.payroll.period.payslips');
@@ -345,14 +348,20 @@ Route::middleware(['auth'])->group(function () {
     // ── HR PAYROLL ─────────────────────────────────────────────────────────
     Route::get('/hr/payslips', [\App\Http\Controllers\EmployeePayrollController::class, 'payslips'])->name('hr.payslips');
     Route::get('/hr/govpay',   [\App\Http\Controllers\EmployeePayrollController::class, 'govpay'])->name('hr.govpay');
+    Route::get('/hr/settings',          [\App\Http\Controllers\UserSettingsController::class, 'show'])->name('hr.settings');
+    Route::post('/hr/settings/password', [\App\Http\Controllers\UserSettingsController::class, 'changePassword'])->name('hr.settings.password');
 
     // ── SUPERVISOR PAYROLL ─────────────────────────────────────────────────
     Route::get('/supervisor/payslips', [\App\Http\Controllers\EmployeePayrollController::class, 'payslips'])->name('supervisor.payslips');
     Route::get('/supervisor/govpay',   [\App\Http\Controllers\EmployeePayrollController::class, 'govpay'])->name('supervisor.govpay');
+    Route::get('/supervisor/settings',           [\App\Http\Controllers\UserSettingsController::class, 'show'])->name('supervisor.settings');
+    Route::post('/supervisor/settings/password', [\App\Http\Controllers\UserSettingsController::class, 'changePassword'])->name('supervisor.settings.password');
 
     // ── EMPLOYEE PAYROLL ───────────────────────────────────────────────────
     Route::get('/employee/payslips', [\App\Http\Controllers\EmployeePayrollController::class, 'payslips'])->name('employee.payslips');
     Route::get('/employee/govpay',   [\App\Http\Controllers\EmployeePayrollController::class, 'govpay'])->name('employee.govpay');
+    Route::get('/employee/settings',           [\App\Http\Controllers\UserSettingsController::class, 'show'])->name('employee.settings');
+    Route::post('/employee/settings/password', [\App\Http\Controllers\UserSettingsController::class, 'changePassword'])->name('employee.settings.password');
 
     // ══════════════════════════════════════════════════════════════════════
     // ── PAYROLL OFFICER ROUTES ─────────────────────────────────────────────
@@ -360,10 +369,14 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/payroll_officer/dashboard', [\App\Http\Controllers\PayrollOfficerDashboardController::class, 'index'])->name('payroll_officer.dashboard');
     Route::get('/payroll_officer/profile',   [\App\Http\Controllers\PayrollOfficerProfileController::class, 'profile'])->name('payroll_officer.profile');
+    Route::get('/payroll_officer/employees/directory', [\App\Http\Controllers\ViewOnlyDirectoryController::class, 'payroll'])->name('payroll_officer.employees.directory');
+    Route::get('/payroll_officer/settings',           [\App\Http\Controllers\UserSettingsController::class, 'show'])->name('payroll_officer.settings');
+    Route::post('/payroll_officer/settings/password', [\App\Http\Controllers\UserSettingsController::class, 'changePassword'])->name('payroll_officer.settings.password');
     Route::post('/payroll_officer/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('payroll_officer.announcements.store');
 
     // ── Payroll Officer Attendance ─────────────────────────────────────────
     Route::get('/payroll_officer/attendance/reports',   [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'index'])->name('payroll_officer.attendance.reports');
+    Route::get('/payroll_officer/attendance/employee',  [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'employeeAttendance'])->name('payroll_officer.attendance.employee');
     Route::get('/payroll_officer/attendance/today',     [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'today'])->name('payroll_officer.attendance.today');
     Route::get('/payroll_officer/attendance/records',   [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'records'])->name('payroll_officer.attendance.records');
     Route::get('/payroll_officer/attendance/export',    [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'exportCsv'])->name('payroll_officer.attendance.export');
@@ -392,6 +405,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Payroll Period ─────────────────────────────────────────────────────
     Route::post('/payroll_officer/payroll/period/store',                 [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'storePeriod'])->name('payroll_officer.payroll.period.store');
+    Route::post('/payroll_officer/payroll/period/{id}/update',           [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'updatePeriod'])->name('payroll_officer.payroll.period.update');
     Route::get('/payroll_officer/payroll/period/{id}/payslips',          [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'periodPayslips'])->name('payroll_officer.payroll.period.payslips');
     Route::get('/payroll_officer/payroll/period/{id}/all-payslips',      [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'allPeriodPayslips'])->name('payroll_officer.payroll.period.all-payslips');
     Route::post('/payroll_officer/payroll/period/{id}/submit',           [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'submitForApproval'])->name('payroll_officer.payroll.period.submit');
@@ -428,6 +442,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/finance_officer/dashboard', [\App\Http\Controllers\FinanceOfficerDashboardController::class, 'index'])->name('finance_officer.dashboard');
     Route::get('/finance_officer/profile',   [\App\Http\Controllers\FinanceOfficerProfileController::class, 'profile'])->name('finance_officer.profile');
+    Route::get('/finance_officer/employees/directory', [\App\Http\Controllers\ViewOnlyDirectoryController::class, 'finance'])->name('finance_officer.employees.directory');
+    Route::get('/finance_officer/settings',           [\App\Http\Controllers\UserSettingsController::class, 'show'])->name('finance_officer.settings');
+    Route::post('/finance_officer/settings/password', [\App\Http\Controllers\UserSettingsController::class, 'changePassword'])->name('finance_officer.settings.password');
     Route::post('/finance_officer/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('finance_officer.announcements.store');
 
     Route::get('/finance_officer/payroll',  [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'index'])->name('finance_officer.payroll');
@@ -436,6 +453,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/finance_officer/govpay/{id}',   [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'govpayView'])->name('finance_officer.govpay.view');
 
     // ── Finance Officer Payroll Actions ───────────────────────────────────────
+    Route::post('/finance_officer/payroll/period/{id}/update',         [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'updatePeriod'])->name('finance_officer.payroll.period.update');
     Route::post('/finance_officer/payroll/period/{id}/release',       [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'releasePayroll'])->name('finance_officer.payroll.period.release');
     Route::get('/finance_officer/payroll/period/{id}/payslips',       [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'periodPayslips'])->name('finance_officer.payroll.period.payslips');
     Route::get('/finance_officer/payroll/period/{id}/released-payslips', [\App\Http\Controllers\FinanceOfficerPayrollController::class, 'releasedPeriodPayslips'])->name('finance_officer.payroll.period.released-payslips');
@@ -466,6 +484,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Finance Officer Attendance ─────────────────────────────────────────
     Route::get('/finance_officer/attendance/reports',   [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'index'])->name('finance_officer.attendance.reports');
+    Route::get('/finance_officer/attendance/employee',  [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'employeeAttendance'])->name('finance_officer.attendance.employee');
     Route::get('/finance_officer/attendance/today',     [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'today'])->name('finance_officer.attendance.today');
     Route::get('/finance_officer/attendance/records',   [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'records'])->name('finance_officer.attendance.records');
     Route::get('/finance_officer/attendance/export',    [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'exportCsv'])->name('finance_officer.attendance.export');

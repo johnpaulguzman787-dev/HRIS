@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('title', 'Settings - Medisource HRMS')
+@section('content')
+@include('supervisor.supervisor_sidebar')
+@include('partials.settings-change-password', ['passwordRoute' => 'supervisor.settings.password'])
+@endsection

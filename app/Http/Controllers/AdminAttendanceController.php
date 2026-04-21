@@ -604,16 +604,51 @@ class AdminAttendanceController extends Controller
 
     $myLeaveStats    = [];
     $myLeaveRequests = collect();
+    $leaveHistory    = collect();
+    $creditStats     = [];
+    $employees       = Employee::orderBy('fname')->get();
+    $departments     = Department::orderBy('name')->get();
+    $calendarEvents  = collect();
+
+    if ($activeTab === 'leave-credits' && $employee) {
+        $selectedEmpId = $request->get('employee_id', $employee->id);
+
+        $leaveHistoryQuery = LeaveRequest::with(['leaveType', 'approver'])
+            ->where('employee_id', $selectedEmpId)
+            ->orderByDesc('created_at');
+        if ($request->filled('status')) {
+            $leaveHistoryQuery->where('status', $request->status);
+        }
+        if ($request->filled('type')) {
+            $leaveHistoryQuery->where('leave_type_id', $request->type);
+        }
+        $leaveHistory = $leaveHistoryQuery->get();
+
+        $credits = LeaveCredit::with('leaveType')
+            ->where('employee_id', $selectedEmpId)
+            ->where('year', $currentYear)
+            ->get();
+
+        foreach ($credits as $credit) {
+            $key = strtolower($credit->leaveType->code ?? '');
+            $creditStats[$key . '_used']      = $credit->used_days;
+            $creditStats[$key . '_remaining'] = $credit->remaining_days;
+            $creditStats[$key . '_total']     = $credit->total_days;
+        }
+
+        $employees   = Employee::orderBy('fname')->get();
+        $departments = Department::orderBy('name')->get();
+    }
 
     if ($activeTab === 'my-leave' && $employee) {
         $myLeaveQuery = LeaveRequest::with(['leaveType', 'approver'])
             ->where('employee_id', $employee->id)
             ->orderByDesc('created_at');
-        if (request()->filled('status')) {
-            $myLeaveQuery->where('status', request('status'));
+        if ($request->filled('status')) {
+            $myLeaveQuery->where('status', $request->status);
         }
-        if (request()->filled('type')) {
-            $myLeaveQuery->where('leave_type_id', request('type'));
+        if ($request->filled('type')) {
+            $myLeaveQuery->where('leave_type_id', $request->type);
         }
         $myLeaveRequests = $myLeaveQuery->get();
 
@@ -627,12 +662,10 @@ class AdminAttendanceController extends Controller
         foreach ($credits as $credit) {
             $key = strtolower($credit->leaveType->code ?? '');
             $myLeaveStats[$key . '_used']      = $credit->used_days;
-            $myLeaveStats[$key . '_remaining']  = $credit->remaining_days;
-            $myLeaveStats[$key . '_total']      = $credit->total_days;
+            $myLeaveStats[$key . '_remaining'] = $credit->remaining_days;
+            $myLeaveStats[$key . '_total']     = $credit->total_days;
         }
     }
-
-    $calendarEvents = collect();
 
     if ($activeTab === 'leave-calendar') {
         $calMonth = $request->get('month')
@@ -670,7 +703,8 @@ class AdminAttendanceController extends Controller
 
     return view('admin.admin_leave-management', compact(
         'activeTab', 'myLeaveStats', 'myLeaveRequests',
-        'calendarEvents', 'leaveTypes', 'currentYear'
+        'calendarEvents', 'leaveTypes', 'currentYear',
+        'leaveHistory', 'creditStats', 'employees', 'departments'
     ));
 }
 public function fileLeave(Request $request)

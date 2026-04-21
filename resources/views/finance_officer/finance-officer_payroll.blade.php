@@ -216,6 +216,15 @@
                                             '{{ $period->end_date }}',
                                             '{{ $period->status }}'
                                         )">View</button>
+                                    <button class="btn-view ml-1"
+                                        @click="openEditPeriod(
+                                            {{ $period->id }},
+                                            '{{ addslashes($period->name) }}',
+                                            '{{ $period->start_date }}',
+                                            '{{ $period->end_date }}',
+                                            '{{ $period->payout_date }}',
+                                            '{{ $period->status }}'
+                                        )">Edit</button>
                                 </td>
                             </tr>
                             @empty
@@ -425,9 +434,8 @@
                             </button>
                         </div>
                         <div class="space-y-2.5 text-sm">
-                            <div class="flex justify-between items-center"><span class="text-gray-500 text-xs">Below ₱{{ number_format($contrib['pagibig_threshold']) }}:</span><span class="font-medium text-orange-500">₱{{ number_format($contrib['pagibig_low_amount']) }}/mo</span></div>
-                            <div class="flex justify-between items-center"><span class="text-gray-500 text-xs">₱{{ number_format($contrib['pagibig_threshold']) }} &amp; above:</span><span class="font-medium text-orange-500">₱{{ number_format($contrib['pagibig_high_amount']) }}/mo</span></div>
-                            <div class="flex justify-between items-center pt-2.5 border-t border-gray-100"><span class="text-gray-500 text-xs">Threshold</span><span class="font-medium text-gray-700">₱{{ number_format($contrib['pagibig_threshold']) }}.00</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-500 text-xs">Fixed Amount:</span><span class="font-medium text-orange-500">₱{{ number_format($contrib['pagibig_high_amount']) }}/mo</span></div>
+                            <div class="flex justify-between items-center pt-2.5 border-t border-gray-100"><span class="text-gray-500 text-xs">Per Payslip</span><span class="font-medium text-gray-700">₱{{ number_format($contrib['pagibig_high_amount'] / 2, 2) }}</span></div>
                         </div>
                     </div>
 
@@ -477,10 +485,8 @@
                                     $phBase = max((float) $contrib['philhealth_floor'], min($sal, (float) $contrib['philhealth_ceiling']));
                                     $ph     = round($phBase * ((float) $contrib['philhealth_rate'] / 100 / 2), 2);
 
-                                    // Pag-IBIG — threshold-based fixed monthly amount
-                                    $pi = $sal < (float) $contrib['pagibig_threshold']
-                                        ? (float) $contrib['pagibig_low_amount']
-                                        : (float) $contrib['pagibig_high_amount'];
+                                    // Pag-IBIG — flat fixed monthly amount
+                                    $pi = (float) $contrib['pagibig_high_amount'];
 
                                     // W/Tax — TRAIN Law 6-bracket annualized
                                     $b1 = (float) $contrib['wtax_bracket_1']; $b2 = (float) $contrib['wtax_bracket_2'];
@@ -689,6 +695,53 @@
          MODALS
     ════════════════════════════════════════════ --}}
 
+    {{-- Edit Period Modal --}}
+    <div x-show="showEditPeriodModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showEditPeriodModal=false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-7"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"  x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold text-gray-800">Edit Payroll Period</h2>
+                <button @click="showEditPeriodModal=false" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Payroll Period Name</label>
+                    <input type="text" x-model="editPeriod.name" required maxlength="200" placeholder="Enter payroll period name" class="ctrl w-full">
+                </div>
+                <template x-if="editPeriod.status === 'Pending'">
+                    <div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Start Date</label>
+                                <input type="date" x-model="editPeriod.startDate" required class="ctrl w-full">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">End Date</label>
+                                <input type="date" x-model="editPeriod.endDate" required class="ctrl w-full">
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Payout Date</label>
+                            <input type="date" x-model="editPeriod.payoutDate" required class="ctrl w-full">
+                        </div>
+                    </div>
+                </template>
+                <template x-if="editPeriod.status !== 'Pending'">
+                    <div class="rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm text-yellow-800">
+                        Dates cannot be changed once the period has been submitted or released.
+                    </div>
+                </template>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" @click="showEditPeriodModal=false" class="btn-outline">Cancel</button>
+                    <button type="button" @click="savePeriodEdit()" class="btn-primary" :disabled="!editPeriod.name.trim()" :class="{ 'opacity-50 cursor-not-allowed': !editPeriod.name.trim() }">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- ── Centered Error/Info Dialog ── --}}
     <div x-show="alertModal.show" x-cloak
          class="fixed inset-0 z-[999] flex items-center justify-center modal-overlay"
@@ -883,7 +936,14 @@
             <form :action="`/finance_officer/payroll/benefit/${assignBenefit.id}/assign`" method="POST" class="space-y-4">
                 @csrf
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Assigned Employees</label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-sm font-medium text-gray-700">Assigned Employees</label>
+                        <button type="button"
+                            @click="benefitSelectedEmps = [...allEmps]"
+                            class="text-xs text-blue-600 hover:text-blue-800 font-semibold border border-blue-200 rounded-lg px-2.5 py-1 hover:bg-blue-50 transition">
+                            Assign to All
+                        </button>
+                    </div>
                     <div class="flex flex-wrap gap-1.5 mb-2" x-show="benefitSelectedEmps.length > 0">
                         <template x-for="s in benefitSelectedEmps" :key="s.id">
                             <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-1 rounded-full">
@@ -1014,7 +1074,7 @@
 
     {{-- Edit Contribution Rate --}}
     <div x-show="showEditContribModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showEditContribModal=false">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-7"
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-7"
              x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-lg font-bold text-gray-800" x-text="{ sss:'Edit SSS Rates', philhealth:'Edit PhilHealth Rates', pagibig:'Edit Pag-IBIG Rates', wtax:'Edit W/Tax Brackets' }[editContribType]"></h2>
@@ -1025,17 +1085,17 @@
                 <p class="text-xs text-gray-400 uppercase font-semibold tracking-wider">Salary Brackets → Fixed Monthly Contribution</p>
                 <div class="max-h-64 overflow-y-auto space-y-2 pr-1">
                     <template x-for="(row, i) in sssRows" :key="i">
-                        <div class="grid grid-cols-5 gap-1.5 items-center">
-                            <input type="number" step="0.01" x-model="row.salary_from" placeholder="From" class="ctrl col-span-1 text-xs">
-                            <input type="number" step="0.01" x-model="row.salary_to"   placeholder="To (blank=∞)" class="ctrl col-span-1 text-xs">
-                            <input type="number" step="0.01" x-model="row.employee_share" placeholder="Employee" class="ctrl col-span-1 text-xs">
-                            <input type="number" step="0.01" x-model="row.employer_share" placeholder="Employer" class="ctrl col-span-1 text-xs">
+                        <div class="flex gap-2 items-center">
+                            <input type="number" step="0.01" x-model="row.salary_from" placeholder="From" class="ctrl text-xs px-2 py-1.5 min-w-0 flex-1">
+                            <input type="number" step="0.01" x-model="row.salary_to"   placeholder="To (blank=∞)" class="ctrl text-xs px-2 py-1.5 min-w-0 flex-1">
+                            <input type="number" step="0.01" x-model="row.employee_share" placeholder="Employee" class="ctrl text-xs px-2 py-1.5 min-w-0 flex-1">
+                            <input type="number" step="0.01" x-model="row.employer_share" placeholder="Employer" class="ctrl text-xs px-2 py-1.5 min-w-0 flex-1">
                             <button type="button" @click="sssRows.splice(i,1)" class="text-red-400 hover:text-red-600 text-xs font-bold">✕</button>
                         </div>
                     </template>
                 </div>
-                <div class="grid grid-cols-5 gap-1.5 items-center text-xs text-gray-400 font-medium px-0.5">
-                    <span>Salary From</span><span>Salary To</span><span>Emp. Share</span><span>Emr. Share</span><span></span>
+                <div class="flex gap-2 items-center text-xs text-gray-400 font-medium px-0.5">
+                    <span class="flex-1 text-center">Salary From</span><span class="flex-1 text-center">Salary To</span><span class="flex-1 text-center">Emp. Share</span><span class="flex-1 text-center">Emr. Share</span><span class="w-4"></span>
                 </div>
                 <button type="button" @click="sssRows.push({salary_from:'',salary_to:'',employee_share:'',employer_share:''})"
                         class="text-xs text-blue-500 hover:text-blue-700 font-medium">+ Add Row</button>
@@ -1055,11 +1115,7 @@
 
             {{-- Pag-IBIG Fields --}}
             <div x-show="editContribType==='pagibig'" class="space-y-4">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Threshold (₱) — below this = low amount</label><input type="number" step="0.01" x-model="contrib.pagibig_threshold" class="ctrl w-full"></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Below Threshold (₱/month)</label><input type="number" step="0.01" x-model="contrib.pagibig_low_amount" class="ctrl w-full"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">At/Above Threshold (₱/month)</label><input type="number" step="0.01" x-model="contrib.pagibig_high_amount" class="ctrl w-full"></div>
-                </div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Fixed Amount (₱/month)</label><input type="number" step="0.01" x-model="contrib.pagibig_high_amount" class="ctrl w-full"></div>
             </div>
 
             {{-- W/Tax Fields --}}
@@ -1127,6 +1183,8 @@
             showAddGradeModal:    false,
             showEditGradeModal:   false,
             showEditContribModal: false,
+            showEditPeriodModal: false,
+            editPeriod: { id: null, name: '', startDate: '', endDate: '', payoutDate: '', status: '' },
             editContribType: '',
             contrib: @json($contrib),
             sssRows: @json($sssRowsForJs),
@@ -1221,6 +1279,36 @@
             closePeriodView() {
                 this.page = 'list'; this.pvSelectedId = null; this.pvActive = {};
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+
+            openEditPeriod(id, name, startDate, endDate, payoutDate, status) {
+                this.editPeriod = { id, name, startDate, endDate, payoutDate, status };
+                this.showEditPeriodModal = true;
+            },
+
+            async savePeriodEdit() {
+                const ep = this.editPeriod;
+                if (!ep.name.trim()) return;
+                const body = { name: ep.name };
+                if (ep.status === 'Pending') {
+                    body.start_date  = ep.startDate;
+                    body.end_date    = ep.endDate;
+                    body.payout_date = ep.payoutDate;
+                }
+                try {
+                    const res = await fetch(`/finance_officer/payroll/period/${ep.id}/update`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                        },
+                        body: JSON.stringify(body)
+                    });
+                    const data = await res.json();
+                    if (res.ok) { this.showEditPeriodModal = false; window.location.reload(); }
+                    else { this.showAlert('error', 'Error', data.message ?? 'Could not update period.'); }
+                } catch (e) { this.showAlert('error', 'Error', 'Network error. Please try again.'); }
             },
 
             pvSelectPayslip(ps) { this.pvSelectedId = ps.id; this.pvActive = { ...ps }; },

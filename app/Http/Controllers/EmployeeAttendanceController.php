@@ -48,6 +48,8 @@ class EmployeeAttendanceController extends Controller
             'undertime' => AttendanceLog::where('employee_id', $employee->id)->whereMonth('attendance_date', $month)->whereYear('attendance_date', $year)->where('undertime_minutes', '>', 0)->count(),
         ] : array_fill_keys(['present', 'late', 'absent', 'on_leave', 'overtime', 'undertime'], 0);
 
+        if ($employee) $this->autoCloseStaleSession($employee->id);
+
         $todayLog = $employee ? AttendanceLog::where('employee_id', $employee->id)
             ->whereDate('attendance_date', Carbon::today())
             ->with('shift')
@@ -65,6 +67,8 @@ class EmployeeAttendanceController extends Controller
         }
         $today    = Carbon::today();
         $now      = Carbon::now();
+
+        $this->autoCloseStaleSession($employee->id);
 
         $existing = AttendanceLog::where('employee_id', $employee->id)
             ->whereDate('attendance_date', $today)
@@ -1013,5 +1017,45 @@ class EmployeeAttendanceController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    private function autoCloseStaleSession(int $employeeId): void
+    {
+        $today    = Carbon::today();
+        $staleLog = AttendanceLog::where('employee_id', $employeeId)
+            ->whereDate('attendance_date', '<', $today)
+            ->whereNull('clock_out')
+            ->with(['sessions', 'shift'])
+            ->latest('attendance_date')
+            ->first();
+
+        if (!$staleLog) return;
+
+        $dateStr     = Carbon::parse($staleLog->attendance_date)->toDateString();
+        $openSession = $staleLog->sessions()->whereNull('clock_out')->first();
+        $closeAt     = null;
+
+        if ($openSession) {
+            if ($staleLog->shift) {
+                $shiftEnd = Carbon::createFromTimeString($dateStr . ' ' . $staleLog->shift->end_time);
+                if ($shiftEnd->gt(Carbon::parse($openSession->clock_in))) {
+                    $closeAt = $shiftEnd;
+                }
+            }
+            $closeAt = $closeAt ?? Carbon::parse($dateStr)->setTime(23, 59, 59);
+            $openSession->update(['clock_out' => $closeAt]);
+        }
+
+        $allSessions   = $staleLog->fresh()->sessions()->get();
+        $totalBreakMin = $allSessions->sum('break_minutes');
+        $totalWorkMin  = $allSessions->filter(fn($s) => $s->clock_out !== null)
+            ->sum(fn($s) => max(0, (int) Carbon::parse($s->clock_in)->diffInMinutes(Carbon::parse($s->clock_out)) - $s->break_minutes));
+
+        $staleLog->update([
+            'clock_out'     => $closeAt ?? Carbon::parse($dateStr)->setTime(23, 59, 59),
+            'total_hours'   => round($totalWorkMin / 60, 2),
+            'break_minutes' => $totalBreakMin,
+            'status'        => 'incomplete',
+        ]);
     }
 }

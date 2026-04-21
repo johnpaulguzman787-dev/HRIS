@@ -55,8 +55,15 @@
         }
         .card-title { font-size: 1.05rem; font-weight: 700; color: #111827; }
 
-        /* ── Table ── */
-        .contrib-table { width: 100%; border-collapse: collapse; }
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .contrib-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
         .contrib-table thead tr { background: #f9fafb; }
         .contrib-table thead th {
             padding: 13px 24px;
@@ -111,36 +118,113 @@
         }
         .year-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
 
-        /* ── View button ── */
+        /* ── Export/View button (fixed styling) ── */
         .btn-view {
-            display: inline-block;
-            background: #eff6ff; color: #2563eb;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff !important;
+            color: #2563eb !important;
             border: 1.5px solid #93c5fd;
-            padding: 5px 18px; border-radius: 7px;
-            font-size: 0.775rem; font-weight: 600;
-            cursor: pointer; text-decoration: none; white-space: nowrap;
+            padding: 8px 18px;
+            border-radius: 7px;
+            font-size: 0.775rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
             transition: background 0.15s, color 0.15s, border-color 0.15s;
         }
-        .btn-view:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .btn-view:hover {
+            background: #2563eb !important;
+            color: #fff !important;
+            border-color: #2563eb !important;
+        }
 
         /* ── Back button ── */
         .btn-back {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: #f8fafc; border: 1.5px solid #e2e8f0;
-            border-radius: 9px; padding: 8px 18px;
-            color: #374151; font-size: 0.84rem; font-weight: 500;
-            cursor: pointer; white-space: nowrap; text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 9px;
+            padding: 8px 18px;
+            color: #374151;
+            font-size: 0.84rem;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            text-decoration: none;
             transition: background 0.15s, color 0.15s;
         }
-        .btn-back:hover { background: #e2e8f0; color: #1d4ed8; }
+        .btn-back:hover {
+            background: #e2e8f0;
+            color: #1d4ed8;
+        }
 
         /* ── Breadcrumb ── */
-        .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 0.875rem; }
-        .breadcrumb a { color: #9ca3af; text-decoration: none; }
-        .breadcrumb a:hover { color: #6b7280; }
-        .breadcrumb .sep { color: #d1d5db; }
-        .breadcrumb .current { font-weight: 600; color: #374151; }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.875rem;
+        }
+        .breadcrumb a {
+            color: #9ca3af;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            color: #6b7280;
+        }
+        .breadcrumb .sep {
+            color: #d1d5db;
+        }
+        .breadcrumb .current {
+            font-weight: 600;
+            color: #374151;
+        }
 
+        /* ── Transition for margin ── */
+        .transition-margin {
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ── Mobile responsiveness ── */
+        @media (max-width: 768px) {
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 16px 20px;
+            }
+            .card-header .flex.items-center.gap-3 {
+                width: 100%;
+            }
+            .card-title {
+                font-size: 0.95rem;
+            }
+            .year-select {
+                width: 100%;
+            }
+            .tabs-wrapper {
+                padding: 0 16px;
+            }
+            .tab-btn {
+                margin-right: 24px;
+                font-size: 0.8rem;
+            }
+            .btn-back {
+                font-size: 0.75rem;
+                padding: 6px 12px;
+            }
+            .breadcrumb {
+                font-size: 0.75rem;
+            }
+            .p-8 {
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
 @php
@@ -192,334 +276,387 @@
     }
 @endphp
 
-<body x-data="financeGovpayApp()" x-init="init()">
+<body x-data="financeGovpayApp()" x-init="init()" class="flex h-screen overflow-hidden">
 
-    @include('finance_officer.finance_sidebar')
+    <!-- ===================== DESKTOP SIDEBAR ===================== -->
+    <div class="hidden lg:block">
+        @include('finance_officer.finance_sidebar')
+    </div>
 
-    {{-- MAIN CONTENT --}}
-    <div class="min-h-screen transition-all duration-300"
-         :style="'margin-left: ' + (sidebarCollapsed ? '80px' : '256px')">
-
-    <!-- Blue Header -->
-    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-40 shadow-lg mt-4 mx-4 rounded-2xl">
-        <div class="flex items-center justify-between px-8 py-4">
-            <h1 class="text-white font-bold text-xl">Government Contributions</h1>
-            <x-notification-bell />
+    <!-- ===================== MOBILE DRAWER ===================== -->
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 lg:hidden"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+            @include('finance_officer.finance_sidebar')
         </div>
-    </header>
+    </div>
 
-    {{-- ══════════════════════════════════════
-         LIST VIEW
-    ══════════════════════════════════════ --}}
-    @if(!$isView)
+    <!-- ===================== MAIN CONTENT ===================== -->
+    <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin"
+         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
+         style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
-        <!-- Tab Bar -->
-        <div class="tabs-wrapper">
-            <div class="tabs-row">
-                <button id="tabAll"  class="tab-btn active" onclick="switchTab('all')">All Contributions</button>
-                <button id="tabMine" class="tab-btn"        onclick="switchTab('mine')">My Contributions</button>
+        <!-- Blue Header with Hamburger -->
+        <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-40 shadow-lg mt-4 mx-4 rounded-2xl">
+            <div class="flex items-center justify-between px-8 py-4">
+                <div class="flex items-center gap-3">
+                    <button @click="mobileMenuOpen = true"
+                            class="lg:hidden p-2 rounded-lg hover:bg-white/20 transition-colors">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h1 class="text-white font-bold text-xl">Government Contributions</h1>
+                </div>
+                <x-notification-bell />
             </div>
-        </div>
+        </header>
 
-        <div class="p-8 space-y-6">
+        {{-- ══════════════════════════════════════
+             LIST VIEW
+        ══════════════════════════════════════ --}}
+        @if(!$isView)
 
-            {{-- ALL CONTRIBUTIONS --}}
-            <div id="panelAll">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Contribution Summary</span>
-                        <div class="flex items-center gap-3">
-                            <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;display:inline-flex;align-items:center;gap:6px;">
-                                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                Export PDF
-                            </button>
-                            <form method="GET" action="{{ route('finance_officer.govpay') }}">
-                                <select name="year" class="year-select" onchange="this.form.submit()">
-                                    @foreach($years as $y)
-                                        <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
-                                    @endforeach
-                                </select>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="contrib-table">
-                            <thead>
-                                <tr>
-                                    <th class="text-left">Period Name</th>
-                                    <th class="td-center">SSS Total</th>
-                                    <th class="td-center">PhilHealth Total</th>
-                                    <th class="td-center">Pag-IBIG Total</th>
-                                    <th class="td-center">W/ Tax Total</th>
-                                    <th class="td-center">Status</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($contributions as $row)
-                                <tr>
-                                    <td class="td-name">{{ $row->period_name }}</td>
-                                    <td class="td-center">₱{{ number_format($row->sss_total, 2) }}</td>
-                                    <td class="td-center">₱{{ number_format($row->philhealth_total, 2) }}</td>
-                                    <td class="td-center">₱{{ number_format($row->pagibig_total, 2) }}</td>
-                                    <td class="td-center">₱{{ number_format($row->tax_total, 2) }}</td>
-                                    <td class="td-center">
-                                        <span class="{{ strtolower($row->status ?? '') === 'released' ? 'badge-released' : 'badge-pending' }}">
-                                            {{ ucfirst($row->status ?? 'Pending') }}
-                                        </span>
-                                    </td>
-                                    <td class="td-right pr-6">
-                                        <a href="{{ route('finance_officer.govpay.view', $row->payroll_period_id) }}" class="btn-view">View</a>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="7" class="text-center py-12 text-gray-400 text-sm">No contributions found for {{ $year }}.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+            <!-- Tab Bar -->
+            <div class="tabs-wrapper">
+                <div class="tabs-row">
+                    <button id="tabAll"  class="tab-btn active" onclick="switchTab('all')">All Contributions</button>
+                    <button id="tabMine" class="tab-btn"        onclick="switchTab('mine')">My Contributions</button>
                 </div>
             </div>
 
-            {{-- MY CONTRIBUTIONS --}}
-            <div id="panelMine" style="display:none;">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">My Contribution Summary</span>
-                        <button onclick="exportMyGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;display:inline-flex;align-items:center;gap:6px;">
+            <div class="p-8 space-y-6">
+
+                {{-- ALL CONTRIBUTIONS --}}
+                <div id="panelAll">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Contribution Summary</span>
+                            <div class="flex items-center gap-3">
+                                <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;">
+                                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    Export PDF
+                                </button>
+                                <form method="GET" action="{{ route('finance_officer.govpay') }}">
+                                    <select name="year" class="year-select" onchange="this.form.submit()">
+                                        @foreach($years as $y)
+                                            <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                        @endforeach
+                                    </select>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="contrib-table">
+                                <thead>
+                                    <tr>
+                                        <th class="text-left">Period Name</th>
+                                        <th class="td-center">SSS Total</th>
+                                        <th class="td-center">PhilHealth Total</th>
+                                        <th class="td-center">Pag-IBIG Total</th>
+                                        <th class="td-center">W/ Tax Total</th>
+                                        <th class="td-center">Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($contributions as $row)
+                                    <tr>
+                                        <td class="td-name">{{ $row->period_name }}</td>
+                                        <td class="td-center">₱{{ number_format($row->sss_total, 2) }}</td>
+                                        <td class="td-center">₱{{ number_format($row->philhealth_total, 2) }}</td>
+                                        <td class="td-center">₱{{ number_format($row->pagibig_total, 2) }}</td>
+                                        <td class="td-center">₱{{ number_format($row->tax_total, 2) }}</td>
+                                        <td class="td-center">
+                                            <span class="{{ strtolower($row->status ?? '') === 'released' ? 'badge-released' : 'badge-pending' }}">
+                                                {{ ucfirst($row->status ?? 'Pending') }}
+                                            </span>
+                                        </td>
+                                        <td class="td-right pr-6">
+                                            <a href="{{ route('finance_officer.govpay.view', $row->payroll_period_id) }}" class="btn-view">View</a>
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <td>
+                                        <td colspan="7" class="text-center py-12 text-gray-400 text-sm">No contributions found for {{ $year }}.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- MY CONTRIBUTIONS --}}
+                <div id="panelMine" style="display:none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">My Contribution Summary</span>
+                            <div class="flex items-center gap-3">
+                                <button onclick="exportMyGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;">
+                                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    Export PDF
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="contrib-table">
+                                <thead>
+                                    <tr>
+                                        <th class="text-left">Period Name</th>
+                                        <th class="td-center">SSS</th>
+                                        <th class="td-center">PhilHealth</th>
+                                        <th class="td-center">Pag-IBIG</th>
+                                        <th class="td-center">W/ Tax</th>
+                                        <th class="td-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($myContributions as $row)
+                                    <tr>
+                                        <td class="td-name">{{ $row->period_name }}</td>
+                                        <td class="td-center">₱{{ number_format($row->sss ?? 0, 2) }}</td>
+                                        <td class="td-center">₱{{ number_format($row->philhealth ?? 0, 2) }}</td>
+                                        <td class="td-center">₱{{ number_format($row->pagibig ?? 0, 2) }}</td>
+                                        <td class="td-center">₱{{ number_format($row->tax ?? 0, 2) }}</td>
+                                        <td class="td-center">
+                                            <span class="{{ strtolower($row->status ?? '') === 'released' ? 'badge-released' : 'badge-pending' }}">
+                                                {{ ucfirst($row->status ?? 'Pending') }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-12 text-gray-400 text-sm">No personal contributions found for {{ $year }}.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </tr>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        @endif
+
+        {{-- ══════════════════════════════════════
+             DETAIL VIEW
+        ══════════════════════════════════════ --}}
+        @if($isView)
+        <div class="p-8">
+
+            <!-- Back + Breadcrumb -->
+            <div class="flex flex-wrap items-center gap-5 mb-6">
+                <a href="{{ route('finance_officer.govpay') }}" class="btn-back">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Back to All Contributions
+                </a>
+                <div class="breadcrumb">
+                    <a href="{{ route('finance_officer.govpay') }}">All Contributions</a>
+                    <span class="sep">›</span>
+                    <span class="current">{{ $periodName }}</span>
+                </div>
+            </div>
+
+            <!-- Employee Contributions Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Employee Contributions - {{ $periodName }}</span>
+                    <div class="flex items-center gap-3">
+                        <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;">
                             <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Export PDF
                         </button>
+                        <form method="GET" action="{{ route('finance_officer.govpay') }}">
+                            <select name="year" class="year-select" onchange="this.form.submit()">
+                                @foreach($years as $y)
+                                    <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                @endforeach
+                            </select>
+                        </form>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="contrib-table">
-                            <thead>
-                                <tr>
-                                    <th class="text-left">Period Name</th>
-                                    <th class="td-center">SSS</th>
-                                    <th class="td-center">PhilHealth</th>
-                                    <th class="td-center">Pag-IBIG</th>
-                                    <th class="td-center">W/ Tax</th>
-                                    <th class="td-center">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($myContributions as $row)
-                                <tr>
-                                    <td class="td-name">{{ $row->period_name }}</td>
-                                    <td class="td-center">₱{{ number_format($row->sss ?? 0, 2) }}</td>
-                                    <td class="td-center">₱{{ number_format($row->philhealth ?? 0, 2) }}</td>
-                                    <td class="td-center">₱{{ number_format($row->pagibig ?? 0, 2) }}</td>
-                                    <td class="td-center">₱{{ number_format($row->tax ?? 0, 2) }}</td>
-                                    <td class="td-center">
-                                        <span class="{{ strtolower($row->status ?? '') === 'released' ? 'badge-released' : 'badge-pending' }}">
-                                            {{ ucfirst($row->status ?? 'Pending') }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="6" class="text-center py-12 text-gray-400 text-sm">No personal contributions found for {{ $year }}.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="contrib-table">
+                        <thead>
+                            <tr>
+                                <th class="text-left">Employee</th>
+                                <th class="td-center">SSS</th>
+                                <th class="td-center">PhilHealth</th>
+                                <th class="td-center">Pag-IBIG</th>
+                                <th class="td-center">W/ Tax</th>
+                                <th class="td-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($records as $row)
+                            <tr>
+                                <td class="td-name">{{ $row->fname }} {{ $row->lname }}</td>
+                                <td class="td-center">₱{{ number_format($row->sss ?? 0, 2) }}</td>
+                                <td class="td-center">₱{{ number_format($row->philhealth ?? 0, 2) }}</td>
+                                <td class="td-center">₱{{ number_format($row->pagibig ?? 0, 2) }}</td>
+                                <td class="td-center">₱{{ number_format($row->tax ?? 0, 2) }}</td>
+                                <td class="td-center">
+                                    <span class="{{ strtolower($row->status ?? '') === 'released' ? 'badge-released' : 'badge-pending' }}">
+                                        {{ ucfirst($row->status ?? 'Pending') }}
+                                    </span>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="6" class="text-center py-12 text-gray-400 text-sm">No employee contributions found for this period.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
         </div>
-
-    @endif
-
-    {{-- ══════════════════════════════════════
-         DETAIL VIEW
-    ══════════════════════════════════════ --}}
-    @if($isView)
-    <div class="p-8">
-
-        <!-- Back + Breadcrumb -->
-        <div class="flex items-center gap-5 mb-6">
-            <a href="{{ route('finance_officer.govpay') }}" class="btn-back">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
-                </svg>
-                Back to All Contributions
-            </a>
-            <div class="breadcrumb">
-                <a href="{{ route('finance_officer.govpay') }}">All Contributions</a>
-                <span class="sep">›</span>
-                <span class="current">{{ $periodName }}</span>
-            </div>
-        </div>
-
-        <!-- Employee Contributions Card -->
-        <div class="card">
-            <div class="card-header">
-                <span class="card-title">Employee Contributions - {{ $periodName }}</span>
-                <div class="flex items-center gap-3">
-                    <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;display:inline-flex;align-items:center;gap:6px;">
-                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        Export PDF
-                    </button>
-                    <form method="GET" action="{{ route('finance_officer.govpay') }}">
-                        <select name="year" class="year-select" onchange="this.form.submit()">
-                            @foreach($years as $y)
-                                <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
-                            @endforeach
-                        </select>
-                    </form>
-                </div>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="contrib-table">
-                    <thead>
-                        <tr>
-                            <th class="text-left">Employee</th>
-                            <th class="td-center">SSS</th>
-                            <th class="td-center">PhilHealth</th>
-                            <th class="td-center">Pag-IBIG</th>
-                            <th class="td-center">W/ Tax</th>
-                            <th class="td-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($records as $row)
-                        <tr>
-                            <td class="td-name">{{ $row->fname }} {{ $row->lname }}</td>
-                            <td class="td-center">₱{{ number_format($row->sss ?? 0, 2) }}</td>
-                            <td class="td-center">₱{{ number_format($row->philhealth ?? 0, 2) }}</td>
-                            <td class="td-center">₱{{ number_format($row->pagibig ?? 0, 2) }}</td>
-                            <td class="td-center">₱{{ number_format($row->tax ?? 0, 2) }}</td>
-                            <td class="td-center">
-                                <span class="{{ strtolower($row->status ?? '') === 'released' ? 'badge-released' : 'badge-pending' }}">
-                                    {{ ucfirst($row->status ?? 'Pending') }}
-                                </span>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="6" class="text-center py-12 text-gray-400 text-sm">No employee contributions found for this period.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        @endif
 
     </div>
-    @endif
 
-</div>
+    <script>
+        const _isView       = @json($isView);
+        const _periodName   = @json($isView ? $periodName : ('Government Contributions ' . $year));
+        const _records      = @json($isView ? $exportRecords : $exportContributions);
+        const _totals       = @json($exportTotals);
+        const _myRecords    = @json($isView ? [] : $exportMyContributions);
+        const _myTotals     = @json($isView ? [] : $exportMyTotals);
+        const _year         = @json($year);
 
-<script>
-    const _isView       = @json($isView);
-    const _periodName   = @json($isView ? $periodName : ('Government Contributions ' . $year));
-    const _records      = @json($isView ? $exportRecords : $exportContributions);
-    const _totals       = @json($exportTotals);
-    const _myRecords    = @json($isView ? [] : $exportMyContributions);
-    const _myTotals     = @json($isView ? [] : $exportMyTotals);
-    const _year         = @json($year);
-
-    function exportMyGovpay() {
-        const f = v => '₱ ' + v;
-        const rows = _myRecords.map(r =>
-            `<tr><td>${r.period}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td></tr>`
-        ).join('');
-        const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
-            <td>TOTAL</td><td>${f(_myTotals.sss)}</td><td>${f(_myTotals.philhealth)}</td><td>${f(_myTotals.pagibig)}</td><td>${f(_myTotals.tax)}</td><td></td></tr>`;
-        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>My Contributions ${_year}</title>
-<style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
-.sub{font-size:12px;color:#64748b;margin-bottom:24px;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
-td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
-.footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
-@media print{@page{margin:.8cm;}body{padding:20px;}}</style>
-</head><body>
-<div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
-<div class="sub">My Government Contributions – ${_year}</div>
-<table><thead><tr><th>Period</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr></thead>
-<tbody>${rows}${totalsRow}</tbody></table>
-<div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
-</body></html>`;
-        const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
-        if (!w) return;
-        w.document.write(html);
-        w.document.close();
-        w.focus();
-        setTimeout(() => w.print(), 400);
-    }
-
-    function exportGovpay() {
-        const f  = v => '₱ ' + v;
-        const isDetail = _isView;
-        const rows = _records.map(r => {
-            const cols = isDetail
-                ? `<td>${r.name}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td>`
-                : `<td>${r.period}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td>`;
-            return `<tr>${cols}</tr>`;
-        }).join('');
-        const header = isDetail
-            ? `<tr><th>Employee</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr>`
-            : `<tr><th>Period</th><th>SSS Total</th><th>PhilHealth Total</th><th>Pag-IBIG Total</th><th>W/ Tax Total</th><th>Status</th></tr>`;
-        const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
-            <td>TOTAL</td><td>${f(_totals.sss)}</td><td>${f(_totals.philhealth)}</td><td>${f(_totals.pagibig)}</td><td>${f(_totals.tax)}</td><td></td></tr>`;
-        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_periodName}</title>
-<style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
-.sub{font-size:12px;color:#64748b;margin-bottom:24px;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
-td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
-tr:hover td{background:#f8faff;}
-.footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
-@media print{@page{margin:.8cm;}body{padding:20px;}}</style>
-</head><body>
-<div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
-<div class="sub">${_periodName}</div>
-<table><thead>${header}</thead><tbody>${rows}${totalsRow}</tbody></table>
-<div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
-</body></html>`;
-        const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
-        if (!w) return;
-        w.document.write(html);
-        w.document.close();
-        w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove());
-        w.focus();
-        setTimeout(() => w.print(), 400);
-    }
-
-    function financeGovpayApp() {
-        return {
-            sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
-
-            init() {
-                window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
-            },
-        };
-    }
-
-    // ── Tab switch (list view only) ──
-    function switchTab(tab) {
-        const panelAll  = document.getElementById('panelAll');
-        const panelMine = document.getElementById('panelMine');
-        const tabAll    = document.getElementById('tabAll');
-        const tabMine   = document.getElementById('tabMine');
-        if (!panelAll) return;
-        if (tab === 'all') {
-            panelAll.style.display  = 'block';
-            panelMine.style.display = 'none';
-            if (tabAll)  tabAll.classList.add('active');
-            if (tabMine) tabMine.classList.remove('active');
-        } else {
-            panelAll.style.display  = 'none';
-            panelMine.style.display = 'block';
-            if (tabAll)  tabAll.classList.remove('active');
-            if (tabMine) tabMine.classList.add('active');
+        function exportGovpay() {
+            const f  = v => '₱ ' + v;
+            const isDetail = _isView;
+            const rows = _records.map(r => {
+                const cols = isDetail
+                    ? `<td>${r.name}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td>`
+                    : `<td>${r.period}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td>`;
+                return `<tr>${cols}</tr>`;
+            }).join('');
+            const header = isDetail
+                ? `<tr><th>Employee</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr>`
+                : `<tr><th>Period</th><th>SSS Total</th><th>PhilHealth Total</th><th>Pag-IBIG Total</th><th>W/ Tax Total</th><th>Status</th></tr>`;
+            const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
+                <td>TOTAL</td><td>${f(_totals.sss)}</td><td>${f(_totals.philhealth)}</td><td>${f(_totals.pagibig)}</td><td>${f(_totals.tax)}</td><td></td>
+            </tr>`;
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_periodName}</title>
+    <style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
+    h1{font-size:18px;font-weight:700;color:#2563eb;margin-bottom:4px;}
+    .sub{font-size:12px;color:#64748b;margin-bottom:24px;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
+    td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
+    tr:hover td{background:#f8faff;}
+    .footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
+    @media print{@page{margin:.8cm;}body{padding:20px;}}</style>
+    </head><body>
+    <div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
+    <div class="sub">${_periodName}</div>
+    <table><thead>${header}</thead><tbody>${rows}${totalsRow}</tbody></tr>
+    <div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
+    </body></html>`;
+            const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
+            if (!w) return;
+            w.document.write(html);
+            w.document.close();
+            w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove());
+            w.focus();
+            setTimeout(() => w.print(), 400);
         }
-    }
-</script>
+
+        function exportMyGovpay() {
+            const f = v => '₱ ' + v;
+            const rows = _myRecords.map(r =>
+                `<td><td class="td-name">${r.period}</td><td class="td-center">${f(r.sss)}</td><td class="td-center">${f(r.philhealth)}</td><td class="td-center">${f(r.pagibig)}</td><td class="td-center">${f(r.tax)}</td><td class="td-center">${r.status}</td></tr>`
+            ).join('');
+            const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
+                <td>TOTAL</td><td>${f(_myTotals.sss)}</td><td>${f(_myTotals.philhealth)}</td><td>${f(_myTotals.pagibig)}</td><td>${f(_myTotals.tax)}</td><td></td>
+            </tr>`;
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>My Contributions ${_year}</title>
+    <style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
+    h1{font-size:18px;font-weight:700;color:#2563eb;margin-bottom:4px;}
+    .sub{font-size:12px;color:#64748b;margin-bottom:24px;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
+    td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
+    tr:hover td{background:#f8faff;}
+    .footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
+    @media print{@page{margin:.8cm;}body{padding:20px;}}</style>
+    </head><body>
+    <div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
+    <div class="sub">My Government Contributions – ${_year}</div>
+    <table><thead><tr><th>Period</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr></thead>
+    <tbody>${rows}${totalsRow}</tbody></table>
+    <div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>
+    </body></html>`;
+            const w = window.open('', '_blank', 'width=1000,height=750,scrollbars=yes');
+            if (!w) return;
+            w.document.write(html);
+            w.document.close();
+            w.focus();
+            setTimeout(() => w.print(), 400);
+        }
+
+        function financeGovpayApp() {
+            return {
+                sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+                mobileMenuOpen: false,
+
+                init() {
+                    window.addEventListener('sidebar-toggle', e => {
+                        this.sidebarCollapsed = e.detail.collapsed;
+                    });
+                },
+
+                toggleSidebar() {
+                    this.sidebarCollapsed = !this.sidebarCollapsed;
+                    localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed);
+                    window.dispatchEvent(new CustomEvent('sidebar-toggle', {
+                        detail: { collapsed: this.sidebarCollapsed }
+                    }));
+                }
+            };
+        }
+
+        // ── Tab switch (list view only) ──
+        function switchTab(tab) {
+            const panelAll  = document.getElementById('panelAll');
+            const panelMine = document.getElementById('panelMine');
+            const tabAll    = document.getElementById('tabAll');
+            const tabMine   = document.getElementById('tabMine');
+            if (!panelAll) return;
+            if (tab === 'all') {
+                panelAll.style.display  = 'block';
+                panelMine.style.display = 'none';
+                if (tabAll)  tabAll.classList.add('active');
+                if (tabMine) tabMine.classList.remove('active');
+            } else {
+                panelAll.style.display  = 'none';
+                panelMine.style.display = 'block';
+                if (tabAll)  tabAll.classList.remove('active');
+                if (tabMine) tabMine.classList.add('active');
+            }
+        }
+    </script>
 </body>
 </html>

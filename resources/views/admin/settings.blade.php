@@ -31,7 +31,10 @@
 
 <div x-data="{
     sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
-    init() { window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; }); },
+    mobileMenuOpen: false,
+    init() {
+        window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
+    },
     matrix: window.__matrix,
     saving: null,
     toast: { show: false, message: '', type: 'success' },
@@ -99,17 +102,52 @@
 }"
 class="flex h-screen overflow-hidden bg-gray-50">
 
-    @include('admin.admin_sidebar', ['activeMenu' => 'settings'])
+    <!-- ===================== DESKTOP SIDEBAR ===================== -->
+    <div class="hidden lg:block">
+        @include('admin.admin_sidebar', ['activeMenu' => 'settings'])
+    </div>
 
+    <!-- ===================== MOBILE DRAWER ===================== -->
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 lg:hidden"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+            @include('admin.admin_sidebar', ['activeMenu' => 'settings'])
+        </div>
+    </div>
+
+    <!-- ===================== MAIN CONTENT ===================== -->
     <main class="flex-1 overflow-y-auto min-h-screen transition-all duration-300"
           :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'">
 
-        <!-- Header -->
+        <!-- Header with Hamburger -->
         <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-                <div>
-                    <h1 class="text-xl sm:text-2xl font-bold text-white">Settings</h1>
-                    <p class="text-xs sm:text-sm text-blue-100 mt-1">Roles &amp; Permissions</p>
+                <div class="flex items-center gap-3">
+                    <button @click="mobileMenuOpen = true"
+                            class="lg:hidden p-2 rounded-lg hover:bg-white/20 transition-colors">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white">Settings</h1>
+                        <p class="text-xs sm:text-sm text-blue-100 mt-1">Roles &amp; Permissions</p>
+                    </div>
                 </div>
                 <div class="flex items-center space-x-4">
                     <x-notification-bell />
@@ -117,7 +155,7 @@ class="flex h-screen overflow-hidden bg-gray-50">
             </div>
         </header>
 
-        <div class="p-6 lg:p-8 mt-4">
+        <div class="p-4 sm:p-6 lg:p-8 mt-4">
 
             <!-- Toast -->
             <div x-show="toast.show" x-cloak
@@ -161,8 +199,8 @@ class="flex h-screen overflow-hidden bg-gray-50">
                 </p>
             </div>
 
-            <!-- Legend -->
-            <div class="mb-5 flex flex-wrap items-center gap-5 text-xs">
+            <!-- Legend (responsive wrap) -->
+            <div class="mb-5 flex flex-wrap items-center gap-3 text-xs">
                 <span class="font-semibold text-gray-500 uppercase tracking-wide">Legend:</span>
 
                 <div class="flex items-center gap-1.5 text-gray-600">
@@ -195,10 +233,10 @@ class="flex h-screen overflow-hidden bg-gray-50">
                 </div>
             </div>
 
-            <!-- Permissions Matrix -->
+            <!-- Permissions Matrix (horizontal scroll on mobile) -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="w-full min-w-[800px]">
 
                         <!-- Column headers -->
                         <thead>
@@ -225,7 +263,7 @@ class="flex h-screen overflow-hidden bg-gray-50">
                                     {{ $roleLabels[$role] }}
                                 </th>
                                 @endforeach
-                            </tr>
+                            <tr>
                         </thead>
 
                         <tbody>
@@ -243,8 +281,7 @@ class="flex h-screen overflow-hidden bg-gray-50">
                                         </div>
                                         <span class="text-sm font-bold {{ $s['header_text'] }} uppercase tracking-wide">{{ $module }}</span>
                                     </div>
-                                </td>
-                            </tr>
+                            <tr>
 
                             {{-- Feature rows --}}
                             @foreach($moduleData['actions'] as $action => $label)
@@ -315,8 +352,8 @@ class="flex h-screen overflow-hidden bg-gray-50">
                 </div>
             </div>
 
-            <!-- How permissions work note -->
-            <div class="mt-5 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+            <!-- How permissions work note (added bottom margin on mobile) -->
+            <div class="mt-5 mb-6 lg:mb-0 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
                 <svg class="w-4 h-4 text-amber-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
@@ -340,7 +377,10 @@ class="flex h-screen overflow-hidden bg-gray-50">
     ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    @media (max-width: 1024px) { .lg\:ml-20, .lg\:ml-64 { margin-left: 0 !important; } }
+    /* Ensure the table scrolls horizontally on mobile */
+    @media (max-width: 1024px) {
+        .lg\:ml-20, .lg\:ml-64 { margin-left: 0 !important; }
+    }
 </style>
 
 @endsection

@@ -54,7 +54,7 @@
 <head>
     <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Employee Attendance</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -409,38 +409,202 @@
         .total-cell:last-child { border-right: none; }
         .total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 4px; }
         .total-value { font-size: 18px; font-weight: 800; color: #111827; }
+
+        /* ========== MOBILE RESPONSIVENESS ========== */
+        @media (max-width: 1024px) {
+            .desktop-sidebar { display: none !important; }
+
+            /* Stat Cards: responsive grid */
+            .stat-cards-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px !important;
+                margin-bottom: 20px !important;
+            }
+            .stat-card {
+                padding: 14px 16px !important;
+                border-radius: 12px !important;
+            }
+            .stat-card .sc-icon {
+                width: 32px !important;
+                height: 32px !important;
+                margin-bottom: 10px !important;
+            }
+            .stat-card .sc-value {
+                font-size: 24px !important;
+            }
+            .stat-card .sc-label {
+                font-size: 10px !important;
+            }
+            .stat-card .sc-sub {
+                font-size: 10px !important;
+            }
+
+            /* Table toolbar stacks vertically */
+            .table-toolbar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                padding: 14px !important;
+            }
+            .toolbar-right {
+                justify-content: flex-start !important;
+                flex-wrap: wrap !important;
+            }
+            .search-box { flex: 1; min-width: 0; }
+            .search-box input { width: 100% !important; }
+            .date-picker { flex: 1; min-width: 0; }
+            .dept-select { flex: 1; min-width: 0; }
+
+            /* Tables: horizontal scroll */
+            .att-table, .monthly-table, .detail-table { min-width: 700px; }
+            .overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+            /* Header padding */
+            header .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+
+            /* Content area padding */
+            .main-content-padding { padding: 16px !important; }
+
+            /* Profile card on mobile */
+            .profile-card {
+                flex-direction: column !important;
+                text-align: center !important;
+                gap: 12px !important;
+                padding: 16px !important;
+            }
+            .profile-avatar {
+                width: 48px !important;
+                height: 48px !important;
+                font-size: 16px !important;
+            }
+            .profile-name {
+                font-size: 16px !important;
+            }
+
+            /* Breadcrumb on mobile */
+            .breadcrumb {
+                flex-wrap: wrap !important;
+                margin-bottom: 16px !important;
+            }
+            .breadcrumb a {
+                font-size: 12px !important;
+                padding: 4px 10px !important;
+            }
+
+            /* Totals row: 2 columns on mobile */
+            .totals-row {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            .total-cell {
+                border-right: none !important;
+                border-bottom: 1px solid var(--border) !important;
+                padding: 12px 14px !important;
+            }
+            .total-cell:nth-child(odd) {
+                border-right: 1px solid var(--border) !important;
+            }
+            .total-cell:last-child {
+                border-bottom: none !important;
+            }
+            .total-cell:nth-last-child(2) {
+                border-bottom: none !important;
+            }
+            .total-value {
+                font-size: 16px !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .stat-cards-grid {
+                gap: 8px !important;
+            }
+            .stat-card .sc-value {
+                font-size: 20px !important;
+            }
+            .stat-card .sc-label {
+                font-size: 9px !important;
+            }
+            .stat-card .sc-sub {
+                font-size: 9px !important;
+            }
+            .breadcrumb .sep,
+            .breadcrumb .crumb-current:not(:last-child) {
+                display: none !important;
+            }
+            .toolbar-right {
+                gap: 8px !important;
+            }
+            .toggle-btn {
+                padding: 6px 12px !important;
+                font-size: 12px !important;
+            }
+            .period-btn {
+                padding: 6px 12px !important;
+                font-size: 12px !important;
+            }
+        }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, collapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+     x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })">
 
-{{-- ═══════════ HR SIDEBAR ═══════════ --}}
-@include('hr.hr_sidebar')
+{{-- ═══════════ DESKTOP SIDEBAR (hidden on mobile) ═══════════ --}}
+<div class="hidden lg:block desktop-sidebar">
+    @include('hr.hr_sidebar')
+</div>
 
+{{-- ═══════════ MOBILE SLIDE-OUT DRAWER ═══════════ --}}
+<div x-show="mobileMenuOpen"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-50 lg:hidden"
+     style="display:none;">
+    <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="-translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="-translate-x-full"
+         class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+        @include('hr.hr_sidebar')
+    </div>
+</div>
 
 {{-- ══════════ MAIN CONTENT ══════════ --}}
 <div x-data="{ collapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
      x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })"
-     :style="collapsed ? 'margin-left:5rem' : 'margin-left:16rem'"
+     :style="window.innerWidth >= 1024 ? (collapsed ? 'margin-left:5rem' : 'margin-left:16rem') : 'margin-left:0'"
+     x-on:resize.window="$el.style.marginLeft = window.innerWidth >= 1024 ? (collapsed ? '5rem' : '16rem') : '0'"
      style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1); min-height:100vh;">
 
-   <!-- Blue Header -->
-<header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-hidden">
-    <div class="flex items-center justify-between px-8 py-[22px]">
-        <div>
-            <h1 class="text-white text-[22px] font-bold tracking-[0.3px] m-0">Employee Attendance</h1>
-            <p class="text-white/65 text-[13px] mt-[3px] mb-0">Track and manage workforce attendance records</p>
-        </div>
-        <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 bg-white/15 rounded-full flex items-center justify-center cursor-pointer">
-                <svg class="w-[18px] h-[18px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                </svg>
+    <!-- Blue Header with Hamburger on mobile -->
+    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
+        <div class="flex items-center justify-between px-8 py-[22px]">
+            <div class="flex items-center gap-3">
+                {{-- Hamburger button (mobile only) --}}
+                <button @click="mobileMenuOpen = true"
+                        class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="text-white text-[22px] font-bold tracking-[0.3px] m-0">Employee Attendance</h1>
+                    <p class="text-white/65 text-[13px] mt-[3px] mb-0">Track and manage workforce attendance records</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2.5">
+                <x-hr-notif />
             </div>
         </div>
-    </div>
-</header>
+    </header>
 
-    <div style="padding:24px 32px;">
+    <div class="main-content-padding" style="padding:24px 32px;">
 
         @if($viewingDetail)
         {{-- ══════════ DETAIL VIEW ══════════ --}}
@@ -505,7 +669,7 @@
                 </div>
             </div>
 
-            <div style="overflow-x:auto;">
+            <div class="overflow-x-auto">
                 <table class="detail-table">
                     <thead>
                         <tr>
@@ -707,7 +871,7 @@
                 </div>
             </div>
 
-            <div style="overflow-x:auto;">
+            <div class="overflow-x-auto">
 
                 {{-- ── DAILY VIEW TABLE ── --}}
                 @if($currentView === 'daily')
@@ -848,13 +1012,14 @@
     function setView(v) {
         document.getElementById('viewInput').value = v;
         document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
+        if (event && event.target) event.target.classList.add('active');
         document.getElementById('filterForm').submit();
     }
+    
     function setPeriod(p) {
         document.getElementById('periodInput').value = p;
         document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
+        if (event && event.target) event.target.classList.add('active');
         document.getElementById('detailForm').submit();
     }
 

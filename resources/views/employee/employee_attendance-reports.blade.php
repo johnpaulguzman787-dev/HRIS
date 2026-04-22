@@ -248,7 +248,14 @@
     </div>
 </div>
 
-@php $openSession = $todayLog?->sessions()->whereNull('clock_out')->first(); @endphp
+@php
+    $openSession = $todayLog?->sessions()->whereNull('clock_out')->first();
+    $completedWorkSeconds = $todayLog
+        ? (int) $todayLog->sessions()->whereNotNull('clock_out')->get()->sum(function($s) {
+            return max(0, \Carbon\Carbon::parse($s->clock_in)->diffInSeconds(\Carbon\Carbon::parse($s->clock_out)) - ($s->break_minutes * 60));
+        })
+        : 0;
+@endphp
 <script>
 function attendancePage() {
     return {
@@ -263,9 +270,11 @@ function attendancePage() {
         resumed:     {{ $openSession?->break_end ? 'true' : 'false' }},
         breakTime:   '{{ $openSession?->break_start ? \Carbon\Carbon::parse($openSession->break_start)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         breakMinutes: {{ $todayLog?->break_minutes ?? 0 }},
-        clockInTime:  '{{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
+        clockInTime:  '{{ $todayLog?->clock_in ? \Carbon\Carbon::parse($todayLog->clock_in)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
         clockOutTime: '{{ $todayLog?->clock_out ? \Carbon\Carbon::parse($todayLog->clock_out)->setTimezone(config("app.timezone"))->format("h:i A") : "" }}',
-        clockInTimestamp: {{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->valueOf() : 'null' }},
+        completedWorkSeconds: {{ $completedWorkSeconds }},
+        currentSessionStart: {{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->valueOf() : 'null' }},
+        currentSessionBreakMinutes: {{ $openSession?->break_minutes ?? 0 }},
         liveTime: '', liveDate: '', elapsedSeconds: 0,
         rows: [], currentPage: 1, totalRecords: 0, perPage: 10,
         currentMonth: {{ $month }}, currentYear: {{ $year }},
@@ -285,10 +294,12 @@ function attendancePage() {
             this.tick();
             setInterval(() => {
                 this.tick();
-                if (this.clockedIn && !this.onBreak)
-                    this.elapsedSeconds = this.clockInTimestamp
-                        ? Math.floor((Date.now() - this.clockInTimestamp) / 1000) - (this.breakMinutes * 60)
-                        : 0;
+                if (this.clockedIn && !this.onBreak && this.currentSessionStart) {
+                    const secs = Math.floor((Date.now() - this.currentSessionStart) / 1000);
+                    this.elapsedSeconds = this.completedWorkSeconds + Math.max(0, secs - this.currentSessionBreakMinutes * 60);
+                } else if (!this.clockedIn) {
+                    this.elapsedSeconds = this.completedWorkSeconds;
+                }
             }, 1000);
             window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
             await this.loadRecords();
@@ -320,6 +331,7 @@ function attendancePage() {
                     this.resumed = true;
                     this.clockedIn = true;
                     this.breakMinutes = data.break_minutes;
+                    this.currentSessionBreakMinutes = data.break_minutes;
                 } else { this.showError(data.message ?? 'Resume failed.'); }
                 return;
             }
@@ -335,8 +347,9 @@ function attendancePage() {
                     this.clockedIn = true;
                     this.clockedOut = false;
                     this.resumed = false;
-                    this.clockInTime = data.clock_in;
-                    this.clockInTimestamp = Date.now();
+                    if (!this.clockInTime) this.clockInTime = data.clock_in;
+                    this.currentSessionStart = Date.now();
+                    this.currentSessionBreakMinutes = 0;
                 } else { this.showError(data.message ?? 'Clock-in failed.'); }
                 return;
             }
@@ -367,6 +380,12 @@ function attendancePage() {
             });
             const data = await res.json();
             if (res.ok) {
+                if (this.currentSessionStart) {
+                    const secs = Math.floor((Date.now() - this.currentSessionStart) / 1000);
+                    this.completedWorkSeconds += Math.max(0, secs - this.currentSessionBreakMinutes * 60);
+                }
+                this.currentSessionStart = null;
+                this.currentSessionBreakMinutes = 0;
                 this.clockedIn = false;
                 this.clockedOut = true;
                 this.clockOutTime = data.clock_out;

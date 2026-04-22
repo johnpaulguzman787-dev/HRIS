@@ -390,7 +390,7 @@
                 @endcanDo
             </div>
 
-            {{-- Table + Panel (stacked on mobile) --}}
+            {{-- Table + Panel --}}
             <div class="pb-10 anim-3">
                 <div class="flex flex-col lg:flex-row gap-5 items-start">
 

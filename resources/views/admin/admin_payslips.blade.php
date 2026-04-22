@@ -386,13 +386,14 @@
                 </select>
                 <button @click="exportAllPayslips()"
                         :disabled="filteredAllPayslips.length === 0"
-                        class="btn-primary">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 16v4a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 8.414V12M12 10v6m0 0l-3-3m3 3l3-3"/></svg>
+                        :style="filteredAllPayslips.length === 0 ? 'background:#d1d5db;cursor:not-allowed;' : ''"
+                        class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl border-none cursor-pointer transition-colors whitespace-nowrap">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 16v4a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 8.414V12M12 10v6m0 0l-3-3m3 3l3-3"/></svg>
                     Export All PDF
                 </button>
             </div>
 
-            {{-- Table + Panel (stacked on mobile) --}}
+            {{-- Table + Panel --}}
             <div class="pb-10 anim-3">
                 <div class="flex flex-col lg:flex-row gap-5 items-start">
 

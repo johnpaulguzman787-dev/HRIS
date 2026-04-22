@@ -11,73 +11,28 @@
     <style>
         [x-cloak] { display: none !important; }
         body { background: #f0f2f5; }
-
         /* ── Tabs (underline style) ── */
-        .tab-bar {
-            display: flex;
-            gap: 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .tab-btn {
-            position: relative;
-            padding: 12px 24px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #9ca3af;
-            border: none;
-            background: none;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: color 0.2s ease;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -1px;
-        }
+        .tab-bar {display: flex; gap: 0; border-bottom: 1px solid #e5e7eb;}
+        .tab-btn {position: relative; padding: 12px 24px; font-size: 0.9rem; font-weight: 500; color: #9ca3af; border: none; background: none; cursor: pointer; white-space: nowrap; transition: color 0.2s ease; border-bottom: 2px solid transparent; margin-bottom: -1px;}
         .tab-btn:hover:not(.active) { color: #374151; }
-        .tab-btn.active {
-            color: #2563eb;
-            font-weight: 600;
-            border-bottom: 2px solid #2563eb;
-        }
-
+        .tab-btn.active {color: #2563eb; font-weight: 600; border-bottom: 2px solid #2563eb;}
         /* ── Animations ── */
-        @keyframes tabFadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes tabFadeIn { from { opacity: 0; transform: translateY(8px); } to   { opacity: 1; transform: translateY(0); }}
         .tab-content { animation: tabFadeIn 0.28s cubic-bezier(0.4,0,0.2,1); }
-
-        @keyframes fadeSlideUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(16px); } to   { opacity: 1; transform: translateY(0); }}
         .anim-1 { animation: fadeSlideUp 0.38s ease both; }
         .anim-2 { animation: fadeSlideUp 0.38s 0.06s ease both; }
         .anim-3 { animation: fadeSlideUp 0.38s 0.12s ease both; }
         .anim-4 { animation: fadeSlideUp 0.38s 0.18s ease both; }
-
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(20px); }
-            to   { opacity: 1; transform: translateX(0); }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to   { opacity: 1; transform: translateX(0); }
         }
         .slide-in-right { animation: slideInRight 0.25s cubic-bezier(0.4,0,0.2,1) both; }
-
         /* ── Summary cards ── */
-        .summary-card {
-            background: #fff;
-            border-radius: 10px;
-            border: 1px solid #e5e7eb;
-            padding: 22px 26px;
-            flex: 1;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .summary-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(59,130,246,0.10);
-        }
+        .summary-card { background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; padding: 22px 26px; flex: 1; transition: transform 0.2s ease, box-shadow 0.2s ease;}
+        .summary-card:hover {transform: translateY(-2px);box-shadow: 0 8px 24px rgba(59,130,246,0.10);}
         .summary-card .label { font-size: 0.78rem; color: #9ca3af; margin-bottom: 6px; }
         .summary-card .value { font-size: 1.75rem; font-weight: 700; color: #1e293b; letter-spacing: -0.5px; }
         .summary-card .sub   { font-size: 0.72rem; color: #9ca3af; margin-top: 4px; }
-
         /* ── Badges ── */
         .badge-pending    { background: #fff3e0; color: #e65100; }
         .badge-completed  { background: #e8f5e9; color: #2e7d32; }
@@ -90,104 +45,56 @@
         .badge-allowance  { background: #fce4ec; color: #ad1457; }
         .badge-nontaxable { background: #e3f2fd; color: #1565c0; }
         .badge-taxable    { background: #e3f2fd; color: #1565c0; }
-
-        .multiplier-badge {
-            background: #fff8e1; color: #f57c00;
-            padding: 2px 10px; border-radius: 20px;
-            font-size: 0.78rem; font-weight: 600;
-        }
+        .multiplier-badge { background: #fff8e1; color: #f57c00; padding: 2px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600}
 
         /* ── Tables ── */
         .data-table { width: 100%; border-collapse: collapse; }
         .data-table thead tr { background: #f8fafc; border-bottom: 1px solid #e5e7eb; }
-        .data-table thead th {
-            text-align: left; padding: 11px 20px;
-            font-size: 0.75rem; font-weight: 600;
-            color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;
-        }
+        .data-table thead th { text-align: left; padding: 11px 20px; font-size: 0.75rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em}
         .data-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
         .data-table tbody tr:hover { background: #f8faff; }
         .data-table tbody td { padding: 14px 20px; font-size: 0.875rem; color: #374151; }
         .data-table tbody tr.row-active { background: #eff6ff; }
-
         /* Period view table — lighter header */
         .pv-table { width: 100%; border-collapse: collapse; }
         .pv-table thead tr { border-bottom: 1px solid #e5e7eb; }
-        .pv-table thead th {
-            text-align: left; padding: 12px 16px;
-            font-size: 0.8rem; font-weight: 600; color: #374151;
-        }
+        .pv-table thead th { text-align: left; padding: 12px 16px; font-size: 0.8rem; font-weight: 600; color: #374151}
         .pv-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; cursor: pointer; }
         .pv-table tbody tr:hover { background: #f8faff; }
         .pv-table tbody tr.row-active { background: #eff6ff; }
         .pv-table tbody td { padding: 14px 16px; font-size: 0.875rem; color: #374151; }
-
         /* ── Progress bar ── */
         .progress-track { height: 4px; background: #e5e7eb; border-radius: 99px; overflow: hidden; margin-top: 5px; }
         .progress-fill  { height: 100%; background: #3b82f6; border-radius: 99px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
-
         /* ── Payslip panel ── */
-        .payslip-header {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            border-radius: 12px 12px 0 0;
-            padding: 18px 22px; color: #fff;
-        }
+        .payslip-header { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 12px 12px 0 0; padding: 18px 22px; color: #fff}
         .payslip-body { padding: 0 22px 22px; }
         .payslip-section-title { font-size: 0.82rem; font-weight: 700; color: #374151; margin-top: 16px; margin-bottom: 8px; }
         .payslip-line { display: flex; justify-content: space-between; font-size: 0.82rem; color: #6b7280; padding: 3px 0; }
         .payslip-line.bold { font-weight: 700; color: #1e293b; font-size: 0.875rem; border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 4px; }
         .info-label { font-size: 0.72rem; color: rgba(255,255,255,0.75); }
         .info-value { font-size: 0.82rem; color: #fff; font-weight: 500; }
-
         /* ── Inputs / Selects ── */
-        .ctrl {
-            border: 1px solid #e2e8f0; border-radius: 8px; padding: 9px 14px;
-            font-size: 0.875rem; background: #fff; color: #374151; outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
+        .ctrl { border: 1px solid #e2e8f0; border-radius: 8px; padding: 9px 14px; font-size: 0.875rem; background: #fff; color: #374151; outline: none; transition: border-color 0.2s, box-shadow 0.2s}
         .ctrl:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         .search-wrap { position: relative; }
         .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #9ca3af; }
         .search-wrap input { padding-left: 38px; }
         select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
-
         /* ── Buttons ── */
-        .btn-primary {
-            background: #3b82f6; color: #fff; border-radius: 8px; padding: 9px 18px;
-            font-size: 0.875rem; font-weight: 600; display: inline-flex; align-items: center;
-            gap: 6px; border: none; cursor: pointer; transition: background 0.2s;
-        }
+        .btn-primary { background: #3b82f6; color: #fff; border-radius: 8px; padding: 9px 18px; font-size: 0.875rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer; transition: background 0.2s}
         .btn-primary:hover { background: #2563eb; }
-        .btn-view {
-            border: 1px solid #e2e8f0; border-radius: 7px; padding: 5px 14px;
-            font-size: 0.8rem; font-weight: 500; color: #374151; background: #fff;
-            cursor: pointer; transition: all 0.15s;
-        }
+        .btn-view { border: 1px solid #e2e8f0; border-radius: 7px; padding: 5px 14px; font-size: 0.8rem; font-weight: 500; color: #374151; background: #fff; cursor: pointer; transition: all 0.15s}
         .btn-view:hover { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-        .btn-delete {
-            border: 1px solid #fee2e2; border-radius: 7px; padding: 5px 14px;
-            font-size: 0.8rem; font-weight: 500; color: #ef4444; background: #fff;
-            cursor: pointer; transition: all 0.15s;
-        }
+        .btn-delete { border: 1px solid #fee2e2; border-radius: 7px; padding: 5px 14px; font-size: 0.8rem; font-weight: 500; color: #ef4444; background: #fff; cursor: pointer; transition: all 0.15s}
         .btn-delete:hover { background: #fef2f2; border-color: #fca5a5; }
-        .btn-outline {
-            border: 1px solid #e2e8f0; border-radius: 8px; padding: 9px 18px;
-            font-size: 0.875rem; font-weight: 500; color: #374151; background: #fff;
-            cursor: pointer; transition: background 0.15s;
-        }
+        .btn-outline {border: 1px solid #e2e8f0; border-radius: 8px; padding: 9px 18px; font-size: 0.875rem; font-weight: 500; color: #374151; background: #fff; cursor: pointer; transition: background 0.15s;}
         .btn-outline:hover { background: #f3f4f6; }
-        .btn-back {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 8px;
-            font-size: 0.82rem; font-weight: 500; color: #374151; background: #fff;
-            cursor: pointer; transition: background 0.15s; text-decoration: none;
-        }
+        .btn-back {display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.82rem; font-weight: 500; color: #374151; background: #fff; cursor: pointer; transition: background 0.15s; text-decoration: none;}
         .btn-back:hover { background: #f3f4f6; }
-
         /* ── Modal ── */
         .modal-overlay { background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
-
-        /* ── Sidebar offset ── */
+         /* ── Sidebar offset ── */
         .main-content { transition: margin-left 0.35s cubic-bezier(0.4,0,0.2,1); }
     </style>
 </head>

@@ -335,7 +335,7 @@
             </div>
         </div>
 
-        {{-- Toolbar: single row, no wrap, search longer --}}
+        {{-- Toolbar --}}
         <div class="pb-4 anim-2 my-toolbar">
             <div class="search-wrap" style="flex:3;">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -356,7 +356,7 @@
             </button>
         </div>
 
-        {{-- Table + Panel (stacked on mobile) --}}
+        {{-- Table + Panel --}}
         <div class="pb-10 anim-3">
             <div class="flex flex-col lg:flex-row gap-5 items-start">
 

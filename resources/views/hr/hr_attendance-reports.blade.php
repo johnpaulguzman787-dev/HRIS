@@ -19,7 +19,7 @@
 <head>
     <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>My Attendance – MEDISOURCE HR</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -56,62 +56,126 @@
         .clock-btn:disabled { opacity:0.6; cursor:not-allowed; }
         .setup-btn { transition: all 0.2s ease; }
         ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:#f1f5f9} ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+        
+        /* Mobile responsiveness */
+        @media (max-width: 1024px) {
+            .desktop-sidebar { display: none !important; }
+            .main-content-margin { margin-left: 0 !important; }
+            .grid-cols-6 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.75rem !important; }
+            .stat-card { padding: 0.75rem !important; }
+            .stat-card div p:first-child { font-size: 1.5rem !important; }
+            .p-6 { padding: 1rem !important; }
+            header .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+            header h1 { font-size: 1.2rem !important; }
+            .overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { min-width: 640px; }
+            th, td { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+            .border-t.flex.items-center.justify-between { flex-direction: column; gap: 0.75rem; align-items: center; }
+            .inline-flex.items-center.gap-1\\.5 { padding: 0.25rem 0.6rem !important; font-size: 0.7rem !important; }
+            header.sticky { margin-left: 0.75rem; margin-right: 0.75rem; margin-top: 0.75rem; }
+        }
+        
+        @media (max-width: 480px) {
+            .stat-card div p:first-child { font-size: 1.25rem !important; }
+        }
     </style>
 </head>
-<body class="bg-gray-100" x-data="attendancePage()" x-init="init()">
+<body class="bg-gray-100" x-data="attendancePage()" x-init="init()" style="overflow-x: hidden;">
 
-{{-- ═══════════ HR SIDEBAR ═══════════ --}}
-@include('hr.hr_sidebar')
+<div class="flex h-screen overflow-hidden bg-gray-100">
 
-{{-- ═══════════ MAIN CONTENT ═══════════ --}}
-<div id="main-content" class="min-h-screen bg-gray-100"
-     :style="sidebarCollapsed ? 'margin-left:5rem' : 'margin-left:16rem'"
-     style="transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1);">
-
-    {{-- Blue Header --}}
-    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
-    <div class="anim-fade flex items-center justify-between px-8 py-4">
-        <h1 class="text-white font-bold text-xl">My Attendance</h1>
-        <x-hr-notif />
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- DESKTOP SIDEBAR (hidden on mobile)      --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div class="hidden lg:block desktop-sidebar">
+        @include('hr.hr_sidebar')
     </div>
-</header>
 
-    <div class="p-6 space-y-5">
-
-        {{-- STAT CARDS --}}
-        <div class="grid grid-cols-6 gap-3 mb-6">
-            <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8f0d8; animation-delay:0.08s;">
-                <p class="text-xs font-bold uppercase tracking-wider" style="color:#14532d;">Total Days Present</p>
-                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#2563eb;">{{ $stats['present'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#15803d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-            </div>
-            <div class="stat-card p-4 flex flex-col justify-between" style="background:#fde8c8; animation-delay:0.11s;">
-                <p class="text-xs font-bold uppercase tracking-wider" style="color:#92400e;">Late</p>
-                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['late'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#b45309;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-            </div>
-            <div class="stat-card p-4 flex flex-col justify-between" style="background:#fbc8c8; animation-delay:0.14s;">
-                <p class="text-xs font-bold uppercase tracking-wider" style="color:#991b1b;">Absent</p>
-                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['absent'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#dc2626;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-            </div>
-            <div class="stat-card p-4 flex flex-col justify-between" style="background:#f9c8e8; animation-delay:0.17s;">
-                <p class="text-xs font-bold uppercase tracking-wider" style="color:#831843;">Leave</p>
-                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['on_leave'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#be185d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-            </div>
-            <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.20s;">
-                <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Overtime</p>
-                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['overtime'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-            </div>
-            <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.23s;">
-                <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Undertime</p>
-                <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['undertime'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
-            </div>
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- MOBILE SLIDE-OUT DRAWER                 --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 lg:hidden"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+            @include('hr.hr_sidebar')
         </div>
+    </div>
 
-        {{-- TABLE --}}
-        <div class="anim-up bg-white rounded-2xl overflow-hidden" style="animation-delay:0.26s; box-shadow:0 1px 12px rgba(0,0,0,0.07);">
-            <div class="px-6 py-4 flex items-center justify-between">
-                <h3 class="font-bold text-gray-800 text-base">Attendance Records</h3>
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- MAIN CONTENT                            --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div class="flex-1 overflow-y-auto min-h-screen w-full main-content-margin"
+        :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
+        style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
+
+        {{-- Blue Header with Hamburger on mobile --}}
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
+            <div class="flex items-center justify-between px-8 py-4">
                 <div class="flex items-center gap-3">
-                    <div class="relative">
+                    {{-- Hamburger button (mobile only) --}}
+                    <button @click="mobileMenuOpen = true"
+                            class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h1 class="text-white font-bold text-xl">My Attendance</h1>
+                </div>
+                <x-hr-notif />
+            </div>
+        </header>
+
+        <div class="p-6 space-y-5">
+
+            {{-- STAT CARDS --}}
+            <div class="grid grid-cols-6 gap-3 mb-6">
+                <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8f0d8; animation-delay:0.08s;">
+                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#14532d;">Total Days Present</p>
+                    <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#2563eb;">{{ $stats['present'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#15803d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                </div>
+                <div class="stat-card p-4 flex flex-col justify-between" style="background:#fde8c8; animation-delay:0.11s;">
+                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#92400e;">Late</p>
+                    <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['late'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#b45309;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                </div>
+                <div class="stat-card p-4 flex flex-col justify-between" style="background:#fbc8c8; animation-delay:0.14s;">
+                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#991b1b;">Absent</p>
+                    <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['absent'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#dc2626;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                </div>
+                <div class="stat-card p-4 flex flex-col justify-between" style="background:#f9c8e8; animation-delay:0.17s;">
+                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#831843;">Leave</p>
+                    <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['on_leave'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#be185d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                </div>
+                <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.20s;">
+                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Overtime</p>
+                    <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['overtime'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                </div>
+                <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8dafa; animation-delay:0.23s;">
+                    <p class="text-xs font-bold uppercase tracking-wider" style="color:#1e3a8a;">Undertime</p>
+                    <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#1f2937;">{{ $stats['undertime'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#1d4ed8;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
+                </div>
+            </div>
+
+            {{-- TABLE --}}
+            <div class="anim-up bg-white rounded-2xl overflow-hidden" style="animation-delay:0.26s; box-shadow:0 1px 12px rgba(0,0,0,0.07);">
+                <div class="px-6 py-4 flex items-center justify-between">
+                    <h3 class="font-bold text-gray-800 text-base">Attendance Records</h3>
+                    <div class="flex items-center gap-3">
+                        <div class="relative">
     <select x-model="selectedMonth" @change="changeMonth()"
         class="appearance-none flex items-center gap-2 border border-gray-200 rounded-xl pl-8 pr-8 py-2 bg-gray-50 text-xs text-gray-600 font-medium cursor-pointer hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300">
         <option value="1">January</option>
@@ -134,76 +198,77 @@
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </div>
 </div>
-                    @canDo('Time & Attendance', 'export')
-                    <button @click="exportPdf()"
-                            :disabled="totalRecords === 0"
-                            :class="totalRecords > 0 ? 'export-btn' : ''"
-                            :style="totalRecords > 0 ? '' : 'background:#d1d5db;cursor:not-allowed;'"
-                            class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white border-none">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        Export PDF
-                    </button>
-                    @endcanDo
+                        @canDo('Time & Attendance', 'export')
+                        <button @click="exportPdf()"
+                                :disabled="totalRecords === 0"
+                                :class="totalRecords > 0 ? 'export-btn' : ''"
+                                :style="totalRecords > 0 ? '' : 'background:#d1d5db;cursor:not-allowed;'"
+                                class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white border-none">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            Export PDF
+                        </button>
+                        @endcanDo
+                    </div>
                 </div>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="border-t border-b border-gray-100 bg-gray-50/60">
-                            <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Date</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Work Setup</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Shift</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Schedule</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Clock In</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Clock Out</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Overtime</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        <template x-for="(row, i) in rows" :key="row.date">
-                            <tr class="table-row" :style="`animation-delay:${0.035*i}s`">
-                                <td class="px-6 py-4 text-sm font-medium text-gray-700" x-text="row.date"></td>
-                                <td class="px-6 py-4"><span class="px-3 py-1 rounded-lg text-xs font-bold" :style="row.setup==='WFH'?'background:#dbeafe;color:#1d4ed8;':'background:#f1f5f9;color:#475569;'" x-text="row.setup"></span></td>
-                                <td class="px-6 py-4 text-sm text-gray-600" x-text="row.shift"></td>
-                                <td class="px-6 py-4 text-sm text-gray-500" x-text="row.schedule"></td>
-                                <td class="px-6 py-4 text-sm font-semibold text-gray-800" x-text="row.clockIn"></td>
-                                <td class="px-6 py-4 text-sm text-gray-500" x-text="row.clockOut"></td>
-                                <td class="px-6 py-4 text-sm text-gray-600" x-text="row.overtime"></td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold" :style="statusStyle(row.status)">
-                                        <span class="w-1.5 h-1.5 rounded-full" :style="dotStyle(row.status)"></span>
-                                        <span x-text="row.status"></span>
-                                    </span>
-                                </td>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-t border-b border-gray-100 bg-gray-50/60">
+                                <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Date</th>
+                                <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Work Setup</th>
+                                <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Shift</th>
+                                <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Schedule</th>
+                                <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Clock In</th>
+                                <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Clock Out</th>
+                                <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Overtime</th>
+                                <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
                             </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            <template x-for="(row, i) in rows" :key="row.date">
+                                <tr class="table-row" :style="`animation-delay:${0.035*i}s`">
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-700" x-text="row.date"></td>
+                                    <td class="px-6 py-4"><span class="px-3 py-1 rounded-lg text-xs font-bold" :style="row.setup==='WFH'?'background:#dbeafe;color:#1d4ed8;':'background:#f1f5f9;color:#475569;'" x-text="row.setup"></span></td>
+                                    <td class="px-6 py-4 text-sm text-gray-600" x-text="row.shift"></td>
+                                    <td class="px-6 py-4 text-sm text-gray-500" x-text="row.schedule"></td>
+                                    <td class="px-6 py-4 text-sm font-semibold text-gray-800" x-text="row.clockIn"></td>
+                                    <td class="px-6 py-4 text-sm text-gray-500" x-text="row.clockOut"></td>
+                                    <td class="px-6 py-4 text-sm text-gray-600" x-text="row.overtime"></td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold" :style="statusStyle(row.status)">
+                                            <span class="w-1.5 h-1.5 rounded-full" :style="dotStyle(row.status)"></span>
+                                            <span x-text="row.status"></span>
+                                        </span>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                    <p class="text-xs text-gray-400">
+                        Showing <span class="font-semibold text-gray-600" x-text="rows.length"></span>
+                        of <span class="font-semibold text-gray-600" x-text="totalRecords"></span> records
+                    </p>
+                    <div class="flex items-center gap-1">
+                        <button @click="if(currentPage>1) loadRecords(currentPage-1)"
+                                :disabled="currentPage<=1"
+                                class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 text-xs flex items-center justify-center hover:bg-gray-50 disabled:opacity-40">&lsaquo;</button>
+                        <template x-for="p in Math.ceil(totalRecords/perPage)" :key="p">
+                            <button @click="loadRecords(p)"
+                                    :style="p===currentPage ? 'background:#3b82f6;color:#fff;' : ''"
+                                    :class="p===currentPage ? '' : 'border border-gray-200 text-gray-500 hover:bg-gray-50'"
+                                    class="w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center"
+                                    x-text="p"></button>
                         </template>
-                    </tbody>
-                </table>
-            </div>
-            <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-                <p class="text-xs text-gray-400">
-                    Showing <span class="font-semibold text-gray-600" x-text="rows.length"></span>
-                    of <span class="font-semibold text-gray-600" x-text="totalRecords"></span> records
-                </p>
-                <div class="flex items-center gap-1">
-                    <button @click="if(currentPage>1) loadRecords(currentPage-1)"
-                            :disabled="currentPage<=1"
-                            class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 text-xs flex items-center justify-center hover:bg-gray-50 disabled:opacity-40">&lsaquo;</button>
-                    <template x-for="p in Math.ceil(totalRecords/perPage)" :key="p">
-                        <button @click="loadRecords(p)"
-                                :style="p===currentPage ? 'background:#3b82f6;color:#fff;' : ''"
-                                :class="p===currentPage ? '' : 'border border-gray-200 text-gray-500 hover:bg-gray-50'"
-                                class="w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center"
-                                x-text="p"></button>
-                    </template>
-                    <button @click="if(currentPage<Math.ceil(totalRecords/perPage)) loadRecords(currentPage+1)"
-                            :disabled="currentPage>=Math.ceil(totalRecords/perPage)"
-                            class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 text-xs flex items-center justify-center hover:bg-gray-50 disabled:opacity-40">&rsaquo;</button>
+                        <button @click="if(currentPage<Math.ceil(totalRecords/perPage)) loadRecords(currentPage+1)"
+                                :disabled="currentPage>=Math.ceil(totalRecords/perPage)"
+                                class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 text-xs flex items-center justify-center hover:bg-gray-50 disabled:opacity-40">&rsaquo;</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
+        </div>
     </div>
 </div>
 
@@ -219,6 +284,7 @@
 function attendancePage() {
     return {
         sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+        mobileMenuOpen: false,
         workSetup: '{{ $todayLog?->work_setup ?? ($employeeShift?->work_setup ?? "wfh") }}',
         assignedShiftId: {{ $employeeShift?->shift_id ?? 'null' }},
         breakAllowed: {{ $employeeShift?->shift?->break_schedule ? 'true' : 'false' }},
@@ -406,11 +472,11 @@ function attendancePage() {
             const sBg  = s=>({'Present':'#dcfce7','Late':'#fef3c7','Absent':'#fee2e2','On Leave':'#ede9fe','Undertime':'#fef9c3','Overtime':'#dbeafe'}[s]||'#f1f5f9');
             const sClr = s=>({'Present':'#16a34a','Late':'#d97706','Absent':'#dc2626','On Leave':'#4f46e5','Undertime':'#b45309','Overtime':'#1d4ed8'}[s]||'#64748b');
             const tbody = rows.map((r,i)=>`<tr style="background:${i%2===0?'#fff':'#f8faff'}"><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.date}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;"><span style="background:${r.setup==='WFH'?'#dbeafe':'#f1f5f9'};color:${r.setup==='WFH'?'#1d4ed8':'#475569'};padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;">${r.setup}</span></td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;">${r.shift}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.schedule}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:600;white-space:nowrap;">${r.clockIn}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.clockOut}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.overtime}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;"><span style="background:${sBg(r.status)};color:${sClr(r.status)};padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;">${r.status}</span></td></tr>`).join('');
-            return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Attendance – ${period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report</div><div class="badge">${period}</div></div><table><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div>@include('partials.attendance-error-modal')
+            return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Attendance – ${period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report</div><div class="badge">${period}</div></div><tr><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div>@include('partials.attendance-error-modal')
 </body></html>`;
         },
 
-                        _printHtml(html) {
+        _printHtml(html) {
             const w = window.open('', '_blank', 'width=1050,height=820,scrollbars=yes');
             if (!w) return;
             w.document.write(html);

@@ -23,7 +23,7 @@
 <head>
     <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Pending Requests — MEDISOURCE</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -32,94 +32,254 @@
     <style>
         *{font-family:'DM Sans',sans-serif;box-sizing:border-box;}
         [x-cloak]{display:none!important;}
-        @@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
+        @keyframes pulseDot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
         :root{--blue:#3b82f6;--blue-dark:#1d4ed8;--blue-light:#eff6ff;--muted:#6b7280;--border:#e5e7eb;}
         .nav-item{transition:background .15s,color .15s;}
         .chevron-icon{transition:transform .25s cubic-bezier(.4,0,.2,1);}
         .avatar-ring{box-shadow:0 0 0 3px rgba(59,130,246,.25);}
 
-        /* stat cards */
-        .stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
-        .stat-card{border-radius:14px;padding:20px 22px;}
+        /* stat cards - responsive grid */
+        .stat-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px;}
+        @media (min-width: 640px) {
+            .stat-cards{grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+        }
+        .stat-card{border-radius:14px;padding:16px;}
+        @media (min-width: 640px) {
+            .stat-card{padding:20px 22px;}
+        }
         .sc-blue{background:#dbeafe;} .sc-orange{background:#ffedd5;} .sc-purple{background:#ede9fe;} .sc-red{background:#fee2e2;}
         .sc-blue .slabel{color:#1d4ed8;} .sc-orange .slabel{color:#c2410c;} .sc-purple .slabel{color:#6d28d9;} .sc-red .slabel{color:#dc2626;}
-        .slabel{font-size:13px;font-weight:500;margin-bottom:6px;}
-        .sval{font-size:36px;font-weight:800;color:#111827;line-height:1;margin-bottom:4px;}
+        .slabel{font-size:12px;font-weight:500;margin-bottom:4px;}
+        @media (min-width: 640px) {
+            .slabel{font-size:13px;margin-bottom:6px;}
+        }
+        .sval{font-size:28px;font-weight:800;color:#111827;line-height:1;margin-bottom:2px;}
+        @media (min-width: 640px) {
+            .sval{font-size:36px;margin-bottom:4px;}
+        }
         .sc-blue .ssub{color:#3b82f6;} .sc-orange .ssub{color:#f97316;} .sc-purple .ssub{color:#7c3aed;} .sc-red .ssub{color:#ef4444;}
-        .ssub{font-size:12px;}
+        .ssub{font-size:11px;}
+        @media (min-width: 640px) {
+            .ssub{font-size:12px;}
+        }
 
-        /* toolbar */
-        .toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
-        .toolbar-title{font-size:18px;font-weight:700;color:#111827;}
-        .toolbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-        .search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:9px;padding:8px 14px;}
-        .search-box input{border:none;background:transparent;outline:none;font-size:13px;color:#111827;width:150px;font-family:inherit;}
-        .fsel{appearance:none;background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:8px 28px 8px 12px;font-size:13px;color:#374151;cursor:pointer;outline:none;font-family:inherit;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
-        .btn-primary{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:var(--blue);color:#fff;transition:background .15s;white-space:nowrap;}
+        /* toolbar - responsive stacking */
+        .toolbar{display:flex;flex-direction:column;align-items:stretch;margin-bottom:18px;gap:12px;}
+        @media (min-width: 768px) {
+            .toolbar{flex-direction:row;align-items:center;justify-content:space-between;}
+        }
+        .toolbar-title{font-size:16px;font-weight:700;color:#111827;}
+        @media (min-width: 640px) {
+            .toolbar-title{font-size:18px;}
+        }
+        .toolbar-right{display:flex;flex-direction:column;gap:8px;}
+        @media (min-width: 640px) {
+            .toolbar-right{flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap;}
+        }
+        .search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:9px;padding:8px 14px;width:100%;}
+        @media (min-width: 640px) {
+            .search-box{width:auto;}
+        }
+        .search-box input{border:none;background:transparent;outline:none;font-size:13px;color:#111827;width:100%;font-family:inherit;}
+        @media (min-width: 640px) {
+            .search-box input{width:150px;}
+        }
+        .filters-row{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+        .filters-row::-webkit-scrollbar{display:none;}
+        .fsel{appearance:none;background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:8px 24px 8px 10px;font-size:12px;color:#374151;cursor:pointer;outline:none;font-family:inherit;white-space:nowrap;flex-shrink:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;}
+        @media (min-width: 640px) {
+            .fsel{font-size:13px;padding:8px 28px 8px 12px;}
+        }
+        .btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:var(--blue);color:#fff;transition:background .15s;white-space:nowrap;width:100%;}
+        @media (min-width: 640px) {
+            .btn-primary{width:auto;padding:9px 20px;}
+        }
         .btn-primary:hover{background:var(--blue-dark);}
 
-        /* request card */
-        .rcard{background:#fff;border:1px solid var(--border);border-radius:14px;margin-bottom:16px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.04);}
-        .rcard-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid #f3f4f6;flex-wrap:wrap;gap:8px;}
+        /* request card - responsive */
+        .rcard{background:#fff;border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.04);}
+        @media (min-width: 640px) {
+            .rcard{margin-bottom:16px;}
+        }
+        .rcard-head{display:flex;flex-direction:column;align-items:flex-start;padding:14px;border-bottom:1px solid #f3f4f6;gap:10px;}
+        @media (min-width: 640px) {
+            .rcard-head{flex-direction:row;align-items:center;justify-content:space-between;padding:16px 20px 12px;gap:8px;}
+        }
         .rcard-left{display:flex;align-items:center;gap:12px;}
         .emp-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;}
-        .emp-name{font-size:15px;font-weight:700;color:#111827;}
-        .emp-dept{font-size:12px;color:var(--muted);margin-top:1px;}
-        .rcard-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-        .req-id{font-size:12px;color:var(--muted);font-weight:500;}
-        .badge{padding:3px 11px;border-radius:20px;font-size:11.5px;font-weight:600;display:inline-block;white-space:nowrap;}
+        .emp-name{font-size:14px;font-weight:700;color:#111827;}
+        @media (min-width: 640px) {
+            .emp-name{font-size:15px;}
+        }
+        .emp-dept{font-size:11px;color:var(--muted);margin-top:1px;}
+        @media (min-width: 640px) {
+            .emp-dept{font-size:12px;}
+        }
+        .rcard-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+        .req-id{font-size:11px;color:var(--muted);font-weight:500;}
+        @media (min-width: 640px) {
+            .req-id{font-size:12px;}
+        }
+        .badge{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;display:inline-block;white-space:nowrap;}
+        @media (min-width: 640px) {
+            .badge{padding:3px 11px;font-size:11.5px;}
+        }
         .b-leave{background:#dbeafe;color:#1d4ed8;}
         .b-ot{background:#ffedd5;color:#c2410c;}
         .b-shift{background:#fce7f3;color:#be185d;}
         .b-await{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;}
 
         /* card body */
-        .rcard-body{padding:16px 20px;}
-        .dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;background:#f9fafb;border-radius:10px;padding:14px 16px;margin-bottom:12px;}
-        .dlabel{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px;}
-        .dval{font-size:13px;font-weight:700;color:#111827;}
-        .rsection{margin-bottom:10px;}
-        .rlabel{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:3px;}
-        .rtext{font-size:13px;color:#374151;}
+        .rcard-body{padding:14px;}
+        @media (min-width: 640px) {
+            .rcard-body{padding:16px 20px;}
+        }
+        .dgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;background:#f9fafb;border-radius:10px;padding:12px;margin-bottom:12px;}
+        @media (min-width: 640px) {
+            .dgrid{grid-template-columns:repeat(4,1fr);gap:12px;padding:14px 16px;}
+        }
+        .dlabel{font-size:10px;color:var(--muted);font-weight:500;margin-bottom:2px;text-transform:uppercase;letter-spacing:.3px;}
+        @media (min-width: 640px) {
+            .dlabel{font-size:11px;margin-bottom:3px;}
+        }
+        .dval{font-size:12px;font-weight:700;color:#111827;}
+        @media (min-width: 640px) {
+            .dval{font-size:13px;}
+        }
+        .rsection{margin-bottom:8px;}
+        .rlabel{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:2px;}
+        @media (min-width: 640px) {
+            .rlabel{font-size:12px;margin-bottom:3px;}
+        }
+        .rtext{font-size:12px;color:#374151;}
+        @media (min-width: 640px) {
+            .rtext{font-size:13px;}
+        }
 
-        /* progress */
-        .prog-steps{display:flex;align-items:flex-start;gap:0;margin-top:6px;}
-        .pstep{display:flex;flex-direction:column;align-items:center;gap:4px;}
-        .pcircle{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+        /* progress steps - responsive */
+        .prog-steps{display:flex;align-items:flex-start;gap:0;margin-top:6px;flex-wrap:wrap;justify-content:center;}
+        .pstep{display:flex;flex-direction:column;align-items:center;gap:3px;}
+        .pcircle{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+        @media (min-width: 640px) {
+            .pcircle{width:30px;height:30px;font-size:13px;}
+        }
         .pc-done{background:#dcfce7;border:2px solid #16a34a;color:#16a34a;}
         .pc-active{background:#eff6ff;border:2px solid var(--blue);color:var(--blue);}
-        .pname{font-size:11px;font-weight:600;color:#374151;text-align:center;}
-        .pstatus{font-size:10px;color:var(--muted);text-align:center;}
-        .pline{height:2px;width:60px;background:#16a34a;flex-shrink:0;margin-top:14px;}
+        .pname{font-size:9px;font-weight:600;color:#374151;text-align:center;}
+        @media (min-width: 640px) {
+            .pname{font-size:11px;}
+        }
+        .pstatus{font-size:8px;color:var(--muted);text-align:center;}
+        @media (min-width: 640px) {
+            .pstatus{font-size:10px;}
+        }
+        .pline{height:2px;width:30px;background:#16a34a;flex-shrink:0;margin-top:12px;}
+        @media (min-width: 640px) {
+            .pline{width:60px;margin-top:14px;}
+        }
 
-        /* actions */
-        .action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 16px;}
-        .btn-approve{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#dcfce7;color:#15803d;transition:background .15s;}
+        /* action buttons - responsive */
+        .action-row{display:grid;grid-template-columns:1fr;gap:8px;padding:0 14px 14px;}
+        @media (min-width: 640px) {
+            .action-row{grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 16px;}
+        }
+        .btn-approve,.btn-reject{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:background .15s;}
+        @media (min-width: 640px) {
+            .btn-approve,.btn-reject{padding:10px;}
+        }
+        .btn-approve{background:#dcfce7;color:#15803d;}
         .btn-approve:hover{background:#bbf7d0;}
-        .btn-reject{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#fee2e2;color:#dc2626;transition:background .15s;}
+        .btn-reject{background:#fee2e2;color:#dc2626;}
         .btn-reject:hover{background:#fecaca;}
 
-        /* modal */
-        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:999;}
-        .modal-box{background:#fff;border-radius:16px;padding:28px 32px;width:520px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.15);}
-        .modal-title{font-size:17px;font-weight:800;color:#111827;}
+        /* modal - mobile first slide up */
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;z-index:999;padding:0;}
+        @media (min-width: 640px) {
+            .modal-overlay{align-items:center;padding:20px;}
+        }
+        .modal-box{background:#fff;border-radius:28px 28px 0 0;padding:24px 20px 32px;width:100%;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 -4px 20px rgba(0,0,0,.15);}
+        @media (min-width: 640px) {
+            .modal-box{border-radius:16px;padding:28px 32px;width:520px;max-width:95vw;}
+        }
+        .modal-box::before{content:'';display:block;width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:0 auto 20px;}
+        @media (min-width: 640px) {
+            .modal-box::before{display:none;}
+        }
+        .modal-title{font-size:17px;font-weight:800;color:#111827;margin-bottom:20px;}
         .flabel{font-size:12px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block;}
         .finput{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13px;font-family:inherit;outline:none;color:#111827;transition:border-color .15s;}
         .finput:focus{border-color:var(--blue);}
-        .frow{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-        .mactions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;}
-        .btn-cancel{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:#374151;}
-        .btn-save{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:var(--blue);color:#fff;}
+        .frow{display:grid;grid-template-columns:1fr;gap:14px;}
+        @media (min-width: 640px) {
+            .frow{grid-template-columns:1fr 1fr;}
+        }
+        .mactions{display:flex;flex-direction:column-reverse;gap:8px;margin-top:22px;}
+        @media (min-width: 640px) {
+            .mactions{flex-direction:row;justify-content:flex-end;gap:10px;}
+        }
+        .btn-cancel{padding:10px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:#374151;text-align:center;width:100%;}
+        .btn-save{padding:10px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:var(--blue);color:#fff;text-align:center;width:100%;}
+        @media (min-width: 640px) {
+            .btn-cancel,.btn-save{width:auto;padding:8px 18px;}
+            .btn-save{padding:8px 20px;}
+        }
         .close-btn{width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;flex-shrink:0;}
         .fsel-modal{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
-        .doc-upload{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed #d1d5db;border-radius:10px;padding:24px 20px;background:#f9fafb;cursor:pointer;}
-            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .doc-upload{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed #d1d5db;border-radius:10px;padding:20px 16px;background:#f9fafb;cursor:pointer;}
+        @media (min-width: 640px) {
+            .doc-upload{padding:24px 20px;}
+        }
+        @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+        /* page content padding */
+        .page-content{padding:16px;}
+        @media (min-width: 640px) {
+            .page-content{padding:24px 32px;}
+        }
+
+        /* sidebar responsive */
+        .desktop-sidebar{display:none;}
+        @media (min-width: 1024px){
+            .desktop-sidebar{display:block;}
+        }
+        @media (max-width: 1023px){
+            .main-content{margin-left:0!important;}
+        }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, collapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+     x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })">
 
 {{-- ══════════ SIDEBAR ══════════ --}}
-@include('hr.hr_sidebar')
+
+{{-- DESKTOP SIDEBAR --}}
+<div class="hidden lg:block desktop-sidebar">
+    @include('hr.hr_sidebar')
+</div>
+
+{{-- MOBILE SLIDE-OUT DRAWER --}}
+<div x-show="mobileMenuOpen"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-50 lg:hidden"
+     style="display:none;">
+    <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="-translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="-translate-x-full"
+         class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+        @include('hr.hr_sidebar')
+    </div>
+</div>
+
 {{-- ══════════ MAIN ══════════ --}}
 <div x-data="{
         collapsed:localStorage.getItem('sidebarCollapsed')==='true',
@@ -138,17 +298,26 @@
         resultMessage:''
      }"
      x-init="window.addEventListener('sidebar-toggle',e=>{collapsed=e.detail.collapsed})"
-     :style="collapsed?'margin-left:5rem':'margin-left:16rem'"
-     style="transition:margin-left .35s cubic-bezier(.4,0,.2,1);min-height:100vh;">
+     :style="window.innerWidth >= 1024 ? (collapsed ? 'margin-left:5rem' : 'margin-left:16rem') : 'margin-left:0'"
+     x-on:resize.window="$el.style.marginLeft = window.innerWidth >= 1024 ? (collapsed ? '5rem' : '16rem') : '0'"
+     style="transition:margin-left .35s cubic-bezier(.4,0,.2,1);min-height:100vh;"
+     class="main-content">
 
     <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
-        <div class="flex items-center justify-between px-8 py-4">
-            <h1 class="text-white font-bold text-xl">Pending Requests</h1>
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex items-center gap-3">
+                <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <h1 class="text-white font-bold text-lg">Pending Requests</h1>
+            </div>
             <x-hr-notif />
         </div>
     </header>
 
-    <div style="padding:24px 32px;">
+    <div class="page-content">
 
         {{-- STAT CARDS --}}
         <div class="stat-cards">
@@ -163,7 +332,7 @@
                 <div class="ssub">{{ now()->format('F Y') }}</div>
             </div>
             <div class="stat-card sc-purple">
-                <div class="slabel">Shift Arrangement Requests</div>
+                <div class="slabel">Shift Arrangement</div>
                 <div class="sval">{{ $shiftCount ?? 1 }}</div>
                 <div class="ssub">{{ now()->format('F Y') }}</div>
             </div>
@@ -182,9 +351,11 @@
                     <svg style="width:15px;height:15px;color:#6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input type="text" placeholder="Search">
                 </div>
-                <select class="fsel"><option>All Stages</option><option>Awaiting Approval</option><option>Approved</option><option>Rejected</option></select>
-                <select class="fsel"><option>All Types</option><option>Leave Request</option><option>Overtime Request</option><option>Shift Arrangement</option></select>
-                <select class="fsel"><option>All Departments</option>@foreach($departments ?? [] as $d)<option>{{ $d->name }}</option>@endforeach</select>
+                <div class="filters-row">
+                    <select class="fsel"><option>All Stages</option><option>Awaiting Approval</option><option>Approved</option><option>Rejected</option></select>
+                    <select class="fsel"><option>All Types</option><option>Leave Request</option><option>Overtime Request</option><option>Shift Arrangement</option></select>
+                    <select class="fsel"><option>All Departments</option>@foreach($departments ?? [] as $d)<option>{{ $d->name }}</option>@endforeach</select>
+                </div>
                 @canDo('Requests & Approval', 'create')
                 <button class="btn-primary" @click="showFileReq=true">
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -223,7 +394,7 @@
                     <span class="req-id">{{ $req->ref_no }}</span>
                     @if($req->type === 'leave')   <span class="badge b-leave">Leave Request</span>
                     @elseif($req->type === 'overtime') <span class="badge b-ot">Overtime Request</span>
-                    @elseif($req->type === 'shift')    <span class="badge b-shift">Shift Arrangement Request</span>
+                    @elseif($req->type === 'shift')    <span class="badge b-shift">Shift Arrangement</span>
                     @endif
                     <span class="badge b-await">Awaiting Your Approval</span>
                 </div>
@@ -232,42 +403,42 @@
                 @if($req->type === 'leave')
                 <div class="dgrid">
                     <div><div class="dlabel">Leave Type</div><div class="dval">{{ $req->leaveType->name ?? '—' }}</div></div>
-                    <div><div class="dlabel">Date</div><div class="dval">{{ \Carbon\Carbon::parse($req->start_date)->format('F j') }} – {{ \Carbon\Carbon::parse($req->end_date)->format('j, Y') }}</div></div>
-                    <div><div class="dlabel">Filed On</div><div class="dval">{{ $req->created_at->format('F j, Y') }}</div></div>
-                    <div><div class="dlabel">Balance</div><div class="dval">{{ $req->credit ? $req->credit->remaining_days . ' days remaining' : '—' }}</div></div>
+                    <div><div class="dlabel">Date</div><div class="dval">{{ \Carbon\Carbon::parse($req->start_date)->format('M j') }} – {{ \Carbon\Carbon::parse($req->end_date)->format('j, Y') }}</div></div>
+                    <div><div class="dlabel">Filed On</div><div class="dval">{{ $req->created_at->format('M j, Y') }}</div></div>
+                    <div><div class="dlabel">Balance</div><div class="dval">{{ $req->credit ? $req->credit->remaining_days . ' days' : '—' }}</div></div>
                 </div>
                 @elseif($req->type === 'overtime')
                 <div class="dgrid">
-                    <div><div class="dlabel">OT Date</div><div class="dval">{{ \Carbon\Carbon::parse($req->ot_date)->format('F j, Y') }}</div></div>
+                    <div><div class="dlabel">OT Date</div><div class="dval">{{ \Carbon\Carbon::parse($req->ot_date)->format('M j, Y') }}</div></div>
                     <div><div class="dlabel">OT Hours</div><div class="dval">{{ $req->requested_hours }}h</div></div>
                     <div><div class="dlabel">Time Range</div><div class="dval">{{ $req->ot_start_time ? \Carbon\Carbon::parse($req->ot_start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($req->ot_end_time)->format('g:i A') : '—' }}</div></div>
-                    <div><div class="dlabel">Filed On</div><div class="dval">{{ $req->created_at->format('F j, Y') }}</div></div>
+                    <div><div class="dlabel">Filed On</div><div class="dval">{{ $req->created_at->format('M j, Y') }}</div></div>
                 </div>
                 @elseif($req->type === 'shift')
                 <div class="dgrid">
                     <div><div class="dlabel">Current Shift</div><div class="dval">{{ $req->current_shift->name ?? '—' }}</div></div>
                     <div><div class="dlabel">Requested Shift</div><div class="dval">{{ $req->requested_shift->name ?? '—' }}</div></div>
-                    <div><div class="dlabel">Effective From</div><div class="dval">{{ \Carbon\Carbon::parse($req->effective_from)->format('F j, Y') }}</div></div>
-                    <div><div class="dlabel">Until</div><div class="dval">{{ $req->effective_until ? \Carbon\Carbon::parse($req->effective_until)->format('F j, Y') : 'Ongoing' }}</div></div>
+                    <div><div class="dlabel">Effective From</div><div class="dval">{{ \Carbon\Carbon::parse($req->effective_from)->format('M j, Y') }}</div></div>
+                    <div><div class="dlabel">Until</div><div class="dval">{{ $req->effective_until ? \Carbon\Carbon::parse($req->effective_until)->format('M j, Y') : 'Ongoing' }}</div></div>
                 </div>
                 @endif
                 <div class="rsection"><div class="rlabel">Reason</div><div class="rtext">{{ $req->reason ?? '—' }}</div></div>
                 @if($req->document_path)
-                <div style="margin-bottom:10px;"><div class="rlabel">Documents</div><div style="font-size:13px;color:#3b82f6;font-weight:500;">{{ basename($req->document_path) }}</div></div>
+                <div style="margin-bottom:8px;"><div class="rlabel">Documents</div><div style="font-size:12px;color:#3b82f6;font-weight:500;">{{ basename($req->document_path) }}</div></div>
                 @endif
                 <div><div class="rlabel">Approval Progress</div>
                 <div class="prog-steps">
-                    <div class="pstep"><div class="pcircle pc-done"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div><div class="pname">Employee</div><div class="pstatus">Filed</div></div>
+                    <div class="pstep"><div class="pcircle pc-done"><svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div><div class="pname">Employee</div><div class="pstatus">Filed</div></div>
                     @if(isset($req->employee->department_id))
                     <div class="pline"></div>
                     @if($req->status === 'supervisor_approved')
-                    <div class="pstep"><div class="pcircle pc-done"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div><div class="pname">Supervisor</div><div class="pstatus">Approved</div></div>
+                    <div class="pstep"><div class="pcircle pc-done"><svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div><div class="pname">Supervisor</div><div class="pstatus">Approved</div></div>
                     @else
-                    <div class="pstep"><div class="pcircle" style="background:#f9fafb;border:2px solid #d1d5db;color:#9ca3af;"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01"/></svg></div><div class="pname">Supervisor</div><div class="pstatus">Bypassed</div></div>
+                    <div class="pstep"><div class="pcircle" style="background:#f9fafb;border:2px solid #d1d5db;color:#9ca3af;"><svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01"/></svg></div><div class="pname">Supervisor</div><div class="pstatus">Bypassed</div></div>
                     @endif
                     @endif
                     <div class="pline"></div>
-                    <div class="pstep"><div class="pcircle pc-active"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01"/></svg></div><div class="pname">HR Manager</div><div class="pstatus">Pending Approval</div></div>
+                    <div class="pstep"><div class="pcircle pc-active"><svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01"/></svg></div><div class="pname">HR Manager</div><div class="pstatus">Pending</div></div>
                 </div></div>
             </div>
             @canDo('Requests & Approval', 'edit')
@@ -282,13 +453,13 @@
             @endcanDo
         </div>
         @empty
-        <div style="text-align:center;padding:60px 16px;">
-            <div style="font-size:15px;font-weight:600;color:#9ca3af;">No pending requests at this time.</div>
-            <div style="font-size:13px;color:#d1d5db;margin-top:4px;">All leave requests will appear here when submitted.</div>
+        <div style="text-align:center;padding:40px 16px;">
+            <div style="font-size:14px;font-weight:600;color:#9ca3af;">No pending requests at this time.</div>
+            <div style="font-size:12px;color:#d1d5db;margin-top:4px;">All leave requests will appear here when submitted.</div>
         </div>
         @endforelse
 
-    </div>{{-- /padding --}}
+    </div>{{-- /page-content --}}
 
     {{-- ══ FILE REQUEST MODAL ══ --}}
     <div x-show="showFileReq" class="modal-overlay" x-cloak @click.self="showFileReq=false;reqType=''">
@@ -507,7 +678,7 @@
         </div>
     </div>
 
-{{-- ══ RESULT MODAL ══ --}}
+    {{-- ══ RESULT MODAL ══ --}}
     <div x-show="showResult" class="modal-overlay" x-cloak @click.self="showResult=false">
         <div class="modal-box" style="width:400px;text-align:center;">
             <div :style="resultType==='success' ? 'width:64px;height:64px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;' : 'width:64px;height:64px;background:#fee2e2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;'">
@@ -525,5 +696,28 @@
     </div>
 
 </div>
+
+<script>
+    // Fix sidebar margin on load and resize
+    (function() {
+        var mainEl = document.querySelector('.main-content');
+        if (!mainEl) return;
+        function updateMargin() {
+            var collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (window.innerWidth < 1024) {
+                mainEl.style.marginLeft = '0';
+            } else {
+                mainEl.style.marginLeft = collapsed ? '5rem' : '16rem';
+            }
+        }
+        updateMargin();
+        window.addEventListener('resize', updateMargin);
+        window.addEventListener('sidebar-toggle', function(e) {
+            if (window.innerWidth >= 1024) {
+                mainEl.style.marginLeft = e.detail.collapsed ? '5rem' : '16rem';
+            }
+        });
+    })();
+</script>
 </body>
 </html>

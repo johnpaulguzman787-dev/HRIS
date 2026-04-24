@@ -27,13 +27,7 @@
         @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to   { opacity: 1; transform: translateX(0); }
         }
         .slide-in-right { animation: slideInRight 0.25s cubic-bezier(0.4,0,0.2,1) both; }
-        /* ── Summary cards ── */
-        .cards-wrap {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        
+        .cards-wrap { display: flex; gap: 16px; flex-wrap: wrap }   
         .summary-card { background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; padding: 22px 26px; flex: 1; transition: transform 0.2s ease, box-shadow 0.2s ease;}
         .summary-card:hover {transform: translateY(-2px);box-shadow: 0 8px 24px rgba(59,130,246,0.10);}
         .summary-card .label { font-size: 0.78rem; color: #9ca3af; margin-bottom: 6px; }
@@ -163,12 +157,10 @@
         align-items: center;
         gap: 0.75rem;
     }
-    /* Search bar fixed 320px */
     .toolbar-period .search-wrap {
         flex: 0 0 320px;
         width: 320px;
     }
-    /* Right group stays together */
     .toolbar-period .right-group {
         display: flex;
         gap: 0.75rem;

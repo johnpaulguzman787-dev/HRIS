@@ -93,14 +93,9 @@
         .btn-close-ps:hover { background:#f3f4f6; }
         .btn-export-ps { background:#2563eb; color:#fff; border-radius:8px; padding:10px 18px; font-size:0.875rem; font-weight:600; display:inline-flex; align-items:center; gap:7px; border:none; cursor:pointer; transition:background 0.18s,transform 0.15s; flex:1; justify-content:center; }
         .btn-export-ps:hover { background:#1d4ed8; transform:translateY(-1px); }
-        .cards-wrap {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
+        .cards-wrap { display: flex; gap: 16px; flex-wrap: wrap }
         .modal-overlay { background:rgba(0,0,0,0.4); backdrop-filter:blur(2px); }
         .main-content { transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1); }
-
 @media (max-width: 768px) {
     .px-8 { padding-left: 16px; padding-right: 16px; }
 

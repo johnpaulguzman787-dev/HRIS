@@ -211,6 +211,9 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/admin/payslips/period/{id}',            [\App\Http\Controllers\AdminPayrollController::class, 'releasedPeriodPayslips'])->name('admin.payslips.period');
 
+        // Admin account settings
+        Route::post('/admin/settings/password', [\App\Http\Controllers\UserSettingsController::class, 'changePassword'])->name('admin.settings.password');
+
         // Settings (admin-only)
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/',              [SettingsController::class, 'index'])->name('index');

@@ -121,6 +121,7 @@ class AdminPayrollController extends Controller
             'sss'            => (float) $p->sss,
             'philhealth'     => (float) $p->philhealth,
             'pagibig'        => (float) $p->pagibig,
+            'lateDeduction'  => (float) ($p->late_deduction ?? 0),
             'withholdingTax' => (float) $p->withholding_tax,
             'totalDeductions'=> (float) $p->total_deductions,
             'netPay'         => (float) $p->net_pay,
@@ -251,6 +252,7 @@ class AdminPayrollController extends Controller
             'sss'            => (float) $p->sss,
             'philhealth'     => (float) $p->philhealth,
             'pagibig'        => (float) $p->pagibig,
+            'lateDeduction'  => (float) ($p->late_deduction ?? 0),
             'withholdingTax' => (float) $p->withholding_tax,
             'totalDeductions'=> (float) $p->total_deductions,
             'netPay'         => (float) $p->net_pay,
@@ -627,6 +629,7 @@ class AdminPayrollController extends Controller
             'sss'            => (float) $p->sss,
             'philhealth'     => (float) $p->philhealth,
             'pagibig'        => (float) $p->pagibig,
+            'lateDeduction'  => (float) ($p->late_deduction ?? 0),
             'withholdingTax' => (float) $p->withholding_tax,
             'totalDeductions'=> (float) $p->total_deductions,
             'netPay'         => (float) $p->net_pay,
@@ -648,6 +651,7 @@ class AdminPayrollController extends Controller
             'sss'            => 'required|numeric|min:0',
             'philhealth'     => 'required|numeric|min:0',
             'pagibig'        => 'required|numeric|min:0',
+            'lateDeduction'  => 'nullable|numeric|min:0',
             'withholdingTax' => 'required|numeric|min:0',
         ]);
 
@@ -658,7 +662,8 @@ class AdminPayrollController extends Controller
         }
 
         $grossPay        = $request->basicPay + $request->otPay + $request->benefits;
-        $totalDeductions = $request->sss + $request->philhealth + $request->pagibig + $request->withholdingTax;
+        $lateDeduction   = (float) ($request->lateDeduction ?? 0);
+        $totalDeductions = $request->sss + $request->philhealth + $request->pagibig + $request->withholdingTax + $lateDeduction;
 
         $payslip->update([
             'basic_pay'        => $request->basicPay,
@@ -668,6 +673,7 @@ class AdminPayrollController extends Controller
             'sss'              => $request->sss,
             'philhealth'       => $request->philhealth,
             'pagibig'          => $request->pagibig,
+            'late_deduction'   => $lateDeduction,
             'withholding_tax'  => $request->withholdingTax,
             'total_deductions' => $totalDeductions,
             'net_pay'          => $grossPay - $totalDeductions,
@@ -702,18 +708,28 @@ class AdminPayrollController extends Controller
         $c       = DB::table('contribution_settings')->pluck('value', 'key');
         $sssRows = DB::table('sss_contributions')->orderBy('salary_from')->get();
 
+        // Resolve OT multiplier from PayrollItem (fall back to 1.25 if not configured)
+        $otItem       = \App\Models\PayrollItem::where('type', 'Addition')
+            ->where('status', 'Active')
+            ->where(function ($q) {
+                $q->where('name', 'like', '%Regular OT%')
+                  ->orWhere('name', 'like', '%Regular Overtime%');
+            })
+            ->first();
+        $otMultiplier = $otItem ? (float) $otItem->multiplier : 1.25;
+
         foreach ($employees as $emp) {
             $grade         = $emp->salaryGrade;
             $monthlySalary = $grade ? (float) $grade->monthly_basic_salary : 0;
             $basicPay      = $monthlySalary / 2;
 
-            // OT pay: approved OT hours × hourly rate × 1.25 (Regular OT)
+            // OT pay: approved OT hours × hourly rate × multiplier from PayrollItem
             $hourlyRate = $monthlySalary > 0 ? ($monthlySalary * 12 / 261 / 8) : 0;
             $otHours    = \App\Models\OvertimeRequest::where('employee_id', $emp->id)
                 ->where('status', 'approved')
                 ->whereBetween('ot_date', [$period->start_date, $period->end_date])
                 ->sum('approved_hours');
-            $otPay = round($otHours * $hourlyRate * 1.25, 2);
+            $otPay = round($otHours * $hourlyRate * $otMultiplier, 2);
 
             $benefitsTotal = $emp->benefits->sum('amount');
             $grossPay = $basicPay + $otPay + $benefitsTotal;
@@ -737,7 +753,13 @@ class AdminPayrollController extends Controller
             $annualTaxable    = max(0, ($grossPay * 24) - $annualDeductions);
             $withholdingTax   = round($this->computeWithholdingTax($annualTaxable, $c) / 24, 2);
 
-            $totalDeductions = $sss + $philhealth + $pagibig + $withholdingTax;
+            // ── Late deduction: sum of late_minutes in period × per-minute rate ──
+            $lateMinutes   = \App\Models\AttendanceLog::where('employee_id', $emp->id)
+                ->whereBetween('attendance_date', [$period->start_date, $period->end_date])
+                ->sum('late_minutes');
+            $lateDeduction = $hourlyRate > 0 ? round(($lateMinutes / 60) * $hourlyRate, 2) : 0;
+
+            $totalDeductions = $sss + $philhealth + $pagibig + $withholdingTax + $lateDeduction;
             $netPay          = $grossPay - $totalDeductions;
 
             Payslip::create([
@@ -750,6 +772,7 @@ class AdminPayrollController extends Controller
                 'sss'               => $sss,
                 'philhealth'        => $philhealth,
                 'pagibig'           => $pagibig,
+                'late_deduction'    => $lateDeduction,
                 'withholding_tax'   => $withholdingTax,
                 'total_deductions'  => $totalDeductions,
                 'net_pay'           => $netPay,

@@ -977,7 +977,6 @@ public function getLeaveRequest($id)
 
         if ($filterType === 'all' || $filterType === 'leave') {
             $q = LeaveRequest::with(['leaveType', 'approver', 'employee.department', 'employee.jobTitle'])
-                ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'cancelled', 'supervisor_approved']);
             if ($filterDept)             $q->whereHas('employee', fn($e) => $e->where('department_id', $filterDept));
             if ($filterStatus !== 'all') $q->where('status', $filterStatus);
@@ -1005,7 +1004,6 @@ public function getLeaveRequest($id)
 
         if ($filterType === 'all' || $filterType === 'overtime') {
             $q = OvertimeRequest::with(['employee.department', 'employee.jobTitle'])
-                ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'supervisor_approved']);
             if ($filterDept)             $q->whereHas('employee', fn($e) => $e->where('department_id', $filterDept));
             if ($filterStatus !== 'all') $q->where('status', $filterStatus);
@@ -1032,7 +1030,6 @@ public function getLeaveRequest($id)
 
         if ($filterType === 'all' || $filterType === 'shift') {
             $q = ShiftChangeRequest::with(['employee.department', 'employee.jobTitle', 'currentShift', 'requestedShift'])
-                ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'supervisor_approved']);
             if ($filterDept)             $q->whereHas('employee', fn($e) => $e->where('department_id', $filterDept));
             if ($filterStatus !== 'all') $q->where('status', $filterStatus);

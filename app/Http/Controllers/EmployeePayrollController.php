@@ -57,6 +57,7 @@ class EmployeePayrollController extends Controller
                 'sss'            => (float) $p->sss,
                 'philhealth'     => (float) $p->philhealth,
                 'pagibig'        => (float) $p->pagibig,
+                'lateDeduction'  => (float) ($p->late_deduction ?? 0),
                 'withholdingTax' => (float) $p->withholding_tax,
                 'totalDeductions'=> (float) $p->total_deductions,
                 'netPay'         => (float) $p->net_pay,

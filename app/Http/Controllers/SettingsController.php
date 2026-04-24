@@ -45,6 +45,7 @@ class SettingsController extends Controller
                 'can_view'   => 'View Leave Records',
                 'can_create' => 'File Leave Request',
                 'can_edit'   => 'Approve / Reject Leave',
+                'can_export' => 'Export Leave Report',
             ],
         ],
         'Requests & Approval' => [
@@ -79,22 +80,21 @@ class SettingsController extends Controller
         ],
         'supervisor' => [
             'Employee Management' => ['can_archive', 'can_import', 'can_export'],
-            'Leave Management'    => ['can_export'],
             'Requests & Approval' => ['can_export'],
             'Payroll'             => ['can_create', 'can_edit', 'can_export'],
         ],
         'payroll_officer' => [
             'Employee Management' => ['can_create', 'can_edit', 'can_archive', 'can_import'],
             'Time & Attendance'   => ['can_create', 'can_edit'],
-            'Leave Management'    => ['can_create', 'can_edit'],
-            'Requests & Approval' => ['can_create', 'can_edit'],
+            'Leave Management'    => ['can_edit'],
+            'Requests & Approval' => ['can_edit'],
             'Payroll'             => ['can_edit'],  // payroll officer submits, does NOT release
         ],
         'finance_officer' => [
             'Employee Management' => ['can_create', 'can_edit', 'can_archive', 'can_import'],
             'Time & Attendance'   => ['can_create', 'can_edit'],
-            'Leave Management'    => ['can_create', 'can_edit'],
-            'Requests & Approval' => ['can_create', 'can_edit'],
+            'Leave Management'    => ['can_edit'],
+            'Requests & Approval' => ['can_edit'],
             'Payroll'             => ['can_create'], // finance officer releases, does NOT submit
         ],
         'employee' => [

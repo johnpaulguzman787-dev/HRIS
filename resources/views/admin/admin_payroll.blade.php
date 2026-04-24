@@ -181,7 +181,7 @@
 
     <!-- ===================== DESKTOP SIDEBAR ===================== -->
     <div class="hidden lg:block">
-        @include('payroll_officer.payroll_sidebar')
+        @include('admin.admin_sidebar')
     </div>
 
     <!-- ===================== MOBILE DRAWER ===================== -->
@@ -203,7 +203,7 @@
              x-transition:leave-start="translate-x-0"
              x-transition:leave-end="-translate-x-full"
              class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
-            @include('payroll_officer.payroll_sidebar')
+            @include('admin.admin_sidebar')
         </div>
     </div>
 

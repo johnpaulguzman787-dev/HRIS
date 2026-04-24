@@ -50,7 +50,7 @@
         .slide-in-right { animation:slideRight 0.28s cubic-bezier(0.22,1,0.36,1) both; }
         .tab-content    { animation:tabIn 0.28s cubic-bezier(0.22,1,0.36,1) both; }
 
-        /* ── Summary Cards (mobile stack) ── */
+        /* ── Summary Cards ── */
         .cards-wrap {
             display: flex;
             gap: 16px;
@@ -244,7 +244,7 @@
                 padding: 4px 12px;
                 font-size: 0.7rem;
             }
-            /* Toolbar for All Payslips (wraps) */
+            /* Toolbar for */
             .toolbar-row {
                 flex-wrap: wrap;
             }
@@ -368,17 +368,20 @@
                     </svg>
                     <input type="text" placeholder="Search employee…" class="ctrl w-full" x-model="allSearch">
                 </div>
+
                 <select class="ctrl ctrl-select flex-1 sm:flex-none" style="min-width:160px" @change="changePeriod($event.target.value, $event.target.options[$event.target.selectedIndex].text)">
                     <option value="" disabled x-show="periods.length === 0">No periods available</option>
                     <template x-for="p in periods" :key="p.id">
                         <option :value="p.id" :selected="p.id == currentPeriodId" x-text="p.name"></option>
                     </template>
                 </select>
+
                 <select class="ctrl ctrl-select w-28" x-model="allYearFilter" @change="filterPeriodsByYear()">
                     @for($y=now()->year; $y>=now()->year-3; $y--)
                     <option value="{{ $y }}">{{ $y }}</option>
                     @endfor
                 </select>
+                
                 @canDo('Payroll', 'export')
                 <button @click="exportAllPayslips()"
                         :disabled="filteredAllPayslips.length === 0"
@@ -428,7 +431,7 @@
                         </div>
                     </div>
 
-                    {{-- Payslip Panel (full width on mobile) --}}
+                    {{-- Payslip Panel --}}
                     <div class="w-full lg:w-80 flex-shrink-0" x-show="allSelectedId!==null" x-cloak>
                         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden slide-in-right">
                             <div class="payslip-header">

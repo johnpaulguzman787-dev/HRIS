@@ -34,7 +34,7 @@
         .anim-3 { animation:fadeUp 0.44s 0.14s cubic-bezier(0.22,1,0.36,1) both; }
         .slide-in-right { animation:slideRight 0.28s cubic-bezier(0.22,1,0.36,1) both; }
 
-        /* ── Summary Cards (mobile stack) ── */
+        /* ── Summary Cards ── */
         .cards-wrap {
             display: flex;
             gap: 16px;
@@ -285,7 +285,7 @@
          :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
          style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
-        {{-- Header with Hamburger --}}
+        {{-- Header --}}
         <header class="bg-gradient-to-r from-blue-500 to-blue-600 sticky top-0 z-40 shadow-lg -mt-3 -mx-3 lg:-mt-6 lg:-mx-6 mb-3 lg:mb-6 rounded-2xl">
             <div class="flex items-center justify-between px-8 py-4">
                 <div class="flex items-center gap-3">
@@ -380,7 +380,7 @@
                     </div>
                 </div>
 
-                {{-- My Payslip Panel (full width on mobile) --}}
+                {{-- My Payslip Panel  --}}
                 <div class="w-full lg:w-80 flex-shrink-0" x-show="mySelectedId!==null" x-cloak>
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden slide-in-right">
                         <div class="payslip-header">

@@ -392,7 +392,7 @@
                     </div>
                 </div>
 
-                {{-- Payslip Detail Panel (full width on mobile) --}}
+                {{-- Payslip Detail Panel --}}
                 <div class="w-full lg:w-80 flex-shrink-0" x-show="mySelectedId!==null" x-cloak>
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden slide-in-right">
                         <div class="payslip-header">

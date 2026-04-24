@@ -252,12 +252,12 @@
                 flex: 1 1 auto;
                 min-width: 120px;
             }
-            /* Close and Export buttons – adjust padding on mobile, keep equal width */
+            /* Close and Export buttons  */
             .btn-primary, .btn-close {
                 padding: 8px 16px;
                 font-size: 0.75rem;
             }
-            /* My Payslip toolbar: single row, no scroll, search longer */
+            /* My Payslip toolbar */
             .my-toolbar {
                 flex-wrap: nowrap !important;
                 overflow: hidden !important;
@@ -340,7 +340,7 @@
         </div>
 
         {{-- ══════════════════════════
-             ALL PAYSLIPS (wraps on mobile)
+             ALL PAYSLIPS
         ══════════════════════════ --}}
         <div x-show="activeTab==='all'" x-cloak class="tab-content">
 
@@ -432,7 +432,7 @@
                         </div>
                     </div>
 
-                    {{-- Payslip Panel (full width on mobile) --}}
+                    {{-- Payslip Panel --}}
                     <div class="w-full lg:w-80 flex-shrink-0" x-show="allSelectedId!==null" x-cloak>
                         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden slide-in-right">
                             <div class="payslip-header">

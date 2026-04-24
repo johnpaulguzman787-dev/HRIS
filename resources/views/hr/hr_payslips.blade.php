@@ -34,7 +34,7 @@
         .anim-3 { animation:fadeUp 0.44s 0.14s cubic-bezier(0.22,1,0.36,1) both; }
         .slide-in-right { animation:slideRight 0.28s cubic-bezier(0.22,1,0.36,1) both; }
 
-        /* ── Summary Cards (mobile stack) ── */
+        /* ── Summary Cards ── */
         .cards-wrap {
             display: flex;
             gap: 16px;
@@ -59,7 +59,7 @@
         .badge-submitted { background:#e3f2fd; color:#1565c0; }
         .badge-released  { background:#e8f5e9; color:#2e7d32; }
 
-        /* ── Tables (horizontal scroll on mobile) ── */
+        /* ── Tables ── */
         .table-wrapper {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -392,7 +392,7 @@
                     </div>
                 </div>
 
-                {{-- Payslip Detail Panel (full width on mobile) --}}
+                {{-- Payslip Detail Panel --}}
                 <div class="w-full lg:w-80 flex-shrink-0" x-show="mySelectedId!==null" x-cloak>
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden slide-in-right">
                         <div class="payslip-header">

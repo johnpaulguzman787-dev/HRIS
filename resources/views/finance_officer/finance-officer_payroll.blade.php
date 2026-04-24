@@ -25,7 +25,7 @@
         .anim-3 { animation:fadeSlideUp 0.38s 0.12s ease both; }
         @keyframes slideInRight { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
         .slide-in-right { animation:slideInRight 0.25s cubic-bezier(0.4,0,0.2,1) both; }
-
+        .cards-wrap { display: flex; gap: 16px; flex-wrap: wrap }   
         .summary-card { background:#fff; border-radius:10px; border:1px solid #e5e7eb; padding:22px 26px; flex:1; transition:transform 0.2s ease,box-shadow 0.2s ease; }
         .summary-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(59,130,246,0.10); }
         .summary-card .label { font-size:0.78rem; color:#9ca3af; margin-bottom:6px; }
@@ -96,84 +96,214 @@
 
         .modal-overlay { background:rgba(0,0,0,0.4); backdrop-filter:blur(2px); }
         .main-content { transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1); }
+@media (max-width: 768px) {
+    .px-8 { padding-left: 16px; padding-right: 16px; }
+
+    .tab-btn {
+        padding: 12px 20px;
+        font-size: 0.8rem;
+    }
+
+    .cards-wrap {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .toolbar-period {
+        display: flex;
+        flex-wrap: nowrap;      /* forces one row */
+        gap: 0.75rem;
+        overflow-x: auto;       /* adds horizontal scroll if needed */
+        -webkit-overflow-scrolling: touch;
+    }
+    .toolbar-period .search-wrap {
+        flex: 2 1 180px;        /* search wider */
+        min-width: 140px;
+    }
+    .toolbar-period .right-group {
+        display: flex;
+        gap: 0.75rem;
+        flex: 1 1 auto;
+    }
+    .toolbar-period select {
+        flex: 1 1 auto;
+        min-width: 100px;
+    }
+
+@media (max-width: 768px) {
+    .payslip-header {
+        padding: 1rem;
+    }
+    .payslip-body {
+        padding: 0 1rem 1rem;
+    }
+    .btn-back {
+        font-size: 0.7rem;
+        padding: 0.5rem 0.75rem;
+    }
+    nav.flex.items-center.gap-1\.5 {
+        font-size: 0.7rem;
+        flex-wrap: wrap;
+    }
+    .pv-table td,
+    .pv-table th {
+        white-space: normal; 
+        word-break: break-word;
+    }
+    .pv-table .btn-view,
+    .pv-table .rounded-full {
+        white-space: nowrap;
+    }
+}
+}
+
+@media (min-width: 769px) {
+    .toolbar-period {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .toolbar-period .search-wrap {
+        flex: 0 0 320px;
+        width: 320px;
+    }
+    .toolbar-period .right-group {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex: 0 0 auto;
+    }
+}
+
+@media (max-width: 768px) {
+
+}
     </style>
 </head>
 
-<body x-data="payrollApp()" x-init="init()">
+<body x-data="payrollApp()" x-init="init()" class="flex h-screen overflow-hidden">
 
-    @include('finance_officer.finance_sidebar')
+    <!-- ===================== DESKTOP SIDEBAR ===================== -->
+    <div class="hidden lg:block">
+        @include('finance_officer.finance_sidebar')
+    </div>
 
-    <div class="main-content min-h-screen" :style="'margin-left: ' + (sidebarCollapsed ? '80px' : '256px')">
+    <!-- ===================== MOBILE DRAWER ===================== -->
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 lg:hidden"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+            @include('finance_officer.finance_sidebar')
+        </div>
+    </div>
+    
+    {{-- ══════════════════════════════════════════════════
+         MAIN CONTENT
+    ══════════════════════════════════════════════════ --}}
+    <!-- ===================== MAIN CONTENT ===================== -->
+    <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin p-3 lg:p-6"
+         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
+         style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
-        {{-- Header --}}
-        <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-40 shadow-lg mt-4 mx-4 rounded-2xl">
+        {{-- Header with Hamburger --}}
+        <header class="bg-gradient-to-r from-blue-500 to-blue-600 sticky top-0 z-40 shadow-lg -mt-3 -mx-3 lg:-mt-6 lg:-mx-6 mb-3 lg:mb-6 rounded-2xl">
             <div class="flex items-center justify-between px-8 py-4">
-                <h1 class="text-white font-bold text-xl">Payroll</h1>
+                <div class="flex items-center gap-3">
+                    <button @click="mobileMenuOpen = true"
+                            class="lg:hidden p-2 rounded-lg hover:bg-white/20 transition-colors">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h1 class="text-white font-bold text-xl tracking-tight">Payroll</h1>
+                </div>
                 <x-notification-bell />
             </div>
         </header>
 
 
         {{-- ══════════════════════════════════════
-             PAGE: LIST (tabs)
+             PAGE: PAYROLL LIST (tabs view)
         ══════════════════════════════════════ --}}
         <div x-show="page === 'list'" x-cloak>
 
             {{-- Tab Bar --}}
-            <div class="bg-white px-8 pt-4 anim-2">
+            <div class="bg-white -mx-3 lg:-mx-6 px-3 lg:px-6 pt-2 anim-2">
                 <div class="tab-bar">
-                    <button class="tab-btn" :class="activeTab==='payroll-period'   && 'active'" @click="activeTab='payroll-period'">Payroll Period</button>
-                    <button class="tab-btn" :class="activeTab==='salary-structure' && 'active'" @click="activeTab='salary-structure'">Salary Structure</button>
-                    <button class="tab-btn" :class="activeTab==='benefits'         && 'active'" @click="activeTab='benefits'">Benefits</button>
-                    <button class="tab-btn" :class="activeTab==='contributions'    && 'active'" @click="activeTab='contributions'">Contributions</button>
+                    <button class="tab-btn" :class="activeTab==='payroll-period' && 'active'"    @click="activeTab='payroll-period'">Payroll Period</button>
+                    <button class="tab-btn" :class="activeTab==='salary-structure' && 'active'"  @click="activeTab='salary-structure'">Salary Structure</button>
+                    <button class="tab-btn" :class="activeTab==='benefits' && 'active'"          @click="activeTab='benefits'">Benefits</button>
+                    <button class="tab-btn" :class="activeTab==='contributions' && 'active'"     @click="activeTab='contributions'">Contributions</button>
                 </div>
             </div>
 
             {{-- ── TAB 1: PAYROLL PERIOD ── --}}
-            <div x-show="activeTab==='payroll-period'" x-cloak class="p-8 tab-content">
+            <div x-show="activeTab==='payroll-period'" x-cloak class="tab-content">
 
                 {{-- Summary Cards --}}
-                <div class="flex gap-4 mb-7">
-                    <div class="summary-card">
-                        <div class="label">Gross Payroll</div>
-                        <div class="value">₱ {{ number_format($grossPayroll) }}</div>
-                        <div class="sub">{{ $latestPeriod->name ?? '—' }}</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="label">Net Pay</div>
-                        <div class="value">₱ {{ number_format($netPay) }}</div>
-                        <div class="sub">{{ $latestPeriod->name ?? '—' }}</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="label">Total Deductions</div>
-                        <div class="value">₱ {{ number_format($totalDeductions) }}</div>
-                        <div class="sub">{{ $latestPeriod->name ?? '—' }}</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="label">Days to Cutoff</div>
-                        <div class="value">{{ $daysToCutoff }}</div>
-                        @if($activePeriod)
-                        <div class="sub">Cutoff: {{ \Carbon\Carbon::parse($activePeriod->start_date)->format('m/d/Y') }} – {{ \Carbon\Carbon::parse($activePeriod->end_date)->format('m/d/Y') }}</div>
-                        @elseif($latestPeriod)
-                        <div class="sub">Cutoff: {{ \Carbon\Carbon::parse($latestPeriod->start_date)->format('m/d/Y') }} – {{ \Carbon\Carbon::parse($latestPeriod->end_date)->format('m/d/Y') }}</div>
-                        @else
-                        <div class="sub">No active period</div>
-                        @endif
+                <div class="pt-6 pb-4">
+                    <div class="cards-wrap">
+                        <div class="summary-card">
+                            <div class="label">Gross Payroll</div>
+                            <div class="value">₱ {{ number_format($grossPayroll) }}</div>
+                            <div class="sub">{{ $latestPeriod->name ?? '—' }}</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="label">Net Pay</div>
+                            <div class="value">₱ {{ number_format($netPay) }}</div>
+                            <div class="sub">{{ $latestPeriod->name ?? '—' }}</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="label">Total Deductions</div>
+                            <div class="value">₱ {{ number_format($totalDeductions) }}</div>
+                            <div class="sub">{{ $latestPeriod->name ?? '—' }}</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="label">Days to Cutoff</div>
+                            <div class="value">{{ $daysToCutoff }}</div>
+                            @if($activePeriod)
+                            <div class="sub">Cutoff: {{ \Carbon\Carbon::parse($activePeriod->start_date)->format('m/d/Y') }} – {{ \Carbon\Carbon::parse($activePeriod->end_date)->format('m/d/Y') }}</div>
+                            @elseif($latestPeriod)
+                            <div class="sub">Cutoff: {{ \Carbon\Carbon::parse($latestPeriod->start_date)->format('m/d/Y') }} – {{ \Carbon\Carbon::parse($latestPeriod->end_date)->format('m/d/Y') }}</div>
+                            @else
+                            <div class="sub">No active period</div>
+                            @endif
+                        </div>
                     </div>
                 </div>
 
                 {{-- Toolbar --}}
-                <div class="flex items-center justify-between gap-3 mb-4">
-                    <div class="search-wrap flex-1 max-w-xs">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>
-                        <input type="text" placeholder="Search" class="ctrl w-full" x-model="periodSearch">
+                <div class="toolbar-period mb-4 anim-2">
+                    <div class="search-wrap">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
+                        </svg>
+                        <input type="text" placeholder="Search..." class="ctrl w-full" x-model="periodSearch">
                     </div>
-                    <div class="flex items-center gap-3">
+
+                    <div class="right-group">
                         <select class="ctrl" x-model="periodStatusFilter">
-                            <option value="">Status</option>
+                            <option value="">All status</option>
+                            <option value="Pending">Pending</option>
                             <option value="Submitted">Submitted</option>
                             <option value="Released">Released</option>
                         </select>
+
                         <select class="ctrl" x-model="periodYearFilter">
                             @for($y = now()->year; $y >= now()->year - 3; $y--)
                             <option value="{{ $y }}">{{ $y }}</option>
@@ -184,6 +314,7 @@
 
                 {{-- Table --}}
                 <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -208,6 +339,7 @@
                                     </span>
                                 </td>
                                 <td style="text-align:center">
+                                    <div class="flex items-center justify-center gap-1">
                                     <button class="btn-view"
                                         @click="openPeriodView(
                                             {{ $period->id }},
@@ -225,6 +357,7 @@
                                             '{{ $period->payout_date }}',
                                             '{{ $period->status }}'
                                         )">Edit</button>
+                                    </div>
                                 </td>
                             </tr>
                             @empty
@@ -232,53 +365,58 @@
                             @endforelse
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>{{-- /tab payroll-period --}}
 
 
             {{-- ── TAB 2: SALARY STRUCTURE ── --}}
-            <div x-show="activeTab==='salary-structure'" x-cloak class="p-8 tab-content space-y-8">
+            <div x-show="activeTab==='salary-structure'" x-cloak class="tab-content space-y-8">
 
                 {{-- Salary Grade --}}
                 <div>
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-base font-bold text-gray-800">Salary Grade</h3>
-                        @canDo('Payroll', 'edit')
-                        <button class="btn-primary" @click="openAddGrade()">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Add Salary Grade
-                        </button>
-                        @endcanDo
-                    </div>
-                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                        <table class="data-table">
-                            <thead>
-                                <tr><th>Grade Code</th><th>Level Name</th><th>Monthly Basic Salary</th><th>Semi-Monthly Pay</th><th>Assigned Employees</th><th></th></tr>
-                            </thead>
-                            <tbody>
-                                @forelse($salaryGrades ?? [] as $grade)
-                                <tr>
-                                    <td><span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-600">{{ $grade->grade_code }}</span></td>
-                                    <td class="text-gray-600">{{ $grade->level_name }}</td>
-                                    <td class="font-medium text-gray-700">₱{{ number_format($grade->monthly_basic_salary, 2) }}</td>
-                                    <td class="text-gray-600">₱{{ number_format($grade->monthly_basic_salary / 2, 2) }}</td>
-                                    <td><span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">{{ $grade->employees_count ?? 0 }} employee{{ ($grade->employees_count ?? 0) !== 1 ? 's' : '' }}</span></td>
-                                    <td class="text-right">
-                                        @canDo('Payroll', 'edit')
-                                        <div class="flex items-center justify-end gap-2">
-                                            <button class="btn-view"
-                                                data-emps="{{ json_encode($grade->employees->map(fn($e) => ['id' => $e->id, 'name' => $e->fname.' '.$e->lname])->values()) }}"
-                                                @click="openEditGrade({{ $grade->id }}, '{{ addslashes($grade->grade_code) }}', '{{ addslashes($grade->level_name) }}', {{ $grade->monthly_basic_salary }}, JSON.parse($el.getAttribute('data-emps')))">Edit</button>
-                                            <button class="btn-delete" @click="deleteGrade({{ $grade->id }})">Delete</button>
-                                        </div>
-                                        @endcanDo
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr><td colspan="6" class="text-center py-12 text-gray-400 text-sm">No salary grades found.</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <div class="pt-6 pb-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base font-bold text-gray-800">Salary Grade</h3>
+                            @canDo('Payroll', 'edit')
+                            <button class="btn-primary" @click="openAddGrade()">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Add Salary Grade
+                            </button>
+                            @endcanDo
+                        </div>
+                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr><th>Grade Code</th><th>Level Name</th><th>Monthly Basic Salary</th><th>Semi-Monthly Pay</th><th>Assigned Employees</th><th></th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($salaryGrades ?? [] as $grade)
+                                        <tr>
+                                            <td><span class="inline-flex items-center px-2 py-0.5 rounded text-[0.7rem] sm:text-xs font-semibold bg-blue-50 text-blue-600 whitespace-nowrap"> {{ $grade->grade_code }}</span></td>
+                                            <td class="text-gray-600">{{ $grade->level_name }}</td>
+                                            <td class="font-medium text-gray-700">₱{{ number_format($grade->monthly_basic_salary, 2) }}</td>
+                                            <td class="text-gray-600">₱{{ number_format($grade->monthly_basic_salary / 2, 2) }}</td>
+                                            <td><span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">{{ $grade->employees_count ?? 0 }} employee{{ ($grade->employees_count ?? 0) !== 1 ? 's' : '' }}</span></td>
+                                            <td class="text-right">
+                                                @canDo('Payroll', 'edit')
+                                                <div class="flex items-center justify-end gap-1">
+                                                    <button class="btn-view"
+                                                        data-emps="{{ json_encode($grade->employees->map(fn($e) => ['id' => $e->id, 'name' => $e->fname.' '.$e->lname])->values()) }}"
+                                                        @click="openEditGrade({{ $grade->id }}, '{{ addslashes($grade->grade_code) }}', '{{ addslashes($grade->level_name) }}', {{ $grade->monthly_basic_salary }}, JSON.parse($el.getAttribute('data-emps')))">Edit</button>
+                                                    <button class="btn-delete" @click="deleteGrade({{ $grade->id }})">Delete</button>
+                                                </div>
+                                                @endcanDo
+                                            </td>
+                                        </tr>
+                                        @empty
+                                        <tr><td colspan="6" class="text-center py-12 text-gray-400 text-sm">No salary grades found.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -297,32 +435,34 @@
                         </div>
                     </div>
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                        <table class="data-table">
-                            <thead>
-                                <tr><th>Payroll Item</th><th>Multiplier</th><th>Type</th><th>Basis</th><th>Status</th><th></th></tr>
-                            </thead>
-                            <tbody>
-                                @forelse($payrollItems as $item)
-                                <tr x-show="!itemStatusFilter || itemStatusFilter === '{{ $item->status }}'">
-                                    <td class="font-medium text-gray-700">{{ $item->name }}</td>
-                                    <td><span class="multiplier-badge">x{{ $item->multiplier }}</span></td>
-                                    <td><span class="px-3 py-1 rounded-full text-xs font-medium {{ strtolower($item->type)==='addition' ? 'badge-addition' : 'badge-deduction' }}">{{ $item->type }}</span></td>
-                                    <td class="text-gray-500">{{ $item->basis }}</td>
-                                    <td><span class="px-3 py-1 rounded-full text-xs font-medium {{ $item->status==='Active' ? 'badge-active' : 'badge-inactive' }}">{{ $item->status }}</span></td>
-                                    <td class="text-right">
-                                        @canDo('Payroll', 'edit')
-                                        <div class="flex items-center justify-end gap-2">
-                                            <button class="btn-view" @click="openEditItem({{ $item->id }}, '{{ addslashes($item->name) }}', {{ $item->multiplier }}, '{{ $item->type }}', '{{ $item->basis }}', '{{ $item->status }}')">Edit</button>
-                                            <button class="btn-delete" @click="deleteItem({{ $item->id }})">Delete</button>
-                                        </div>
-                                        @endcanDo
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr><td colspan="6" class="text-center py-12 text-gray-400 text-sm">No payroll items found.</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Payroll Item</th><th>Multiplier</th><th>Type</th><th>Basis</th><th>Status</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($payrollItems as $item)
+                                    <tr x-show="!itemStatusFilter || itemStatusFilter === '{{ $item->status }}'">
+                                        <td class="font-medium text-gray-700">{{ $item->name }}</td>
+                                        <td><span class="multiplier-badge">x{{ $item->multiplier }}</span></td>
+                                        <td><span class="px-3 py-1 rounded-full text-xs font-medium {{ strtolower($item->type)==='addition' ? 'badge-addition' : 'badge-deduction' }}">{{ $item->type }}</span></td>
+                                        <td class="text-gray-500">{{ $item->basis }}</td>
+                                        <td><span class="px-3 py-1 rounded-full text-xs font-medium {{ $item->status==='Active' ? 'badge-active' : 'badge-inactive' }}">{{ $item->status }}</span></td>
+                                        <td class="text-right">
+                                            @canDo('Payroll', 'edit')
+                                            <div class="flex items-center justify-end gap-1">
+                                                <button class="btn-view" @click="openEditItem({{ $item->id }}, '{{ addslashes($item->name) }}', {{ $item->multiplier }}, '{{ $item->type }}', '{{ $item->basis }}', '{{ $item->status }}')">Edit</button>
+                                                <button class="btn-delete" @click="deleteItem({{ $item->id }})">Delete</button>
+                                            </div>
+                                            @endcanDo
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr><td colspan="6" class="text-center py-12 text-gray-400 text-sm">No payroll items found.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -330,7 +470,8 @@
 
 
             {{-- ── TAB 3: BENEFITS ── --}}
-            <div x-show="activeTab==='benefits'" x-cloak class="p-8 tab-content">
+            <div x-show="activeTab==='benefits'" x-cloak class="tab-content">
+                <div class="pt-6 pb-4">
                 <div class="flex items-center justify-between gap-3 mb-4">
                     <div class="search-wrap flex-1 max-w-xs">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>
@@ -347,6 +488,7 @@
                     </div>
                 </div>
                 <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                     <table class="data-table">
                         <thead>
                             <tr><th>Benefit Item</th><th>Type</th><th>Amount</th><th>Taxable</th><th>Frequency</th><th>Eligibility</th><th>Status</th><th></th></tr>
@@ -363,7 +505,7 @@
                                 <td><span class="px-3 py-1 rounded-full text-xs font-medium {{ $benefit->status==='Active' ? 'badge-active' : 'badge-inactive' }}">{{ $benefit->status }}</span></td>
                                 <td class="text-right">
                                     @canDo('Payroll', 'edit')
-                                    <div class="flex items-center justify-end gap-2">
+                                    <div class="flex items-center justify-end gap-1">
                                         @if($benefit->status === 'Active')
                                         <button class="btn-view" @click="openAssignBenefit({{ $benefit->id }}, '{{ addslashes($benefit->name) }}')">Assign</button>
                                         @endif
@@ -378,14 +520,18 @@
                             @endforelse
                         </tbody>
                     </table>
+                    </div>
+                </div>
                 </div>
             </div>{{-- /tab benefits --}}
 
 
             {{-- ── TAB 4: CONTRIBUTIONS ── --}}
-            <div x-show="activeTab==='contributions'" x-cloak class="p-8 tab-content space-y-8">
+            <div x-show="activeTab==='contributions'" x-cloak class="pt-6 tab-content space-y-8">
 
-                <div class="grid grid-cols-4 gap-4">
+                {{-- Rate Cards --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
                     {{-- SSS --}}
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
                         <div class="flex items-center justify-between mb-3">
@@ -536,7 +682,7 @@
         ══════════════════════════════════════ --}}
         <div x-show="page === 'view'" x-cloak>
 
-            <div class="px-8 pt-5 pb-2 anim-1">
+            <div class="pt-5 pb-2 anim-1">
                 <div class="flex items-center gap-3 mb-5">
                     <button class="btn-back" @click="closePeriodView()">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -552,7 +698,7 @@
                     </nav>
                 </div>
 
-                <div class="flex items-center justify-between mb-6">
+                <div class="px-8 flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-800" x-text="viewPeriod.name"></h2>
                     <div class="flex items-center gap-2">
                         @canDo('Payroll', 'edit')
@@ -577,8 +723,8 @@
                 </div>
             </div>
 
-            <div class="px-8 mb-6 anim-2">
-                <div class="grid grid-cols-2 gap-4">
+            <div class=" mb-6 anim-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
                         <h3 class="text-sm font-semibold text-gray-700 mb-4">Payroll Processing Status</h3>
                         <div class="space-y-4">
@@ -619,11 +765,11 @@
                 </div>
             </div>
 
-            <div class="px-8 pb-10 anim-3">
-                <div class="flex gap-4 items-start">
+            <div class=" pb-10 anim-3">
+                <div class="flex flex-col md:flex-row gap-4 items-start">
                     <div class="flex-1 min-w-0">
                         <h3 class="text-base font-bold text-gray-800 mb-3">Employee Payroll</h3>
-                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                             <table class="pv-table">
                                 <thead><tr><th>Employee</th><th>Gross Pay</th><th>Net Pay</th><th>Status</th><th></th></tr></thead>
                                 <tbody>
@@ -646,7 +792,7 @@
                     </div>
 
                     {{-- Payslip Panel --}}
-                    <div class="w-80 flex-shrink-0" x-show="pvSelectedId!==null" x-cloak>
+                    <div class="w-full md:w-80 flex-shrink-0" x-show="pvSelectedId !== null" x-cloak>
                         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden slide-in-right">
                             <div class="payslip-header">
                                 <div class="text-lg font-bold mb-0.5">Medisource</div>

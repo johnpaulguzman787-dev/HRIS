@@ -12,6 +12,7 @@
 
 <div x-data="{
     sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+    mobileMenuOpen: false,
     init() {
         window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
         this.$watch('searchQuery', () => { this.currentPage = 1; });
@@ -133,17 +134,55 @@
 }"
     class="flex h-screen overflow-hidden bg-gray-50" @keydown.escape.window="closeModal()">
 
-    @include('finance_officer.finance_sidebar', ['activeMenu' => 'employees'])
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- DESKTOP SIDEBAR (hidden on mobile)      --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div class="hidden lg:block">
+        @include('finance_officer.finance_sidebar', ['activeMenu' => 'employees'])
+    </div>
 
-    <main class="flex-1 overflow-y-auto transition-all duration-300"
+    {{-- ═══════════════════════════════════════ --}}
+    {{-- MOBILE SLIDE-OUT DRAWER                 --}}
+    {{-- ═══════════════════════════════════════ --}}
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 lg:hidden"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+            @include('finance_officer.finance_sidebar', ['activeMenu' => 'employees'])
+        </div>
+    </div>
+
+    <main class="flex-1 overflow-y-auto transition-all duration-300 w-full"
           :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'">
 
-        <!-- Top Header -->
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
+        <!-- Top Header with Hamburger -->
+        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-                <div>
-                    <h1 class="text-xl sm:text-2xl font-bold text-white">Employees</h1>
-                    <p class="text-xs sm:text-sm text-blue-100 mt-1">Employee Directory</p>
+                <div class="flex items-center gap-3">
+                    <button @click="mobileMenuOpen = true"
+                            class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white">Employees</h1>
+                        <p class="text-xs sm:text-sm text-blue-100 mt-1">Employee Directory</p>
+                    </div>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-4">
                     <x-notification-bell />
@@ -263,7 +302,7 @@
 
                     <div class="px-8 pt-7 pb-0 flex-shrink-0">
                         <template x-if="selectedEmployee">
-                            <div class="flex items-center gap-4 mb-5">
+                            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-5 text-center sm:text-left">
                                 <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-md flex-shrink-0"
                                     x-text="(selectedEmployee.first_name.charAt(0) + selectedEmployee.last_name.charAt(0)).toUpperCase()"></div>
                                 <div>
@@ -274,21 +313,21 @@
                             </div>
                         </template>
 
-                        <div class="flex justify-center border-b border-gray-200">
+                        <div class="flex justify-center border-b border-gray-200 overflow-x-auto">
                             <button @click="empTab = 'basic'"
-                                class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200"
+                                class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200 whitespace-nowrap"
                                 :class="empTab === 'basic' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
                                 Basic Details
                                 <span x-show="empTab === 'basic'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full"></span>
                             </button>
                             <button @click="empTab = 'job'"
-                                class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200"
+                                class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200 whitespace-nowrap"
                                 :class="empTab === 'job' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
                                 Job Information
                                 <span x-show="empTab === 'job'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full"></span>
                             </button>
                             <button @click="empTab = 'docs'"
-                                class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200"
+                                class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200 whitespace-nowrap"
                                 :class="empTab === 'docs' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
                                 Documents
                                 <span x-show="empTab === 'docs'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full"></span>
@@ -435,8 +474,8 @@
                 </div>
             </div>
 
-            <!-- Department Summary Cards -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 mx-8">
+            <!-- Department Summary Cards - Responsive Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 mx-4 sm:mx-8">
                 <template x-for="dept in departments" :key="dept.id">
                     <div @click="viewDepartmentDetails(dept)"
                         class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 cursor-pointer transition-all duration-200">
@@ -447,9 +486,9 @@
                 </template>
             </div>
 
-            <!-- Top Control Section -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mx-8">
-                <div class="flex items-center space-x-3 w-full sm:w-auto">
+            <!-- Top Control Section - Responsive Layout -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mx-4 sm:mx-8">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                     <div class="relative flex-1 sm:flex-none sm:w-80 group">
                         <input type="text" x-model="searchQuery" placeholder="Search employees..."
                             class="w-full pl-10 pr-10 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 group-hover:shadow-md">
@@ -463,7 +502,7 @@
 
                     <div class="relative">
                         <button @click="showFilters = !showFilters"
-                            class="w-[180px] py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200 hover:shadow-sm relative flex items-center gap-2 text-sm text-gray-400 justify-start pl-4"
+                            class="w-full sm:w-[180px] py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200 hover:shadow-sm relative flex items-center gap-2 text-sm text-gray-400 justify-center sm:justify-start pl-4"
                             :class="{ 'bg-blue-50 border-blue-300': showFilters || activeFilterCount > 0 }">
                             <svg class="w-4 h-4 transition-colors duration-200"
                                 :class="{ 'text-blue-600': showFilters || activeFilterCount > 0, 'text-gray-500': !showFilters && activeFilterCount === 0 }"
@@ -530,7 +569,7 @@
             </div>
 
             <!-- Active Filters -->
-            <div x-show="selectedDepartments.length > 0 || selectedSort" class="mb-4 flex flex-wrap items-center gap-2 mx-8">
+            <div x-show="selectedDepartments.length > 0 || selectedSort" class="mb-4 flex flex-wrap items-center gap-2 mx-4 sm:mx-8">
                 <span class="text-xs text-gray-500">Active filters:</span>
                 <template x-for="dept in selectedDepartments" :key="dept">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
@@ -550,13 +589,14 @@
             </div>
 
             <!-- Search Results Info -->
-            <div x-show="searchQuery.length > 0" class="mb-4 flex items-center justify-between mx-8">
+            <div x-show="searchQuery.length > 0" class="mb-4 flex items-center justify-between mx-4 sm:mx-8">
                 <p class="text-sm text-gray-600">Found <span class="font-semibold text-blue-600" x-text="resultCount"></span> result<span x-show="resultCount !== 1">s</span> for "<span class="font-semibold" x-text="searchQuery"></span>"</p>
                 <button @click="clearSearch" class="text-xs text-gray-500 hover:text-blue-600 transition-colors duration-200">Clear search</button>
             </div>
 
-            <!-- Employee Table -->
-            <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden mx-8">
+            <!-- Employee Table - Responsive with mobile cards -->
+            <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden mx-4 sm:mx-8">
+                <!-- Desktop Table -->
                 <div class="hidden md:block">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
                         <div class="grid grid-cols-12 gap-4">
@@ -577,7 +617,9 @@
                                                 <span x-text="employee.avatar"></span>
                                             </div>
                                             <div class="min-w-0">
-                                                <p class="font-medium text-gray-800 group-hover:text-blue-600 transition-colors duration-300 truncate" x-text="employee.name"></p>
+                                                <div class="flex items-center gap-1.5">
+                                                    <p class="font-medium text-gray-800 group-hover:text-blue-600 transition-colors duration-300 truncate" x-text="employee.name"></p>
+                                                </div>
                                                 <p class="text-xs text-gray-500 truncate" x-text="employee.email"></p>
                                             </div>
                                         </div>
@@ -621,9 +663,11 @@
                                     <span x-text="employee.avatar"></span>
                                 </div>
                                 <div class="flex-1">
-                                    <div class="flex items-start justify-between">
-                                        <div>
-                                            <p class="font-medium text-gray-800" x-text="employee.name"></p>
+                                    <div class="flex items-start justify-between flex-wrap gap-2">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <p class="font-medium text-gray-800" x-text="employee.name"></p>
+                                            </div>
                                             <p class="text-xs text-gray-500" x-text="employee.email"></p>
                                         </div>
                                         <span class="px-2 py-1 text-xs font-medium rounded-full"
@@ -631,8 +675,14 @@
                                             x-text="employee.status"></span>
                                     </div>
                                     <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
-                                        <div><p class="text-xs text-gray-500">Department</p><p class="font-medium text-gray-800" x-text="employee.department"></p></div>
-                                        <div><p class="text-xs text-gray-500">Position</p><p class="font-medium text-gray-800" x-text="employee.job_title"></p></div>
+                                        <div>
+                                            <p class="text-xs text-gray-500">Department</p>
+                                            <p class="font-medium text-gray-800" x-text="employee.department"></p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-500">Position</p>
+                                            <p class="font-medium text-gray-800" x-text="employee.job_title"></p>
+                                        </div>
                                     </div>
                                     <div class="mt-3">
                                         <button @click="viewEmployee(employee)"

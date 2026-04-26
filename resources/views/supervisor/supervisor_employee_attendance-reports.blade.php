@@ -40,7 +40,7 @@
 <head>
     <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Employee Attendance</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -73,6 +73,7 @@
             --border: #e5e7eb;
         }
 
+        /* ── STAT CARDS ── */
         .stat-cards-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -125,6 +126,7 @@
         .stat-card.undertime .sc-value { color: #6d28d9; }
         .stat-card.undertime .sc-sub   { color: #5b21b6; }
 
+        /* ── TABLE CARD ── */
         .table-card {
             background: #fff; border-radius: 14px;
             border: 1px solid var(--border); overflow: hidden;
@@ -177,6 +179,7 @@
         }
         .toggle-btn.active { background: var(--blue); color: #fff; }
 
+        /* ── DAILY TABLE ── */
         .att-table { width: 100%; border-collapse: collapse; }
         .att-table thead tr { background: #f9fafb; }
         .att-table th {
@@ -191,6 +194,7 @@
         .att-table tr:last-child td { border-bottom: none; }
         .att-table tbody tr:hover { background: #fafafa; }
 
+        /* ── MONTHLY TABLE ── */
         .monthly-table { width: 100%; border-collapse: collapse; }
         .monthly-table thead tr { background: #f9fafb; }
         .monthly-table th {
@@ -233,6 +237,7 @@
         .view-monthly-btn:hover { background: #dbeafe; border-color: #93c5fd; }
         .view-monthly-btn svg { width: 12px; height: 12px; }
 
+        /* ── EMPLOYEE CELL ── */
         .emp-avatar {
             width: 33px; height: 33px; border-radius: 50%;
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
@@ -242,6 +247,7 @@
         .emp-name { font-weight: 600; font-size: 13px; color: #111827; line-height: 1.3; }
         .emp-dept { font-size: 11.5px; color: var(--muted); }
 
+        /* ── SHIFT BADGE ── */
         .shift-badge {
             display: inline-flex; flex-direction: column; align-items: center;
             background: #eff6ff; color: #1d4ed8; border-radius: 6px;
@@ -249,6 +255,7 @@
         }
         .shift-badge .shift-sub { font-size: 10px; font-weight: 500; opacity: .7; }
 
+        /* ── STATUS BADGE ── */
         .status-badge {
             display: inline-block; padding: 4px 12px;
             border-radius: 20px; font-size: 12px; font-weight: 600;
@@ -261,6 +268,7 @@
         .badge-holiday    { background: #ede9fe; color: #7c3aed; }
         .badge-incomplete { background: #fef3c7; color: #b45309; }
 
+        /* ── PAGINATION ── */
         .att-pagination {
             display: flex; align-items: center; justify-content: flex-end;
             gap: 5px; padding: 14px 20px; border-top: 1px solid var(--border);
@@ -275,9 +283,11 @@
         .page-btn:hover  { background: #eff6ff; color: var(--blue); }
         .page-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
 
+        /* ── DETAIL VIEW ── */
         .breadcrumb {
             display: flex; align-items: center; gap: 6px;
             font-size: 13px; color: var(--muted); margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         .breadcrumb a {
             color: var(--muted); text-decoration: none;
@@ -295,6 +305,10 @@
             background: #fff; border: 1px solid var(--border); border-radius: 14px;
             padding: 20px 24px; display: flex; align-items: center; gap: 18px;
             margin-bottom: 20px; box-shadow: 0 1px 6px rgba(0,0,0,.04);
+            flex-wrap: wrap;
+        }
+        @media (max-width: 640px) {
+            .profile-card { flex-direction: column; text-align: center; justify-content: center; }
         }
         .profile-avatar {
             width: 62px; height: 62px; border-radius: 50%;
@@ -350,10 +364,97 @@
         .total-cell:last-child { border-right: none; }
         .total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 4px; }
         .total-value { font-size: 18px; font-weight: 800; color: #111827; }
+
+        /* ========== MOBILE RESPONSIVENESS ========== */
+        @media (max-width: 1024px) {
+            .desktop-sidebar { display: none !important; }
+            .main-content-margin { margin-left: 0 !important; }
+
+            /* ── Stat Cards: single column, full-width ── */
+            .stat-cards-grid {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+                margin-bottom: 16px !important;
+            }
+            .stat-card {
+                padding: 16px 18px !important;
+                border-radius: 12px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                position: relative !important;
+            }
+            .stat-card .sc-icon {
+                display: none !important;
+            }
+            .stat-card .sc-label {
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                letter-spacing: .6px !important;
+                margin-bottom: 2px !important;
+            }
+            .stat-card .sc-value {
+                font-size: 32px !important;
+                font-weight: 800 !important;
+                line-height: 1.1 !important;
+                margin-bottom: 0 !important;
+            }
+            .stat-card .sc-sub {
+                font-size: 11px !important;
+                font-weight: 500 !important;
+                opacity: .75 !important;
+                text-align: right !important;
+                margin-top: 6px !important;
+            }
+
+            /* ── Table toolbar stacks properly ── */
+            .table-toolbar {
+                flex-direction: column;
+                align-items: stretch !important;
+                padding: 14px 14px 12px !important;
+            }
+            .toolbar-right {
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                gap: 8px !important;
+            }
+            .search-box { flex: 1; min-width: 0; }
+            .search-box input { width: 100% !important; }
+            .date-picker { flex: 1; min-width: 0; }
+            .dept-select { flex: 1; min-width: 0; }
+
+            /* ── Tables: horizontal scroll ── */
+            .att-table, .monthly-table, .detail-table { min-width: 700px; }
+            .overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+            /* ── Header padding ── */
+            header .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+
+            /* ── Content area padding ── */
+            .main-content-padding { padding: 14px !important; }
+
+            /* ── Totals row: 2 columns ── */
+            .totals-row { grid-template-columns: repeat(2, 1fr) !important; }
+            .total-cell { border-right: none !important; border-bottom: 1px solid var(--border); }
+            .total-cell:nth-child(odd) { border-right: 1px solid var(--border) !important; }
+            .total-cell:last-child { border-bottom: none; }
+            .total-cell:nth-last-child(2) { border-bottom: none; }
+
+            /* ── Breadcrumb wrap ── */
+            .breadcrumb { flex-wrap: wrap; }
+            .breadcrumb .sep,
+            .breadcrumb .crumb-current:not(:last-child) { display: none; }
+        }
+
+        @media (max-width: 640px) {
+            .stat-cards-grid { gap: 8px !important; }
+            .stat-card .sc-value { font-size: 28px !important; }
+        }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, collapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+     x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })">
 
+{{-- ══════════ SIDEBAR ══════════ --}}
 @php
     $sidebarUser = auth()->user();
     $sidebarEmployee = $sidebarUser ? \App\Models\Employee::with('jobTitle')->where('user_id', $sidebarUser->id)->first() : null;
@@ -370,8 +471,35 @@
     $requestRoutes    = ['supervisor.requests.pending', 'supervisor.requests.approved'];
 @endphp
 
-@include('supervisor.supervisor_sidebar')
+{{-- DESKTOP SIDEBAR (visible on large screens) --}}
+<div class="hidden lg:block desktop-sidebar">
+    @include('supervisor.supervisor_sidebar')
+</div>
 
+{{-- MOBILE SLIDE-OUT DRAWER --}}
+<div x-show="mobileMenuOpen"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-50 lg:hidden"
+     style="display:none;">
+    <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="-translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="-translate-x-full"
+         class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+        @include('supervisor.supervisor_sidebar')
+    </div>
+</div>
+
+{{-- ══════════ MAIN CONTENT ══════════ --}}
 <div x-data="{
         collapsed: localStorage.getItem('sidebarCollapsed') === 'true',
         editModal: false, editLogId: null, editClockIn: '', editClockOut: '', editError: '', editSaving: false,
@@ -389,27 +517,34 @@
         }
     }"
      x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })"
-     :style="collapsed ? 'margin-left:5rem' : 'margin-left:16rem'"
+     :style="window.innerWidth >= 1024 ? (collapsed ? 'margin-left:5rem' : 'margin-left:16rem') : 'margin-left:0'"
+     x-on:resize.window="$el.style.marginLeft = window.innerWidth >= 1024 ? (collapsed ? '5rem' : '16rem') : '0'"
      style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1); min-height:100vh;">
 
-    {{-- ✅ FIXED: overflow-visible so notif dropdown is never clipped --}}
     <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
         <div class="flex items-center justify-between px-6 py-4">
-            <div>
-                <h1 class="text-xl sm:text-2xl font-bold text-white leading-tight">Employee Attendance</h1>
-                <p class="text-xs sm:text-sm text-blue-100 mt-0.5">Track and manage workforce attendance records</p>
-            </div>
             <div class="flex items-center gap-3">
-                {{-- ✅ x-supervisor-notif component --}}
+                <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="text-white text-[22px] font-bold tracking-[0.3px] m-0">Employee Attendance</h1>
+                    <p class="text-white/65 text-[13px] mt-[3px] mb-0">Track and manage workforce attendance records</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2.5">
                 <x-supervisor-notif />
             </div>
         </div>
     </header>
 
-    <div style="padding:24px 32px;">
+    <div class="main-content-padding" style="padding:24px 32px;">
 
         @if($viewingDetail)
-        {{-- ══ EMPLOYEE DETAIL VIEW ══ --}}
+        {{-- ══════════ EMPLOYEE DETAIL VIEW ══════════ --}}
+
         <div class="breadcrumb">
             <a href="{{ route('supervisor.attendance.employee', ['view' => 'monthly', 'month' => $selectedMonth]) }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -439,11 +574,13 @@
                     <form method="GET" action="{{ route('supervisor.attendance.employee') }}" id="detailForm" style="display:contents;">
                         <input type="hidden" name="view" value="monthly">
                         <input type="hidden" name="employee_id" value="{{ request('employee_id') }}">
+
                         <div class="period-btns">
                             <button type="button" class="period-btn {{ $selectedPeriod == '1' ? 'active' : '' }}" onclick="setPeriod('1')">Period 1</button>
                             <button type="button" class="period-btn {{ $selectedPeriod == '2' ? 'active' : '' }}" onclick="setPeriod('2')">Period 2</button>
                         </div>
                         <input type="hidden" name="period" id="periodInput" value="{{ $selectedPeriod }}">
+
                         <div class="date-picker">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -452,6 +589,7 @@
                                 onchange="document.getElementById('detailForm').submit()">
                         </div>
                     </form>
+
                     <button onclick="exportAttendancePdf()" class="export-btn" style="border:none;cursor:pointer;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -461,7 +599,7 @@
                 </div>
             </div>
 
-            <div style="overflow-x:auto;">
+            <div class="overflow-x-auto">
                 <table class="detail-table">
                     <thead>
                         <tr>
@@ -478,6 +616,11 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @php
+                            $start = $selectedPeriod == '1' ? $period1Start : $period2Start;
+                            $end   = $selectedPeriod == '1' ? $period1End   : $period2End;
+                        @endphp
+
                         @forelse($dailyRecords ?? [] as $rec)
                         @php
                             $st     = strtolower($rec->status ?? 'present');
@@ -544,7 +687,8 @@
         </div>
 
         @else
-        {{-- ══ STAT CARDS + LIST VIEW ══ --}}
+        {{-- ══════════ STAT CARDS + LIST VIEW ══════════ --}}
+
         <div class="stat-cards-grid">
             <div class="stat-card present">
                 <div class="sc-icon">
@@ -556,6 +700,7 @@
                 <div class="sc-value">{{ $presentCount ?? 0 }}</div>
                 <div class="sc-sub">{{ $presentRate ?? '0%' }} attendance rate</div>
             </div>
+
             <div class="stat-card late">
                 <div class="sc-icon">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -566,6 +711,7 @@
                 <div class="sc-value">{{ $lateCount ?? 0 }}</div>
                 <div class="sc-sub">{{ $lateRate ?? '0%' }} of workforce</div>
             </div>
+
             <div class="stat-card absent">
                 <div class="sc-icon">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -576,6 +722,7 @@
                 <div class="sc-value">{{ $absentCount ?? 0 }}</div>
                 <div class="sc-sub">{{ $absentRate ?? '0%' }} absent today</div>
             </div>
+
             <div class="stat-card overtime">
                 <div class="sc-icon">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -586,6 +733,7 @@
                 <div class="sc-value">{{ $overtimeHours ?? '0 hrs' }}</div>
                 <div class="sc-sub">Across {{ $overtimeEmployees ?? 0 }} employees</div>
             </div>
+
             <div class="stat-card undertime">
                 <div class="sc-icon">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -603,6 +751,7 @@
                 <h2>Attendance Records</h2>
                 <div class="toolbar-right">
                     <form method="GET" action="{{ route('supervisor.attendance.employee') }}" id="filterForm" style="display:contents">
+
                         @if($currentView === 'daily')
                         <div class="search-box">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -630,6 +779,17 @@
                                 onchange="document.getElementById('filterForm').submit()">
                         </div>
                         @endif
+
+                        <select name="department" class="dept-select"
+                            onchange="document.getElementById('filterForm').submit()">
+                            <option value="">All Departments</option>
+                            @foreach($departments ?? [] as $dept)
+                                <option value="{{ $dept->id }}" {{ request('department') == $dept->id ? 'selected' : '' }}>
+                                    {{ $dept->name }}
+                                </option>
+                            @endforeach
+                        </select>
+
                         <div class="toggle-btns">
                             <button type="button" class="toggle-btn {{ $currentView === 'daily' ? 'active' : '' }}"
                                 onclick="setView('daily')">Daily</button>
@@ -637,12 +797,15 @@
                                 onclick="setView('monthly')">Monthly</button>
                         </div>
                         <input type="hidden" name="view" id="viewInput" value="{{ $currentView }}">
+
                     </form>
                 </div>
             </div>
 
-            <div style="overflow-x:auto;">
+            <div class="overflow-x-auto">
+
                 @if($currentView === 'daily')
+                {{-- ── DAILY TABLE ── --}}
                 <table class="att-table">
                     <thead>
                         <tr>
@@ -696,6 +859,7 @@
                 </table>
 
                 @else
+                {{-- ── MONTHLY TABLE ── --}}
                 <table class="monthly-table">
                     <thead>
                         <tr>
@@ -750,8 +914,10 @@
                     </tbody>
                 </table>
                 @endif
+
             </div>
 
+            {{-- Pagination --}}
             @if(isset($records) && $records instanceof \Illuminate\Pagination\LengthAwarePaginator)
             <div class="att-pagination">
                 @for($p = 1; $p <= $records->lastPage(); $p++)
@@ -765,23 +931,35 @@
                 @endfor
             </div>
             @endif
+
         </div>
-        @endif
+        @endif {{-- end @if($viewingDetail) --}}
 
     </div>
 </div>
 
 <script>
-    function setView(v) {
-        document.getElementById('viewInput').value = v;
-        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
+    function setView(viewType) {
+        document.getElementById('viewInput').value = viewType;
+        const btns = document.querySelectorAll('.toggle-btn');
+        btns.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.innerText.toLowerCase() === viewType) {
+                btn.classList.add('active');
+            }
+        });
         document.getElementById('filterForm').submit();
     }
-    function setPeriod(p) {
-        document.getElementById('periodInput').value = p;
-        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
+
+    function setPeriod(periodValue) {
+        document.getElementById('periodInput').value = periodValue;
+        const btns = document.querySelectorAll('.period-btn');
+        btns.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.innerText === 'Period ' + periodValue) {
+                btn.classList.add('active');
+            }
+        });
         document.getElementById('detailForm').submit();
     }
 
@@ -816,7 +994,7 @@
             <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.overtime}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;"><span style="background:${sBg(r.status)};color:${sClr(r.status)};padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;">${r.status}</span></td>
         </tr>`).join('');
-        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_empName} – ${_period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report — ${_empName}</div><div class="badge">${_period}</div></div><table><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></body></html>`;
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_empName} – ${_period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report — ${_empName}</div><div class="badge">${_period}</div></div></td><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></body></html>`;
         const w = window.open('', '_blank', 'width=1050,height=820,scrollbars=yes');
         if (!w) return;
         w.document.write(html);

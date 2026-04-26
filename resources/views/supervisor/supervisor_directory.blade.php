@@ -1,3 +1,5 @@
+{{-- FILE NAME: supervisor/employees/index.blade.php (Supervisor Employees Directory - Mobile Responsive) --}}
+
 @extends('layouts.app')
 
 @section('title', 'Employees Directory - Medisource HRMS')
@@ -19,6 +21,7 @@
         this.$watch('searchQuery', () => { this.currentPage = 1; });
         this.$watch('selectedSort', () => { this.currentPage = 1; });
     },
+    mobileMenuOpen: false,
     showAddEmployee: false,
     showManageDepartment: false,
     showEmployeeDetails: false,
@@ -76,12 +79,14 @@
             contract_period: '', end_date: ''
         };
         this.showAddEmployee = true;
+        document.body.style.overflow = 'hidden';
     },
 
     closeAddEmployee() {
         this.showAddEmployee = false;
         this.formErrors = {};
         this.isSaving = false;
+        document.body.style.overflow = '';
     },
 
     nextStep() { if (this.addStep < 3) this.addStep++; },
@@ -210,6 +215,7 @@
         };
         this.isDeptEditMode = false;
         this.showDepartmentDetails = true;
+        document.body.style.overflow = 'hidden';
     },
 
     addJobTitle() {
@@ -357,17 +363,23 @@
         this.empTab = 'basic';
         this.employeeDocuments = [];
         this.showEmployeeDetails = true;
+        this.loadDocuments(employee.id);
         setTimeout(() => { document.body.style.overflow = 'hidden'; }, 100);
-        this.isLoadingDocs = true;
-        fetch(`/supervisor/employees/${employee.id}/documents`, {
-            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') }
-        }).then(r => r.json()).then(data => {
-            this.employeeDocuments = data.documents || [];
-            this.isLoadingDocs = false;
-        }).catch(() => { this.isLoadingDocs = false; });
     },
 
     enableEditMode() { this.isEditMode = true; },
+
+    async loadDocuments(employeeId) {
+        this.isLoadingDocs = true;
+        try {
+            const res = await fetch(`/supervisor/employees/${employeeId}/documents`, {
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') }
+            });
+            const data = await res.json();
+            this.employeeDocuments = data.documents || [];
+        } catch (e) { console.error('Failed to load documents', e); }
+        this.isLoadingDocs = false;
+    },
 
     async saveChanges() {
         if (!this.selectedEmployee.contact_number || this.selectedEmployee.contact_number.length < 10) {
@@ -448,6 +460,12 @@
     async handleDocUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!['pdf', 'doc', 'docx'].includes(ext)) {
+            this.showToast('Only PDF and Word documents (doc/docx) are allowed.', 'error');
+            event.target.value = '';
+            return;
+        }
         this.isUploadingDoc = true;
         const formData = new FormData();
         formData.append('document', file);
@@ -500,19 +518,55 @@
     showConfirm(message, onConfirm) { this.confirmModal = { show: true, message, onConfirm }; },
     confirmOk() { if (this.confirmModal.onConfirm) this.confirmModal.onConfirm(); this.confirmModal.show = false; },
     confirmCancel() { this.confirmModal.show = false; },
-}" class="flex h-screen overflow-hidden bg-gray-50" @keydown.escape.window="closeModal(); closeAddEmployee()">
+}"
+    class="flex h-screen overflow-hidden bg-gray-50"
+    @keydown.escape.window="closeModal(); closeAddEmployee()">
 
-    @include('supervisor.supervisor_sidebar')
+    {{-- DESKTOP SIDEBAR (hidden on mobile) --}}
+    <div class="hidden lg:block">
+        @include('supervisor.supervisor_sidebar')
+    </div>
 
-    <main class="flex-1 overflow-y-auto transition-all duration-300"
+    {{-- MOBILE DRAWER --}}
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 lg:hidden"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+            @include('supervisor.supervisor_sidebar')
+        </div>
+    </div>
+
+    <main class="flex-1 overflow-y-auto transition-all duration-300 w-full"
           :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'">
 
         <!-- Top Header -->
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
+        <header class="anim-fade bg-gradient-to-r from-blue-600 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-                <div>
-                    <h1 class="text-xl sm:text-2xl font-bold text-white">Employees</h1>
-                    <p class="text-xs sm:text-sm text-blue-100 mt-1">Employee Directory</p>
+                <div class="flex items-center gap-3">
+                    <button @click="mobileMenuOpen = true"
+                            class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white">Employees</h1>
+                        <p class="text-xs sm:text-sm text-blue-100 mt-1">Employee Directory</p>
+                    </div>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-4">
                     <x-supervisor-notif />
@@ -534,27 +588,27 @@
                     x-transition:leave="transition-all duration-150 ease-in"
                     x-transition:leave-start="opacity-100 scale-100"
                     x-transition:leave-end="opacity-0 scale-90"
-                    class="bg-white rounded-2xl shadow-2xl flex flex-col items-center justify-center text-center p-10"
-                    style="width: 460px; min-height: 320px;"
+                    class="bg-white rounded-2xl shadow-2xl flex flex-col items-center justify-center text-center p-8 sm:p-10 w-full max-w-sm sm:max-w-md"
+                    style="min-height: 260px;"
                     @click.stop>
-                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 shadow-sm"
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center mb-4 sm:mb-5 shadow-sm"
                         :class="alertModal.type === 'success' ? 'bg-blue-50' : 'bg-red-50'">
                         <template x-if="alertModal.type === 'success'">
-                            <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <svg class="w-7 h-7 sm:w-8 sm:h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                             </svg>
                         </template>
                         <template x-if="alertModal.type === 'error'">
-                            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <svg class="w-7 h-7 sm:w-8 sm:h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                             </svg>
                         </template>
                     </div>
                     <p class="text-sm font-semibold text-gray-800 mb-1"
                         x-text="alertModal.type === 'success' ? 'Success' : 'Action Failed'"></p>
-                    <p class="text-sm text-gray-500 mb-7 leading-snug" x-text="alertModal.message"></p>
+                    <p class="text-sm text-gray-500 mb-6 leading-snug" x-text="alertModal.message"></p>
                     <button @click="alertModal.show = false"
-                        class="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl active:scale-95 transition-all duration-150 shadow-md hover:shadow-lg">
+                        class="px-8 py-2.5 text-white text-sm font-semibold rounded-xl active:scale-95 transition-all duration-150 shadow-md hover:shadow-lg bg-blue-600 hover:bg-blue-700">
                         OK
                     </button>
                 </div>
@@ -571,34 +625,34 @@
                     x-transition:leave="transition-all duration-150 ease-in"
                     x-transition:leave-start="opacity-100 scale-100"
                     x-transition:leave-end="opacity-0 scale-90"
-                    class="bg-white rounded-2xl shadow-2xl flex flex-col items-center justify-center text-center p-10"
-                    style="width: 420px; min-height: 260px;"
+                    class="bg-white rounded-2xl shadow-2xl flex flex-col items-center justify-center text-center p-8 sm:p-10 w-full max-w-sm sm:max-w-md"
+                    style="min-height: 220px;"
                     @click.stop>
-                    <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-5 shadow-sm">
-                        <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4 shadow-sm">
+                        <svg class="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                         </svg>
                     </div>
                     <p class="text-sm font-semibold text-gray-800 mb-1">Confirm Action</p>
-                    <p class="text-sm text-gray-500 mb-7 leading-snug" x-text="confirmModal.message"></p>
+                    <p class="text-sm text-gray-500 mb-6 leading-snug" x-text="confirmModal.message"></p>
                     <div class="flex gap-3">
                         <button @click="confirmCancel()"
-                            class="px-7 py-2.5 text-sm font-semibold rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all">
+                            class="px-6 py-2.5 text-sm font-semibold rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all">
                             Cancel
                         </button>
                         <button @click="confirmOk()"
-                            class="px-7 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-md">
+                            class="px-6 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-md">
                             Confirm
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- ===================== MANAGE DEPARTMENT MODAL (no Add Dept button) ===================== -->
+            <!-- ===================== MANAGE DEPARTMENT MODAL - MOBILE RESPONSIVE ===================== -->
             <div x-show="showManageDepartment" x-cloak
-                class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
                 style="background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);"
-                @click.self="showManageDepartment = false">
+                @click.self="showManageDepartment = false; document.body.style.overflow = 'auto'">
                 <div x-show="showManageDepartment"
                     x-transition:enter="transition-all duration-300 ease-out"
                     x-transition:enter-start="opacity-0 scale-95 translate-y-4"
@@ -606,41 +660,84 @@
                     x-transition:leave="transition-all duration-200 ease-in"
                     x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                     x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-                    class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden relative"
+                    class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden relative flex flex-col"
+                    style="max-height: 92vh;"
                     @click.stop>
-                    <div class="px-8 pt-8 pb-6 flex items-center justify-between">
-                        <h2 class="text-2xl font-bold text-gray-900">Manage Department</h2>
-                        <button @click="showManageDepartment = false"
-                            class="w-10 h-10 flex items-center justify-center rounded-full border-2 border-gray-300 text-gray-500 hover:border-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200 bg-white">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+
+                    <div class="px-4 sm:px-8 pt-5 sm:pt-7 pb-3 sm:pb-4 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Manage Department</h2>
+                        <button @click="showManageDepartment = false; document.body.style.overflow = 'auto'"
+                            class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full border-2 border-gray-300 text-gray-500 hover:border-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200 bg-white">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </button>
                     </div>
-                    <div class="px-8 pb-8 overflow-y-auto" style="max-height: calc(90vh - 140px);">
-                        <table class="w-full border border-gray-200 rounded-xl overflow-hidden">
-                            <thead>
-                                <tr class="bg-gray-50 border-b border-gray-200">
-                                    <th class="text-left px-5 py-3 text-sm font-semibold text-gray-700 w-1/3">Department</th>
-                                    <th class="text-left px-5 py-3 text-sm font-semibold text-gray-700">Job Titles</th>
-                                    <th class="text-center px-5 py-3 text-sm font-semibold text-gray-700 w-32">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <template x-for="dept in departments" :key="dept.id">
-                                    <tr class="hover:bg-gray-50 transition-colors duration-150">
-                                        <td class="px-5 py-4 text-sm font-medium text-gray-800 align-top" x-text="dept.name"></td>
-                                        <td class="px-5 py-4 text-sm text-gray-500 align-top">
-                                            <span x-text="dept.job_titles.map(j => j.title).join(', ')"></span>
-                                        </td>
-                                        <td class="px-5 py-4 text-center align-middle w-36">
-                                            <button @click="viewDepartmentDetails(dept)"
-                                                class="whitespace-nowrap px-5 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">View Details</button>
-                                        </td>
+
+                    <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+                        <!-- Mobile Card View -->
+                        <div class="space-y-3 sm:hidden">
+                            <template x-for="dept in departments" :key="dept.id">
+                                <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <h3 class="text-base font-bold text-gray-800" x-text="dept.name"></h3>
+                                        <button @click="viewDepartmentDetails(dept)"
+                                            class="px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-sm">
+                                            View Details
+                                        </button>
+                                    </div>
+                                    <div class="pt-2 border-t border-gray-100">
+                                        <p class="text-xs text-gray-500 mb-2">Job Titles</p>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <template x-for="job in dept.job_titles" :key="job.id">
+                                                <span class="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md" x-text="job.title"></span>
+                                            </template>
+                                            <template x-if="dept.job_titles.length === 0">
+                                                <span class="text-xs text-gray-400 italic">No job titles</span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Desktop Table View -->
+                        <div class="hidden sm:block overflow-x-auto">
+                            <table class="w-full border border-gray-200 rounded-xl overflow-hidden">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b border-gray-200">
+                                        <th class="text-left px-5 py-3 text-sm font-semibold text-gray-700 w-1/3">Department</th>
+                                        <th class="text-left px-5 py-3 text-sm font-semibold text-gray-700">Job Titles</th>
+                                        <th class="text-center px-5 py-3 text-sm font-semibold text-gray-700 w-36">Actions</th>
                                     </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <template x-for="dept in departments" :key="dept.id">
+                                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                            <td class="px-5 py-4 text-sm font-medium text-gray-800 align-top" x-text="dept.name"></td>
+                                            <td class="px-5 py-4 text-sm text-gray-500 align-top">
+                                                <span x-text="dept.job_titles.map(j => j.title).join(', ')"></span>
+                                            </td>
+                                            <td class="px-5 py-4 text-center align-middle">
+                                                <button @click="viewDepartmentDetails(dept)"
+                                                    class="whitespace-nowrap px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">View Details</button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <template x-if="departments.length === 0">
+                                        <tr>
+                                            <td colspan="3" class="px-5 py-8 text-center text-sm text-gray-400">No departments found.</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="px-4 sm:px-8 py-3 border-t border-gray-100 bg-gray-50 flex-shrink-0">
+                        <p class="text-xs text-gray-400 text-center sm:text-left">
+                            <span x-text="departments.length"></span> department<span x-show="departments.length !== 1">s</span> total
+                        </p>
                     </div>
                 </div>
             </div>
@@ -649,7 +746,7 @@
             <div x-show="showDepartmentDetails" x-cloak
                 class="fixed inset-0 z-50 flex items-center justify-center p-4"
                 style="background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);"
-                @click.self="showDepartmentDetails = false; isDeptEditMode = false">
+                @click.self="showDepartmentDetails = false; isDeptEditMode = false; document.body.style.overflow = 'auto'">
                 <div x-show="showDepartmentDetails"
                     x-transition:enter="transition-all duration-300 ease-out"
                     x-transition:enter-start="opacity-0 scale-95 translate-y-4"
@@ -659,7 +756,7 @@
                     x-transition:leave-end="opacity-0 scale-95 translate-y-4"
                     class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative"
                     @click.stop>
-                    <button @click="showDepartmentDetails = false; isDeptEditMode = false"
+                    <button @click="showDepartmentDetails = false; isDeptEditMode = false; document.body.style.overflow = 'auto'"
                         class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full border-2 border-gray-300 text-gray-500 hover:border-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200 z-10 bg-white">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -740,8 +837,8 @@
                     style="max-height: 92vh;"
                     @click.stop>
 
-                    <div class="px-8 pt-7 pb-0 flex items-center justify-between">
-                        <h2 class="text-2xl font-bold text-gray-900">Add Employee</h2>
+                    <div class="px-6 sm:px-8 pt-6 sm:pt-7 pb-0 flex items-center justify-between">
+                        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Add Employee</h2>
                         <button @click="closeAddEmployee()"
                             class="w-9 h-9 flex items-center justify-center rounded-full border-2 border-gray-300 text-gray-400 hover:border-gray-500 hover:text-gray-600 transition-all duration-150">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
@@ -750,21 +847,21 @@
                         </button>
                     </div>
 
-                    <div class="px-8 pt-5 pb-0">
-                        <div class="flex gap-4">
-                            <button @click="addStep = 1" class="flex-1 pb-3 text-sm font-medium transition-all duration-200 relative text-left"
+                    <div class="px-6 sm:px-8 pt-5 pb-0">
+                        <div class="flex gap-2 sm:gap-4">
+                            <button @click="addStep = 1" class="flex-1 pb-3 text-xs sm:text-sm font-medium transition-all duration-200 relative text-left"
                                 :class="addStep === 1 ? 'text-blue-600' : addStep > 1 ? 'text-gray-500' : 'text-gray-300'">
                                 Basic Details
                                 <span class="absolute bottom-0 left-0 right-0 h-1 rounded-full transition-all duration-300"
                                     :class="addStep === 1 ? 'bg-blue-600' : addStep > 1 ? 'bg-gray-400' : 'bg-gray-200'"></span>
                             </button>
-                            <button @click="addStep >= 2 ? addStep = 2 : null" class="flex-1 pb-3 text-sm font-medium transition-all duration-200 relative text-center"
+                            <button @click="addStep >= 2 ? addStep = 2 : null" class="flex-1 pb-3 text-xs sm:text-sm font-medium transition-all duration-200 relative text-center"
                                 :class="addStep === 2 ? 'text-blue-600' : addStep > 2 ? 'text-gray-500' : 'text-gray-300'">
-                                Job Information
+                                Job Info
                                 <span class="absolute bottom-0 left-0 right-0 h-1 rounded-full transition-all duration-300"
                                     :class="addStep === 2 ? 'bg-blue-600' : addStep > 2 ? 'bg-gray-400' : 'bg-gray-200'"></span>
                             </button>
-                            <button @click="addStep >= 3 ? addStep = 3 : null" class="flex-1 pb-3 text-sm font-medium transition-all duration-200 relative text-right"
+                            <button @click="addStep >= 3 ? addStep = 3 : null" class="flex-1 pb-3 text-xs sm:text-sm font-medium transition-all duration-200 relative text-right"
                                 :class="addStep === 3 ? 'text-blue-600' : 'text-gray-300'">
                                 Documents
                                 <span class="absolute bottom-0 left-0 right-0 h-1 rounded-full transition-all duration-300"
@@ -774,10 +871,10 @@
                     </div>
 
                     <!-- STEP 1: Basic Details -->
-                    <div x-show="addStep === 1" class="px-8 pt-5 pb-0 space-y-4 overflow-y-auto" style="max-height: calc(92vh - 185px);">
+                    <div x-show="addStep === 1" class="px-6 sm:px-8 pt-5 pb-0 space-y-4 overflow-y-auto" style="max-height: calc(92vh - 185px);">
                         <div>
                             <label class="block text-sm font-semibold text-gray-800 mb-1.5">Name</label>
-                            <div class="flex gap-2">
+                            <div class="flex flex-col sm:flex-row gap-2">
                                 <div class="flex-1 min-w-0">
                                     <input type="text" x-model="newEmployeeForm.first_name" placeholder="First Name"
                                         @input="newEmployeeForm.first_name = $event.target.value.replace(/[^a-zA-Z\s\-']/g, '')"
@@ -794,22 +891,24 @@
                                         class="w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-transparent text-gray-700 placeholder-gray-400">
                                     <p x-show="hasError('last_name')" x-text="fieldError('last_name')" class="text-xs text-red-500 mt-1"></p>
                                 </div>
-                                <div class="w-14">
-                                    <input type="text" x-model="newEmployeeForm.mi" placeholder="MI" minlength="1" maxlength="2"
-                                        @input="newEmployeeForm.mi = $event.target.value.replace(/[^a-zA-Z]/g, '')"
-                                        class="w-full px-2 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 text-center uppercase text-gray-700 placeholder-gray-400">
-                                </div>
-                                <div class="relative w-36">
-                                    <select x-model="newEmployeeForm.suffix"
-                                        class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 appearance-none bg-white text-gray-400">
-                                        <option value="" disabled selected>Choose suffix</option>
-                                        <option value="None">None</option>
-                                        <option value="Sr.">Sr.</option>
-                                        <option value="Jr.">Jr.</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                    <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                <div class="flex flex-row gap-2">
+                                    <div class="w-16">
+                                        <input type="text" x-model="newEmployeeForm.mi" placeholder="MI" minlength="1" maxlength="2"
+                                            @input="newEmployeeForm.mi = $event.target.value.replace(/[^a-zA-Z]/g, '')"
+                                            class="w-full px-2 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 text-center uppercase text-gray-700 placeholder-gray-400">
+                                    </div>
+                                    <div class="relative flex-1 sm:w-36">
+                                        <select x-model="newEmployeeForm.suffix"
+                                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 appearance-none bg-white text-gray-400">
+                                            <option value="" disabled selected>Suffix</option>
+                                            <option value="None">None</option>
+                                            <option value="Sr.">Sr.</option>
+                                            <option value="Jr.">Jr.</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -819,15 +918,15 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="flex-1">
                                 <label class="block text-sm font-semibold text-gray-800 mb-1.5">Date of Birth</label>
                                 <input type="date" x-model="newEmployeeForm.date_of_birth"
                                     :class="hasError('date_of_birth') ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-blue-400'"
                                     class="w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-transparent text-gray-400">
                                 <p x-show="hasError('date_of_birth')" x-text="fieldError('date_of_birth')" class="text-xs text-red-500 mt-1"></p>
                             </div>
-                            <div>
+                            <div class="flex-1">
                                 <label class="block text-sm font-semibold text-gray-800 mb-1.5">Gender</label>
                                 <div class="relative">
                                     <select x-model="newEmployeeForm.gender"
@@ -873,12 +972,11 @@
                                 class="w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-transparent text-gray-700 placeholder-gray-400">
                             <p x-show="hasError('contact_no')" x-text="fieldError('contact_no')" class="text-xs text-red-500 mt-1"></p>
                         </div>
-
                         <div class="h-2"></div>
                     </div>
 
                     <!-- STEP 2: Job Information -->
-                    <div x-show="addStep === 2" class="px-8 pt-5 pb-0 space-y-4 overflow-y-auto" style="max-height: calc(92vh - 185px);">
+                    <div x-show="addStep === 2" class="px-6 sm:px-8 pt-5 pb-0 space-y-4 overflow-y-auto" style="max-height: calc(92vh - 185px);">
 
                         <!-- Department: locked to supervisor's department -->
                         <div>
@@ -905,8 +1003,8 @@
                             <p x-show="hasError('job_title_id')" x-text="fieldError('job_title_id')" class="text-xs text-red-500 mt-1"></p>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="flex-1">
                                 <label class="block text-sm font-semibold text-gray-800 mb-1.5">Employment Type</label>
                                 <div class="relative">
                                     <select x-model="newEmployeeForm.employment_type"
@@ -924,7 +1022,7 @@
                                 </div>
                                 <p x-show="hasError('employment_type')" x-text="fieldError('employment_type')" class="text-xs text-red-500 mt-1"></p>
                             </div>
-                            <div>
+                            <div class="flex-1">
                                 <label class="block text-sm font-semibold text-gray-800 mb-1.5">Employment Status</label>
                                 <div class="relative">
                                     <select x-model="newEmployeeForm.employment_status"
@@ -946,8 +1044,8 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="flex-1">
                                 <label class="block text-sm font-semibold text-gray-800 mb-1.5">Contract Period</label>
                                 <div class="relative">
                                     <select x-model="newEmployeeForm.contract_period"
@@ -964,18 +1062,17 @@
                                     </div>
                                 </div>
                             </div>
-                            <div>
+                            <div class="flex-1">
                                 <label class="block text-sm font-semibold text-gray-800 mb-1.5">End Date <span class="text-gray-400 font-normal">(optional)</span></label>
                                 <input type="date" x-model="newEmployeeForm.end_date"
                                     class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 text-gray-400">
                             </div>
                         </div>
-
                         <div class="h-2"></div>
                     </div>
 
                     <!-- STEP 3: Documents -->
-                    <div x-show="addStep === 3" class="px-8 pt-5 pb-0 space-y-4 overflow-y-auto" style="max-height: calc(92vh - 185px);">
+                    <div x-show="addStep === 3" class="px-6 sm:px-8 pt-5 pb-0 space-y-4 overflow-y-auto" style="max-height: calc(92vh - 185px);">
                         <div>
                             <label class="block text-sm font-semibold text-gray-800 mb-2">Upload Documents</label>
                             <label for="file-upload-wiz"
@@ -1017,13 +1114,13 @@
                     </div>
 
                     <!-- Footer -->
-                    <div class="px-8 py-5 flex items-center justify-between border-t border-gray-100 bg-white">
+                    <div class="px-6 sm:px-8 py-5 flex items-center justify-between border-t border-gray-100 bg-white">
                         <div>
                             <p x-show="Object.keys(formErrors).length > 0" class="text-xs text-red-500">Please fix the highlighted errors.</p>
                         </div>
                         <div class="flex items-center gap-3">
                             <button x-show="addStep > 1" @click="addStep--"
-                                class="px-7 py-2.5 text-sm font-medium text-gray-600 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-200">
+                                class="px-5 sm:px-7 py-2.5 text-sm font-medium text-gray-600 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-200">
                                 Back
                             </button>
                             <button x-show="addStep < 3"
@@ -1035,7 +1132,7 @@
                                     (addStep === 1 && !(newEmployeeForm.first_name && newEmployeeForm.last_name && validEmail(newEmployeeForm.email) && newEmployeeForm.contact_no.length === 11)) ||
                                     (addStep === 2 && !(newEmployeeForm.job_title_id && newEmployeeForm.employment_type && newEmployeeForm.employment_status))
                                 "
-                                class="px-7 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200"
+                                class="px-5 sm:px-7 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200"
                                 :class="{
                                     'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer':
                                         (addStep === 1 && newEmployeeForm.first_name && newEmployeeForm.last_name && validEmail(newEmployeeForm.email) && newEmployeeForm.contact_no.length === 11) ||
@@ -1047,7 +1144,7 @@
                                 Save &amp; Continue
                             </button>
                             <button x-show="addStep === 3" @click="saveEmployee()" :disabled="isSaving"
-                                class="px-7 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200"
+                                class="px-5 sm:px-7 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200"
                                 :class="isSaving ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'">
                                 <span x-show="!isSaving">Save Employee</span>
                                 <span x-show="isSaving" class="flex items-center gap-2">
@@ -1080,7 +1177,6 @@
                     style="max-height: 92vh;"
                     @click.stop x-show="selectedEmployee">
 
-                    <!-- Close button -->
                     <button @click="closeModal"
                         class="absolute top-5 right-5 w-9 h-9 flex items-center justify-center rounded-full border-2 border-gray-200 text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all duration-200 z-10 bg-white">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
@@ -1088,36 +1184,34 @@
                         </svg>
                     </button>
 
-                    <!-- Header: Avatar + Name -->
-                    <div class="px-8 pt-7 pb-0 flex-shrink-0">
+                    <div class="px-6 sm:px-8 pt-6 sm:pt-7 pb-0 flex-shrink-0">
                         <template x-if="selectedEmployee">
-                            <div class="flex items-center gap-4 mb-5">
-                                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-md flex-shrink-0"
+                            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-5 text-center sm:text-left">
+                                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-lg sm:text-xl font-bold shadow-md flex-shrink-0"
                                     x-text="(selectedEmployee.first_name.charAt(0) + selectedEmployee.last_name.charAt(0)).toUpperCase()"></div>
                                 <div>
-                                    <h2 class="text-xl font-bold text-gray-900 leading-tight"
+                                    <h2 class="text-lg sm:text-xl font-bold text-gray-900 leading-tight"
                                         x-text="selectedEmployee.first_name + ' ' + (selectedEmployee.mi ? selectedEmployee.mi + '. ' : '') + selectedEmployee.last_name + (selectedEmployee.suffix ? ' ' + selectedEmployee.suffix : '')"></h2>
                                     <p class="text-sm text-gray-500 mt-0.5" x-text="selectedEmployee.position"></p>
                                 </div>
                             </div>
                         </template>
 
-                        <!-- Tab Bar -->
-                        <div class="flex justify-center border-b border-gray-200">
+                        <div class="flex justify-center border-b border-gray-200 overflow-x-auto">
                             <button @click="empTab = 'basic'; isEditMode = false"
-                                class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200"
+                                class="px-4 sm:px-5 pb-3 text-sm font-medium relative transition-colors duration-200 whitespace-nowrap"
                                 :class="empTab === 'basic' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
                                 Basic Details
                                 <span x-show="empTab === 'basic'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full"></span>
                             </button>
                             <button @click="empTab = 'job'; isEditMode = false"
-                                class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200"
+                                class="px-4 sm:px-5 pb-3 text-sm font-medium relative transition-colors duration-200 whitespace-nowrap"
                                 :class="empTab === 'job' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
                                 Job Information
                                 <span x-show="empTab === 'job'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full"></span>
                             </button>
                             <button @click="empTab = 'docs'; isEditMode = false"
-                                class="px-5 pb-3 text-sm font-medium relative transition-colors duration-200"
+                                class="px-4 sm:px-5 pb-3 text-sm font-medium relative transition-colors duration-200 whitespace-nowrap"
                                 :class="empTab === 'docs' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
                                 Documents
                                 <span x-show="empTab === 'docs'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full"></span>
@@ -1125,19 +1219,16 @@
                         </div>
                     </div>
 
-                    <!-- Tab Contents (scrollable) -->
                     <div class="flex-1 overflow-y-auto">
                         <template x-if="selectedEmployee">
                             <div>
 
                                 <!-- BASIC DETAILS TAB -->
-                                <div x-show="empTab === 'basic'" class="px-8 py-5 space-y-4">
-
-                                    <!-- Full Name -->
+                                <div x-show="empTab === 'basic'" class="px-6 sm:px-8 py-5 space-y-4">
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Full Name</label>
-                                        <div class="grid grid-cols-12 gap-2">
-                                            <div class="col-span-5">
+                                        <div class="flex flex-col sm:flex-row gap-2">
+                                            <div class="flex-1">
                                                 <input type="text" x-model="selectedEmployee.first_name" placeholder="First Name"
                                                     :readonly="!isEditMode"
                                                     @input="if(isEditMode) selectedEmployee.first_name = $event.target.value.replace(/[^a-zA-Z\s\-']/g, '')"
@@ -1145,7 +1236,7 @@
                                                     :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
                                                     class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                                             </div>
-                                            <div class="col-span-5">
+                                            <div class="flex-1">
                                                 <input type="text" x-model="selectedEmployee.last_name" placeholder="Last Name"
                                                     :readonly="!isEditMode"
                                                     @input="if(isEditMode) selectedEmployee.last_name = $event.target.value.replace(/[^a-zA-Z\s\-']/g, '')"
@@ -1153,7 +1244,7 @@
                                                     :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
                                                     class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                                             </div>
-                                            <div class="col-span-2">
+                                            <div class="w-full sm:w-20">
                                                 <input type="text" x-model="selectedEmployee.mi" placeholder="MI" maxlength="2"
                                                     :readonly="!isEditMode"
                                                     :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
@@ -1176,7 +1267,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- Email -->
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Email Address</label>
                                         <input type="email" x-model="selectedEmployee.email"
@@ -1188,7 +1278,6 @@
                                         <p x-show="isEditMode && !hasError('email')" class="text-xs text-yellow-600 mt-1">⚠ Changing email will send a new verification link.</p>
                                     </div>
 
-                                    <!-- Contact Number -->
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Contact Number</label>
                                         <input type="text" x-model="selectedEmployee.contact_number"
@@ -1201,40 +1290,34 @@
                                         <p x-show="isEditMode && hasError('contact_no')" x-text="fieldError('contact_no')" class="text-xs text-red-500 mt-1"></p>
                                     </div>
 
-                                    <!-- Date of Birth + Gender -->
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
+                                    <div class="flex flex-col sm:flex-row gap-3">
+                                        <div class="flex-1">
                                             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Date of Birth</label>
                                             <input type="date" x-model="selectedEmployee.date_of_birth" readonly
                                                 class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed">
                                         </div>
-                                        <div>
+                                        <div class="flex-1">
                                             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Gender</label>
                                             <input type="text" x-model="selectedEmployee.gender" readonly
                                                 class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed capitalize">
                                         </div>
                                     </div>
 
-                                    <!-- Address -->
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Address</label>
                                         <textarea x-model="selectedEmployee.address" readonly rows="2"
                                             class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed resize-none"></textarea>
                                     </div>
-
                                 </div>
 
                                 <!-- JOB INFORMATION TAB -->
-                                <div x-show="empTab === 'job'" class="px-8 py-5 space-y-4">
-
-                                    <!-- Department (locked for supervisor) -->
+                                <div x-show="empTab === 'job'" class="px-6 sm:px-8 py-5 space-y-4">
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Department</label>
                                         <input type="text" x-model="selectedEmployee.department" readonly
                                             class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed">
                                     </div>
 
-                                    <!-- Job Title -->
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Job Title</label>
                                         <div class="relative">
@@ -1253,7 +1336,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- Role -->
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Role</label>
                                         <div class="relative">
@@ -1270,16 +1352,15 @@
                                         </div>
                                     </div>
 
-                                    <!-- Date Hired + Employment Type -->
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
+                                    <div class="flex flex-col sm:flex-row gap-3">
+                                        <div class="flex-1">
                                             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Date Hired</label>
                                             <input type="date" x-model="selectedEmployee.date_hired"
                                                 :readonly="!isEditMode"
                                                 :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
                                                 class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                                         </div>
-                                        <div>
+                                        <div class="flex-1">
                                             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Employment Type</label>
                                             <div class="relative">
                                                 <select x-model="selectedEmployee.employment_type"
@@ -1298,7 +1379,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- Employment Status -->
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Employment Status</label>
                                         <div class="relative">
@@ -1316,14 +1396,11 @@
                                             </div>
                                         </div>
                                     </div>
-
                                 </div>
 
                                 <!-- DOCUMENTS TAB -->
-                                <div x-show="empTab === 'docs'" class="px-8 py-5">
-
-                                    <!-- Upload Button -->
-                                    <div class="flex items-center justify-between mb-4">
+                                <div x-show="empTab === 'docs'" class="px-6 sm:px-8 py-5">
+                                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                                         <p class="text-sm text-gray-500">PDF and Word documents only (max 10 MB)</p>
                                         <label class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all"
                                             :class="isUploadingDoc ? 'opacity-60 pointer-events-none' : ''">
@@ -1334,7 +1411,6 @@
                                         </label>
                                     </div>
 
-                                    <!-- Loading state -->
                                     <div x-show="isLoadingDocs" class="flex items-center justify-center py-8">
                                         <svg class="animate-spin w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1342,7 +1418,6 @@
                                         </svg>
                                     </div>
 
-                                    <!-- Document List -->
                                     <div x-show="!isLoadingDocs">
                                         <template x-if="employeeDocuments.length === 0">
                                             <div class="text-center py-10 text-gray-400">
@@ -1386,21 +1461,20 @@
                         </template>
                     </div>
 
-                    <!-- Footer Buttons (only for basic/job tabs) -->
-                    <div x-show="empTab !== 'docs'" class="px-8 py-4 bg-white border-t border-gray-100 flex justify-end gap-3 flex-shrink-0">
+                    <div x-show="empTab !== 'docs'" class="px-6 sm:px-8 py-4 bg-white border-t border-gray-100 flex justify-end gap-3 flex-shrink-0">
                         @canDo('Employee Management', 'edit')
                         <button x-show="!isEditMode" @click="enableEditMode"
-                            class="px-7 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-all">
+                            class="px-6 sm:px-7 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-all">
                             Edit
                         </button>
                         @endcanDo
                         <button x-show="isEditMode" @click="isEditMode = false"
-                            class="px-7 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-all">
+                            class="px-6 sm:px-7 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-all">
                             Cancel
                         </button>
                         <button x-show="isEditMode" @click="saveChanges()" :disabled="isSaving"
                             :class="isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 cursor-pointer'"
-                            class="px-7 py-2.5 text-white text-sm font-medium rounded-xl transition-all">
+                            class="px-6 sm:px-7 py-2.5 text-white text-sm font-medium rounded-xl transition-all">
                             <span x-show="!isSaving">Save Changes</span>
                             <span x-show="isSaving" class="flex items-center gap-2">
                                 <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -1414,9 +1488,9 @@
                 </div>
             </div>
 
-            <!-- Top Control Section -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mx-8">
-                <div class="flex items-center space-x-3 w-full sm:w-auto">
+            <!-- Top Control Section - Responsive Layout -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mx-0 sm:mx-4 lg:mx-8">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                     <div class="relative flex-1 sm:flex-none sm:w-80 group">
                         <input type="text" x-model="searchQuery" placeholder="Search employees..."
                             class="w-full pl-10 pr-10 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 group-hover:shadow-md">
@@ -1428,10 +1502,9 @@
                         </button>
                     </div>
 
-                    <!-- Sort only filter (no department filter since supervisor sees one dept) -->
                     <div class="relative">
                         <button @click="showFilters = !showFilters"
-                            class="w-[180px] py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200 hover:shadow-sm relative flex items-center gap-2 text-sm text-gray-400 justify-start pl-4"
+                            class="w-full sm:w-[180px] py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200 hover:shadow-sm relative flex items-center gap-2 text-sm text-gray-400 justify-center sm:justify-start pl-4"
                             :class="{ 'bg-blue-50 border-blue-300': showFilters || activeFilterCount > 0 }">
                             <svg class="w-4 h-4 transition-colors duration-200"
                                 :class="{ 'text-blue-600': showFilters || activeFilterCount > 0, 'text-gray-500': !showFilters && activeFilterCount === 0 }"
@@ -1480,18 +1553,21 @@
                     </div>
                 </div>
 
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center gap-3 w-full sm:w-auto">
                     <button @click="showManageDepartment = true"
-                        class="flex-1 sm:flex-none px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:shadow-xl transform hover:scale-105">
-                        <span class="flex items-center justify-center">
+                        class="flex-1 sm:flex-none px-4 sm:px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:shadow-xl transform hover:scale-105">
+                        <span class="flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
                             <span class="hidden sm:inline">Manage Department</span>
                             <span class="sm:hidden">Dept</span>
                         </span>
                     </button>
                     @canDo('Employee Management', 'create')
                     <button @click="openAddEmployee()"
-                        class="flex-1 sm:flex-none px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:shadow-xl transform hover:scale-105 group">
-                        <span class="flex items-center justify-center space-x-2">
+                        class="flex-1 sm:flex-none px-4 sm:px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:shadow-xl transform hover:scale-105 group">
+                        <span class="flex items-center justify-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
@@ -1504,13 +1580,14 @@
             </div>
 
             <!-- Search Results Info -->
-            <div x-show="searchQuery.length > 0" class="mb-4 flex items-center justify-between mx-8">
+            <div x-show="searchQuery.length > 0" class="mb-4 flex items-center justify-between mx-0 sm:mx-4 lg:mx-8">
                 <p class="text-sm text-gray-600">Found <span class="font-semibold text-blue-600" x-text="resultCount"></span> result<span x-show="resultCount !== 1">s</span> for "<span class="font-semibold" x-text="searchQuery"></span>"</p>
                 <button @click="clearSearch" class="text-xs text-gray-500 hover:text-blue-600 transition-colors duration-200">Clear search</button>
             </div>
 
-            <!-- Employee Table -->
-            <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden mx-8">
+            <!-- Employee Table - Responsive with mobile cards -->
+            <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden mx-0 sm:mx-4 lg:mx-8">
+                <!-- Desktop Table -->
                 <div class="hidden md:block">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
                         <div class="grid grid-cols-12 gap-4">
@@ -1575,8 +1652,8 @@
                                     <span x-text="employee.avatar"></span>
                                 </div>
                                 <div class="flex-1">
-                                    <div class="flex items-start justify-between">
-                                        <div>
+                                    <div class="flex items-start justify-between flex-wrap gap-2">
+                                        <div class="flex-1">
                                             <p class="font-medium text-gray-800" x-text="employee.name"></p>
                                             <p class="text-xs text-gray-500" x-text="employee.email"></p>
                                         </div>
@@ -1585,8 +1662,14 @@
                                             x-text="employee.status"></span>
                                     </div>
                                     <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
-                                        <div><p class="text-xs text-gray-500">Department</p><p class="font-medium text-gray-800" x-text="employee.department"></p></div>
-                                        <div><p class="text-xs text-gray-500">Position</p><p class="font-medium text-gray-800" x-text="employee.job_title"></p></div>
+                                        <div>
+                                            <p class="text-xs text-gray-500">Department</p>
+                                            <p class="font-medium text-gray-800" x-text="employee.department"></p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-500">Position</p>
+                                            <p class="font-medium text-gray-800" x-text="employee.job_title"></p>
+                                        </div>
                                     </div>
                                     <div class="mt-3">
                                         <button @click="viewEmployee(employee)"
@@ -1636,7 +1719,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </main>
 </div>
@@ -1648,8 +1730,20 @@
     ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    @media (max-width: 1024px) { .lg\:ml-20, .lg\:ml-72 { margin-left: 0 !important; } }
+
+    /* Mobile responsive overrides */
+    @media (max-width: 1024px) {
+        .lg\:ml-20, .lg\:ml-72 { margin-left: 0 !important; }
+    }
+
+    /* Hide scrollbar on mobile for cleaner look */
+    @media (max-width: 768px) {
+        .overflow-x-auto {
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+    }
+
     [x-cloak] { display: none !important; }
 </style>
-
 @endsection

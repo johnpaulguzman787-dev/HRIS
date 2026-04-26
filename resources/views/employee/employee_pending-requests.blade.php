@@ -23,7 +23,7 @@
 <head>
     <link rel="icon" type="image/png" href="{{ asset('images/HRISLogo-Icon.png') }}">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Pending Requests — MEDISOURCE</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -32,13 +32,18 @@
     <style>
         *{font-family:'DM Sans',sans-serif;box-sizing:border-box;}
         [x-cloak]{display:none!important;}
-        @@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
+        @keyframes pulseDot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
         :root{--blue:#3b82f6;--blue-dark:#1d4ed8;--blue-light:#eff6ff;--muted:#6b7280;--border:#e5e7eb;}
         .nav-item{transition:background .15s,color .15s;}
         .chevron-icon{transition:transform .25s cubic-bezier(.4,0,.2,1);}
         .avatar-ring{box-shadow:0 0 0 3px rgba(59,130,246,.25);}
 
-        /* stat cards */
+        /* DESKTOP SIDEBAR */
+        .desktop-sidebar { display: none; }
+        @media (min-width: 1024px) { .desktop-sidebar { display: block; } }
+        @media (max-width: 1023px) { .main-content { margin-left: 0 !important; } }
+
+        /* stat cards - responsive grid */
         .stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
         .stat-card{border-radius:14px;padding:20px 22px;}
         .sc-blue{background:#dbeafe;} .sc-orange{background:#ffedd5;} .sc-purple{background:#ede9fe;} .sc-red{background:#fee2e2;}
@@ -47,8 +52,16 @@
         .sval{font-size:36px;font-weight:800;color:#111827;line-height:1;margin-bottom:4px;}
         .sc-blue .ssub{color:#3b82f6;} .sc-orange .ssub{color:#f97316;} .sc-purple .ssub{color:#7c3aed;} .sc-red .ssub{color:#ef4444;}
         .ssub{font-size:12px;}
+        @media (max-width: 768px) {
+            .stat-cards{grid-template-columns:repeat(2,1fr)!important;gap:10px!important;margin-bottom:18px!important;}
+            .stat-card{padding:14px 14px!important;border-radius:12px!important;}
+            .sval{font-size:28px!important;}
+            .slabel{font-size:11.5px!important;line-height:1.3;}
+            .ssub{font-size:11px!important;}
+        }
+        @media (max-width: 375px) {.sval{font-size:24px!important;}}
 
-        /* toolbar */
+        /* toolbar - responsive */
         .toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
         .toolbar-title{font-size:18px;font-weight:700;color:#111827;}
         .toolbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
@@ -57,8 +70,44 @@
         .fsel{appearance:none;background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:8px 28px 8px 12px;font-size:13px;color:#374151;cursor:pointer;outline:none;font-family:inherit;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
         .btn-primary{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:var(--blue);color:#fff;transition:background .15s;white-space:nowrap;}
         .btn-primary:hover{background:var(--blue-dark);}
+        @media (max-width: 768px) {
+            .toolbar{flex-direction:column!important;align-items:stretch!important;gap:10px!important;}
+            .toolbar-right{flex-direction:column!important;align-items:stretch!important;gap:8px!important;}
+            .search-box{width:100%!important;border-radius:10px!important;}
+            .search-box input{width:100%!important;}
+            .fsel{width:100%!important;padding:8px 24px 8px 10px!important;}
+            .btn-primary{width:100%!important;justify-content:center!important;padding:12px 16px!important;}
+        }
 
-        /* request card */
+        /* filter row - horizontal scroll on mobile */
+        .filters-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 768px) {
+            .filters-row {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                gap: 8px;
+                padding-bottom: 4px;
+            }
+            .filters-row::-webkit-scrollbar {
+                display: none;
+            }
+            .filters-row .fsel {
+                flex-shrink: 0;
+                white-space: nowrap;
+                width: auto;
+                min-width: 130px;
+            }
+        }
+
+        /* request card - responsive */
         .rcard{background:#fff;border:1px solid var(--border);border-radius:14px;margin-bottom:16px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.04);}
         .rcard-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid #f3f4f6;flex-wrap:wrap;gap:8px;}
         .rcard-left{display:flex;align-items:center;gap:12px;}
@@ -72,8 +121,15 @@
         .b-ot{background:#ffedd5;color:#c2410c;}
         .b-shift{background:#fce7f3;color:#be185d;}
         .b-await{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;}
+        @media (max-width: 768px) {
+            .rcard-head{flex-direction:column!important;align-items:flex-start!important;gap:10px!important;padding:14px 14px 12px!important;}
+            .emp-name{font-size:15px!important;}
+            .emp-dept{font-size:11px!important;}
+            .rcard-right{flex-wrap:wrap!important;gap:6px!important;}
+            .badge{font-size:10px!important;padding:2px 8px!important;}
+        }
 
-        /* card body */
+        /* card body - responsive */
         .rcard-body{padding:16px 20px;}
         .dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;background:#f9fafb;border-radius:10px;padding:14px 16px;margin-bottom:12px;}
         .dlabel{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px;}
@@ -81,9 +137,17 @@
         .rsection{margin-bottom:10px;}
         .rlabel{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:3px;}
         .rtext{font-size:13px;color:#374151;}
+        @media (max-width: 768px) {
+            .rcard-body{padding:12px 14px!important;}
+            .dgrid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important;padding:12px!important;margin-bottom:10px!important;}
+            .dlabel{font-size:10px!important;}
+            .dval{font-size:12.5px!important;}
+            .rlabel{font-size:11px!important;}
+            .rtext{font-size:12px!important;}
+        }
 
-        /* progress */
-        .prog-steps{display:flex;align-items:flex-start;gap:0;margin-top:6px;}
+        /* progress - responsive */
+        .prog-steps{display:flex;align-items:flex-start;gap:0;margin-top:6px;flex-wrap:wrap;justify-content:center;}
         .pstep{display:flex;flex-direction:column;align-items:center;gap:4px;}
         .pcircle{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
         .pc-done{background:#dcfce7;border:2px solid #16a34a;color:#16a34a;}
@@ -91,15 +155,28 @@
         .pname{font-size:11px;font-weight:600;color:#374151;text-align:center;}
         .pstatus{font-size:10px;color:var(--muted);text-align:center;}
         .pline{height:2px;width:60px;background:#16a34a;flex-shrink:0;margin-top:14px;}
+        @media (max-width: 768px) {
+            .pline{width:30px!important;margin-top:14px!important;}
+            .pcircle{width:28px!important;height:28px!important;}
+            .pname{font-size:9px!important;}
+            .pstatus{font-size:8px!important;}
+        }
+        @media (max-width: 480px) {
+            .prog-steps{flex-direction:column!important;align-items:flex-start!important;gap:8px!important;}
+            .pline{width:2px!important;height:20px!important;margin-left:14px!important;margin-top:0!important;}
+            .pstep{flex-direction:row!important;gap:12px!important;width:100%!important;justify-content:flex-start!important;}
+        }
 
-        /* actions */
-        .action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 16px;}
-        .btn-approve{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#dcfce7;color:#15803d;transition:background .15s;}
-        .btn-approve:hover{background:#bbf7d0;}
-        .btn-reject{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#fee2e2;color:#dc2626;transition:background .15s;}
-        .btn-reject:hover{background:#fecaca;}
+        /* action buttons */
+        .action-row{display:grid;grid-template-columns:1fr;gap:10px;padding:0 20px 16px;}
+        .btn-cancel-req{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#fee2e2;color:#dc2626;transition:background .15s;width:100%;}
+        .btn-cancel-req:hover{background:#fecaca;}
+        @media (max-width: 768px) {
+            .action-row{padding:0 14px 14px!important;}
+            .btn-cancel-req{padding:12px!important;font-size:14px!important;border-radius:10px!important;}
+        }
 
-        /* modal */
+        /* modal - responsive */
         .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:999;}
         .modal-box{background:#fff;border-radius:16px;padding:28px 32px;width:520px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.15);}
         .modal-title{font-size:17px;font-weight:800;color:#111827;}
@@ -113,40 +190,95 @@
         .close-btn{width:32px;height:32px;border:2px solid #374151;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;cursor:pointer;flex-shrink:0;}
         .fsel-modal{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
         .doc-upload{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed #d1d5db;border-radius:10px;padding:24px 20px;background:#f9fafb;cursor:pointer;}
-            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @media (max-width: 768px) {
+            .modal-overlay{align-items:flex-end!important;}
+            .modal-box{width:100%!important;max-width:100%!important;border-radius:20px 20px 0 0!important;padding:24px 20px 32px!important;max-height:92vh!important;overflow-y:auto!important;}
+            .modal-box::before{content:'';display:block;width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:0 auto 20px;}
+            .mactions{flex-direction:column-reverse!important;gap:8px!important;}
+            .mactions .btn-save,.mactions .btn-cancel{width:100%!important;text-align:center!important;padding:12px!important;font-size:14px!important;}
+            .modal-title{font-size:17px!important;}
+            .frow{grid-template-columns:1fr!important;}
+        }
+        
+        /* empty state styling */
+        .empty-state {
+            text-align: center;
+            padding: 60px 16px;
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+        }
+        .empty-icon {
+            width: 64px;
+            height: 64px;
+            background: #f3f4f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        @media (max-width: 768px) {
+            .empty-state { padding: 40px 16px; }
+            .empty-icon { width: 48px; height: 48px; }
+            .empty-icon svg { width: 24px; height: 24px; }
+        }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+     x-init="window.addEventListener('sidebar-toggle', e => { sidebarCollapsed = e.detail.collapsed })">
 
-{{-- ══════════ SIDEBAR ══════════ --}}
-@include('employee.employee_sidebar')
+{{-- ══════════ SIDEBAR (Desktop & Mobile Drawer) ══════════ --}}
+<div class="hidden lg:block desktop-sidebar">
+    @include('employee.employee_sidebar')
+</div>
 
-{{-- ══════════ MAIN ══════════ --}}
-<div x-data="{
-        collapsed:localStorage.getItem('sidebarCollapsed')==='true',
-        showFileReq:false,
-        reqType:'',
-        showCancel:false,
-        selName:'',
-        selId:null,
-        selCancelUrl:'',
-        showResult:false,
-        resultType:'success',
-        resultTitle:'',
-        resultMessage:''
-     }"
-     x-init="window.addEventListener('sidebar-toggle',e=>{collapsed=e.detail.collapsed})"
-     :style="collapsed?'margin-left:5rem':'margin-left:16rem'"
+<div x-show="mobileMenuOpen"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-50 lg:hidden"
+     style="display:none;">
+    <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="-translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="-translate-x-full"
+         class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+        @include('employee.employee_sidebar')
+    </div>
+</div>
+
+{{-- ══════════ MAIN CONTENT ══════════ --}}
+<div class="main-content"
+     :style="window.innerWidth >= 1024 ? (sidebarCollapsed ? 'margin-left:5rem' : 'margin-left:16rem') : 'margin-left:0'"
+     x-on:resize.window="$el.style.marginLeft = window.innerWidth >= 1024 ? (sidebarCollapsed ? '5rem' : '16rem') : '0'"
      style="transition:margin-left .35s cubic-bezier(.4,0,.2,1);min-height:100vh;">
 
-    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
-        <div class="flex items-center justify-between px-8 py-4">
-            <h1 class="text-white font-bold text-xl">Pending Requests</h1>
+    {{-- HEADER with hamburger --}}
+    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
+        <div class="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
+            <div class="flex items-center gap-3">
+                <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <h1 class="text-white font-bold text-base sm:text-xl">Pending Requests</h1>
+            </div>
             <x-employee-notif />
         </div>
     </header>
 
-    <div style="padding:24px 32px;">
+    {{-- MAIN CONTENT --}}
+    <div class="p-4 sm:p-6 lg:p-8">
 
         {{-- STAT CARDS --}}
         <div class="stat-cards">
@@ -172,19 +304,40 @@
             </div>
         </div>
 
-        {{-- TOOLBAR --}}
+        {{-- SEARCH AND FILTERS SECTION (ayos na ayos) --}}
         <div class="toolbar">
             <div class="toolbar-title">Pending Requests</div>
             <div class="toolbar-right">
+                {{-- Search Box --}}
                 <div class="search-box">
-                    <svg style="width:15px;height:15px;color:#6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <svg style="width:15px;height:15px;color:#6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
                     <input type="text" placeholder="Search">
                 </div>
-                <select class="fsel"><option>All Stages</option><option>Awaiting Approval</option><option>Approved</option><option>Rejected</option></select>
-                <select class="fsel"><option>All Types</option><option>Leave Request</option><option>Overtime Request</option><option>Shift Arrangement</option></select>
+                
+                {{-- Filters Row (horizontal scroll on mobile) --}}
+                <div class="filters-row">
+                    <select class="fsel">
+                        <option>All Stages</option>
+                        <option>Awaiting Approval</option>
+                        <option>Approved</option>
+                        <option>Rejected</option>
+                    </select>
+                    <select class="fsel">
+                        <option>All Types</option>
+                        <option>Leave Request</option>
+                        <option>Overtime Request</option>
+                        <option>Shift Arrangement</option>
+                    </select>
+                </div>
+                
+                {{-- File a Request Button --}}
                 @canDo('Requests & Approval', 'create')
                 <button class="btn-primary" @click="showFileReq=true">
-                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
                     File a Request
                 </button>
                 @endcanDo
@@ -206,9 +359,12 @@
                 </div>
                 <div class="rcard-right">
                     <span class="req-id">{{ $req->ref_no }}</span>
-                    @if($req->type === 'leave')   <span class="badge b-leave">Leave Request</span>
-                    @elseif($req->type === 'overtime') <span class="badge b-ot">Overtime Request</span>
-                    @elseif($req->type === 'shift')    <span class="badge b-shift">Shift Arrangement Request</span>
+                    @if($req->type === 'leave')   
+                        <span class="badge b-leave">Leave Request</span>
+                    @elseif($req->type === 'overtime') 
+                        <span class="badge b-ot">Overtime Request</span>
+                    @elseif($req->type === 'shift')    
+                        <span class="badge b-shift">Shift Arrangement</span>
                     @endif
                     <span class="badge b-await">Awaiting Approval</span>
                 </div>
@@ -219,7 +375,7 @@
                     <div><div class="dlabel">Leave Type</div><div class="dval">{{ $req->leaveType->name ?? '—' }}</div></div>
                     <div><div class="dlabel">Date</div><div class="dval">{{ \Carbon\Carbon::parse($req->start_date)->format('F j') }} – {{ \Carbon\Carbon::parse($req->end_date)->format('j, Y') }}</div></div>
                     <div><div class="dlabel">Filed On</div><div class="dval">{{ $req->created_at->format('F j, Y') }}</div></div>
-                    <div><div class="dlabel">Balance</div><div class="dval">{{ $req->credit ? $req->credit->remaining_days . ' days remaining' : '—' }}</div></div>
+                    <div><div class="dlabel">Balance</div><div class="dval">{{ $req->credit ? $req->credit->remaining_days . ' days' : '—' }}</div></div>
                 </div>
                 @elseif($req->type === 'overtime')
                 <div class="dgrid">
@@ -237,7 +393,12 @@
                 </div>
                 @endif
                 <div class="rsection"><div class="rlabel">Reason</div><div class="rtext">{{ $req->reason ?? '—' }}</div></div>
-                @if($req->document_path)<div style="margin-bottom:10px;"><div class="rlabel">Documents</div><div style="font-size:13px;color:#3b82f6;font-weight:500;">{{ basename($req->document_path) }}</div></div>@endif
+                @if($req->document_path)
+                <div style="margin-bottom:10px;">
+                    <div class="rlabel">Documents</div>
+                    <div style="font-size:13px;color:#3b82f6;font-weight:500;">{{ basename($req->document_path) }}</div>
+                </div>
+                @endif
                 <div><div class="rlabel">Approval Progress</div>
                 <div class="prog-steps">
                     <div class="pstep"><div class="pcircle pc-done"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div><div class="pname">You</div><div class="pstatus">Filed</div></div>
@@ -251,14 +412,19 @@
                     <div class="pstep"><div class="pcircle" style="background:#f9fafb;border:2px solid #d1d5db;color:#9ca3af;"><svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01"/></svg></div><div class="pname">HR Manager</div><div class="pstatus">Pending</div></div>
                 </div></div>
             </div>
-            <div class="action-row" style="grid-template-columns:1fr;">
-                <button class="btn-reject" @click="selId={{ $req->id }};selName='{{ addslashes(trim((auth()->user()->employee->fname ?? '').' '.(auth()->user()->employee->lname ?? ''))) }}';selCancelUrl='/employee/requests/{{ $req->id }}/cancel';showCancel=true">
+            <div class="action-row">
+                <button class="btn-cancel-req" @click="selId={{ $req->id }};selName='{{ addslashes(trim((auth()->user()->employee->fname ?? '').' '.(auth()->user()->employee->lname ?? ''))) }}';selCancelUrl='/employee/requests/{{ $req->id }}/cancel';showCancel=true">
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Cancel Request
                 </button>
             </div>
         </div>
         @empty
-        <div style="text-align:center;padding:60px 16px;">
+        <div class="empty-state">
+            <div class="empty-icon">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
             <div style="font-size:15px;font-weight:600;color:#9ca3af;">No pending requests at this time.</div>
             <div style="font-size:13px;color:#d1d5db;margin-top:4px;">Filed requests will appear here while awaiting approval.</div>
         </div>
@@ -276,7 +442,7 @@
 
             <div style="margin-bottom:16px;">
                 <label class="flabel">Request Type</label>
-                <select class="finput fsel-modal" x-model="reqType" style="appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;">
+                <select class="finput fsel-modal" x-model="reqType" style="appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 12px center;">
                     <option value="">Choose request type</option>
                     <option value="leave">Leave Request</option>
                     <option value="overtime">Overtime Request</option>
@@ -284,7 +450,7 @@
                 </select>
             </div>
 
-            {{-- LEAVE --}}
+            {{-- LEAVE (content preserved) --}}
             <div x-show="reqType==='leave'" x-transition
                  x-data="{ leaveTypeId:'', startDate:'', endDate:'', reason:'', fileName:'', saving:false, errorMsg:'',
                      handleFile(e){ const f=e.target.files[0]; this.fileName=f?f.name:''; },
@@ -362,18 +528,12 @@
                          else{ $root.resultType='error'; $root.resultTitle='Submission Failed'; $root.resultMessage=data.message??'Something went wrong.'; $root.showResult=true; }
                      }
                  }">
-                <div style="margin-bottom:16px;">
-                    <label class="flabel">Date</label>
-                    <input type="date" class="finput" x-model="otDate">
-                </div>
+                <div style="margin-bottom:16px;"><label class="flabel">Date</label><input type="date" class="finput" x-model="otDate"></div>
                 <div class="frow" style="margin-bottom:16px;">
                     <div><label class="flabel">OT Start</label><input type="time" class="finput" x-model="otStart"></div>
                     <div><label class="flabel">OT End</label><input type="time" class="finput" x-model="otEnd"></div>
                 </div>
-                <div style="margin-bottom:16px;">
-                    <label class="flabel">Reason/Remarks</label>
-                    <input type="text" class="finput" x-model="reason" placeholder="Enter details">
-                </div>
+                <div style="margin-bottom:16px;"><label class="flabel">Reason/Remarks</label><input type="text" class="finput" x-model="reason" placeholder="Enter details"></div>
                 <div style="margin-bottom:16px;">
                     <label class="flabel">Supporting Document (optional)</label>
                     <label class="doc-upload">
@@ -385,7 +545,7 @@
                 </div>
                 <div class="mactions">
                     <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
-                    <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
+                    <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
 
@@ -425,10 +585,7 @@
                     <div><label class="flabel">Effective From</label><input type="date" class="finput" x-model="effectiveFrom"></div>
                     <div><label class="flabel">Effective Until (optional)</label><input type="date" class="finput" x-model="effectiveUntil"></div>
                 </div>
-                <div style="margin-bottom:16px;">
-                    <label class="flabel">Reason/Remarks</label>
-                    <input type="text" class="finput" x-model="reason" placeholder="Enter details">
-                </div>
+                <div style="margin-bottom:16px;"><label class="flabel">Reason/Remarks</label><input type="text" class="finput" x-model="reason" placeholder="Enter details"></div>
                 <div style="margin-bottom:16px;">
                     <label class="flabel">Supporting Document (optional)</label>
                     <label class="doc-upload">
@@ -440,30 +597,28 @@
                 </div>
                 <div class="mactions">
                     <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
-                    <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
+                    <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
 
             <div x-show="reqType===''">
-                <div class="mactions">
-                    <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
-                </div>
+                <div class="mactions"><button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button></div>
             </div>
         </div>
     </div>
 
-    {{-- ══ CANCEL CONFIRM ══ --}}
+    {{-- ══ CANCEL CONFIRM MODAL ══ --}}
     <div x-show="showCancel" class="modal-overlay" x-cloak @click.self="showCancel=false">
         <div class="modal-box" style="width:420px;text-align:center;">
             <div style="width:56px;height:56px;background:#fee2e2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
                 <svg style="width:26px;height:26px;color:#dc2626;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </div>
-            <div style="font-size:17px;font-weight:800;color:#111827;margin-bottom:8px;">Cancel Request?</div>
+            <div class="modal-title" style="margin-bottom:8px;">Cancel Request?</div>
             <div style="font-size:13px;color:#6b7280;margin-bottom:24px;">Are you sure you want to cancel this request? This action cannot be undone.</div>
             <div style="display:flex;justify-content:center;gap:12px;">
                 <button class="btn-cancel" style="min-width:100px;" @click="showCancel=false">Back</button>
-                <button style="min-width:100px;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#dc2626;color:#fff;"
-                    @click="fetch(selCancelUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({})}).then(async r=>{const d=await r.json();showCancel=false;if(r.ok){resultType='success';resultTitle='Request Cancelled';resultMessage=d.message??'Your request has been cancelled successfully.';showResult=true;setTimeout(()=>window.location.reload(),2500);}else{resultType='error';resultTitle='Cancellation Failed';resultMessage=d.message??'Something went wrong. Please try again.';showResult=true;}}).catch(()=>{showCancel=false;resultType='error';resultTitle='Error';resultMessage='An error occurred. Please try again.';showResult=true;})">
+                <button style="min-width:100px;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;border:none;background:#dc2626;color:#fff;cursor:pointer;"
+                    @click="fetch(selCancelUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({})}).then(async r=>{const d=await r.json();showCancel=false;if(r.ok){resultType='success';resultTitle='Request Cancelled';resultMessage=d.message??'Your request has been cancelled successfully.';showResult=true;setTimeout(()=>window.location.reload(),2500);}else{resultType='error';resultTitle='Cancellation Failed';resultMessage=d.message??'Something went wrong.';showResult=true;}}).catch(()=>{showCancel=false;resultType='error';resultTitle='Error';resultMessage='An error occurred.';showResult=true;})">
                     Yes, Cancel
                 </button>
             </div>
@@ -483,10 +638,32 @@
             </div>
             <div style="font-size:18px;font-weight:800;color:#111827;margin-bottom:8px;" x-text="resultTitle"></div>
             <div style="font-size:13px;color:#6b7280;margin-bottom:24px;" x-text="resultMessage"></div>
-            <button @click="showResult=false" style="padding:10px 32px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#111827;color:#fff;">OK</button>
+            <button @click="showResult=false" style="padding:10px 32px;border-radius:9px;font-size:13px;font-weight:600;border:none;background:#111827;color:#fff;cursor:pointer;">OK</button>
         </div>
     </div>
 
 </div>
+
+<script>
+    (function() {
+        var mainEl = document.querySelector('.main-content');
+        if (!mainEl) return;
+        function updateMargin() {
+            var collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (window.innerWidth < 1024) {
+                mainEl.style.marginLeft = '0';
+            } else {
+                mainEl.style.marginLeft = collapsed ? '5rem' : '16rem';
+            }
+        }
+        updateMargin();
+        window.addEventListener('resize', updateMargin);
+        window.addEventListener('sidebar-toggle', function(e) {
+            if (window.innerWidth >= 1024) {
+                mainEl.style.marginLeft = e.detail.collapsed ? '5rem' : '16rem';
+            }
+        });
+    })();
+</script>
 </body>
 </html>

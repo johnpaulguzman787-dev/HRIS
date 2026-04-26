@@ -93,14 +93,9 @@
         .btn-close-ps:hover { background:#f3f4f6; }
         .btn-export-ps { background:#2563eb; color:#fff; border-radius:8px; padding:10px 18px; font-size:0.875rem; font-weight:600; display:inline-flex; align-items:center; gap:7px; border:none; cursor:pointer; transition:background 0.18s,transform 0.15s; flex:1; justify-content:center; }
         .btn-export-ps:hover { background:#1d4ed8; transform:translateY(-1px); }
-        .cards-wrap {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
+        .cards-wrap { display: flex; gap: 16px; flex-wrap: wrap }
         .modal-overlay { background:rgba(0,0,0,0.4); backdrop-filter:blur(2px); }
         .main-content { transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1); }
-
 @media (max-width: 768px) {
     .px-8 { padding-left: 16px; padding-right: 16px; }
 
@@ -231,7 +226,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
-                    <h1 class="text-white font-bold text-xl tracking-tight">Payslips</h1>
+                    <h1 class="text-white font-bold text-xl tracking-tight">Payroll</h1>
                 </div>
                 <x-notification-bell />
             </div>
@@ -560,7 +555,7 @@
 
 
             {{-- ── TAB 4: CONTRIBUTIONS ── --}}
-            <div x-show="activeTab==='contributions'" x-cloak class="tab-content space-y-8">
+            <div x-show="activeTab==='contributions'" x-cloak class="pt-6 tab-content space-y-8">
 
                 {{-- Rate Cards --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -448,6 +448,9 @@
                                 <div class="ps-line"><span>Basic Pay</span><span x-text="'&#8369; '+fmt(allActive.basicPay||0)"></span></div>
                                 <div class="ps-line"><span>OT Pay</span><span x-text="'&#8369; '+fmt(allActive.otPay||0)"></span></div>
                                 <div class="ps-line"><span>Benefits</span><span x-text="'&#8369; '+fmt(allActive.benefits||0)"></span></div>
+                                <template x-if="(allActive.otherAdditions||0) > 0">
+                                    <div class="ps-line"><span>Other Additions</span><span x-text="'&#8369; '+fmt(allActive.otherAdditions||0)"></span></div>
+                                </template>
                                 <div class="ps-line bold"><span>Gross Pay</span><span x-text="'&#8369; '+fmt(allActive.grossPay||0)"></span></div>
                                 <div class="ps-section-title">Deductions</div>
                                 <div class="ps-line"><span>SSS</span><span class="text-red-500" x-text="'-&#8369; '+fmt(allActive.sss||0)"></span></div>
@@ -456,6 +459,9 @@
                                 <div class="ps-line"><span>Withholding Tax</span><span class="text-red-500" x-text="'-&#8369; '+fmt(allActive.withholdingTax||0)"></span></div>
                                 <template x-if="(allActive.lateDeduction||0) > 0">
                                     <div class="ps-line"><span>Late Deduction</span><span class="text-red-500" x-text="'-&#8369; '+fmt(allActive.lateDeduction||0)"></span></div>
+                                </template>
+                                <template x-if="(allActive.otherDeductions||0) > 0">
+                                    <div class="ps-line"><span>Other Deductions</span><span class="text-red-500" x-text="'-&#8369; '+fmt(allActive.otherDeductions||0)"></span></div>
                                 </template>
                                 <div class="ps-line bold"><span>Total Deductions</span><span class="text-red-500" x-text="'-&#8369; '+fmt(allActive.totalDeductions||0)"></span></div>
                                 <div class="ps-section-title">Calculation</div>
@@ -582,6 +588,9 @@
                                 <div class="ps-line"><span>Basic Pay</span><span x-text="'&#8369; '+fmt(myActive.basicPay||0)"></span></div>
                                 <div class="ps-line"><span>OT Pay</span><span x-text="'&#8369; '+fmt(myActive.otPay||0)"></span></div>
                                 <div class="ps-line"><span>Benefits</span><span x-text="'&#8369; '+fmt(myActive.benefits||0)"></span></div>
+                                <template x-if="(myActive.otherAdditions||0) > 0">
+                                    <div class="ps-line"><span>Other Additions</span><span x-text="'&#8369; '+fmt(myActive.otherAdditions||0)"></span></div>
+                                </template>
                                 <div class="ps-line bold"><span>Gross Pay</span><span x-text="'&#8369; '+fmt(myActive.grossPay||0)"></span></div>
                                 <div class="ps-section-title">Deductions</div>
                                 <div class="ps-line"><span>SSS</span><span class="text-red-500" x-text="'-&#8369; '+fmt(myActive.sss||0)"></span></div>
@@ -590,6 +599,9 @@
                                 <div class="ps-line"><span>Withholding Tax</span><span class="text-red-500" x-text="'-&#8369; '+fmt(myActive.withholdingTax||0)"></span></div>
                                 <template x-if="(myActive.lateDeduction||0) > 0">
                                     <div class="ps-line"><span>Late Deduction</span><span class="text-red-500" x-text="'-&#8369; '+fmt(myActive.lateDeduction||0)"></span></div>
+                                </template>
+                                <template x-if="(myActive.otherDeductions||0) > 0">
+                                    <div class="ps-line"><span>Other Deductions</span><span class="text-red-500" x-text="'-&#8369; '+fmt(myActive.otherDeductions||0)"></span></div>
                                 </template>
                                 <div class="ps-line bold"><span>Total Deductions</span><span class="text-red-500" x-text="'-&#8369; '+fmt(myActive.totalDeductions||0)"></span></div>
                                 <div class="ps-section-title">Calculation</div>
@@ -745,6 +757,7 @@
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Basic Pay</span><span>₱ ${f(ps.basicPay)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>OT Pay</span><span>₱ ${f(ps.otPay)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Benefits</span><span>₱ ${f(ps.benefits)}</span></div>
+${ps.otherAdditions > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Other Additions</span><span>₱ ${f(ps.otherAdditions)}</span></div>` : ''}
 <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>
 <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Deductions</div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>SSS</span><span style="color:#dc2626;">-₱ ${f(ps.sss)}</span></div>
@@ -752,6 +765,7 @@
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Pag-IBIG</span><span style="color:#dc2626;">-₱ ${f(ps.pagibig)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Withholding Tax</span><span style="color:#dc2626;">-₱ ${f(ps.withholdingTax)}</span></div>
 ${ps.lateDeduction > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Late Deduction</span><span style="color:#dc2626;">-₱ ${f(ps.lateDeduction)}</span></div>` : ''}
+${ps.otherDeductions > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Other Deductions</span><span style="color:#dc2626;">-₱ ${f(ps.otherDeductions)}</span></div>` : ''}
 <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Total Deductions</span><span style="color:#dc2626;">-₱ ${f(ps.totalDeductions)}</span></div>
 <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Summary</div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>
@@ -791,6 +805,7 @@ ${ps.lateDeduction > 0 ? `<div style="display:flex;justify-content:space-between
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Basic Pay</span><span>&#8369; ${f(ps.basicPay)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>OT Pay</span><span>&#8369; ${f(ps.otPay)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Benefits</span><span>&#8369; ${f(ps.benefits)}</span></div>
+${ps.otherAdditions > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Other Additions</span><span>&#8369; ${f(ps.otherAdditions)}</span></div>` : ''}
 <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 5px;margin-top:4px;border-top:2px solid #e2e8f0;"><span>Gross Pay</span><span>&#8369; ${f(ps.grossPay)}</span></div>
 <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Deductions</div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>SSS</span><span style="color:#dc2626;">-&#8369; ${f(ps.sss)}</span></div>
@@ -798,6 +813,7 @@ ${ps.lateDeduction > 0 ? `<div style="display:flex;justify-content:space-between
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Pag-IBIG</span><span style="color:#dc2626;">-&#8369; ${f(ps.pagibig)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Withholding Tax</span><span style="color:#dc2626;">-&#8369; ${f(ps.withholdingTax)}</span></div>
 ${ps.lateDeduction > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Late Deduction</span><span style="color:#dc2626;">-&#8369; ${f(ps.lateDeduction)}</span></div>` : ''}
+${ps.otherDeductions > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Other Deductions</span><span style="color:#dc2626;">-&#8369; ${f(ps.otherDeductions)}</span></div>` : ''}
 <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 5px;margin-top:4px;border-top:2px solid #e2e8f0;"><span>Total Deductions</span><span style="color:#dc2626;">-&#8369; ${f(ps.totalDeductions)}</span></div>
 <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Summary</div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Gross Pay</span><span>&#8369; ${f(ps.grossPay)}</span></div>
@@ -849,6 +865,7 @@ ${ps.lateDeduction > 0 ? `<div style="display:flex;justify-content:space-between
     <div class="line"><span>Basic Pay</span><span>₱ ${f(ps.basicPay)}</span></div>
     <div class="line"><span>OT Pay</span><span>₱ ${f(ps.otPay)}</span></div>
     <div class="line"><span>Benefits</span><span>₱ ${f(ps.benefits)}</span></div>
+    ${ps.otherAdditions > 0 ? `<div class="line"><span>Other Additions</span><span>₱ ${f(ps.otherAdditions)}</span></div>` : ''}
     <div class="line bold"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>
     <div class="section-title">Deductions</div>
     <div class="line"><span>SSS</span><span class="red">-₱ ${f(ps.sss)}</span></div>
@@ -856,6 +873,7 @@ ${ps.lateDeduction > 0 ? `<div style="display:flex;justify-content:space-between
     <div class="line"><span>Pag-IBIG</span><span class="red">-₱ ${f(ps.pagibig)}</span></div>
     <div class="line"><span>Withholding Tax</span><span class="red">-₱ ${f(ps.withholdingTax)}</span></div>
     ${ps.lateDeduction > 0 ? `<div class="line"><span>Late Deduction</span><span class="red">-₱ ${f(ps.lateDeduction)}</span></div>` : ''}
+    ${ps.otherDeductions > 0 ? `<div class="line"><span>Other Deductions</span><span class="red">-₱ ${f(ps.otherDeductions)}</span></div>` : ''}
     <div class="line bold"><span>Total Deductions</span><span class="red">-₱ ${f(ps.totalDeductions)}</span></div>
     <div class="section-title">Summary</div>
     <div class="line"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>

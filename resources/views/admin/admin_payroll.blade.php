@@ -1132,7 +1132,7 @@
                     <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Multiplier</label><input type="number" name="multiplier" step="0.01" required placeholder="e.g. 1.25" class="ctrl w-full"></div>
                     <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Type</label><select name="type" required class="ctrl w-full"><option value="">Choose type</option><option value="Addition">Addition</option><option value="Deduction">Deduction</option></select></div>
                 </div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Basis</label><input type="text" name="basis" required placeholder="Enter basis" class="ctrl w-full"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Basis</label><select name="basis" required class="ctrl w-full"><option value="">Choose basis</option><option value="Hourly Rate">Hourly Rate</option><option value="Basic Pay">Basic Pay</option><option value="Gross Pay">Gross Pay</option><option value="Fixed">Fixed</option></select></div>
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" @click="showAddItemModal=false" class="btn-outline">Cancel</button>
                     <button type="submit" class="btn-primary">Submit</button>
@@ -1156,7 +1156,7 @@
                     <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Multiplier</label><input type="number" name="multiplier" step="0.01" x-model="editItem.multiplier" required class="ctrl w-full"></div>
                     <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Type</label><select name="type" x-model="editItem.type" required class="ctrl w-full"><option value="Addition">Addition</option><option value="Deduction">Deduction</option></select></div>
                 </div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Basis</label><input type="text" name="basis" x-model="editItem.basis" required class="ctrl w-full"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Basis</label><select name="basis" x-model="editItem.basis" required class="ctrl w-full"><option value="">Choose basis</option><option value="Hourly Rate">Hourly Rate</option><option value="Basic Pay">Basic Pay</option><option value="Gross Pay">Gross Pay</option><option value="Fixed">Fixed</option></select></div>
                 <div class="flex items-center justify-between pt-2">
                     <button type="button" @click="deactivateItem()" class="text-blue-500 border border-blue-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition" x-text="editItem.status==='Active' ? 'Deactivate' : 'Activate'"></button>
                     <div class="flex gap-3">

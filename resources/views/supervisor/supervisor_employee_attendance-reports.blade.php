@@ -818,10 +818,16 @@
                             <th>Overtime</th>
                             <th>Undertime</th>
                             <th>Status</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($records ?? [] as $rec)
+                        @php
+                            $isPast = \Carbon\Carbon::parse($rec->attendance_date)->lt(\Carbon\Carbon::today());
+                            $ciVal  = $rec->clock_in  ? \Carbon\Carbon::parse($rec->clock_in)->format('H:i')  : '';
+                            $coVal  = $rec->clock_out ? \Carbon\Carbon::parse($rec->clock_out)->format('H:i') : '';
+                        @endphp
                         <tr>
                             <td>
                                 <div style="display:flex;align-items:center;gap:10px;">
@@ -847,10 +853,20 @@
                                 @php $st = strtolower($rec->status ?? 'present'); @endphp
                                 <span class="status-badge badge-{{ $st }}">{{ ucfirst($rec->status ?? 'Present') }}</span>
                             </td>
+                            <td>
+                                @if($isPast)
+                                <button @click="openEdit({{ $rec->id }}, '{{ $ciVal }}', '{{ $coVal }}')"
+                                    style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:3px 8px;cursor:pointer;color:#6b7280;font-size:11px;display:inline-flex;align-items:center;gap:4px;"
+                                    title="Edit time in/out">
+                                    <svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                    Edit
+                                </button>
+                                @endif
+                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" style="text-align:center; padding:40px 16px; color:#9ca3af; font-size:13px;">
+                            <td colspan="10" style="text-align:center; padding:40px 16px; color:#9ca3af; font-size:13px;">
                                 No attendance records found for this date.
                             </td>
                         </tr>
@@ -936,6 +952,26 @@
         @endif {{-- end @if($viewingDetail) --}}
 
     </div>
+
+    {{-- Edit Attendance Modal --}}
+    <div x-show="editModal" x-cloak style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.4);">
+        <div @click.outside="editModal=false" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:16px;padding:28px;width:90%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <h3 style="font-size:15px;font-weight:700;color:#111827;margin-bottom:16px;">Edit Attendance</h3>
+            <div style="margin-bottom:14px;">
+                <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Time In</label>
+                <input type="time" x-model="editClockIn" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;">
+            </div>
+            <div style="margin-bottom:18px;">
+                <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Time Out <span style="font-weight:400;color:#9ca3af;">(optional)</span></label>
+                <input type="time" x-model="editClockOut" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;">
+            </div>
+            <div x-show="editError" x-text="editError" style="font-size:12px;color:#dc2626;margin-bottom:12px;"></div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;">
+                <button @click="editModal=false" style="padding:8px 18px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#374151;">Cancel</button>
+                <button @click="saveEdit()" :disabled="editSaving" style="padding:8px 18px;border:none;border-radius:8px;font-size:13px;cursor:pointer;background:#2563eb;color:#fff;font-weight:600;" x-text="editSaving ? 'Saving…' : 'Save'"></button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1006,24 +1042,6 @@
     @endif
 </script>
 
-{{-- Edit Attendance Modal --}}
-<div x-show="editModal" x-cloak style="display:none;position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);">
-    <div @click.outside="editModal=false" style="background:#fff;border-radius:16px;padding:28px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
-        <h3 style="font-size:15px;font-weight:700;color:#111827;margin-bottom:16px;">Edit Attendance</h3>
-        <div style="margin-bottom:14px;">
-            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Time In</label>
-            <input type="time" x-model="editClockIn" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;">
-        </div>
-        <div style="margin-bottom:18px;">
-            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Time Out <span style="font-weight:400;color:#9ca3af;">(optional)</span></label>
-            <input type="time" x-model="editClockOut" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;">
-        </div>
-        <div x-show="editError" x-text="editError" style="font-size:12px;color:#dc2626;margin-bottom:12px;"></div>
-        <div style="display:flex;justify-content:flex-end;gap:10px;">
-            <button @click="editModal=false" style="padding:8px 18px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#374151;">Cancel</button>
-            <button @click="saveEdit()" :disabled="editSaving" style="padding:8px 18px;border:none;border-radius:8px;font-size:13px;cursor:pointer;background:#2563eb;color:#fff;font-weight:600;" x-text="editSaving ? 'Saving…' : 'Save'"></button>
-        </div>
-    </div>
-</div>
+
 </body>
 </html>

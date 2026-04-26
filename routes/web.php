@@ -134,6 +134,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/admin/attendance/clock-out',          [AdminAttendanceController::class, 'clockOut'])->name('admin.attendance.clock-out');
         Route::post('/admin/attendance/break',              [AdminAttendanceController::class, 'breakStart'])->name('admin.attendance.break');
         Route::get('/admin/attendance/employee',            [AdminAttendanceController::class, 'employeeAttendance'])->name('admin.attendance.employee');
+        Route::put('/admin/attendance/log/{id}/update',    [AdminAttendanceController::class, 'updateAttendanceLog'])->name('admin.attendance.log.update');
 
         // Admin leave
         Route::get('/admin/leave/management',               [AdminAttendanceController::class, 'leaveManagement'])->name('admin.leave.management');

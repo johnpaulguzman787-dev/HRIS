@@ -171,8 +171,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/admin/requests/shift/file',           [AdminAttendanceController::class, 'fileShiftChangeRequest'])->name('admin.requests.shift.file');
         Route::post('/admin/requests/overtime/{id}/approve',[AdminAttendanceController::class, 'approveOvertimeRequest'])->name('admin.requests.overtime.approve');
         Route::post('/admin/requests/overtime/{id}/reject', [AdminAttendanceController::class, 'rejectOvertimeRequest'])->name('admin.requests.overtime.reject');
-        Route::post('/admin/requests/shift/{id}/approve',   [AdminAttendanceController::class, 'approveShiftChangeRequest'])->name('admin.requests.shift.approve');
-        Route::post('/admin/requests/shift/{id}/reject',    [AdminAttendanceController::class, 'rejectShiftChangeRequest'])->name('admin.requests.shift.reject');
+        Route::post('/admin/requests/shift/{id}/approve',        [AdminAttendanceController::class, 'approveShiftChangeRequest'])->name('admin.requests.shift.approve');
+        Route::post('/admin/requests/shift/{id}/reject',         [AdminAttendanceController::class, 'rejectShiftChangeRequest'])->name('admin.requests.shift.reject');
+        Route::post('/admin/requests/adjustment/file',           [AdminAttendanceController::class, 'fileAttendanceAdjustment'])->name('admin.requests.adjustment.file');
+        Route::post('/admin/requests/adjustment/{id}/approve',   [AdminAttendanceController::class, 'approveAttendanceAdjustment'])->name('admin.requests.adjustment.approve');
+        Route::post('/admin/requests/adjustment/{id}/reject',    [AdminAttendanceController::class, 'rejectAttendanceAdjustment'])->name('admin.requests.adjustment.reject');
 
         // Admin payroll
         Route::get('/admin/payroll',       [\App\Http\Controllers\AdminPayrollController::class, 'index'])->name('admin.payroll');
@@ -296,8 +299,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/hr/requests/shift/file',              [HRAttendanceController::class, 'fileShiftChangeRequest'])->name('hr.requests.shift.file');
         Route::post('/hr/requests/overtime/{id}/approve',   [HRAttendanceController::class, 'approveOvertimeRequest'])->name('hr.requests.overtime.approve');
         Route::post('/hr/requests/overtime/{id}/reject',    [HRAttendanceController::class, 'rejectOvertimeRequest'])->name('hr.requests.overtime.reject');
-        Route::post('/hr/requests/shift/{id}/approve',      [HRAttendanceController::class, 'approveShiftChangeRequest'])->name('hr.requests.shift.approve');
-        Route::post('/hr/requests/shift/{id}/reject',       [HRAttendanceController::class, 'rejectShiftChangeRequest'])->name('hr.requests.shift.reject');
+        Route::post('/hr/requests/shift/{id}/approve',          [HRAttendanceController::class, 'approveShiftChangeRequest'])->name('hr.requests.shift.approve');
+        Route::post('/hr/requests/shift/{id}/reject',           [HRAttendanceController::class, 'rejectShiftChangeRequest'])->name('hr.requests.shift.reject');
+        Route::post('/hr/requests/adjustment/file',             [HRAttendanceController::class, 'fileAttendanceAdjustment'])->name('hr.requests.adjustment.file');
+        Route::post('/hr/requests/adjustment/{id}/approve',     [HRAttendanceController::class, 'approveAttendanceAdjustment'])->name('hr.requests.adjustment.approve');
+        Route::post('/hr/requests/adjustment/{id}/reject',      [HRAttendanceController::class, 'rejectAttendanceAdjustment'])->name('hr.requests.adjustment.reject');
 
         // HR payroll (own payslips/govpay)
         Route::get('/hr/payslips', [\App\Http\Controllers\EmployeePayrollController::class, 'payslips'])->name('hr.payslips');
@@ -327,6 +333,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Supervisor dashboard
         Route::get('/supervisor', [SupervisorDashboardController::class, 'index'])->name('supervisor.dashboard');
+        Route::post('/supervisor/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('supervisor.announcements.store');
 
         // Supervisor attendance
         Route::get('/supervisor/attendance/reports',        [SupervisorAttendanceController::class, 'index'])->name('supervisor.attendance.reports');
@@ -356,8 +363,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/supervisor/requests/approved',         [SupervisorAttendanceController::class, 'approvedRequests'])->name('supervisor.requests.approved');
         Route::post('/supervisor/requests/{id}/approve',    [SupervisorAttendanceController::class, 'approveRequest'])->name('supervisor.requests.approve');
         Route::post('/supervisor/requests/{id}/reject',     [SupervisorAttendanceController::class, 'rejectRequest'])->name('supervisor.requests.reject');
-        Route::post('/supervisor/requests/overtime/file',   [SupervisorAttendanceController::class, 'fileOvertimeRequest'])->name('supervisor.requests.overtime.file');
-        Route::post('/supervisor/requests/shift/file',      [SupervisorAttendanceController::class, 'fileShiftChangeRequest'])->name('supervisor.requests.shift.file');
+        Route::post('/supervisor/requests/overtime/file',       [SupervisorAttendanceController::class, 'fileOvertimeRequest'])->name('supervisor.requests.overtime.file');
+        Route::post('/supervisor/requests/shift/file',          [SupervisorAttendanceController::class, 'fileShiftChangeRequest'])->name('supervisor.requests.shift.file');
+        Route::post('/supervisor/requests/adjustment/file',     [SupervisorAttendanceController::class, 'fileAttendanceAdjustment'])->name('supervisor.requests.adjustment.file');
+        Route::post('/supervisor/requests/adjustment/{id}/approve', [SupervisorAttendanceController::class, 'approveAttendanceAdjustment'])->name('supervisor.requests.adjustment.approve');
+        Route::post('/supervisor/requests/adjustment/{id}/reject',  [SupervisorAttendanceController::class, 'rejectAttendanceAdjustment'])->name('supervisor.requests.adjustment.reject');
 
         // Supervisor payroll (own payslips/govpay)
         Route::get('/supervisor/payslips', [\App\Http\Controllers\EmployeePayrollController::class, 'payslips'])->name('supervisor.payslips');
@@ -395,8 +405,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/employee/requests/pending',            [EmployeeAttendanceController::class, 'pendingRequests'])->name('employee.requests.pending');
         Route::get('/employee/requests/approved',           [EmployeeAttendanceController::class, 'approvedRequests'])->name('employee.requests.approved');
         Route::post('/employee/requests/{id}/cancel',       [EmployeeAttendanceController::class, 'cancelRequest'])->name('employee.requests.cancel');
-        Route::post('/employee/requests/overtime/file',     [EmployeeAttendanceController::class, 'fileOvertimeRequest'])->name('employee.requests.overtime.file');
-        Route::post('/employee/requests/shift/file',        [EmployeeAttendanceController::class, 'fileShiftChangeRequest'])->name('employee.requests.shift.file');
+        Route::post('/employee/requests/overtime/file',         [EmployeeAttendanceController::class, 'fileOvertimeRequest'])->name('employee.requests.overtime.file');
+        Route::post('/employee/requests/shift/file',            [EmployeeAttendanceController::class, 'fileShiftChangeRequest'])->name('employee.requests.shift.file');
+        Route::post('/employee/requests/adjustment/file',       [EmployeeAttendanceController::class, 'fileAttendanceAdjustment'])->name('employee.requests.adjustment.file');
 
         // Employee payroll (own payslips/govpay)
         Route::get('/employee/payslips', [\App\Http\Controllers\EmployeePayrollController::class, 'payslips'])->name('employee.payslips');

@@ -2,17 +2,17 @@
 
 @php
     $currentRoute    = request()->route()->getName();
-    $isEmployeesSection  = in_array($currentRoute, ['employees.directory', 'employees.profile']);
+    $isEmployeesSection  = in_array($currentRoute, ['supervisor.employees.directory', 'supervisor.employees.profile']);
     $isAttendanceSection = in_array($currentRoute, [
-        'admin.attendance.reports',
-        'admin.attendance.employee',
-        'admin.attendance.today',
-        'admin.attendance.records',
-        'admin.leave.management',
-        'admin.shift.scheduling',
+        'supervisor.attendance.reports',
+        'supervisor.attendance.employee',
+        'supervisor.attendance.today',
+        'supervisor.attendance.records',
+        'supervisor.leave.management',
+        'supervisor.shift.scheduling',
     ]);
-    $isPayrollSection  = in_array($currentRoute, ['admin.payroll', 'admin.payslips', 'admin.govpay', 'admin.govpay.view']);
-    $isRequestsSection = in_array($currentRoute, ['admin.requests.pending', 'admin.requests.approved']);
+    $isPayrollSection  = in_array($currentRoute, ['supervisor.payslips', 'supervisor.govpay']);
+    $isRequestsSection = in_array($currentRoute, ['supervisor.requests.pending', 'supervisor.requests.approved']);
 
     $sidebarUser     = auth()->user();
     $sidebarEmployee = $sidebarUser
@@ -117,10 +117,10 @@
         </p>
 
         <!-- Dashboard -->
-        <a href="{{ route('admin.dashboard') }}"
+        <a href="{{ route('supervisor.dashboard') }}"
            class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg
-               {{ $currentRoute === 'admin.dashboard' ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}"
-           style="{{ $currentRoute === 'admin.dashboard' ? 'background:#3b82f6;' : '' }}">
+               {{ $currentRoute === 'supervisor.dashboard' ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}"
+           style="{{ $currentRoute === 'supervisor.dashboard' ? 'background:#3b82f6;' : '' }}">
             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z
@@ -135,7 +135,7 @@
         <div>
             <button @click="(isMobile || !sidebarCollapsed)
                         ? employeesOpen = !employeesOpen
-                        : window.location='{{ route('employees.directory') }}'"
+                        : window.location='{{ route('supervisor.employees.directory') }}'"
                     class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg
                         {{ $isEmployeesSection ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}"
                     style="{{ $isEmployeesSection ? 'background:#3b82f6;' : '' }}">
@@ -160,14 +160,14 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('employees.directory') }}"
+                <a href="{{ route('supervisor.employees.directory') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'employees.directory' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                       {{ $currentRoute === 'supervisor.employees.directory' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Employee Directory
                 </a>
-                <a href="{{ route('employees.profile') }}"
+                <a href="{{ route('supervisor.employees.profile') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'employees.profile' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                       {{ $currentRoute === 'supervisor.employees.profile' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Employee Profile
                 </a>
             </div>
@@ -177,7 +177,7 @@
         <div>
             <button @click="(isMobile || !sidebarCollapsed)
                         ? attendanceOpen = !attendanceOpen
-                        : window.location='{{ route('admin.attendance.reports') }}'"
+                        : window.location='{{ route('supervisor.attendance.reports') }}'"
                     class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg
                         {{ $isAttendanceSection ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
                 <div class="flex items-center space-x-3">
@@ -201,28 +201,28 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('admin.attendance.reports') }}"
+                <a href="{{ route('supervisor.attendance.reports') }}"
                    class="submenu-item flex items-center px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'admin.attendance.reports' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
-                    @if($currentRoute === 'admin.attendance.reports')
+                       {{ $currentRoute === 'supervisor.attendance.reports' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                    @if($currentRoute === 'supervisor.attendance.reports')
                         <span class="w-2 h-2 rounded-full mr-2.5 flex-shrink-0"
                               style="background:#3b82f6; animation: pulseDot 2s ease-in-out infinite;"></span>
                     @endif
                     My Attendance
                 </a>
-                <a href="{{ route('admin.attendance.employee') }}"
+                <a href="{{ route('supervisor.attendance.employee') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'admin.attendance.employee' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                       {{ $currentRoute === 'supervisor.attendance.employee' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Employee Attendance
                 </a>
-                <a href="{{ route('admin.shift.scheduling') }}"
+                <a href="{{ route('supervisor.shift.scheduling') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'admin.shift.scheduling' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                       {{ $currentRoute === 'supervisor.shift.scheduling' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Shift Scheduling
                 </a>
-                <a href="{{ route('admin.leave.management') }}"
+                <a href="{{ route('supervisor.leave.management') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'admin.leave.management' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                       {{ $currentRoute === 'supervisor.leave.management' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Leave Management
                 </a>
             </div>
@@ -232,7 +232,7 @@
         <div>
             <button @click="(isMobile || !sidebarCollapsed)
                         ? payrollOpen = !payrollOpen
-                        : window.location='{{ route('admin.payroll') }}'"
+                        : window.location='{{ route('supervisor.payslips') }}'"
                     class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg
                         {{ $isPayrollSection ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
                 <div class="flex items-center space-x-3">
@@ -256,19 +256,14 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('admin.payroll') }}"
+                <a href="{{ route('supervisor.payslips') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'admin.payroll' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
-                    Payroll
-                </a>
-                <a href="{{ route('admin.payslips') }}"
-                   class="submenu-item block px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'admin.payslips' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                       {{ $currentRoute === 'supervisor.payslips' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Payslips
                 </a>
-                <a href="{{ route('admin.govpay') }}"
+                <a href="{{ route('supervisor.govpay') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'admin.govpay' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                       {{ $currentRoute === 'supervisor.govpay' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Govt. Contributions
                 </a>
             </div>
@@ -278,7 +273,7 @@
         <div>
             <button @click="(isMobile || !sidebarCollapsed)
                         ? requestsOpen = !requestsOpen
-                        : window.location='{{ route('admin.requests.pending') }}'"
+                        : window.location='{{ route('supervisor.requests.pending') }}'"
                     class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg
                         {{ $isRequestsSection ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
                 <div class="flex items-center space-x-3">
@@ -302,14 +297,14 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('admin.requests.pending') }}"
+                <a href="{{ route('supervisor.requests.pending') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'admin.requests.pending' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                       {{ $currentRoute === 'supervisor.requests.pending' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Pending Requests
                 </a>
-                <a href="{{ route('admin.requests.approved') }}"
+                <a href="{{ route('supervisor.requests.approved') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
-                       {{ $currentRoute === 'admin.requests.approved' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
+                       {{ $currentRoute === 'supervisor.requests.approved' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Approved Logs
                 </a>
             </div>
@@ -322,10 +317,10 @@
                 Others
             </p>
 
-            <a href="{{ route('settings.index') }}"
+            <a href="{{ route('supervisor.settings') }}"
                class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg
-                   {{ $currentRoute === 'settings.index' ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}"
-               style="{{ $currentRoute === 'settings.index' ? 'background:#3b82f6;' : '' }}">
+                   {{ $currentRoute === 'supervisor.settings' ? 'text-white' : 'text-gray-600 hover:bg-gray-50' }}"
+               style="{{ $currentRoute === 'supervisor.settings' ? 'background:#3b82f6;' : '' }}">
                 <svg class="w-5 h-5 flex-shrink-0 settings-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -335,7 +330,7 @@
             </a>
 
             <a href="{{ route('logout') }}"
-               onclick="event.preventDefault(); document.getElementById('admin-logout-form').submit();"
+               onclick="event.preventDefault(); document.getElementById('supervisor-logout-form').submit();"
                class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-500">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -343,7 +338,7 @@
                 </svg>
                 <span x-show="isMobile || !sidebarCollapsed" class="text-sm font-medium whitespace-nowrap">Logout</span>
             </a>
-            <form id="admin-logout-form" action="{{ route('logout') }}" method="POST" class="hidden">@csrf</form>
+            <form id="supervisor-logout-form" action="{{ route('logout') }}" method="POST" class="hidden">@csrf</form>
         </div>
     </nav>
 

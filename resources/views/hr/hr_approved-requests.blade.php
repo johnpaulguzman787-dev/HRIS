@@ -75,6 +75,7 @@
         .badge-leave    { background:#fef3c7; color:#d97706; }
         .badge-ot       { background:#fce7f3; color:#db2777; }
         .badge-shift    { background:#ede9fe; color:#7c3aed; }
+        .badge-adjustment { background:#fef3c7; color:#92400e; }
         .badge-approved { background:#dcfce7; color:#16a34a; }
         .badge-rejected { background:#fee2e2; color:#dc2626; }
         .approver-chip  { display:inline-block; background:#dbeafe; color:#1d4ed8; border-radius:20px; padding:2px 9px; font-size:10.5px; font-weight:600; margin:1px; white-space:nowrap; }
@@ -256,10 +257,11 @@
                     </div>
                     <div class="fsel-wrap filter-item">
                         <select name="type" class="fsel" onchange="document.getElementById('filterForm').submit()">
-                            <option value="all"      {{ ($filterType ?? 'all') === 'all'   ? 'selected' : '' }}>All Types</option>
-                            <option value="leave"    {{ ($filterType ?? '') === 'leave'    ? 'selected' : '' }}>Leave</option>
-                            <option value="overtime" {{ ($filterType ?? '') === 'overtime' ? 'selected' : '' }}>Overtime</option>
-                            <option value="shift"    {{ ($filterType ?? '') === 'shift'    ? 'selected' : '' }}>Shift</option>
+                            <option value="all"        {{ ($filterType ?? 'all') === 'all'       ? 'selected' : '' }}>All Types</option>
+                            <option value="leave"      {{ ($filterType ?? '') === 'leave'      ? 'selected' : '' }}>Leave</option>
+                            <option value="overtime"   {{ ($filterType ?? '') === 'overtime'   ? 'selected' : '' }}>Overtime</option>
+                            <option value="shift"      {{ ($filterType ?? '') === 'shift'      ? 'selected' : '' }}>Shift</option>
+                            <option value="adjustment" {{ ($filterType ?? '') === 'adjustment' ? 'selected' : '' }}>Adjustment</option>
                         </select>
                     </div>
                     <div class="fsel-wrap filter-item">
@@ -295,29 +297,55 @@
                         @php
                             $empName     = trim(optional($req->employee)->fname . ' ' . optional($req->employee)->lname) ?: '—';
                             $empDept     = optional(optional($req->employee)->department)->name ?? '—';
-                            $typeLabel   = $req->type === 'leave' ? 'Leave Request' : ($req->type === 'overtime' ? 'Overtime' : 'Shift Arrangement');
-                            $subType     = $req->type === 'leave'
-                                ? (optional($req->leaveType)->name ?? '—')
-                                : ($req->type === 'overtime'
-                                    ? (($req->requested_hours ?? '?') . 'h OT')
-                                    : (optional($req->current_shift)->name . ' → ' . optional($req->requested_shift)->name));
-                            $fromDate    = $req->type === 'leave'
-                                ? optional($req->start_date)->format('m/d/Y')
-                                : ($req->type === 'overtime'
-                                    ? optional($req->ot_date)->format('m/d/Y')
-                                    : optional($req->effective_from)->format('m/d/Y'));
-                            $toDate      = $req->type === 'leave'
-                                ? optional($req->end_date)->format('m/d/Y')
-                                : ($req->type === 'overtime'
-                                    ? optional($req->ot_date)->format('m/d/Y')
-                                    : optional($req->effective_until)->format('m/d/Y'));
+                            $typeLabel   = match($req->type) {
+                                'leave'      => 'Leave Request',
+                                'overtime'   => 'Overtime',
+                                'shift'      => 'Shift Arrangement',
+                                'adjustment' => 'Attendance Adjustment',
+                                default      => '—',
+                            };
+                            $subType = match($req->type) {
+                                'leave'      => optional($req->leaveType)->name ?? '—',
+                                'overtime'   => ($req->requested_hours ?? '?') . 'h OT',
+                                'shift'      => optional($req->current_shift)->name . ' → ' . optional($req->requested_shift)->name,
+                                'adjustment' => 'Was: ' . ($req->original_clock_in ? \Carbon\Carbon::parse($req->original_clock_in)->format('g:i A') : '—') . ' – ' . ($req->original_clock_out ? \Carbon\Carbon::parse($req->original_clock_out)->format('g:i A') : '—'),
+                                default      => '—',
+                            };
+                            $fromDate    = match($req->type) {
+                                'leave'      => optional($req->start_date)->format('m/d/Y'),
+                                'overtime'   => optional($req->ot_date)->format('m/d/Y'),
+                                'shift'      => optional($req->effective_from)->format('m/d/Y'),
+                                'adjustment' => $req->attendance_date ? \Carbon\Carbon::parse($req->attendance_date)->format('m/d/Y') : null,
+                                default      => null,
+                            };
+                            $toDate      = match($req->type) {
+                                'leave'      => optional($req->end_date)->format('m/d/Y'),
+                                'overtime'   => optional($req->ot_date)->format('m/d/Y'),
+                                'shift'      => optional($req->effective_until)->format('m/d/Y'),
+                                'adjustment' => null,
+                                default      => null,
+                            };
                             $approverName = $req->type === 'leave'
                                 ? trim(optional($req->approver)->fname . ' ' . optional($req->approver)->lname)
-                                : ($req->approved_by ?? '—');
+                                : (in_array($req->type, ['overtime','shift','adjustment']) && $req->approved_by
+                                    ? trim(optional(\App\Models\Employee::find($req->approved_by))->fname . ' ' . optional(\App\Models\Employee::find($req->approved_by))->lname)
+                                    : '—');
                             $rejReason   = $req->rejection_reason ?? '';
                             $processedOn = optional($req->approved_at)->format('m/d/Y') ?? '';
                             $durationDisplay = ($fromDate && $toDate && $fromDate !== $toDate) ? $fromDate . ' – ' . $toDate : ($fromDate ?: '—');
-                            $typeBadge = $req->type === 'leave' ? 'badge-leave' : ($req->type === 'overtime' ? 'badge-ot' : 'badge-shift');
+                            $typeBadge = match($req->type) {
+                                'leave'      => 'badge-leave',
+                                'overtime'   => 'badge-ot',
+                                'shift'      => 'badge-shift',
+                                'adjustment' => 'badge-adjustment',
+                                default      => '',
+                            };
+                            $daysHours = match($req->type) {
+                                'leave'      => ($req->total_days ?? '—') . 'd',
+                                'overtime'   => ($req->requested_hours ?? '—') . 'h',
+                                'adjustment' => \Carbon\Carbon::parse($req->requested_clock_in)->format('g:i A') . ' – ' . ($req->requested_clock_out ? \Carbon\Carbon::parse($req->requested_clock_out)->format('g:i A') : 'N/A'),
+                                default      => '—',
+                            };
                             $jsRef        = addslashes($req->ref_no ?? '');
                             $jsFiled      = optional($req->created_at)->format('F j, Y') ?? '—';
                             $jsReqType    = addslashes($typeLabel);
@@ -337,15 +365,7 @@
                             <td><span class="badge {{ $typeBadge }}">{{ $typeLabel }}</span></td>
                             <td class="text-gray-500 text-xs">{{ optional($req->created_at)->format('m/d/Y') }}</td>
                             <td class="text-gray-500 text-xs">{{ $durationDisplay }}</td>
-                            <td class="font-semibold">
-                                @if($req->type === 'leave')
-                                    {{ $req->total_days ?? '—' }}d
-                                @elseif($req->type === 'overtime')
-                                    {{ $req->requested_hours ?? '—' }}h
-                                @else
-                                    —
-                                @endif
-                            </td>
+                            <td class="font-semibold">{{ $daysHours }}</td>
                             <td>
                                 @if($approverName && $approverName !== '—')
                                     <span class="approver-chip">{{ $approverName }}</span>
@@ -391,28 +411,54 @@
                 @php
                     $empName     = trim(optional($req->employee)->fname . ' ' . optional($req->employee)->lname) ?: '—';
                     $empDept     = optional(optional($req->employee)->department)->name ?? '—';
-                    $typeLabel   = $req->type === 'leave' ? 'Leave Request' : ($req->type === 'overtime' ? 'Overtime' : 'Shift Arrangement');
-                    $subType     = $req->type === 'leave'
-                        ? (optional($req->leaveType)->name ?? '—')
-                        : ($req->type === 'overtime'
-                            ? (($req->requested_hours ?? '?') . 'h OT')
-                            : (optional($req->current_shift)->name . ' → ' . optional($req->requested_shift)->name));
-                    $fromDate    = $req->type === 'leave'
-                        ? optional($req->start_date)->format('m/d/Y')
-                        : ($req->type === 'overtime'
-                            ? optional($req->ot_date)->format('m/d/Y')
-                            : optional($req->effective_from)->format('m/d/Y'));
-                    $toDate      = $req->type === 'leave'
-                        ? optional($req->end_date)->format('m/d/Y')
-                        : ($req->type === 'overtime'
-                            ? optional($req->ot_date)->format('m/d/Y')
-                            : optional($req->effective_until)->format('m/d/Y'));
+                    $typeLabel   = match($req->type) {
+                        'leave'      => 'Leave Request',
+                        'overtime'   => 'Overtime',
+                        'shift'      => 'Shift Arrangement',
+                        'adjustment' => 'Attendance Adjustment',
+                        default      => '—',
+                    };
+                    $subType = match($req->type) {
+                        'leave'      => optional($req->leaveType)->name ?? '—',
+                        'overtime'   => ($req->requested_hours ?? '?') . 'h OT',
+                        'shift'      => optional($req->current_shift)->name . ' → ' . optional($req->requested_shift)->name,
+                        'adjustment' => 'Was: ' . ($req->original_clock_in ? \Carbon\Carbon::parse($req->original_clock_in)->format('g:i A') : '—') . ' – ' . ($req->original_clock_out ? \Carbon\Carbon::parse($req->original_clock_out)->format('g:i A') : '—'),
+                        default      => '—',
+                    };
+                    $fromDate    = match($req->type) {
+                        'leave'      => optional($req->start_date)->format('m/d/Y'),
+                        'overtime'   => optional($req->ot_date)->format('m/d/Y'),
+                        'shift'      => optional($req->effective_from)->format('m/d/Y'),
+                        'adjustment' => $req->attendance_date ? \Carbon\Carbon::parse($req->attendance_date)->format('m/d/Y') : null,
+                        default      => null,
+                    };
+                    $toDate      = match($req->type) {
+                        'leave'      => optional($req->end_date)->format('m/d/Y'),
+                        'overtime'   => optional($req->ot_date)->format('m/d/Y'),
+                        'shift'      => optional($req->effective_until)->format('m/d/Y'),
+                        'adjustment' => null,
+                        default      => null,
+                    };
                     $approverName = $req->type === 'leave'
                         ? trim(optional($req->approver)->fname . ' ' . optional($req->approver)->lname)
-                        : ($req->approved_by ?? '—');
+                        : (in_array($req->type, ['overtime','shift','adjustment']) && $req->approved_by
+                            ? trim(optional(\App\Models\Employee::find($req->approved_by))->fname . ' ' . optional(\App\Models\Employee::find($req->approved_by))->lname)
+                            : '—');
                     $processedOn = optional($req->approved_at)->format('m/d/Y') ?? '';
                     $durationDisplay = ($fromDate && $toDate && $fromDate !== $toDate) ? $fromDate . ' – ' . $toDate : ($fromDate ?: '—');
-                    $typeBadge = $req->type === 'leave' ? 'badge-leave' : ($req->type === 'overtime' ? 'badge-ot' : 'badge-shift');
+                    $typeBadge = match($req->type) {
+                        'leave'      => 'badge-leave',
+                        'overtime'   => 'badge-ot',
+                        'shift'      => 'badge-shift',
+                        'adjustment' => 'badge-adjustment',
+                        default      => '',
+                    };
+                    $daysHours = match($req->type) {
+                        'leave'      => ($req->total_days ?? '—') . 'd',
+                        'overtime'   => ($req->requested_hours ?? '—') . 'h',
+                        'adjustment' => \Carbon\Carbon::parse($req->requested_clock_in)->format('g:i A') . ' – ' . ($req->requested_clock_out ? \Carbon\Carbon::parse($req->requested_clock_out)->format('g:i A') : 'N/A'),
+                        default      => '—',
+                    };
                     $jsRef        = addslashes($req->ref_no ?? '');
                     $jsFiled      = optional($req->created_at)->format('F j, Y') ?? '—';
                     $jsReqType    = addslashes($typeLabel);
@@ -461,15 +507,7 @@
                         </div>
                         <div>
                             <div class="req-card-label">Days / Hours</div>
-                            <div class="req-card-value" style="font-weight:700;">
-                                @if($req->type === 'leave')
-                                    {{ $req->total_days ?? '—' }}d
-                                @elseif($req->type === 'overtime')
-                                    {{ $req->requested_hours ?? '—' }}h
-                                @else
-                                    —
-                                @endif
-                            </div>
+                            <div class="req-card-value" style="font-weight:700;">{{ $daysHours }}</div>
                         </div>
                     </div>
 

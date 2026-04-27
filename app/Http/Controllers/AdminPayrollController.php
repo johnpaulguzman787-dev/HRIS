@@ -116,12 +116,15 @@ class AdminPayrollController extends Controller
             'department'     => $p->employee->department->name ?? '—',
             'basicPay'       => (float) $p->basic_pay,
             'otPay'          => (float) $p->ot_pay,
-            'benefits'       => (float) $p->benefits_total,
-            'grossPay'       => (float) $p->gross_pay,
+            'benefits'        => (float) $p->benefits_total,
+            'otherAdditions'  => (float) ($p->other_additions ?? 0),
+            'grossPay'        => (float) $p->gross_pay,
             'sss'            => (float) $p->sss,
             'philhealth'     => (float) $p->philhealth,
             'pagibig'        => (float) $p->pagibig,
-            'withholdingTax' => (float) $p->withholding_tax,
+            'lateDeduction'   => (float) ($p->late_deduction ?? 0),
+            'otherDeductions' => (float) ($p->other_deductions ?? 0),
+            'withholdingTax'  => (float) $p->withholding_tax,
             'totalDeductions'=> (float) $p->total_deductions,
             'netPay'         => (float) $p->net_pay,
             'status'         => $p->status,
@@ -246,12 +249,15 @@ class AdminPayrollController extends Controller
             'department'     => $p->employee->department->name ?? '—',
             'basicPay'       => (float) $p->basic_pay,
             'otPay'          => (float) $p->ot_pay,
-            'benefits'       => (float) $p->benefits_total,
-            'grossPay'       => (float) $p->gross_pay,
+            'benefits'        => (float) $p->benefits_total,
+            'otherAdditions'  => (float) ($p->other_additions ?? 0),
+            'grossPay'        => (float) $p->gross_pay,
             'sss'            => (float) $p->sss,
             'philhealth'     => (float) $p->philhealth,
             'pagibig'        => (float) $p->pagibig,
-            'withholdingTax' => (float) $p->withholding_tax,
+            'lateDeduction'   => (float) ($p->late_deduction ?? 0),
+            'otherDeductions' => (float) ($p->other_deductions ?? 0),
+            'withholdingTax'  => (float) $p->withholding_tax,
             'totalDeductions'=> (float) $p->total_deductions,
             'netPay'         => (float) $p->net_pay,
             'status'         => $p->status,
@@ -622,12 +628,15 @@ class AdminPayrollController extends Controller
             'department'     => $p->employee?->department?->name ?? '—',
             'basicPay'       => (float) $p->basic_pay,
             'otPay'          => (float) $p->ot_pay,
-            'benefits'       => (float) $p->benefits_total,
-            'grossPay'       => (float) $p->gross_pay,
+            'benefits'        => (float) $p->benefits_total,
+            'otherAdditions'  => (float) ($p->other_additions ?? 0),
+            'grossPay'        => (float) $p->gross_pay,
             'sss'            => (float) $p->sss,
             'philhealth'     => (float) $p->philhealth,
             'pagibig'        => (float) $p->pagibig,
-            'withholdingTax' => (float) $p->withholding_tax,
+            'lateDeduction'   => (float) ($p->late_deduction ?? 0),
+            'otherDeductions' => (float) ($p->other_deductions ?? 0),
+            'withholdingTax'  => (float) $p->withholding_tax,
             'totalDeductions'=> (float) $p->total_deductions,
             'netPay'         => (float) $p->net_pay,
             'status'         => $p->status,
@@ -648,6 +657,7 @@ class AdminPayrollController extends Controller
             'sss'            => 'required|numeric|min:0',
             'philhealth'     => 'required|numeric|min:0',
             'pagibig'        => 'required|numeric|min:0',
+            'lateDeduction'  => 'nullable|numeric|min:0',
             'withholdingTax' => 'required|numeric|min:0',
         ]);
 
@@ -657,17 +667,23 @@ class AdminPayrollController extends Controller
             return response()->json(['success' => false, 'message' => 'Payslip cannot be edited after the period has been submitted.']);
         }
 
-        $grossPay        = $request->basicPay + $request->otPay + $request->benefits;
-        $totalDeductions = $request->sss + $request->philhealth + $request->pagibig + $request->withholdingTax;
+        $otherAdditions  = (float) ($request->otherAdditions ?? 0);
+        $grossPay        = $request->basicPay + $request->otPay + $request->benefits + $otherAdditions;
+        $lateDeduction   = (float) ($request->lateDeduction ?? 0);
+        $otherDeductions = (float) ($request->otherDeductions ?? 0);
+        $totalDeductions = $request->sss + $request->philhealth + $request->pagibig + $request->withholdingTax + $lateDeduction + $otherDeductions;
 
         $payslip->update([
             'basic_pay'        => $request->basicPay,
             'ot_pay'           => $request->otPay,
             'benefits_total'   => $request->benefits,
+            'other_additions'  => $otherAdditions,
             'gross_pay'        => $grossPay,
             'sss'              => $request->sss,
             'philhealth'       => $request->philhealth,
             'pagibig'          => $request->pagibig,
+            'late_deduction'   => $lateDeduction,
+            'other_deductions' => $otherDeductions,
             'withholding_tax'  => $request->withholdingTax,
             'total_deductions' => $totalDeductions,
             'net_pay'          => $grossPay - $totalDeductions,
@@ -702,21 +718,52 @@ class AdminPayrollController extends Controller
         $c       = DB::table('contribution_settings')->pluck('value', 'key');
         $sssRows = DB::table('sss_contributions')->orderBy('salary_from')->get();
 
+        // Load all active PayrollItems once; partition into special vs generic
+        $allItems    = \App\Models\PayrollItem::where('status', 'Active')->get();
+        $otItem      = $allItems->first(fn($i) => strtolower($i->name) === 'regular ot' || strtolower($i->name) === 'regular overtime');
+        $lateItem    = $allItems->first(fn($i) => strtolower($i->name) === 'late deduction');
+        $genericItems = $allItems->filter(fn($i) => $i->id !== ($otItem?->id) && $i->id !== ($lateItem?->id));
+
+        $otMultiplier   = $otItem   ? (float) $otItem->multiplier   : 1.25;
+        $lateMultiplier = $lateItem ? (float) $lateItem->multiplier : 1.00;
+
         foreach ($employees as $emp) {
             $grade         = $emp->salaryGrade;
             $monthlySalary = $grade ? (float) $grade->monthly_basic_salary : 0;
             $basicPay      = $monthlySalary / 2;
 
-            // OT pay: approved OT hours × hourly rate × 1.25 (Regular OT)
+            // OT pay: approved OT hours × hourly rate × multiplier from PayrollItem
             $hourlyRate = $monthlySalary > 0 ? ($monthlySalary * 12 / 261 / 8) : 0;
             $otHours    = \App\Models\OvertimeRequest::where('employee_id', $emp->id)
                 ->where('status', 'approved')
                 ->whereBetween('ot_date', [$period->start_date, $period->end_date])
                 ->sum('approved_hours');
-            $otPay = round($otHours * $hourlyRate * 1.25, 2);
+            $otPay = round($otHours * $hourlyRate * $otMultiplier, 2);
 
             $benefitsTotal = $emp->benefits->sum('amount');
-            $grossPay = $basicPay + $otPay + $benefitsTotal;
+
+            // Apply generic PayrollItems (all active items except Regular OT and Late Deduction)
+            $otherAdditions = 0.0;
+            $otherDeductions = 0.0;
+            $preGross = $basicPay + $otPay + $benefitsTotal;
+            foreach ($genericItems as $item) {
+                $basis = strtolower($item->basis ?? '');
+                if ($basis === 'basic pay') {
+                    $amount = round($basicPay * (float) $item->multiplier, 2);
+                } elseif ($basis === 'gross pay') {
+                    $amount = round($preGross * (float) $item->multiplier, 2);
+                } else {
+                    // Fixed / Hourly Rate variations → treat multiplier as flat peso amount per period
+                    $amount = round((float) $item->multiplier, 2);
+                }
+                if ($item->type === 'Addition') {
+                    $otherAdditions += $amount;
+                } else {
+                    $otherDeductions += $amount;
+                }
+            }
+
+            $grossPay = $preGross + $otherAdditions;
 
             // ── SSS: table-based lookup (fixed employee share per salary bracket) ──
             $sssRow = $sssRows->first(fn($r) =>
@@ -737,7 +784,13 @@ class AdminPayrollController extends Controller
             $annualTaxable    = max(0, ($grossPay * 24) - $annualDeductions);
             $withholdingTax   = round($this->computeWithholdingTax($annualTaxable, $c) / 24, 2);
 
-            $totalDeductions = $sss + $philhealth + $pagibig + $withholdingTax;
+            // ── Late deduction: sum of late_minutes in period × per-minute rate × multiplier ──
+            $lateMinutes   = \App\Models\AttendanceLog::where('employee_id', $emp->id)
+                ->whereBetween('attendance_date', [$period->start_date, $period->end_date])
+                ->sum('late_minutes');
+            $lateDeduction = $hourlyRate > 0 ? round(($lateMinutes / 60) * $hourlyRate * $lateMultiplier, 2) : 0;
+
+            $totalDeductions = $sss + $philhealth + $pagibig + $withholdingTax + $lateDeduction + $otherDeductions;
             $netPay          = $grossPay - $totalDeductions;
 
             Payslip::create([
@@ -746,10 +799,13 @@ class AdminPayrollController extends Controller
                 'basic_pay'         => $basicPay,
                 'ot_pay'            => $otPay,
                 'benefits_total'    => $benefitsTotal,
+                'other_additions'   => $otherAdditions,
                 'gross_pay'         => $grossPay,
                 'sss'               => $sss,
                 'philhealth'        => $philhealth,
                 'pagibig'           => $pagibig,
+                'late_deduction'    => $lateDeduction,
+                'other_deductions'  => $otherDeductions,
                 'withholding_tax'   => $withholdingTax,
                 'total_deductions'  => $totalDeductions,
                 'net_pay'           => $netPay,

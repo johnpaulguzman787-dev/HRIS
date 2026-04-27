@@ -50,11 +50,15 @@
         .slide-in-right { animation:slideRight 0.28s cubic-bezier(0.22,1,0.36,1) both; }
         .tab-content    { animation:tabIn 0.28s cubic-bezier(0.22,1,0.36,1) both; }
 
-        /* ── Summary Cards ── */
-        .cards-wrap { display:flex; gap:16px; }
+        /* ── Summary Cards (mobile stack) ── */
+        .cards-wrap {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
         .summary-card {
             background:#fff; border-radius:10px; border:1px solid #e5e7eb;
-            padding:22px 26px; flex:1;
+            padding:22px 26px; flex:1 1 200px;
             transition:transform 0.2s ease, box-shadow 0.2s ease;
             animation:scaleIn 0.44s cubic-bezier(0.22,1,0.36,1) both;
         }
@@ -72,7 +76,7 @@
         .badge-released  { background:#e8f5e9; color:#2e7d32; }
 
         /* ── Tables ── */
-        .data-table { width:100%; border-collapse:collapse; }
+        .data-table { width:100%; border-collapse:collapse; min-width:600px; }
         .data-table thead tr { border-bottom:1px solid #e5e7eb; }
         .data-table thead th {
             text-align:left; padding:13px 16px;
@@ -124,26 +128,64 @@
         .search-wrap svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:#9ca3af; pointer-events:none; }
         .search-wrap input { padding-left:40px; }
 
-        /* ── Buttons ── */
+        /* ── Buttons (unified) ── */
         .btn-primary {
-            background:#2563eb; color:#fff; border-radius:8px; padding:10px 24px;
-            font-size:0.875rem; font-weight:600; display:inline-flex; align-items:center;
-            gap:7px; border:none; cursor:pointer;
+            background:#2563eb;
+            color:#fff;
+            border-radius:8px;
+            padding:10px 24px;
+            font-size:0.875rem;
+            font-weight:600;
+            display:inline-flex;
+            align-items:center;
+            gap:7px;
+            border:none;
+            cursor:pointer;
             transition:background 0.18s, transform 0.15s;
-            white-space:nowrap; width:100%; justify-content:center;
+            white-space:nowrap;
+            justify-content:center;
         }
         .btn-primary:hover { background:#1d4ed8; transform:translateY(-1px); }
         .btn-primary:active { transform:translateY(0); }
-        .btn-close {
-            border:1px solid #e2e8f0; border-radius:8px; padding:10px 24px;
-            font-size:0.875rem; font-weight:500; color:#374151; background:#fff;
-            cursor:pointer; transition:background 0.15s; width:100%;
+        .btn-primary:disabled {
+            background:#d1d5db;
+            cursor:not-allowed;
+            transform:none;
         }
-        .btn-close:hover { background:#f3f4f6; }
+        .btn-close {
+            border:1px solid #e2e8f0;
+            border-radius:8px;
+            padding:10px 24px;
+            font-size:0.875rem;
+            font-weight:500;
+            color:#374151;
+            background:#fff;
+            cursor:pointer;
+            transition:background 0.15s;
+            text-align:center;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:7px;
+        }
+        /* Make Close and Export buttons equal width on all screen sizes */
+        .btn-primary, .btn-close {
+            flex: 1;
+            width: auto;
+        }
         .btn-view {
-            border:1px solid #e2e8f0; border-radius:7px; padding:5px 16px;
-            font-size:0.8rem; font-weight:500; color:#374151; background:#fff;
-            cursor:pointer; transition:all 0.15s;
+            border:1px solid #e2e8f0;
+            border-radius:7px;
+            padding:5px 16px;
+            font-size:0.8rem;
+            font-weight:500;
+            color:#374151;
+            background:#fff;
+            cursor:pointer;
+            transition:all 0.15s;
+            display:inline-flex;
+            align-items:center;
+            gap:4px;
         }
         .btn-view:hover { background:#eff6ff; color:#2563eb; border-color:#bfdbfe; }
 
@@ -152,25 +194,145 @@
         /* ── Empty State ── */
         .empty-state { text-align:center; padding:48px 24px; color:#9ca3af; }
         .empty-state svg { width:40px; height:40px; margin:0 auto 12px; opacity:0.4; }
+
+        /* ── Transition for margin ── */
+        .transition-margin {
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ── Mobile responsiveness ── */
+        @media (max-width: 768px) {
+            .cards-wrap {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .summary-card {
+                padding: 16px 20px;
+            }
+            .s-value {
+                font-size: 1.5rem;
+            }
+            .flex.gap-5.items-start {
+                flex-direction: column;
+            }
+            .w-80 {
+                width: 100% !important;
+                margin-top: 24px;
+            }
+            .tab-btn {
+                padding: 12px 20px;
+                font-size: 0.8rem;
+            }
+            .ctrl {
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+            .search-wrap {
+                max-width: 100% !important;
+                flex: 1;
+            }
+            .px-8 {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+            .data-table thead th,
+            .data-table tbody td {
+                padding: 10px 12px;
+                font-size: 0.75rem;
+            }
+            .btn-view {
+                padding: 4px 12px;
+                font-size: 0.7rem;
+            }
+            /* Toolbar for All Payslips (wraps) */
+            .toolbar-row {
+                flex-wrap: wrap;
+            }
+            .toolbar-row > * {
+                flex: 1 1 auto;
+                min-width: 120px;
+            }
+            /* Close and Export buttons */
+            .btn-primary, .btn-close {
+                padding: 8px 16px;
+                font-size: 0.75rem;
+            }
+            /* My Payslip toolbar */
+            .my-toolbar {
+                flex-wrap: nowrap !important;
+                overflow: hidden !important;
+                gap: 8px;
+            }
+            .my-toolbar .search-wrap {
+                flex: 3 !important;
+                min-width: 0 !important;
+            }
+            .my-toolbar .ctrl-select {
+                flex: 1 !important;
+                min-width: 80px !important;
+                width: auto !important;
+            }
+            .my-toolbar .btn-primary {
+                flex: 0 0 auto !important;
+                white-space: nowrap;
+            }
+        }
     </style>
 </head>
 
-<body x-data="payslipsApp()" x-init="init()">
+<body x-data="payslipsApp()" x-init="init()" class="flex h-screen overflow-hidden">
 
-    @include('admin.admin_sidebar')
+    <!-- ===================== DESKTOP SIDEBAR ===================== -->
+    <div class="hidden lg:block">
+        @include('admin.admin_sidebar')
+    </div>
 
-    <div class="main-content min-h-screen" :style="'margin-left: ' + (sidebarCollapsed ? '80px' : '256px')">
+    <!-- ===================== MOBILE DRAWER ===================== -->
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 lg:hidden"
+         style="display:none;">
+        <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+            @include('admin.admin_sidebar')
+        </div>
+    </div>
 
-        {{-- Header --}}
-        <header class="bg-gradient-to-r from-blue-500 to-blue-600 sticky top-0 z-40 shadow-lg mt-4 mx-4 rounded-2xl">
+    <!-- ===================== MAIN CONTENT ===================== -->
+    <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin p-3 lg:p-6"
+         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
+         style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
+
+        {{-- Header with Hamburger --}}
+        <header class="bg-gradient-to-r from-blue-500 to-blue-600 sticky top-0 z-40 shadow-lg -mt-3 -mx-3 lg:-mt-6 lg:-mx-6 mb-3 lg:mb-6 rounded-2xl">
             <div class="flex items-center justify-between px-8 py-4">
-                <h1 class="text-white font-bold text-xl tracking-tight">Payslips</h1>
+                <div class="flex items-center gap-3">
+                    <button @click="mobileMenuOpen = true"
+                            class="lg:hidden p-2 rounded-lg hover:bg-white/20 transition-colors">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h1 class="text-white font-bold text-xl tracking-tight">Payslips</h1>
+                </div>
                 <x-notification-bell />
             </div>
         </header>
 
         {{-- Tab Bar --}}
-        <div class="bg-white px-8 pt-2 anim-2">
+        <div class="bg-white -mx-3 lg:-mx-6 px-3 lg:px-6 pt-2 anim-2">
             <div class="tab-bar">
                 <button class="tab-btn" :class="activeTab==='all'&&'active'" @click="activeTab='all'">All Payslips</button>
                 <button class="tab-btn" :class="activeTab==='my'&&'active'"  @click="activeTab='my'">My Payslip</button>
@@ -183,7 +345,7 @@
         <div x-show="activeTab==='all'" x-cloak class="tab-content">
 
             {{-- Summary Cards --}}
-            <div class="px-8 pt-6 pb-4">
+            <div class="pt-6 pb-4">
                 <div class="cards-wrap">
                     <div class="summary-card">
                         <div class="s-label">Gross Payroll</div>
@@ -204,20 +366,20 @@
             </div>
 
             {{-- Toolbar --}}
-            <div class="px-8 pb-4 flex items-center gap-3 anim-2">
-                <div class="search-wrap" style="flex:1;max-width:380px">
+            <div class="pb-4 flex flex-wrap items-center gap-3 anim-2 toolbar-row">
+                <div class="search-wrap flex-1 min-w-[180px]">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                     </svg>
-                    <input type="text" placeholder="Search employee…" class="ctrl" style="width:100%" x-model="allSearch">
+                    <input type="text" placeholder="Search employee…" class="ctrl w-full" x-model="allSearch">
                 </div>
-                <select class="ctrl ctrl-select" style="width:260px" @change="changePeriod($event.target.value, $event.target.options[$event.target.selectedIndex].text)">
+                <select class="ctrl ctrl-select flex-1 sm:flex-none" style="min-width:160px" @change="changePeriod($event.target.value, $event.target.options[$event.target.selectedIndex].text)">
                     <option value="" disabled x-show="periods.length === 0">No periods available</option>
                     <template x-for="p in periods" :key="p.id">
                         <option :value="p.id" :selected="p.id == currentPeriodId" x-text="p.name"></option>
                     </template>
                 </select>
-                <select class="ctrl ctrl-select" style="width:100px" x-model="allYearFilter" @change="filterPeriodsByYear()">
+                <select class="ctrl ctrl-select w-28" x-model="allYearFilter" @change="filterPeriodsByYear()">
                     @for($y=now()->year; $y>=now()->year-3; $y--)
                     <option value="{{ $y }}">{{ $y }}</option>
                     @endfor
@@ -232,20 +394,20 @@
             </div>
 
             {{-- Table + Panel --}}
-            <div class="px-8 pb-10 anim-3">
-                <div class="flex gap-5 items-start">
+            <div class="pb-10 anim-3">
+                <div class="flex flex-col lg:flex-row gap-5 items-start">
 
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-0 w-full">
                         <h3 class="text-base font-bold text-gray-800 mb-3">Employee Payroll</h3>
-                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                             <div x-show="allLoading" class="py-10 text-center text-gray-400 text-sm">Loading…</div>
-                            <table class="data-table" x-show="!allLoading">
+                            <table class="data-table min-w-[600px]" x-show="!allLoading">
                                 <thead><tr>
                                     <th>Employee</th><th>Job Title</th><th>Gross Pay</th><th>Net Pay</th><th>Status</th><th></th>
                                 </tr></thead>
                                 <tbody>
                                     <template x-if="filteredAllPayslips.length === 0">
-                                        <tr><td colspan="6" class="empty-state">
+                                        <td><td colspan="6" class="empty-state">
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                             No payslips found
                                         </td></tr>
@@ -269,7 +431,7 @@
                     </div>
 
                     {{-- Payslip Panel --}}
-                    <div class="w-80 flex-shrink-0" x-show="allSelectedId!==null" x-cloak>
+                    <div class="w-full lg:w-80 flex-shrink-0" x-show="allSelectedId!==null" x-cloak>
                         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden slide-in-right">
                             <div class="payslip-header">
                                 <div class="text-lg font-bold mb-0.5">MediSource</div>
@@ -285,12 +447,21 @@
                                 <div class="ps-line"><span>Basic Pay</span><span x-text="'&#8369; '+fmt(allActive.basicPay||0)"></span></div>
                                 <div class="ps-line"><span>OT Pay</span><span x-text="'&#8369; '+fmt(allActive.otPay||0)"></span></div>
                                 <div class="ps-line"><span>Benefits</span><span x-text="'&#8369; '+fmt(allActive.benefits||0)"></span></div>
+                                <template x-if="(allActive.otherAdditions||0) > 0">
+                                    <div class="ps-line"><span>Other Additions</span><span x-text="'&#8369; '+fmt(allActive.otherAdditions||0)"></span></div>
+                                </template>
                                 <div class="ps-line bold"><span>Gross Pay</span><span x-text="'&#8369; '+fmt(allActive.grossPay||0)"></span></div>
                                 <div class="ps-section-title">Deductions</div>
                                 <div class="ps-line"><span>SSS</span><span class="text-red-500" x-text="'-&#8369; '+fmt(allActive.sss||0)"></span></div>
                                 <div class="ps-line"><span>PhilHealth</span><span class="text-red-500" x-text="'-&#8369; '+fmt(allActive.philhealth||0)"></span></div>
                                 <div class="ps-line"><span>Pag-IBIG</span><span class="text-red-500" x-text="'-&#8369; '+fmt(allActive.pagibig||0)"></span></div>
                                 <div class="ps-line"><span>Withholding Tax</span><span class="text-red-500" x-text="'-&#8369; '+fmt(allActive.withholdingTax||0)"></span></div>
+                                <template x-if="(allActive.lateDeduction||0) > 0">
+                                    <div class="ps-line"><span>Late Deduction</span><span class="text-red-500" x-text="'-&#8369; '+fmt(allActive.lateDeduction||0)"></span></div>
+                                </template>
+                                <template x-if="(allActive.otherDeductions||0) > 0">
+                                    <div class="ps-line"><span>Other Deductions</span><span class="text-red-500" x-text="'-&#8369; '+fmt(allActive.otherDeductions||0)"></span></div>
+                                </template>
                                 <div class="ps-line bold"><span>Total Deductions</span><span class="text-red-500" x-text="'-&#8369; '+fmt(allActive.totalDeductions||0)"></span></div>
                                 <div class="ps-section-title">Calculation</div>
                                 <div class="ps-line"><span>Earnings</span><span x-text="'&#8369; '+fmt(allActive.grossPay||0)"></span></div>
@@ -314,12 +485,12 @@
 
 
         {{-- ══════════════════════════
-             MY PAYSLIP
+             MY PAYSLIP (single row, no scroll, search longer)
         ══════════════════════════ --}}
         <div x-show="activeTab==='my'" x-cloak class="tab-content">
 
             {{-- Summary Cards --}}
-            <div class="px-8 pt-6 pb-4">
+            <div class="pt-6 pb-4">
                 <div class="cards-wrap">
                     <div class="summary-card">
                         <div class="s-label">Gross Pay <span x-text="'('+myYearFilter+')'"></span></div>
@@ -339,36 +510,35 @@
                 </div>
             </div>
 
-            {{-- Toolbar --}}
-            <div class="px-8 pb-4 flex items-center gap-3 anim-2">
-                <div class="search-wrap" style="flex:1;max-width:380px">
+            {{-- Toolbar: single row, no wrap, search takes more space --}}
+            <div class="pb-4 flex items-center gap-2 anim-2 my-toolbar">
+                <div class="search-wrap" style="flex:3;">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                     </svg>
-                    <input type="text" placeholder="Search period…" class="ctrl" style="width:100%" x-model="mySearch">
+                    <input type="text" placeholder="Search period…" class="ctrl w-full" x-model="mySearch">
                 </div>
-                <select class="ctrl ctrl-select" style="width:100px" x-model="myYearFilter">
+                <select class="ctrl ctrl-select" style="flex:1; min-width:90px; width:auto;" x-model="myYearFilter">
                     @for($y=now()->year; $y>=now()->year-3; $y--)
                     <option value="{{ $y }}">{{ $y }}</option>
                     @endfor
                 </select>
                 <button @click="exportMyAllPayslips()"
                         :disabled="filteredMyPayslips.length === 0"
-                        :style="filteredMyPayslips.length === 0 ? 'background:#d1d5db;cursor:not-allowed;' : ''"
-                        class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl border-none cursor-pointer transition-colors whitespace-nowrap">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        class="btn-primary" style="flex:0 0 auto; white-space:nowrap;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     Export All PDF
                 </button>
             </div>
 
-            {{-- Table + Panel --}}
-            <div class="px-8 pb-10 anim-3">
-                <div class="flex gap-5 items-start">
+            {{-- Table + Panel (stacked) --}}
+            <div class="pb-10 anim-3">
+                <div class="flex flex-col lg:flex-row gap-5 items-start">
 
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-0 w-full">
                         <h3 class="text-base font-bold text-gray-800 mb-3">My Payroll Periods</h3>
-                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                            <table class="data-table">
+                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+                            <table class="data-table min-w-[500px]">
                                 <thead><tr>
                                     <th>Period Name</th><th>Start Date</th><th>End Date</th><th>Status</th><th></th>
                                 </tr></thead>
@@ -397,7 +567,7 @@
                     </div>
 
                     {{-- My Payslip Panel --}}
-                    <div class="w-80 flex-shrink-0" x-show="mySelectedId!==null" x-cloak>
+                    <div class="w-full lg:w-80 flex-shrink-0" x-show="mySelectedId!==null" x-cloak>
                         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden slide-in-right">
                             <div class="payslip-header">
                                 <div class="text-lg font-bold mb-0.5">MediSource</div>
@@ -413,12 +583,21 @@
                                 <div class="ps-line"><span>Basic Pay</span><span x-text="'&#8369; '+fmt(myActive.basicPay||0)"></span></div>
                                 <div class="ps-line"><span>OT Pay</span><span x-text="'&#8369; '+fmt(myActive.otPay||0)"></span></div>
                                 <div class="ps-line"><span>Benefits</span><span x-text="'&#8369; '+fmt(myActive.benefits||0)"></span></div>
+                                <template x-if="(myActive.otherAdditions||0) > 0">
+                                    <div class="ps-line"><span>Other Additions</span><span x-text="'&#8369; '+fmt(myActive.otherAdditions||0)"></span></div>
+                                </template>
                                 <div class="ps-line bold"><span>Gross Pay</span><span x-text="'&#8369; '+fmt(myActive.grossPay||0)"></span></div>
                                 <div class="ps-section-title">Deductions</div>
                                 <div class="ps-line"><span>SSS</span><span class="text-red-500" x-text="'-&#8369; '+fmt(myActive.sss||0)"></span></div>
                                 <div class="ps-line"><span>PhilHealth</span><span class="text-red-500" x-text="'-&#8369; '+fmt(myActive.philhealth||0)"></span></div>
                                 <div class="ps-line"><span>Pag-IBIG</span><span class="text-red-500" x-text="'-&#8369; '+fmt(myActive.pagibig||0)"></span></div>
                                 <div class="ps-line"><span>Withholding Tax</span><span class="text-red-500" x-text="'-&#8369; '+fmt(myActive.withholdingTax||0)"></span></div>
+                                <template x-if="(myActive.lateDeduction||0) > 0">
+                                    <div class="ps-line"><span>Late Deduction</span><span class="text-red-500" x-text="'-&#8369; '+fmt(myActive.lateDeduction||0)"></span></div>
+                                </template>
+                                <template x-if="(myActive.otherDeductions||0) > 0">
+                                    <div class="ps-line"><span>Other Deductions</span><span class="text-red-500" x-text="'-&#8369; '+fmt(myActive.otherDeductions||0)"></span></div>
+                                </template>
                                 <div class="ps-line bold"><span>Total Deductions</span><span class="text-red-500" x-text="'-&#8369; '+fmt(myActive.totalDeductions||0)"></span></div>
                                 <div class="ps-section-title">Calculation</div>
                                 <div class="ps-line"><span>Earnings</span><span x-text="'&#8369; '+fmt(myActive.grossPay||0)"></span></div>
@@ -446,6 +625,7 @@
     function payslipsApp() {
         return {
             sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+            mobileMenuOpen: false,
             activeTab: 'all',
 
             // ── Auth employee info (for My Payslip panel) ──
@@ -572,12 +752,15 @@
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Basic Pay</span><span>₱ ${f(ps.basicPay)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>OT Pay</span><span>₱ ${f(ps.otPay)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Benefits</span><span>₱ ${f(ps.benefits)}</span></div>
+${ps.otherAdditions > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Other Additions</span><span>₱ ${f(ps.otherAdditions)}</span></div>` : ''}
 <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>
 <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Deductions</div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>SSS</span><span style="color:#dc2626;">-₱ ${f(ps.sss)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>PhilHealth</span><span style="color:#dc2626;">-₱ ${f(ps.philhealth)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Pag-IBIG</span><span style="color:#dc2626;">-₱ ${f(ps.pagibig)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Withholding Tax</span><span style="color:#dc2626;">-₱ ${f(ps.withholdingTax)}</span></div>
+${ps.lateDeduction > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Late Deduction</span><span style="color:#dc2626;">-₱ ${f(ps.lateDeduction)}</span></div>` : ''}
+${ps.otherDeductions > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Other Deductions</span><span style="color:#dc2626;">-₱ ${f(ps.otherDeductions)}</span></div>` : ''}
 <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 4px;border-top:2px solid #e2e8f0;margin-top:4px;"><span>Total Deductions</span><span style="color:#dc2626;">-₱ ${f(ps.totalDeductions)}</span></div>
 <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Summary</div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:4px 0;"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>
@@ -617,12 +800,15 @@
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Basic Pay</span><span>&#8369; ${f(ps.basicPay)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>OT Pay</span><span>&#8369; ${f(ps.otPay)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Benefits</span><span>&#8369; ${f(ps.benefits)}</span></div>
+${ps.otherAdditions > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Other Additions</span><span>&#8369; ${f(ps.otherAdditions)}</span></div>` : ''}
 <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 5px;margin-top:4px;border-top:2px solid #e2e8f0;"><span>Gross Pay</span><span>&#8369; ${f(ps.grossPay)}</span></div>
 <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Deductions</div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>SSS</span><span style="color:#dc2626;">-&#8369; ${f(ps.sss)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>PhilHealth</span><span style="color:#dc2626;">-&#8369; ${f(ps.philhealth)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Pag-IBIG</span><span style="color:#dc2626;">-&#8369; ${f(ps.pagibig)}</span></div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Withholding Tax</span><span style="color:#dc2626;">-&#8369; ${f(ps.withholdingTax)}</span></div>
+${ps.lateDeduction > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Late Deduction</span><span style="color:#dc2626;">-&#8369; ${f(ps.lateDeduction)}</span></div>` : ''}
+${ps.otherDeductions > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Other Deductions</span><span style="color:#dc2626;">-&#8369; ${f(ps.otherDeductions)}</span></div>` : ''}
 <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0f172a;padding:8px 0 5px;margin-top:4px;border-top:2px solid #e2e8f0;"><span>Total Deductions</span><span style="color:#dc2626;">-&#8369; ${f(ps.totalDeductions)}</span></div>
 <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;">Summary</div>
 <div style="display:flex;justify-content:space-between;font-size:13px;color:#475569;padding:5px 0;"><span>Gross Pay</span><span>&#8369; ${f(ps.grossPay)}</span></div>
@@ -674,12 +860,15 @@
     <div class="line"><span>Basic Pay</span><span>₱ ${f(ps.basicPay)}</span></div>
     <div class="line"><span>OT Pay</span><span>₱ ${f(ps.otPay)}</span></div>
     <div class="line"><span>Benefits</span><span>₱ ${f(ps.benefits)}</span></div>
+    ${ps.otherAdditions > 0 ? `<div class="line"><span>Other Additions</span><span>₱ ${f(ps.otherAdditions)}</span></div>` : ''}
     <div class="line bold"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>
     <div class="section-title">Deductions</div>
     <div class="line"><span>SSS</span><span class="red">-₱ ${f(ps.sss)}</span></div>
     <div class="line"><span>PhilHealth</span><span class="red">-₱ ${f(ps.philhealth)}</span></div>
     <div class="line"><span>Pag-IBIG</span><span class="red">-₱ ${f(ps.pagibig)}</span></div>
     <div class="line"><span>Withholding Tax</span><span class="red">-₱ ${f(ps.withholdingTax)}</span></div>
+    ${ps.lateDeduction > 0 ? `<div class="line"><span>Late Deduction</span><span class="red">-₱ ${f(ps.lateDeduction)}</span></div>` : ''}
+    ${ps.otherDeductions > 0 ? `<div class="line"><span>Other Deductions</span><span class="red">-₱ ${f(ps.otherDeductions)}</span></div>` : ''}
     <div class="line bold"><span>Total Deductions</span><span class="red">-₱ ${f(ps.totalDeductions)}</span></div>
     <div class="section-title">Summary</div>
     <div class="line"><span>Gross Pay</span><span>₱ ${f(ps.grossPay)}</span></div>

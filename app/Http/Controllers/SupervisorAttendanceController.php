@@ -55,7 +55,10 @@ class SupervisorAttendanceController extends Controller
             ->with('shift')
             ->first() : null;
 
-        return view('supervisor.supervisor_attendance-reports', compact('employeeShift', 'availableShifts', 'stats', 'todayLog', 'month', 'year'));
+        $perm = \App\Models\Permission::where('role', 'supervisor')->where('module', 'Time & Attendance')->first();
+        $canExportAttendance = $perm ? (bool) $perm->can_export : false;
+
+        return view('supervisor.supervisor_attendance-reports', compact('employeeShift', 'availableShifts', 'stats', 'todayLog', 'month', 'year', 'canExportAttendance'));
     }
 
     public function clockIn(Request $request)
@@ -1445,8 +1448,15 @@ class SupervisorAttendanceController extends Controller
             ? Carbon::createFromFormat('Y-m-d H:i', "$date {$request->clock_out}")
             : null;
 
-        if ($clockOut && $clockOut->lte($clockIn)) {
-            return response()->json(['message' => 'Clock-out must be after clock-in.'], 422);
+        if ($clockOut) {
+            $isNightShift = $log->shift && $log->shift->end_time < $log->shift->start_time;
+            if ($clockOut->lte($clockIn)) {
+                if ($isNightShift) {
+                    $clockOut->addDay();
+                } else {
+                    return response()->json(['message' => 'Clock-out must be after clock-in.'], 422);
+                }
+            }
         }
 
         $breakMin     = $log->break_minutes ?? 0;
@@ -1455,8 +1465,10 @@ class SupervisorAttendanceController extends Controller
         $status       = $log->status;
 
         if ($log->shift) {
-            $shiftStart  = Carbon::createFromTimeString("$date {$log->shift->start_time}");
-            $shiftEnd    = Carbon::createFromTimeString("$date {$log->shift->end_time}");
+            $isNightShift = $log->shift->end_time < $log->shift->start_time;
+            $shiftStart   = Carbon::createFromTimeString("$date {$log->shift->start_time}");
+            $shiftEnd     = Carbon::createFromTimeString("$date {$log->shift->end_time}");
+            if ($isNightShift) $shiftEnd->addDay();
             $lateMinutes = $clockIn->gt($shiftStart) ? min(999, (int) $shiftStart->diffInMinutes($clockIn)) : 0;
             $isLate      = $lateMinutes > 0;
             if ($clockOut) {

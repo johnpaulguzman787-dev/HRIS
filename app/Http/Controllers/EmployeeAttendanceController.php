@@ -13,6 +13,7 @@ use App\Models\LeaveCredit;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use App\Models\ShiftChangeRequest;
+use App\Models\AttendanceAdjustmentRequest;
 use App\Traits\NotifiesReviewers;
 
 class EmployeeAttendanceController extends Controller
@@ -630,10 +631,14 @@ class EmployeeAttendanceController extends Controller
             ->where('employee_id', $employee->id)
             ->whereIn('status', ['pending', 'supervisor_approved']);
 
-        $leaveCount    = $leaveQuery->count();
-        $overtimeCount = $otQuery->count();
-        $shiftCount    = $shiftQuery->count();
-        $awaitingCount = $leaveCount + $overtimeCount + $shiftCount;
+        $adjustQuery = AttendanceAdjustmentRequest::where('employee_id', $employee->id)
+            ->whereIn('status', ['pending', 'supervisor_approved']);
+
+        $leaveCount      = $leaveQuery->count();
+        $overtimeCount   = $otQuery->count();
+        $shiftCount      = $shiftQuery->count();
+        $adjustmentCount = $adjustQuery->count();
+        $awaitingCount   = $leaveCount + $overtimeCount + $shiftCount + $adjustmentCount;
 
         $allRequests = collect();
 
@@ -695,6 +700,25 @@ class EmployeeAttendanceController extends Controller
             }
         }
 
+        if ($filterType === 'all' || $filterType === 'adjustment') {
+            foreach ($adjustQuery->get() as $r) {
+                $allRequests->push((object)[
+                    'type'                 => 'adjustment',
+                    'id'                   => $r->id,
+                    'ref_no'               => $r->ref_no,
+                    'status'               => $r->status,
+                    'attendance_date'      => $r->attendance_date,
+                    'original_clock_in'    => $r->original_clock_in,
+                    'original_clock_out'   => $r->original_clock_out,
+                    'requested_clock_in'   => $r->requested_clock_in,
+                    'requested_clock_out'  => $r->requested_clock_out,
+                    'reason'               => $r->reason,
+                    'document_path'        => $r->document_path,
+                    'created_at'           => $r->created_at,
+                ]);
+            }
+        }
+
         $requests   = $allRequests->sortByDesc('created_at')->values();
         $leaveTypes = LeaveType::where('is_active', true)->orderBy('name')->get();
         $shiftTypes = \App\Models\Shift::where('is_active', true)->orderBy('name')->get();
@@ -702,7 +726,7 @@ class EmployeeAttendanceController extends Controller
 
         return view('employee.employee_pending-requests', compact(
             'departments', 'leaveTypes', 'shiftTypes',
-            'awaitingCount', 'leaveCount', 'shiftCount', 'overtimeCount',
+            'awaitingCount', 'leaveCount', 'shiftCount', 'overtimeCount', 'adjustmentCount',
             'requests', 'filterType'
         ));
     }
@@ -799,6 +823,29 @@ class EmployeeAttendanceController extends Controller
                     'approved_by'      => $r->approved_by,
                     'approved_at'      => $r->approved_at,
                     'created_at'       => $r->created_at,
+                ]);
+            }
+        }
+
+        if ($filterType === 'all' || $filterType === 'adjustment') {
+            $q = AttendanceAdjustmentRequest::where('employee_id', $employee->id)
+                ->whereIn('status', ['approved', 'rejected']);
+            if ($search) $q->where('ref_no', 'like', "%$search%");
+            foreach ($q->get() as $r) {
+                $allRequests->push((object)[
+                    'type'                => 'adjustment',
+                    'id'                  => $r->id,
+                    'ref_no'              => $r->ref_no,
+                    'status'              => $r->status,
+                    'attendance_date'     => $r->attendance_date,
+                    'original_clock_in'   => $r->original_clock_in,
+                    'original_clock_out'  => $r->original_clock_out,
+                    'requested_clock_in'  => $r->requested_clock_in,
+                    'requested_clock_out' => $r->requested_clock_out,
+                    'reason'              => $r->reason,
+                    'rejection_reason'    => $r->rejection_reason,
+                    'approved_at'         => $r->approved_at,
+                    'created_at'          => $r->created_at,
                 ]);
             }
         }
@@ -1057,5 +1104,58 @@ class EmployeeAttendanceController extends Controller
             'break_minutes' => $totalBreakMin,
             'status'        => 'incomplete',
         ]);
+    }
+
+    public function fileAttendanceAdjustment(Request $request)
+    {
+        $request->validate([
+            'attendance_date'     => 'required|date|before:today',
+            'requested_clock_in'  => 'required|date_format:H:i',
+            'requested_clock_out' => 'nullable|date_format:H:i',
+            'reason'              => 'required|string|max:500',
+            'document'            => 'nullable|file|mimes:pdf,docx|max:10240',
+        ]);
+
+        $employee = Employee::where('user_id', Auth::id())->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
+
+        $log = AttendanceLog::where('employee_id', $employee->id)
+            ->whereDate('attendance_date', $request->attendance_date)
+            ->first();
+
+        do {
+            $lastRef = AttendanceAdjustmentRequest::where('ref_no', 'like', 'AAR-%')
+                ->orderByDesc('id')->value('ref_no');
+            $nextNum = $lastRef ? (int) substr($lastRef, 4) + 1 : 1;
+            $refNo   = 'AAR-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+        } while (AttendanceAdjustmentRequest::where('ref_no', $refNo)->exists());
+
+        $docPath = $request->hasFile('document')
+            ? $request->file('document')->store('adjustment_documents', 'public')
+            : null;
+
+        AttendanceAdjustmentRequest::create([
+            'ref_no'               => $refNo,
+            'employee_id'          => $employee->id,
+            'attendance_log_id'    => $log?->id,
+            'attendance_date'      => $request->attendance_date,
+            'original_clock_in'    => $log?->clock_in ? Carbon::parse($log->clock_in)->format('H:i') : null,
+            'original_clock_out'   => $log?->clock_out ? Carbon::parse($log->clock_out)->format('H:i') : null,
+            'requested_clock_in'   => $request->requested_clock_in,
+            'requested_clock_out'  => $request->requested_clock_out,
+            'reason'               => $request->reason,
+            'document_path'        => $docPath,
+            'status'               => 'pending',
+        ]);
+
+        $this->notifyReviewers(
+            $employee,
+            'New Attendance Adjustment Request',
+            "{$employee->full_name} filed an attendance adjustment request ({$refNo}) for {$request->attendance_date}."
+        );
+
+        return response()->json(['message' => 'Attendance adjustment request filed successfully.', 'ref_no' => $refNo]);
     }
 }

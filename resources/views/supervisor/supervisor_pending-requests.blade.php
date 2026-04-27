@@ -228,6 +228,7 @@
         .b-leave{background:#dbeafe;color:#1d4ed8;}
         .b-ot{background:#ffedd5;color:#c2410c;}
         .b-shift{background:#fce7f3;color:#be185d;}
+        .b-adjustment{background:#fef3c7;color:#92400e;}
         .b-await{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;}
 
         /* card body */
@@ -621,8 +622,12 @@
         @php
             $empName  = trim(($req->employee->fname ?? '') . ' ' . ($req->employee->lname ?? ''));
             $initials = strtoupper(substr($req->employee->fname ?? 'U', 0, 1) . substr($req->employee->lname ?? 'K', 0, 1));
-            $approveUrl = '/supervisor/requests/' . $req->id . '/approve?type=' . $req->type;
-            $rejectUrl  = '/supervisor/requests/' . $req->id . '/reject?type=' . $req->type;
+            $approveUrl = $req->type === 'adjustment'
+                ? '/supervisor/requests/adjustment/' . $req->id . '/approve'
+                : '/supervisor/requests/' . $req->id . '/approve?type=' . $req->type;
+            $rejectUrl = $req->type === 'adjustment'
+                ? '/supervisor/requests/adjustment/' . $req->id . '/reject'
+                : '/supervisor/requests/' . $req->id . '/reject?type=' . $req->type;
         @endphp
         <div class="rcard">
             <div class="rcard-head">
@@ -635,9 +640,10 @@
                 </div>
                 <div class="rcard-right">
                     <span class="req-id">{{ $req->ref_no }}</span>
-                    @if($req->type === 'leave')   <span class="badge b-leave">Leave Request</span>
-                    @elseif($req->type === 'overtime') <span class="badge b-ot">Overtime Request</span>
-                    @elseif($req->type === 'shift')    <span class="badge b-shift">Shift Arrangement</span>
+                    @if($req->type === 'leave')          <span class="badge b-leave">Leave Request</span>
+                    @elseif($req->type === 'overtime')   <span class="badge b-ot">Overtime Request</span>
+                    @elseif($req->type === 'shift')      <span class="badge b-shift">Shift Arrangement</span>
+                    @elseif($req->type === 'adjustment') <span class="badge b-adjustment">Attendance Adjustment</span>
                     @endif
                     <span class="badge b-await">Awaiting Your Approval</span>
                 </div>
@@ -664,6 +670,19 @@
                     <div><div class="dlabel">Effective From</div><div class="dval">{{ \Carbon\Carbon::parse($req->effective_from)->format('M j, Y') }}</div></div>
                     <div><div class="dlabel">Until</div><div class="dval">{{ $req->effective_until ? \Carbon\Carbon::parse($req->effective_until)->format('M j, Y') : 'Ongoing' }}</div></div>
                 </div>
+                @elseif($req->type === 'adjustment')
+                <div class="dgrid">
+                    <div><div class="dlabel">Date</div><div class="dval">{{ \Carbon\Carbon::parse($req->attendance_date)->format('M j, Y') }}</div></div>
+                    <div><div class="dlabel">Original Time</div><div class="dval">{{ $req->original_clock_in ? \Carbon\Carbon::parse($req->original_clock_in)->format('g:i A') . ' – ' . ($req->original_clock_out ? \Carbon\Carbon::parse($req->original_clock_out)->format('g:i A') : 'N/A') : '—' }}</div></div>
+                    <div><div class="dlabel">Requested Time</div><div class="dval">{{ \Carbon\Carbon::parse($req->requested_clock_in)->format('g:i A') }} – {{ $req->requested_clock_out ? \Carbon\Carbon::parse($req->requested_clock_out)->format('g:i A') : 'N/A' }}</div></div>
+                    <div><div class="dlabel">Filed On</div><div class="dval">{{ $req->created_at->format('M j, Y') }}</div></div>
+                </div>
+                @if(!$req->original_clock_in)
+                <div style="margin-top:8px;padding:8px 12px;background:#fef9c3;border:1px solid #fde68a;border-radius:6px;display:flex;align-items:center;gap:8px;font-size:12px;color:#92400e;">
+                    <svg style="width:14px;height:14px;flex-shrink:0;" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    No existing attendance record for this date. Approving will create a new entry.
+                </div>
+                @endif
                 @endif
                 <div class="rsection"><div class="rlabel">Reason</div><div class="rtext">{{ $req->reason ?? '—' }}</div></div>
                 @if($req->document_path)
@@ -713,6 +732,7 @@
                     <option value="leave">Leave Request</option>
                     <option value="overtime">Overtime Request</option>
                     <option value="shift">Shift Arrangement</option>
+                    <option value="adjustment">Attendance Adjustment</option>
                 </select>
             </div>
 
@@ -868,6 +888,55 @@
                         <div style="font-size:13px;font-weight:600;color:#374151;" x-text="fileName||'Choose a file to upload'"></div>
                         <div style="font-size:12px;color:#9ca3af;">PDF or DOCX, max 10MB</div>
                         <input id="supShiftDocInput" type="file" accept=".pdf,.docx" style="display:none;" @change="handleFile($event)">
+                    </label>
+                </div>
+                <div class="mactions">
+                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
+                    <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
+                </div>
+            </div>
+
+            {{-- ADJUSTMENT --}}
+            <div x-show="reqType==='adjustment'" x-transition
+                 x-data="{ adjDate:'', adjIn:'', adjOut:'', reason:'', fileName:'', saving:false,
+                     handleFile(e){ const f=e.target.files[0]; this.fileName=f?f.name:''; },
+                     async submit(){
+                         if(!this.adjDate||!this.adjIn||!this.reason){ $root.resultType='error'; $root.resultTitle='Missing Fields'; $root.resultMessage='Date, clock-in time, and reason are required.'; $root.showResult=true; return; }
+                         this.saving=true;
+                         const form=new FormData();
+                         form.append('attendance_date',this.adjDate);
+                         form.append('requested_clock_in',this.adjIn);
+                         if(this.adjOut) form.append('requested_clock_out',this.adjOut);
+                         form.append('reason',this.reason);
+                         const fi=document.getElementById('supAdjDocInput');
+                         if(fi&&fi.files[0]) form.append('document',fi.files[0]);
+                         form.append('_token',document.querySelector('meta[name=csrf-token]').content);
+                         const res=await fetch('{{ route('supervisor.requests.adjustment.file') }}',{method:'POST',body:form});
+                         this.saving=false;
+                         const data=await res.json();
+                         if(res.ok){ $root.showFileReq=false; $root.reqType=''; $root.resultType='success'; $root.resultTitle='Request Filed'; $root.resultMessage='Your attendance adjustment request has been submitted.'; $root.showResult=true; setTimeout(()=>window.location.reload(),2500); }
+                         else{ $root.resultType='error'; $root.resultTitle='Submission Failed'; $root.resultMessage=data.message??'Something went wrong.'; $root.showResult=true; }
+                     }
+                 }">
+                <div style="margin-bottom:16px;">
+                    <label class="flabel">Attendance Date</label>
+                    <input type="date" class="finput" x-model="adjDate">
+                </div>
+                <div class="frow" style="margin-bottom:16px;">
+                    <div><label class="flabel">Clock-In Time</label><input type="time" class="finput" x-model="adjIn"></div>
+                    <div><label class="flabel">Clock-Out Time (optional)</label><input type="time" class="finput" x-model="adjOut"></div>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label class="flabel">Reason / Remarks</label>
+                    <input type="text" class="finput" x-model="reason" placeholder="Why is the adjustment needed?">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label class="flabel">Supporting Document (optional)</label>
+                    <label class="doc-upload">
+                        <svg style="width:28px;height:28px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <div style="font-size:13px;font-weight:600;color:#374151;" x-text="fileName||'Choose a file to upload'"></div>
+                        <div style="font-size:12px;color:#9ca3af;">PDF or DOCX, max 10MB</div>
+                        <input id="supAdjDocInput" type="file" accept=".pdf,.docx" style="display:none;" @change="handleFile($event)">
                     </label>
                 </div>
                 <div class="mactions">

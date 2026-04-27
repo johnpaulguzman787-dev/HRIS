@@ -38,6 +38,7 @@
         .badge-leave    { background:#fef3c7; color:#d97706; }
         .badge-ot       { background:#fce7f3; color:#db2777; }
         .badge-shift    { background:#ede9fe; color:#7c3aed; }
+        .badge-adjustment { background:#fef3c7; color:#92400e; }
         .badge-approved { background:#dcfce7; color:#16a34a; }
         .badge-rejected { background:#fee2e2; color:#dc2626; }
         .approver-chip  { display:inline-block; background:#dbeafe; color:#1d4ed8; border-radius:20px; padding:2px 10px; font-size:11.5px; font-weight:600; margin:1px; }
@@ -251,39 +252,44 @@
                             $approverName = '';
                             if ($req->type === 'leave' && isset($req->approver)) {
                                 $approverName = trim(($req->approver->fname ?? '') . ' ' . ($req->approver->lname ?? ''));
-                            } elseif (in_array($req->type, ['overtime','shift']) && isset($req->approved_by)) {
+                            } elseif (in_array($req->type, ['overtime','shift','adjustment']) && isset($req->approved_by)) {
                                 $approver = \App\Models\Employee::find($req->approved_by);
                                 $approverName = $approver ? trim($approver->fname . ' ' . $approver->lname) : '—';
                             }
                             $duration = match($req->type) {
-                                'leave'    => \Carbon\Carbon::parse($req->start_date)->format('m/d/Y') . ' – ' . \Carbon\Carbon::parse($req->end_date)->format('m/d/Y'),
-                                'overtime' => \Carbon\Carbon::parse($req->ot_date)->format('m/d/Y'),
-                                'shift'    => \Carbon\Carbon::parse($req->effective_from)->format('m/d/Y') . ($req->effective_until ? ' – ' . \Carbon\Carbon::parse($req->effective_until)->format('m/d/Y') : ' (Ongoing)'),
-                                default    => '—',
+                                'leave'      => \Carbon\Carbon::parse($req->start_date)->format('m/d/Y') . ' – ' . \Carbon\Carbon::parse($req->end_date)->format('m/d/Y'),
+                                'overtime'   => \Carbon\Carbon::parse($req->ot_date)->format('m/d/Y'),
+                                'shift'      => \Carbon\Carbon::parse($req->effective_from)->format('m/d/Y') . ($req->effective_until ? ' – ' . \Carbon\Carbon::parse($req->effective_until)->format('m/d/Y') : ' (Ongoing)'),
+                                'adjustment' => \Carbon\Carbon::parse($req->attendance_date)->format('m/d/Y'),
+                                default      => '—',
                             };
                             $days = match($req->type) {
-                                'leave'    => $req->total_days . 'd',
-                                'overtime' => ($req->approved_hours ?? $req->requested_hours) . 'h',
-                                'shift'    => ($req->requested_shift->name ?? '—'),
-                                default    => '—',
+                                'leave'      => $req->total_days . 'd',
+                                'overtime'   => ($req->approved_hours ?? $req->requested_hours) . 'h',
+                                'shift'      => ($req->requested_shift->name ?? '—'),
+                                'adjustment' => \Carbon\Carbon::parse($req->requested_clock_in)->format('g:i A') . ' – ' . ($req->requested_clock_out ? \Carbon\Carbon::parse($req->requested_clock_out)->format('g:i A') : 'N/A'),
+                                default      => '—',
                             };
                             $typeLabel = match($req->type) {
-                                'leave'    => 'Leave Request',
-                                'overtime' => 'Overtime',
-                                'shift'    => 'Shift Arrangement',
-                                default    => '—',
+                                'leave'      => 'Leave Request',
+                                'overtime'   => 'Overtime',
+                                'shift'      => 'Shift Arrangement',
+                                'adjustment' => 'Attendance Adjustment',
+                                default      => '—',
                             };
                             $typeBadge = match($req->type) {
-                                'leave'    => 'badge-leave',
-                                'overtime' => 'badge-ot',
-                                'shift'    => 'badge-shift',
-                                default    => '',
+                                'leave'      => 'badge-leave',
+                                'overtime'   => 'badge-ot',
+                                'shift'      => 'badge-shift',
+                                'adjustment' => 'badge-adjustment',
+                                default      => '',
                             };
                             $subDetail = match($req->type) {
-                                'leave'    => $req->leaveType->name ?? '—',
-                                'overtime' => ($req->ot_start_time ? \Carbon\Carbon::parse($req->ot_start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($req->ot_end_time)->format('g:i A') : '—'),
-                                'shift'    => ($req->current_shift->name ?? '—') . ' → ' . ($req->requested_shift->name ?? '—'),
-                                default    => '—',
+                                'leave'      => $req->leaveType->name ?? '—',
+                                'overtime'   => ($req->ot_start_time ? \Carbon\Carbon::parse($req->ot_start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($req->ot_end_time)->format('g:i A') : '—'),
+                                'shift'      => ($req->current_shift->name ?? '—') . ' → ' . ($req->requested_shift->name ?? '—'),
+                                'adjustment' => 'Was: ' . ($req->original_clock_in ? \Carbon\Carbon::parse($req->original_clock_in)->format('g:i A') : '—') . ' – ' . ($req->original_clock_out ? \Carbon\Carbon::parse($req->original_clock_out)->format('g:i A') : '—'),
+                                default      => '—',
                             };
                             $jsRef        = addslashes($req->ref_no ?? '');
                             $jsDept       = addslashes($deptName);
@@ -326,39 +332,44 @@
                     $approverName = '';
                     if ($req->type === 'leave' && isset($req->approver)) {
                         $approverName = trim(($req->approver->fname ?? '') . ' ' . ($req->approver->lname ?? ''));
-                    } elseif (in_array($req->type, ['overtime','shift']) && isset($req->approved_by)) {
+                    } elseif (in_array($req->type, ['overtime','shift','adjustment']) && isset($req->approved_by)) {
                         $approver = \App\Models\Employee::find($req->approved_by);
                         $approverName = $approver ? trim($approver->fname . ' ' . $approver->lname) : '—';
                     }
                     $duration = match($req->type) {
-                        'leave'    => \Carbon\Carbon::parse($req->start_date)->format('m/d/Y') . ' – ' . \Carbon\Carbon::parse($req->end_date)->format('m/d/Y'),
-                        'overtime' => \Carbon\Carbon::parse($req->ot_date)->format('m/d/Y'),
-                        'shift'    => \Carbon\Carbon::parse($req->effective_from)->format('m/d/Y') . ($req->effective_until ? ' – ' . \Carbon\Carbon::parse($req->effective_until)->format('m/d/Y') : ' (Ongoing)'),
-                        default    => '—',
+                        'leave'      => \Carbon\Carbon::parse($req->start_date)->format('m/d/Y') . ' – ' . \Carbon\Carbon::parse($req->end_date)->format('m/d/Y'),
+                        'overtime'   => \Carbon\Carbon::parse($req->ot_date)->format('m/d/Y'),
+                        'shift'      => \Carbon\Carbon::parse($req->effective_from)->format('m/d/Y') . ($req->effective_until ? ' – ' . \Carbon\Carbon::parse($req->effective_until)->format('m/d/Y') : ' (Ongoing)'),
+                        'adjustment' => \Carbon\Carbon::parse($req->attendance_date)->format('m/d/Y'),
+                        default      => '—',
                     };
                     $days = match($req->type) {
-                        'leave'    => $req->total_days . 'd',
-                        'overtime' => ($req->approved_hours ?? $req->requested_hours) . 'h',
-                        'shift'    => ($req->requested_shift->name ?? '—'),
-                        default    => '—',
+                        'leave'      => $req->total_days . 'd',
+                        'overtime'   => ($req->approved_hours ?? $req->requested_hours) . 'h',
+                        'shift'      => ($req->requested_shift->name ?? '—'),
+                        'adjustment' => \Carbon\Carbon::parse($req->requested_clock_in)->format('g:i A') . ' – ' . ($req->requested_clock_out ? \Carbon\Carbon::parse($req->requested_clock_out)->format('g:i A') : 'N/A'),
+                        default      => '—',
                     };
                     $typeLabel = match($req->type) {
-                        'leave'    => 'Leave Request',
-                        'overtime' => 'Overtime',
-                        'shift'    => 'Shift Arrangement',
-                        default    => '—',
+                        'leave'      => 'Leave Request',
+                        'overtime'   => 'Overtime',
+                        'shift'      => 'Shift Arrangement',
+                        'adjustment' => 'Attendance Adjustment',
+                        default      => '—',
                     };
                     $typeBadge = match($req->type) {
-                        'leave'    => 'badge-leave',
-                        'overtime' => 'badge-ot',
-                        'shift'    => 'badge-shift',
-                        default    => '',
+                        'leave'      => 'badge-leave',
+                        'overtime'   => 'badge-ot',
+                        'shift'      => 'badge-shift',
+                        'adjustment' => 'badge-adjustment',
+                        default      => '',
                     };
                     $subDetail = match($req->type) {
-                        'leave'    => $req->leaveType->name ?? '—',
-                        'overtime' => ($req->ot_start_time ? \Carbon\Carbon::parse($req->ot_start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($req->ot_end_time)->format('g:i A') : '—'),
-                        'shift'    => ($req->current_shift->name ?? '—') . ' → ' . ($req->requested_shift->name ?? '—'),
-                        default    => '—',
+                        'leave'      => $req->leaveType->name ?? '—',
+                        'overtime'   => ($req->ot_start_time ? \Carbon\Carbon::parse($req->ot_start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($req->ot_end_time)->format('g:i A') : '—'),
+                        'shift'      => ($req->current_shift->name ?? '—') . ' → ' . ($req->requested_shift->name ?? '—'),
+                        'adjustment' => 'Was: ' . ($req->original_clock_in ? \Carbon\Carbon::parse($req->original_clock_in)->format('g:i A') : '—') . ' – ' . ($req->original_clock_out ? \Carbon\Carbon::parse($req->original_clock_out)->format('g:i A') : '—'),
+                        default      => '—',
                     };
                     $jsRef        = addslashes($req->ref_no ?? '');
                     $jsDept       = addslashes($deptName);

@@ -15,6 +15,7 @@ use App\Models\LeaveCredit;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use App\Models\ShiftChangeRequest;
+use App\Models\AttendanceAdjustmentRequest;
 use App\Traits\NotifiesReviewers;
 
 class SupervisorAttendanceController extends Controller
@@ -1014,10 +1015,21 @@ class SupervisorAttendanceController extends Controller
             );
         }
 
-        $leaveCount    = $leaveQuery->count();
-        $overtimeCount = $otQuery->count();
-        $shiftCount    = $shiftQuery->count();
-        $awaitingCount = $leaveCount + $overtimeCount + $shiftCount;
+        $adjustQuery = AttendanceAdjustmentRequest::with(['employee.department', 'employee.jobTitle'])
+            ->where('status', 'pending')
+            ->where('employee_id', '!=', $authEmpId)
+            ->whereHas('employee', fn($q) => $q->where('department_id', $authDeptId));
+        if ($search) {
+            $adjustQuery->whereHas('employee', fn($q) =>
+                $q->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%")
+            );
+        }
+
+        $leaveCount      = $leaveQuery->count();
+        $overtimeCount   = $otQuery->count();
+        $shiftCount      = $shiftQuery->count();
+        $adjustmentCount = $adjustQuery->count();
+        $awaitingCount   = $leaveCount + $overtimeCount + $shiftCount + $adjustmentCount;
 
         $allRequests = collect();
 
@@ -1079,11 +1091,31 @@ class SupervisorAttendanceController extends Controller
             }
         }
 
+        if ($filterType === 'all' || $filterType === 'adjustment') {
+            foreach ($adjustQuery->get() as $r) {
+                $allRequests->push((object)[
+                    'type'                => 'adjustment',
+                    'id'                  => $r->id,
+                    'ref_no'              => $r->ref_no,
+                    'status'              => $r->status,
+                    'employee'            => $r->employee,
+                    'attendance_date'     => $r->attendance_date,
+                    'original_clock_in'   => $r->original_clock_in,
+                    'original_clock_out'  => $r->original_clock_out,
+                    'requested_clock_in'  => $r->requested_clock_in,
+                    'requested_clock_out' => $r->requested_clock_out,
+                    'reason'              => $r->reason,
+                    'document_path'       => $r->document_path,
+                    'created_at'          => $r->created_at,
+                ]);
+            }
+        }
+
         $requests = $allRequests->sortByDesc('created_at')->values();
 
         return view('supervisor.supervisor_pending-requests', compact(
             'departments', 'shiftTypes', 'leaveTypes',
-            'awaitingCount', 'leaveCount', 'shiftCount', 'overtimeCount',
+            'awaitingCount', 'leaveCount', 'shiftCount', 'overtimeCount', 'adjustmentCount',
             'requests', 'filterType'
         ));
     }
@@ -1180,6 +1212,34 @@ class SupervisorAttendanceController extends Controller
                     'approved_by'      => $r->approved_by,
                     'approved_at'      => $r->approved_at,
                     'created_at'       => $r->created_at,
+                ]);
+            }
+        }
+
+        if ($filterType === 'all' || $filterType === 'adjustment') {
+            $q = AttendanceAdjustmentRequest::with(['employee.department', 'employee.jobTitle', 'approver'])
+                ->whereIn('status', ['approved', 'rejected'])
+                ->whereHas('employee', fn($e) => $e->where('department_id', $authDeptId));
+            if ($filterStatus !== 'all') $q->where('status', $filterStatus);
+            if ($search) $q->whereHas('employee', fn($e) => $e->where('fname', 'like', "%$search%")->orWhere('lname', 'like', "%$search%"));
+            foreach ($q->get() as $r) {
+                $allRequests->push((object)[
+                    'type'                => 'adjustment',
+                    'id'                  => $r->id,
+                    'ref_no'              => $r->ref_no,
+                    'status'              => $r->status,
+                    'employee'            => $r->employee,
+                    'attendance_date'     => $r->attendance_date,
+                    'original_clock_in'   => $r->original_clock_in,
+                    'original_clock_out'  => $r->original_clock_out,
+                    'requested_clock_in'  => $r->requested_clock_in,
+                    'requested_clock_out' => $r->requested_clock_out,
+                    'reason'              => $r->reason,
+                    'rejection_reason'    => $r->rejection_reason,
+                    'approved_by'         => $r->approved_by,
+                    'approver'            => $r->approver,
+                    'approved_at'         => $r->approved_at,
+                    'created_at'          => $r->created_at,
                 ]);
             }
         }
@@ -1543,5 +1603,120 @@ class SupervisorAttendanceController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function fileAttendanceAdjustment(Request $request)
+    {
+        $request->validate([
+            'attendance_date'     => 'required|date|before:today',
+            'requested_clock_in'  => 'required|date_format:H:i',
+            'requested_clock_out' => 'nullable|date_format:H:i',
+            'reason'              => 'required|string|max:500',
+            'document'            => 'nullable|file|mimes:pdf,docx|max:10240',
+        ]);
+
+        $employee = Employee::where('user_id', Auth::id())->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found.'], 422);
+        }
+
+        $log = AttendanceLog::where('employee_id', $employee->id)
+            ->whereDate('attendance_date', $request->attendance_date)->first();
+
+        do {
+            $lastRef = AttendanceAdjustmentRequest::where('ref_no', 'like', 'AAR-%')
+                ->orderByDesc('id')->value('ref_no');
+            $nextNum = $lastRef ? (int) substr($lastRef, 4) + 1 : 1;
+            $refNo   = 'AAR-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+        } while (AttendanceAdjustmentRequest::where('ref_no', $refNo)->exists());
+
+        $docPath = $request->hasFile('document')
+            ? $request->file('document')->store('adjustment_documents', 'public') : null;
+
+        AttendanceAdjustmentRequest::create([
+            'ref_no'              => $refNo,
+            'employee_id'         => $employee->id,
+            'attendance_log_id'   => $log?->id,
+            'attendance_date'     => $request->attendance_date,
+            'original_clock_in'   => $log?->clock_in  ? Carbon::parse($log->clock_in)->format('H:i')  : null,
+            'original_clock_out'  => $log?->clock_out ? Carbon::parse($log->clock_out)->format('H:i') : null,
+            'requested_clock_in'  => $request->requested_clock_in,
+            'requested_clock_out' => $request->requested_clock_out,
+            'reason'              => $request->reason,
+            'document_path'       => $docPath,
+            'status'              => 'pending',
+        ]);
+
+        $this->notifyReviewers(
+            $employee,
+            'New Attendance Adjustment Request',
+            "{$employee->full_name} filed an attendance adjustment request ({$refNo}) for {$request->attendance_date}."
+        );
+
+        return response()->json(['message' => 'Attendance adjustment request filed successfully.', 'ref_no' => $refNo]);
+    }
+
+    public function approveAttendanceAdjustment(Request $request, $id)
+    {
+        $authEmployee = Employee::where('user_id', Auth::id())->first();
+        $aar = AttendanceAdjustmentRequest::with(['attendanceLog', 'employee'])->findOrFail($id);
+
+        if (!$authEmployee || $aar->employee->department_id !== $authEmployee->department_id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        if ($aar->status !== 'pending') {
+            return response()->json(['message' => 'Request is no longer pending.'], 409);
+        }
+
+        $aar->update([
+            'status'                 => 'supervisor_approved',
+            'supervisor_approved_by' => Auth::id(),
+            'supervisor_approved_at' => now(),
+        ]);
+
+        $this->notifyHR(
+            'Attendance Adjustment — Supervisor Approved',
+            "{$aar->employee->full_name}'s attendance adjustment request ({$aar->ref_no}) for {$aar->attendance_date->format('F j, Y')} was approved by supervisor, awaiting HR final approval."
+        );
+
+        $this->notifyEmployee(
+            $aar->employee_id,
+            'Attendance Adjustment — Supervisor Approved',
+            "Your attendance adjustment request ({$aar->ref_no}) for {$aar->attendance_date->format('F j, Y')} has been approved by your supervisor and is now awaiting HR final approval."
+        );
+
+        return response()->json(['message' => 'Attendance adjustment forwarded to HR.']);
+    }
+
+    public function rejectAttendanceAdjustment(Request $request, $id)
+    {
+        $request->validate(['rejection_reason' => 'required|string|max:500']);
+        $authEmployee = Employee::where('user_id', Auth::id())->first();
+        $aar = AttendanceAdjustmentRequest::with('employee')->findOrFail($id);
+
+        if (!$authEmployee || $aar->employee->department_id !== $authEmployee->department_id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        if ($aar->status !== 'pending') {
+            return response()->json(['message' => 'Request is no longer pending.'], 409);
+        }
+
+        $aar->update([
+            'status'           => 'rejected',
+            'rejection_reason' => $request->rejection_reason,
+            'rejected_by'      => Auth::id(),
+            'rejected_at'      => now(),
+        ]);
+
+        $this->notifyEmployee(
+            $aar->employee_id,
+            'Attendance Adjustment Rejected',
+            "Your attendance adjustment request ({$aar->ref_no}) has been rejected. Reason: {$request->rejection_reason}",
+            'warning'
+        );
+
+        return response()->json(['message' => 'Attendance adjustment rejected.']);
     }
 }

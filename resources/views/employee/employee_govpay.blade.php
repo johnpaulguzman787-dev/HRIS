@@ -169,7 +169,7 @@
     ];
 @endphp
 
-<body x-data="employeeGovpayApp()" x-init="init()" class="flex h-screen overflow-hidden">
+<body x-data="employeeGovpayApp()" x-init="init()" class="flex h-screen overflow-hidden bg-gray-50">
 
     <!-- ===================== DESKTOP SIDEBAR ===================== -->
     <div class="hidden lg:block">
@@ -201,11 +201,11 @@
 
     <!-- ===================== MAIN CONTENT ===================== -->
     <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin"
-         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
+         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
          style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
         <!-- Header with Hamburger -->
-        <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-40 shadow-lg mt-4 mx-4 rounded-2xl">
+        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
             <div class="flex items-center justify-between px-8 py-4">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
@@ -220,7 +220,7 @@
             </div>
         </header>
 
-        <div class="p-8">
+        <div class="p-3 lg:p-6">
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">My Government Contributions</span>

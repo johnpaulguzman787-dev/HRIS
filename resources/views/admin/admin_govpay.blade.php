@@ -19,6 +19,8 @@
             background: #fff;
             border-bottom: 2px solid #e5e7eb;
             padding: 0 32px;
+            margin: 0 16px;
+            border-radius: 0 0 8px 8px;
         }
         .tabs-row { display: flex; }
         .tab-btn {
@@ -35,8 +37,8 @@
             transition: color 0.15s, border-color 0.15s;
             white-space: nowrap;
         }
-        .tab-btn.active { color: #3b82f6; border-bottom-color: #3b82f6; }
-        .tab-btn:hover:not(.active) { color: #6b7280; }
+        .tab-btn:hover:not(.active) { color:#374151; }
+        .tab-btn.active { color:#2563eb; font-weight:700; border-bottom:3px solid #2563eb; }
 
         /* ── Card ── */
         .card {
@@ -238,7 +240,7 @@
     }
 @endphp
 
-<body x-data="adminGovpayApp()" x-init="init()" class="flex h-screen overflow-hidden">
+<body x-data="adminGovpayApp()" x-init="init()" class="flex h-screen overflow-hidden bg-gray-50">
 
     <!-- ===================== DESKTOP SIDEBAR ===================== -->
     <div class="hidden lg:block">
@@ -270,11 +272,11 @@
 
     <!-- ===================== MAIN CONTENT ===================== -->
     <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin"
-         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
+         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
          style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
         <!-- Blue Header with Hamburger -->
-        <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-40 shadow-lg mt-4 mx-4 rounded-2xl">
+        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
             <div class="flex items-center justify-between px-8 py-4">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
@@ -302,7 +304,7 @@
                 </div>
             </div>
 
-            <div class="p-8 space-y-6">
+            <div class="p-3 lg:p-6">
 
                 {{-- ALL CONTRIBUTIONS --}}
                 <div id="panelAll">

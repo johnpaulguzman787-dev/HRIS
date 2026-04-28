@@ -137,10 +137,10 @@ class="flex h-screen overflow-hidden bg-gray-50">
 
     <!-- ===================== MAIN CONTENT ===================== -->
     <main class="flex-1 overflow-y-auto min-h-screen transition-all duration-300"
-          :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'">
+          :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'">
 
         <!-- Header with Hamburger -->
-        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
+        <header class="anim-fade bg-gradient-to-br from-blue-600 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
@@ -160,7 +160,7 @@ class="flex h-screen overflow-hidden bg-gray-50">
             </div>
         </header>
 
-        <div class="p-4 sm:p-6 lg:p-8 mt-4">
+        <div class="p-3 lg:p-6">
 
             <!-- Toast -->
             <div x-show="toast.show" x-cloak

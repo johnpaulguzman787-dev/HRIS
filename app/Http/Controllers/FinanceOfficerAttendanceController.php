@@ -115,7 +115,7 @@ class FinanceOfficerAttendanceController extends Controller
         $lateMinutes    = 0;
         $status         = 'present';
 
-        if ($isFirstSession && $selectedShift) {
+        if ($isFirstSession && $selectedShift && !$selectedShift->is_flexi) {
             $shiftStart = Carbon::createFromTimeString(Carbon::today()->toDateString() . ' ' . $selectedShift->start_time);
             if ($now->gt($shiftStart)) {
                 $lateMinutes = min(999, (int) $shiftStart->diffInMinutes($now));
@@ -208,43 +208,52 @@ class FinanceOfficerAttendanceController extends Controller
         }
 
         if ($selectedShift) {
-            $shiftEnd = Carbon::createFromTimeString(
-                Carbon::today()->toDateString() . ' ' . $selectedShift->end_time
-            );
-
-            // Night shift: if end_time is earlier than start_time, it crosses midnight
-            if ($shiftEnd->lt(Carbon::createFromTimeString(
-                Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
-            ))) {
-                $shiftEnd->addDay();
-            }
-
-            if ($now->gt($shiftEnd)) {
-                $approvedOt = OvertimeRequest::where('employee_id', $employee->id)
-                    ->where('status', 'approved')
-                    ->where(function ($q) use ($today) {
-                        $yesterday = Carbon::yesterday()->toDateString();
-                        $q->whereDate('ot_date', $today)
-                          ->orWhere(function ($q2) use ($yesterday) {
-                              $q2->whereDate('ot_date', $yesterday)
-                                 ->whereColumn('ot_end_time', '<', 'ot_start_time');
-                          });
-                    })
-                    ->first();
-
-                if ($approvedOt) {
-                    $otDateBase  = Carbon::parse($approvedOt->ot_date)->toDateString();
-                    $approvedEnd = Carbon::createFromTimeString($otDateBase . ' ' . $approvedOt->ot_end_time);
-                    if ($approvedEnd->lt($shiftEnd)) {
-                        $approvedEnd->addDay();
-                    }
-                    $overtimeMinutes = (int) $shiftEnd->diffInMinutes($approvedEnd);
-                    if ($clockOutStatus !== 'late') $clockOutStatus = 'overtime';
+            if ($selectedShift->is_flexi) {
+                $requiredMinutes = (int) (($selectedShift->required_hours ?? 8) * 60);
+                $workedMinutes   = (int) ($totalHours * 60);
+                if ($workedMinutes < $requiredMinutes) {
+                    $undertimeMinutes = $requiredMinutes - $workedMinutes;
+                    if ($clockOutStatus !== 'late') $clockOutStatus = 'undertime';
                 }
-            } elseif ($now->lt($shiftEnd)) {
-                $undertimeMinutes = (int) $now->diffInMinutes($shiftEnd);
-                if ($clockOutStatus !== 'late') {
-                    $clockOutStatus = 'undertime';
+            } else {
+                $shiftEnd = Carbon::createFromTimeString(
+                    Carbon::today()->toDateString() . ' ' . $selectedShift->end_time
+                );
+
+                // Night shift: if end_time is earlier than start_time, it crosses midnight
+                if ($shiftEnd->lt(Carbon::createFromTimeString(
+                    Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
+                ))) {
+                    $shiftEnd->addDay();
+                }
+
+                if ($now->gt($shiftEnd)) {
+                    $approvedOt = OvertimeRequest::where('employee_id', $employee->id)
+                        ->where('status', 'approved')
+                        ->where(function ($q) use ($today) {
+                            $yesterday = Carbon::yesterday()->toDateString();
+                            $q->whereDate('ot_date', $today)
+                              ->orWhere(function ($q2) use ($yesterday) {
+                                  $q2->whereDate('ot_date', $yesterday)
+                                     ->whereColumn('ot_end_time', '<', 'ot_start_time');
+                              });
+                        })
+                        ->first();
+
+                    if ($approvedOt) {
+                        $otDateBase  = Carbon::parse($approvedOt->ot_date)->toDateString();
+                        $approvedEnd = Carbon::createFromTimeString($otDateBase . ' ' . $approvedOt->ot_end_time);
+                        if ($approvedEnd->lt($shiftEnd)) {
+                            $approvedEnd->addDay();
+                        }
+                        $overtimeMinutes = (int) $shiftEnd->diffInMinutes($approvedEnd);
+                        if ($clockOutStatus !== 'late') $clockOutStatus = 'overtime';
+                    }
+                } elseif ($now->lt($shiftEnd)) {
+                    $undertimeMinutes = (int) $now->diffInMinutes($shiftEnd);
+                    if ($clockOutStatus !== 'late') {
+                        $clockOutStatus = 'undertime';
+                    }
                 }
             }
         }

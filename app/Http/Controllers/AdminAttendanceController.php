@@ -128,7 +128,7 @@ class AdminAttendanceController extends Controller
         $lateMinutes    = 0;
         $status         = 'present';
 
-        if ($isFirstSession && $selectedShift) {
+        if ($isFirstSession && $selectedShift && !$selectedShift->is_flexi) {
             $shiftStart = Carbon::createFromTimeString(
                 Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
             );
@@ -228,44 +228,53 @@ class AdminAttendanceController extends Controller
         }
 
         if ($selectedShift) {
-            $shiftEnd = Carbon::createFromTimeString(
-                Carbon::today()->toDateString() . ' ' . $selectedShift->end_time
-            );
-
-            // Night shift: if end_time is earlier than start_time, it crosses midnight
-            if ($shiftEnd->lt(Carbon::createFromTimeString(
-                Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
-            ))) {
-                $shiftEnd->addDay();
-            }
-
-            if ($now->gt($shiftEnd)) {
-                $approvedOt = OvertimeRequest::where('employee_id', $employee->id)
-                    ->where('status', 'approved')
-                    ->where(function ($q) use ($today) {
-                        $yesterday = Carbon::yesterday()->toDateString();
-                        $q->whereDate('ot_date', $today)
-                          ->orWhere(function ($q2) use ($yesterday) {
-                              $q2->whereDate('ot_date', $yesterday)
-                                 ->whereColumn('ot_end_time', '<', 'ot_start_time');
-                          });
-                    })
-                    ->first();
-
-                if ($approvedOt) {
-                    $otDateBase  = Carbon::parse($approvedOt->ot_date)->toDateString();
-                    $approvedEnd = Carbon::createFromTimeString($otDateBase . ' ' . $approvedOt->ot_end_time);
-                    if ($approvedEnd->lt($shiftEnd)) {
-                        $approvedEnd->addDay();
-                    }
-                    $overtimeMinutes = (int) $shiftEnd->diffInMinutes($approvedEnd);
-                    if ($clockOutStatus !== 'late') $clockOutStatus = 'overtime';
+            if ($selectedShift->is_flexi) {
+                $requiredMinutes = (int) (($selectedShift->required_hours ?? 8) * 60);
+                $workedMinutes   = (int) ($totalHours * 60);
+                if ($workedMinutes < $requiredMinutes) {
+                    $undertimeMinutes = $requiredMinutes - $workedMinutes;
+                    if ($clockOutStatus !== 'late') $clockOutStatus = 'undertime';
                 }
-            } elseif ($now->lt($shiftEnd)) {
-                // Clocked out BEFORE shift end = undertime
-                $undertimeMinutes = (int) $now->diffInMinutes($shiftEnd);
-                if ($clockOutStatus !== 'late') {
-                    $clockOutStatus = 'undertime';
+            } else {
+                $shiftEnd = Carbon::createFromTimeString(
+                    Carbon::today()->toDateString() . ' ' . $selectedShift->end_time
+                );
+
+                // Night shift: if end_time is earlier than start_time, it crosses midnight
+                if ($shiftEnd->lt(Carbon::createFromTimeString(
+                    Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
+                ))) {
+                    $shiftEnd->addDay();
+                }
+
+                if ($now->gt($shiftEnd)) {
+                    $approvedOt = OvertimeRequest::where('employee_id', $employee->id)
+                        ->where('status', 'approved')
+                        ->where(function ($q) use ($today) {
+                            $yesterday = Carbon::yesterday()->toDateString();
+                            $q->whereDate('ot_date', $today)
+                              ->orWhere(function ($q2) use ($yesterday) {
+                                  $q2->whereDate('ot_date', $yesterday)
+                                     ->whereColumn('ot_end_time', '<', 'ot_start_time');
+                              });
+                        })
+                        ->first();
+
+                    if ($approvedOt) {
+                        $otDateBase  = Carbon::parse($approvedOt->ot_date)->toDateString();
+                        $approvedEnd = Carbon::createFromTimeString($otDateBase . ' ' . $approvedOt->ot_end_time);
+                        if ($approvedEnd->lt($shiftEnd)) {
+                            $approvedEnd->addDay();
+                        }
+                        $overtimeMinutes = (int) $shiftEnd->diffInMinutes($approvedEnd);
+                        if ($clockOutStatus !== 'late') $clockOutStatus = 'overtime';
+                    }
+                } elseif ($now->lt($shiftEnd)) {
+                    // Clocked out BEFORE shift end = undertime
+                    $undertimeMinutes = (int) $now->diffInMinutes($shiftEnd);
+                    if ($clockOutStatus !== 'late') {
+                        $clockOutStatus = 'undertime';
+                    }
                 }
             }
         }
@@ -1469,13 +1478,16 @@ public function getLeaveRequest($id)
 
     public function storeShiftTypeAdmin(Request $request)
     {
+        $isFlexi = (bool) $request->input('is_flexi', false);
+
         $request->validate([
-            'name'        => 'required|string|max:100',
-            'code'        => 'required|string|max:20|unique:shifts,code',
-            'start_time'  => 'required|date_format:H:i',
-            'end_time'    => 'required|date_format:H:i',
-            'break_start' => 'nullable|date_format:H:i',
-            'break_end'   => 'nullable|date_format:H:i',
+            'name'           => 'required|string|max:100',
+            'code'           => 'required|string|max:20|unique:shifts,code',
+            'start_time'     => $isFlexi ? 'nullable|date_format:H:i' : 'required|date_format:H:i',
+            'end_time'       => $isFlexi ? 'nullable|date_format:H:i' : 'required|date_format:H:i',
+            'break_start'    => 'nullable|date_format:H:i',
+            'break_end'      => 'nullable|date_format:H:i',
+            'required_hours' => $isFlexi ? 'required|numeric|min:1|max:24' : 'nullable|numeric|min:1|max:24',
         ]);
 
         $breakSchedule = null;
@@ -1489,10 +1501,12 @@ public function getLeaveRequest($id)
         \App\Models\Shift::create([
             'name'           => $request->name,
             'code'           => $request->code,
-            'start_time'     => $request->start_time,
-            'end_time'       => $request->end_time,
+            'start_time'     => $request->start_time ?? '00:00:00',
+            'end_time'       => $request->end_time ?? '00:00:00',
             'break_schedule' => $breakSchedule,
             'is_active'      => true,
+            'is_flexi'       => $isFlexi,
+            'required_hours' => $isFlexi ? $request->required_hours : null,
         ]);
 
         return response()->json(['message' => 'Shift type created successfully.']);
@@ -1509,18 +1523,23 @@ public function getLeaveRequest($id)
             'end_time'       => $shift->end_time,
             'break_schedule' => $shift->break_schedule,
             'is_active'      => $shift->is_active,
+            'is_flexi'       => (bool) $shift->is_flexi,
+            'required_hours' => $shift->required_hours,
         ]);
     }
 
     public function updateShiftTypeAdmin(Request $request, $id)
     {
+        $isFlexi = (bool) $request->input('is_flexi', false);
+
         $request->validate([
-            'name'        => 'required|string|max:100',
-            'code'        => 'required|string|max:20|unique:shifts,code,' . $id,
-            'start_time'  => 'required|date_format:H:i',
-            'end_time'    => 'required|date_format:H:i',
-            'break_start' => 'nullable|date_format:H:i',
-            'break_end'   => 'nullable|date_format:H:i',
+            'name'           => 'required|string|max:100',
+            'code'           => 'required|string|max:20|unique:shifts,code,' . $id,
+            'start_time'     => $isFlexi ? 'nullable|date_format:H:i' : 'required|date_format:H:i',
+            'end_time'       => $isFlexi ? 'nullable|date_format:H:i' : 'required|date_format:H:i',
+            'break_start'    => 'nullable|date_format:H:i',
+            'break_end'      => 'nullable|date_format:H:i',
+            'required_hours' => $isFlexi ? 'required|numeric|min:1|max:24' : 'nullable|numeric|min:1|max:24',
         ]);
 
         $shift = \App\Models\Shift::findOrFail($id);
@@ -1536,9 +1555,11 @@ public function getLeaveRequest($id)
         $shift->update([
             'name'           => $request->name,
             'code'           => $request->code,
-            'start_time'     => $request->start_time,
-            'end_time'       => $request->end_time,
+            'start_time'     => $request->start_time ?? '00:00:00',
+            'end_time'       => $request->end_time ?? '00:00:00',
             'break_schedule' => $breakSchedule,
+            'is_flexi'       => $isFlexi,
+            'required_hours' => $isFlexi ? $request->required_hours : null,
         ]);
 
         return response()->json(['message' => 'Shift type updated successfully.']);

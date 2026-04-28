@@ -120,7 +120,7 @@ class SupervisorAttendanceController extends Controller
         $lateMinutes    = 0;
         $status         = 'present';
 
-        if ($isFirstSession && $selectedShift) {
+        if ($isFirstSession && $selectedShift && !$selectedShift->is_flexi) {
             $shiftStart = Carbon::createFromTimeString(Carbon::today()->toDateString() . ' ' . $selectedShift->start_time);
             if ($now->gt($shiftStart)) {
                 $lateMinutes = min(999, (int) $shiftStart->diffInMinutes($now));
@@ -213,39 +213,48 @@ class SupervisorAttendanceController extends Controller
         }
 
         if ($selectedShift) {
-            $shiftEnd = Carbon::createFromTimeString(
-                Carbon::today()->toDateString() . ' ' . $selectedShift->end_time
-            );
-            if ($shiftEnd->lt(Carbon::createFromTimeString(
-                Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
-            ))) {
-                $shiftEnd->addDay();
-            }
-            if ($now->gt($shiftEnd)) {
-                $approvedOt = OvertimeRequest::where('employee_id', $employee->id)
-                    ->where('status', 'approved')
-                    ->where(function ($q) use ($today) {
-                        $yesterday = Carbon::yesterday()->toDateString();
-                        $q->whereDate('ot_date', $today)
-                          ->orWhere(function ($q2) use ($yesterday) {
-                              $q2->whereDate('ot_date', $yesterday)
-                                 ->whereColumn('ot_end_time', '<', 'ot_start_time');
-                          });
-                    })
-                    ->first();
-
-                if ($approvedOt) {
-                    $otDateBase  = Carbon::parse($approvedOt->ot_date)->toDateString();
-                    $approvedEnd = Carbon::createFromTimeString($otDateBase . ' ' . $approvedOt->ot_end_time);
-                    if ($approvedEnd->lt($shiftEnd)) {
-                        $approvedEnd->addDay();
-                    }
-                    $overtimeMinutes = (int) $shiftEnd->diffInMinutes($approvedEnd);
-                    if ($clockOutStatus !== 'late') $clockOutStatus = 'overtime';
+            if ($selectedShift->is_flexi) {
+                $requiredMinutes = (int) (($selectedShift->required_hours ?? 8) * 60);
+                $workedMinutes   = (int) ($totalHours * 60);
+                if ($workedMinutes < $requiredMinutes) {
+                    $undertimeMinutes = $requiredMinutes - $workedMinutes;
+                    if ($clockOutStatus !== 'late') $clockOutStatus = 'undertime';
                 }
-            } elseif ($now->lt($shiftEnd)) {
-                $undertimeMinutes = (int) $now->diffInMinutes($shiftEnd);
-                if ($clockOutStatus !== 'late') $clockOutStatus = 'undertime';
+            } else {
+                $shiftEnd = Carbon::createFromTimeString(
+                    Carbon::today()->toDateString() . ' ' . $selectedShift->end_time
+                );
+                if ($shiftEnd->lt(Carbon::createFromTimeString(
+                    Carbon::today()->toDateString() . ' ' . $selectedShift->start_time
+                ))) {
+                    $shiftEnd->addDay();
+                }
+                if ($now->gt($shiftEnd)) {
+                    $approvedOt = OvertimeRequest::where('employee_id', $employee->id)
+                        ->where('status', 'approved')
+                        ->where(function ($q) use ($today) {
+                            $yesterday = Carbon::yesterday()->toDateString();
+                            $q->whereDate('ot_date', $today)
+                              ->orWhere(function ($q2) use ($yesterday) {
+                                  $q2->whereDate('ot_date', $yesterday)
+                                     ->whereColumn('ot_end_time', '<', 'ot_start_time');
+                              });
+                        })
+                        ->first();
+
+                    if ($approvedOt) {
+                        $otDateBase  = Carbon::parse($approvedOt->ot_date)->toDateString();
+                        $approvedEnd = Carbon::createFromTimeString($otDateBase . ' ' . $approvedOt->ot_end_time);
+                        if ($approvedEnd->lt($shiftEnd)) {
+                            $approvedEnd->addDay();
+                        }
+                        $overtimeMinutes = (int) $shiftEnd->diffInMinutes($approvedEnd);
+                        if ($clockOutStatus !== 'late') $clockOutStatus = 'overtime';
+                    }
+                } elseif ($now->lt($shiftEnd)) {
+                    $undertimeMinutes = (int) $now->diffInMinutes($shiftEnd);
+                    if ($clockOutStatus !== 'late') $clockOutStatus = 'undertime';
+                }
             }
         }
 
@@ -919,6 +928,11 @@ class SupervisorAttendanceController extends Controller
             'days_off'       => 'nullable|array',
         ]);
 
+        $shift = \App\Models\Shift::find($request->shift_id);
+        if ($shift && $shift->is_flexi) {
+            return response()->json(['message' => 'Flexi schedule can only be assigned by HR or Admin.'], 403);
+        }
+
         EmployeeShift::where('employee_id', $request->employee_id)
             ->where('is_active', true)
             ->update([
@@ -949,6 +963,11 @@ class SupervisorAttendanceController extends Controller
             'end_date'          => 'nullable|date|after_or_equal:effective_date',
             'days_off'          => 'nullable|array',
         ]);
+
+        $shift = \App\Models\Shift::find($request->shift_id);
+        if ($shift && $shift->is_flexi) {
+            return response()->json(['message' => 'Flexi schedule can only be assigned by HR or Admin.'], 403);
+        }
 
         $old = EmployeeShift::findOrFail($request->employee_shift_id);
         $old->update([

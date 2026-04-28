@@ -786,9 +786,9 @@
                     <select class="form-input dept-select" style="width:100%;" x-model="shiftId">
                         <option value="">Choose shift type</option>
                         @foreach($shiftTypes ?? [] as $shift)
-                            <option value="{{ $shift->id }}">
-                                {{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }})
-                            </option>
+                            @if(!$shift->is_flexi)
+                            <option value="{{ $shift->id }}">{{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }})</option>
+                            @endif
                         @endforeach
                     </select>
                 </div>
@@ -900,9 +900,9 @@
                     <select class="form-input dept-select" style="width:100%;" x-model="shiftId">
                         <option value="">Choose shift type</option>
                         @foreach($shiftTypes ?? [] as $shift)
-                            <option value="{{ $shift->id }}">
-                                {{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }})
-                            </option>
+                            @if(!$shift->is_flexi)
+                            <option value="{{ $shift->id }}">{{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }})</option>
+                            @endif
                         @endforeach
                     </select>
                 </div>

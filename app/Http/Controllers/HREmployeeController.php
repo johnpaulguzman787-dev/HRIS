@@ -52,6 +52,7 @@ class HREmployeeController extends Controller
                     'address'           => $e->address ?? '',
                     'employment_type'   => $e->employment_type ?? '',
                     'employment_status' => $e->employment_status ?? '',
+                    'is_verified'       => !is_null($e->user->email_verified_at ?? null),
                 ];
             });
 

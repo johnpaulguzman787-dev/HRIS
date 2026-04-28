@@ -15,8 +15,15 @@ class Shift extends Model
         'start_time',
         'end_time',
         'is_active',
+        'is_flexi',
+        'required_hours',
         'break_schedule',
         'description',
+    ];
+
+    protected $casts = [
+        'is_flexi'       => 'boolean',
+        'required_hours' => 'float',
     ];
 
     // One shift can have many employee shifts

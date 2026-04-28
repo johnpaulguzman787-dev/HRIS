@@ -674,7 +674,7 @@
         <div class="table-card" x-data="{
             shiftSearch: '',
             showEditShiftTypeModal: false,
-            editShift: { id: null, name: '', code: '', start_time: '', end_time: '', break_start: '', break_end: '' },
+            editShift: { id: null, name: '', code: '', start_time: '', end_time: '', break_start: '', break_end: '', is_flexi: false, required_hours: '' },
             saving: false,
             errorMsg: '',
             async openEdit(id) {
@@ -685,29 +685,36 @@
                 const data = await res.json();
                 const bs = data.break_schedule ? JSON.parse(data.break_schedule) : {};
                 this.editShift = {
-                    id:          data.id,
-                    name:        data.name,
-                    code:        data.code,
-                    start_time:  data.start_time ? data.start_time.substring(0,5) : '',
-                    end_time:    data.end_time   ? data.end_time.substring(0,5)   : '',
-                    break_start: bs.start ?? '',
-                    break_end:   bs.end   ?? '',
+                    id:             data.id,
+                    name:           data.name,
+                    code:           data.code,
+                    start_time:     data.start_time ? data.start_time.substring(0,5) : '',
+                    end_time:       data.end_time   ? data.end_time.substring(0,5)   : '',
+                    break_start:    bs.start ?? '',
+                    break_end:      bs.end   ?? '',
+                    is_flexi:       data.is_flexi    ?? false,
+                    required_hours: data.required_hours ?? '',
                 };
                 this.showEditShiftTypeModal = true;
             },
             async submitEdit() {
                 this.errorMsg = '';
+                if (this.editShift.is_flexi && !this.editShift.required_hours) {
+                    this.errorMsg = 'Required hours is needed for flexi schedule.'; return;
+                }
                 this.saving = true;
                 const res = await fetch(`/admin/shift/type/${this.editShift.id}/update`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
                     body: JSON.stringify({
-                        name:        this.editShift.name,
-                        code:        this.editShift.code,
-                        start_time:  this.editShift.start_time,
-                        end_time:    this.editShift.end_time,
-                        break_start: this.editShift.break_start || null,
-                        break_end:   this.editShift.break_end   || null,
+                        name:           this.editShift.name,
+                        code:           this.editShift.code,
+                        start_time:     this.editShift.start_time,
+                        end_time:       this.editShift.end_time,
+                        break_start:    this.editShift.break_start || null,
+                        break_end:      this.editShift.break_end   || null,
+                        is_flexi:       this.editShift.is_flexi,
+                        required_hours: this.editShift.is_flexi ? this.editShift.required_hours : null,
                     })
                 });
                 this.saving = false;
@@ -766,15 +773,18 @@
                             <td style="font-weight:600;">
                                 {{ $shift->name }}
                                 <span style="font-size:11px;color:#9ca3af;font-weight:400;">({{ $shift->code }})</span>
+                                @if($shift->is_flexi)
+                                <span style="display:inline-block;font-size:10px;font-weight:600;color:#7c3aed;background:#ede9fe;border-radius:4px;padding:1px 6px;margin-left:4px;letter-spacing:.3px;">FLEXI</span>
+                                @endif
                             </td>
-                            <td>{{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }}</td>
+                            <td>{{ $shift->is_flexi ? '—' : \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }}</td>
                             <td style="white-space:nowrap;">
-                                {{ isset($bs['start'], $bs['end'])
+                                {{ $shift->is_flexi ? '—' : (isset($bs['start'], $bs['end'])
                                     ? \Carbon\Carbon::parse($bs['start'])->format('g:i A') . ' – ' . \Carbon\Carbon::parse($bs['end'])->format('g:i A')
-                                    : '—' }}
+                                    : '—') }}
                             </td>
-                            <td>{{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }}</td>
-                            <td>{{ $shift->work_hours }}h</td>
+                            <td>{{ $shift->is_flexi ? '—' : \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }}</td>
+                            <td>{{ $shift->is_flexi ? ($shift->required_hours . 'h required') : ($shift->work_hours . 'h') }}</td>
                             <td><span class="night-diff-badge nd-none">None</span></td>
                             <td>{{ $shift->assigned ?? 0 }}</td>
                             <td>
@@ -812,7 +822,18 @@
                         <label class="form-label">Shift Code</label>
                         <input type="text" class="form-input" x-model="editShift.code" placeholder="e.g. DS-001">
                     </div>
-                    <div class="form-row" style="margin-bottom:14px;">
+                    <div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:#374151;">
+                            <input type="checkbox" x-model="editShift.is_flexi" style="width:16px;height:16px;accent-color:#7c3aed;">
+                            Flexi Schedule
+                        </label>
+                        <span style="font-size:11px;color:#9ca3af;">(no fixed start/end enforcement)</span>
+                    </div>
+                    <div x-show="editShift.is_flexi" style="margin-bottom:14px;">
+                        <label class="form-label">Required Hours <span style="color:#dc2626;">*</span></label>
+                        <input type="number" class="form-input" x-model="editShift.required_hours" min="1" max="24" step="0.5" placeholder="e.g. 8">
+                    </div>
+                    <div x-show="!editShift.is_flexi" class="form-row" style="margin-bottom:14px;">
                         <div>
                             <label class="form-label">Time In</label>
                             <input type="time" class="form-input" x-model="editShift.start_time">
@@ -822,7 +843,7 @@
                             <input type="time" class="form-input" x-model="editShift.end_time">
                         </div>
                     </div>
-                    <div class="form-row" style="margin-bottom:14px;">
+                    <div x-show="!editShift.is_flexi" class="form-row" style="margin-bottom:14px;">
                         <div>
                             <label class="form-label">Break Start</label>
                             <input type="time" class="form-input" x-model="editShift.break_start">
@@ -832,7 +853,7 @@
                             <input type="time" class="form-input" x-model="editShift.break_end">
                         </div>
                     </div>
-                    <div style="margin-bottom:14px;">
+                    <div x-show="!editShift.is_flexi" style="margin-bottom:14px;">
                         <label class="form-label">Night Differential</label>
                         <input type="text" class="form-input" value="None" disabled style="background:#f9fafb;color:#9ca3af;cursor:not-allowed;">
                     </div>
@@ -1123,7 +1144,11 @@
                         <option value="">Choose shift type</option>
                         @foreach($shiftTypes ?? [] as $shift)
                             <option value="{{ $shift->id }}">
-                                {{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }})
+                                @if($shift->is_flexi)
+                                    {{ $shift->name }} ({{ $shift->required_hours }}h required)
+                                @else
+                                    {{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }})
+                                @endif
                             </option>
                         @endforeach
                     </select>
@@ -1167,11 +1192,14 @@
         </div>
 
         {{-- Assign Shift Modal --}}
+        <script>window._adminShiftMeta = {!! json_encode(collect($shiftTypes ?? [])->keyBy('id')->map(fn($s) => ['is_flexi' => (bool)$s->is_flexi, 'required_hours' => $s->required_hours])) !!};</script>
         <div x-show="showAssignShiftModal" class="modal-overlay" x-cloak @click.self="showAssignShiftModal = false"
              x-data="{
                  deptId: '', empId: '', shiftId: '', workSetup: '',
                  effectiveDate: '', endDate: '', daysOff: ['Sat','Sun'],
                  empList: [], saving: false, errorMsg: '',
+                 shiftMeta: window._adminShiftMeta,
+                 get selectedShift() { return this.shiftMeta[this.shiftId] ?? null; },
                  async onDeptChange() {
                      this.empId = ''; this.empList = [];
                      if (!this.deptId) return;
@@ -1242,10 +1270,20 @@
                         <option value="">Choose shift type</option>
                         @foreach($shiftTypes ?? [] as $shift)
                             <option value="{{ $shift->id }}">
-                                {{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }})
+                                @if($shift->is_flexi)
+                                    {{ $shift->name }} ({{ $shift->required_hours }}h required)
+                                @else
+                                    {{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }})
+                                @endif
                             </option>
                         @endforeach
                     </select>
+                    <template x-if="selectedShift && selectedShift.is_flexi">
+                        <div style="margin-top:8px;padding:10px 14px;background:#ede9fe;border-radius:8px;font-size:13px;color:#5b21b6;display:flex;align-items:center;gap:8px;">
+                            <svg style="width:15px;height:15px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Flexi schedule — employee must complete <strong style="margin-left:4px;" x-text="selectedShift.required_hours + 'h'"></strong>&nbsp;per day.
+                        </div>
+                    </template>
                 </div>
                 <div style="margin-bottom:14px;">
                     <label class="form-label">Work Setup</label>
@@ -1290,20 +1328,29 @@
              x-data="{
                  name: '', code: '', start_time: '07:00', end_time: '16:00',
                  break_start: '12:00', break_end: '13:00',
+                 is_flexi: false, required_hours: '',
                  saving: false, errorMsg: '',
                  async submit() {
                      this.errorMsg = '';
                      if (!this.name || !this.code || !this.start_time || !this.end_time) {
                          this.errorMsg = 'Please fill in all required fields.'; return;
                      }
+                     if (this.is_flexi && !this.required_hours) {
+                         this.errorMsg = 'Required hours is needed for flexi schedule.'; return;
+                     }
                      this.saving = true;
                      const res = await fetch('{{ route('admin.shift.type.store') }}', {
                          method: 'POST',
                          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
                          body: JSON.stringify({
-                             name: this.name, code: this.code,
-                             start_time: this.start_time, end_time: this.end_time,
-                             break_start: this.break_start || null, break_end: this.break_end || null,
+                             name:           this.name,
+                             code:           this.code,
+                             start_time:     this.start_time,
+                             end_time:       this.end_time,
+                             break_start:    this.break_start || null,
+                             break_end:      this.break_end   || null,
+                             is_flexi:       this.is_flexi,
+                             required_hours: this.is_flexi ? this.required_hours : null,
                          })
                      });
                      this.saving = false;
@@ -1330,7 +1377,18 @@
                     <label class="form-label">Shift Code</label>
                     <input type="text" class="form-input" x-model="code" placeholder="e.g. EMS-001">
                 </div>
-                <div class="form-row" style="margin-bottom:14px;">
+                <div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:#374151;">
+                        <input type="checkbox" x-model="is_flexi" style="width:16px;height:16px;accent-color:#7c3aed;">
+                        Flexi Schedule
+                    </label>
+                    <span style="font-size:11px;color:#9ca3af;">(no fixed start/end enforcement)</span>
+                </div>
+                <div x-show="is_flexi" style="margin-bottom:14px;">
+                    <label class="form-label">Required Hours <span style="color:#dc2626;">*</span></label>
+                    <input type="number" class="form-input" x-model="required_hours" min="1" max="24" step="0.5" placeholder="e.g. 8">
+                </div>
+                <div x-show="!is_flexi" class="form-row" style="margin-bottom:14px;">
                     <div>
                         <label class="form-label">Time In</label>
                         <input type="time" class="form-input" x-model="start_time">
@@ -1340,7 +1398,7 @@
                         <input type="time" class="form-input" x-model="end_time">
                     </div>
                 </div>
-                <div class="form-row" style="margin-bottom:14px;">
+                <div x-show="!is_flexi" class="form-row" style="margin-bottom:14px;">
                     <div>
                         <label class="form-label">Break Start</label>
                         <input type="time" class="form-input" x-model="break_start">
@@ -1350,7 +1408,7 @@
                         <input type="time" class="form-input" x-model="break_end">
                     </div>
                 </div>
-                <div style="margin-bottom:14px;">
+                <div x-show="!is_flexi" style="margin-bottom:14px;">
                     <label class="form-label">Night Differential</label>
                     <input type="text" class="form-input" value="None" disabled style="background:#f9fafb;color:#9ca3af;cursor:not-allowed;">
                 </div>

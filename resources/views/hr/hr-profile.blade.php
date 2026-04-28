@@ -31,6 +31,7 @@
         contract_period: '{{ $employee?->contract_period ?? "—" }}',
         start_date: '{{ $employee?->start_date ? \Carbon\Carbon::parse($employee->start_date)->format("m/d/Y") : "—" }}',
         end_date: '{{ $employee?->end_date ? \Carbon\Carbon::parse($employee->end_date)->format("m/d/Y") : "" }}',
+        position: '{{ $employee?->jobTitle?->title ?? "—" }}',
     },
 
     documents: window._profileDocs,
@@ -111,27 +112,30 @@
         <!-- Profile Content -->
         <div class="p-4 sm:p-6 lg:p-8 space-y-4 lg:space-y-6">
 
-            {{-- ── Profile Card ── --}}
+            {{-- ── Profile Card (Mobile: centered layout) ── --}}
             <div class="profile-card bg-white rounded-2xl overflow-hidden" style="box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
 
+                <!-- Colored top bar -->
                 <div class="h-14 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 relative">
                     <div class="absolute inset-0" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.06) 0%, transparent 40%);"></div>
                     <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(255,255,255,0.4) 15px, rgba(255,255,255,0.4) 16px);"></div>
                 </div>
 
                 <div class="p-4 lg:p-6 pb-5 lg:pb-6">
-                    <div class="flex items-end gap-4 -mt-8 mb-4 lg:mb-6">
-                        <div class="avatar-pop flex-shrink-0 w-16 h-16 lg:w-24 lg:h-24 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xl lg:text-3xl font-bold shadow-xl" style="border: 4px solid white;"
-                            x-text="employee.initials"></div>
-                        <div class="pb-1 name-fade">
-                            <h2 class="text-lg lg:text-2xl font-bold text-gray-800 leading-tight" x-text="employee.full_name"></h2>
-                            <p class="text-xs lg:text-sm text-gray-500 mt-0.5" x-text="employee.job_title"></p>
+                    <!-- Avatar + Name row (mobile: centered column, desktop: row) -->
+                    <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-8 mb-4 lg:mb-6">
+                        <div class="avatar-pop flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xl sm:text-2xl lg:text-3xl font-bold shadow-xl mx-auto sm:mx-0"
+                             style="border: 4px solid white;"
+                             x-text="employee.initials"></div>
+                        <div class="pb-1 name-fade text-center sm:text-left">
+                            <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 leading-tight" x-text="employee.full_name"></h2>
+                            <p class="text-xs sm:text-sm text-gray-500 mt-0.5" x-text="employee.position"></p>
                         </div>
                     </div>
 
                     <div class="border-t border-gray-100 my-3 lg:my-4"></div>
 
-                    {{-- Mobile: 2-column grid for info | Desktop: 3-column grid --}}
+                    <!-- Info Grid - Responsive: mobile (1 col), tablet (2 col), desktop (3 col) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0">
 
                         <!-- Email -->
@@ -148,7 +152,7 @@
                         </div>
 
                         <!-- Contact -->
-                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 border-b border-gray-50 lg:border-b-0 lg:border-r border-r-gray-100">
+                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 border-b border-gray-50 lg:border-b-0 lg:border-r border-r-gray-100 sm:pl-6">
                             <div class="w-7 h-7 lg:w-9 lg:h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
@@ -161,7 +165,7 @@
                         </div>
 
                         <!-- Date of Birth -->
-                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 border-b border-gray-50 lg:border-b-0">
+                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 border-b border-gray-50 lg:border-b-0 sm:pl-6">
                             <div class="w-7 h-7 lg:w-9 lg:h-9 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -187,11 +191,10 @@
                         </div>
 
                         <!-- Address -->
-                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 border-b border-gray-50 lg:border-b-0 lg:border-r border-r-gray-100 lg:border-t border-t-gray-100">
+                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 border-b border-gray-50 lg:border-b-0 lg:border-r border-r-gray-100 lg:border-t border-t-gray-100 sm:pl-6">
                             <div class="w-7 h-7 lg:w-9 lg:h-9 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
                             </div>
                             <div class="min-w-0">
@@ -201,7 +204,7 @@
                         </div>
 
                         <!-- Status -->
-                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 lg:border-t border-t-gray-100">
+                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 lg:border-t border-t-gray-100 sm:pl-6">
                             <div class="w-7 h-7 lg:w-9 lg:h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -220,22 +223,21 @@
                 </div>
             </div>
 
-            {{-- ── Job Information ── --}}
+            {{-- ── Job Information (Responsive) ── --}}
             <div class="section-card bg-white rounded-2xl p-4 lg:p-8" style="box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
                 <div class="flex items-center gap-3 mb-4 lg:mb-6">
                     <div class="w-1 h-5 lg:h-6 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full"></div>
                     <h3 class="text-base lg:text-lg font-bold text-gray-800">Job Information</h3>
                 </div>
 
-                {{-- Mobile: 2-column grid | Desktop: 3-column grid --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 lg:gap-x-8 gap-y-3 lg:gap-y-6">
                     <div class="job-field group">
                         <p class="text-[9px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest mb-0.5 lg:mb-1.5">Department</p>
                         <p class="text-[11px] lg:text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-200" x-text="employee.department"></p>
                     </div>
                     <div class="job-field group">
-                        <p class="text-[9px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest mb-0.5 lg:mb-1.5">Job Title</p>
-                        <p class="text-[11px] lg:text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-200" x-text="employee.job_title"></p>
+                        <p class="text-[9px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest mb-0.5 lg:mb-1.5">Position</p>
+                        <p class="text-[11px] lg:text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-200" x-text="employee.position"></p>
                     </div>
                     <div class="job-field group">
                         <p class="text-[9px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest mb-0.5 lg:mb-1.5">Employment Type</p>
@@ -263,7 +265,7 @@
                 </div>
             </div>
 
-            {{-- ── Documents ── --}}
+            {{-- ── Documents (Responsive) ── --}}
             <div class="section-card bg-white rounded-2xl p-4 lg:p-8" style="box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
                 <div class="flex items-center gap-3 mb-4 lg:mb-6">
                     <div class="w-1 h-5 lg:h-6 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full"></div>
@@ -272,7 +274,7 @@
 
                 <div class="space-y-3">
                     <template x-for="(doc, index) in documents" :key="index">
-                        <div class="doc-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 lg:p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/60 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group">
+                        <div class="doc-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 lg:p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/60 transition-all duration-300 hover:shadow-md group">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0 group-hover:bg-red-100 group-hover:scale-110 transition-all duration-300">
                                     <svg class="w-4 h-4 lg:w-5 lg:h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -292,7 +294,7 @@
                         </div>
                     </template>
 
-                    {{-- Sample documents if documents array is empty --}}
+                    {{-- Fallback when no documents --}}
                     <template x-if="documents.length === 0">
                         <>
                             <div class="doc-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 lg:p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/60 transition-all duration-300">
@@ -339,7 +341,7 @@
         </div>
     </main>
 
-    {{-- ── Document Preview Modal ── --}}
+    {{-- ── Document Preview Modal (Mobile Optimized) ── --}}
     <div
         x-show="showDocModal"
         x-transition:enter="transition ease-out duration-300"
@@ -348,7 +350,7 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+        class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4"
         style="display: none;"
         @keydown.escape.window="closeDoc()"
     >
@@ -357,61 +359,61 @@
         <div
             x-show="showDocModal"
             x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95 translate-y-4"
-            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+            x-transition:enter-start="opacity-0 translate-y-full sm:translate-y-4 sm:scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
             x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-            x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-            class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden mx-4"
+            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave-end="opacity-0 translate-y-full sm:translate-y-4 sm:scale-95"
+            class="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden"
             style="max-height: 90vh;"
         >
-            <div class="flex items-center justify-between px-4 lg:px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-blue-700">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 lg:w-9 lg:h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                        <svg class="w-4 h-4 lg:w-5 lg:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-blue-700">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                     </div>
                     <div>
-                        <p class="text-[10px] lg:text-xs text-blue-200 font-medium">Document Preview</p>
-                        <p class="text-xs lg:text-sm font-bold text-white" x-text="activeDoc ? activeDoc.name : ''"></p>
+                        <p class="text-[10px] sm:text-xs text-blue-200 font-medium">Document Preview</p>
+                        <p class="text-xs sm:text-sm font-bold text-white truncate max-w-[200px] sm:max-w-xs" x-text="activeDoc ? activeDoc.name : ''"></p>
                     </div>
                 </div>
                 <button @click="closeDoc()"
-                    class="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-all duration-200 hover:scale-110">
-                    <svg class="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-all duration-200 hover:scale-110">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
 
-            <div class="flex-1 overflow-auto bg-gray-100 flex flex-col items-center justify-center p-4 lg:p-6" style="min-height: 380px;">
-                <div class="w-full h-full flex flex-col items-center justify-center gap-4 modal-content-fade">
-                    <div class="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-red-50 flex items-center justify-center shadow-md">
-                        <svg class="w-8 h-8 lg:w-10 lg:h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex-1 overflow-auto bg-gray-100 flex flex-col items-center justify-center p-4 sm:p-6" style="min-height: 380px;">
+                <div class="w-full h-full flex flex-col items-center justify-center gap-3 sm:gap-4 modal-content-fade">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-red-50 flex items-center justify-center shadow-md">
+                        <svg class="w-8 h-8 sm:w-10 sm:h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                     </div>
                     <div class="text-center">
-                        <p class="text-sm lg:text-base font-bold text-gray-800" x-text="activeDoc ? activeDoc.name : ''"></p>
-                        <p class="text-xs lg:text-sm text-gray-400 mt-1">PDF Document</p>
+                        <p class="text-sm sm:text-base font-bold text-gray-800" x-text="activeDoc ? activeDoc.name : ''"></p>
+                        <p class="text-xs sm:text-sm text-gray-400 mt-1">Document</p>
                     </div>
-                    <div class="bg-white rounded-xl px-4 py-3 lg:px-6 lg:py-4 shadow-sm border border-gray-200 text-center max-w-xs lg:max-w-sm">
-                        <p class="text-[10px] lg:text-xs text-gray-500 leading-relaxed">
-                            Preview is not available for this file type in demo mode.<br>
+                    <div class="bg-white rounded-xl px-4 py-3 sm:px-6 sm:py-4 shadow-sm border border-gray-200 text-center max-w-[280px] sm:max-w-sm">
+                        <p class="text-[10px] sm:text-xs text-gray-500 leading-relaxed">
+                            Preview is not available for this file type.<br>
                             Use the <span class="font-semibold text-blue-600">Download</span> button to open the file.
                         </p>
                     </div>
                 </div>
             </div>
 
-            <div class="flex items-center justify-end gap-2 lg:gap-3 px-4 lg:px-6 py-3 lg:py-4 border-t border-gray-100 bg-gray-50">
+            <div class="flex items-center justify-end gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 bg-gray-50">
                 <button @click="closeDoc()"
-                    class="px-3 py-1.5 lg:px-5 lg:py-2 text-xs lg:text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-all duration-200 hover:scale-105">
+                    class="px-3 py-1.5 sm:px-5 sm:py-2 text-xs sm:text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-all duration-200">
                     Close
                 </button>
-                <button @click="activeDoc && window.open(activeDoc.download_url, '_blank')" class="px-3 py-1.5 lg:px-5 lg:py-2 text-xs lg:text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2">
-                    <svg class="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button @click="activeDoc && window.open(activeDoc.download_url, '_blank')" class="px-3 py-1.5 sm:px-5 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all duration-200 hover:shadow-lg flex items-center gap-1 sm:gap-2">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
                     Download
@@ -524,6 +526,16 @@
 @keyframes modalContentFade {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile specific adjustments */
+@media (max-width: 640px) {
+    .info-row {
+        padding: 0.75rem 0.5rem;
+    }
+    .border-b {
+        border-bottom-width: 1px;
+    }
 }
 </style>
 

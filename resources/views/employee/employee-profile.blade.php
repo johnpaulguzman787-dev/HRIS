@@ -31,6 +31,7 @@
         contract_period: '{{ $employee?->contract_period ?? "—" }}',
         start_date: '{{ $employee?->start_date ? \Carbon\Carbon::parse($employee->start_date)->format("m/d/Y") : "—" }}',
         end_date: '{{ $employee?->end_date ? \Carbon\Carbon::parse($employee->end_date)->format("m/d/Y") : "" }}',
+        position: '{{ $employee?->jobTitle?->title ?? "—" }}',
     },
 
     documents: window._profileDocs,
@@ -112,102 +113,108 @@
         <!-- Profile Content -->
         <div class="p-4 lg:p-8 space-y-5 lg:space-y-6">
 
-            {{-- ── Profile Card ── --}}
+            {{-- ── Profile Card (Mobile: centered layout) ── --}}
             <div class="profile-card bg-white rounded-2xl overflow-hidden" style="box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
 
+                <!-- Colored top bar -->
                 <div class="h-14 lg:h-16 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 relative">
                     <div class="absolute inset-0" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.06) 0%, transparent 40%);"></div>
                     <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(255,255,255,0.4) 15px, rgba(255,255,255,0.4) 16px);"></div>
                 </div>
 
-                <!-- Avatar + Name row (responsive) -->
+                <!-- Avatar + Name row (mobile: centered column, desktop: row) -->
                 <div class="px-5 sm:px-8 pb-6">
-                    <div class="flex items-end gap-4 sm:gap-5 -mt-8 mb-4 sm:mb-6">
-                        <div class="avatar-pop flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xl sm:text-2xl lg:text-3xl font-bold shadow-xl"
+                    <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-8 mb-4 sm:mb-6">
+                        <div class="avatar-pop flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xl sm:text-2xl lg:text-3xl font-bold shadow-xl mx-auto sm:mx-0"
                              style="border: 4px solid white;"
                              x-text="employee.initials"></div>
-                        <div class="pb-1 name-fade">
+                        <div class="pb-1 name-fade text-center sm:text-left">
                             <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 leading-tight" x-text="employee.full_name"></h2>
-                            <p class="text-xs sm:text-sm text-gray-500 mt-0.5" x-text="employee.job_title"></p>
+                            <p class="text-xs sm:text-sm text-gray-500 mt-0.5" x-text="employee.position"></p>
                         </div>
                     </div>
 
                     <div class="border-t border-gray-100 mb-4"></div>
 
-                    <!-- Info Grid - Fully Responsive: mobile 1col, tablet 2col, desktop 3col -->
+                    <!-- Info Grid - Fully Responsive: mobile 2col, tablet 2col, desktop 3col -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0">
 
-                        <div class="info-row flex items-center gap-3 py-3 sm:py-4 px-2 border-b border-gray-50 sm:border-b-0 sm:border-r border-r-gray-100">
-                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- Email -->
+                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 border-b border-gray-50 lg:border-b-0 lg:border-r border-r-gray-100">
+                            <div class="w-7 h-7 lg:w-9 lg:h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wide">Email</p>
-                                <p class="text-xs sm:text-sm text-gray-700 font-semibold truncate" x-text="employee.email"></p>
+                                <p class="text-[9px] lg:text-xs text-gray-400 font-medium uppercase tracking-wide">Email</p>
+                                <p class="text-[11px] lg:text-sm text-gray-700 font-semibold truncate" x-text="employee.email"></p>
                             </div>
                         </div>
 
-                        <div class="info-row flex items-center gap-3 py-3 sm:py-4 px-2 border-b border-gray-50 sm:border-b-0 sm:border-r border-r-gray-100 sm:pl-6">
-                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- Contact -->
+                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 border-b border-gray-50 lg:border-b-0 lg:border-r border-r-gray-100 sm:pl-6">
+                            <div class="w-7 h-7 lg:w-9 lg:h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wide">Contact</p>
-                                <p class="text-xs sm:text-sm text-gray-700 font-semibold" x-text="employee.contact"></p>
+                                <p class="text-[9px] lg:text-xs text-gray-400 font-medium uppercase tracking-wide">Contact</p>
+                                <p class="text-[11px] lg:text-sm text-gray-700 font-semibold" x-text="employee.contact"></p>
                             </div>
                         </div>
 
-                        <div class="info-row flex items-center gap-3 py-3 sm:py-4 px-2 border-b border-gray-50 sm:border-b-0 sm:pl-6">
-                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- Date of Birth -->
+                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 border-b border-gray-50 lg:border-b-0 sm:pl-6">
+                            <div class="w-7 h-7 lg:w-9 lg:h-9 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wide">Date of Birth</p>
-                                <p class="text-xs sm:text-sm text-gray-700 font-semibold" x-text="employee.dob"></p>
+                                <p class="text-[9px] lg:text-xs text-gray-400 font-medium uppercase tracking-wide">Date of Birth</p>
+                                <p class="text-[11px] lg:text-sm text-gray-700 font-semibold" x-text="employee.dob"></p>
                             </div>
                         </div>
 
-                        <div class="info-row flex items-center gap-3 py-3 sm:py-4 px-2 border-b border-gray-50 sm:border-b-0 sm:border-r border-r-gray-100 sm:border-t sm:border-t-gray-100">
-                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                </svg>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wide">Address</p>
-                                <p class="text-xs sm:text-sm text-gray-700 font-semibold truncate" x-text="employee.address"></p>
-                            </div>
-                        </div>
-
-                        <div class="info-row flex items-center gap-3 py-3 sm:py-4 px-2 border-b border-gray-50 sm:border-b-0 sm:border-r border-r-gray-100 sm:border-t sm:border-t-gray-100 sm:pl-6">
-                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-pink-50 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- Gender -->
+                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 border-b border-gray-50 lg:border-b-0 lg:border-r border-r-gray-100 lg:border-t border-t-gray-100">
+                            <div class="w-7 h-7 lg:w-9 lg:h-9 rounded-xl bg-pink-50 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wide">Gender</p>
-                                <p class="text-xs sm:text-sm text-gray-700 font-semibold" x-text="employee.gender"></p>
+                                <p class="text-[9px] lg:text-xs text-gray-400 font-medium uppercase tracking-wide">Gender</p>
+                                <p class="text-[11px] lg:text-sm text-gray-700 font-semibold" x-text="employee.gender"></p>
                             </div>
                         </div>
 
-                        <div class="info-row flex items-center gap-3 py-3 sm:py-4 px-2 sm:border-t sm:border-t-gray-100 sm:pl-6">
-                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- Address -->
+                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 border-b border-gray-50 lg:border-b-0 lg:border-r border-r-gray-100 lg:border-t border-t-gray-100 sm:pl-6">
+                            <div class="w-7 h-7 lg:w-9 lg:h-9 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                </svg>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[9px] lg:text-xs text-gray-400 font-medium uppercase tracking-wide">Address</p>
+                                <p class="text-[11px] lg:text-sm text-gray-700 font-semibold truncate" x-text="employee.address"></p>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="info-row flex items-center gap-2 lg:gap-3 py-2 lg:py-4 px-2 lg:border-t border-t-gray-100 sm:pl-6">
+                            <div class="w-7 h-7 lg:w-9 lg:h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wide">Status</p>
-                                <span class="inline-flex items-center gap-1.5 px-2 sm:px-3 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-green-100 text-green-700">
-                                    <span class="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-green-500 animate-pulse inline-block"></span>
+                                <p class="text-[9px] lg:text-xs text-gray-400 font-medium uppercase tracking-wide">Status</p>
+                                <span class="inline-flex items-center gap-1 lg:gap-1.5 px-1.5 lg:px-3 py-0.5 rounded-full text-[9px] lg:text-xs font-bold bg-green-100 text-green-700">
+                                    <span class="w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full bg-green-500 animate-pulse inline-block"></span>
                                     <span x-text="employee.status"></span>
                                 </span>
                             </div>
@@ -230,8 +237,8 @@
                         <p class="text-xs lg:text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-200" x-text="employee.department"></p>
                     </div>
                     <div class="job-field group">
-                        <p class="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 lg:mb-1.5">Job Title</p>
-                        <p class="text-xs lg:text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-200" x-text="employee.job_title"></p>
+                        <p class="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 lg:mb-1.5">Position</p>
+                        <p class="text-xs lg:text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-200" x-text="employee.position"></p>
                     </div>
                     <div class="job-field group">
                         <p class="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 lg:mb-1.5">Employment Type</p>
@@ -278,7 +285,10 @@
                                 <span class="text-xs sm:text-sm font-semibold text-gray-700 group-hover:text-blue-700 transition-colors duration-200 break-all" x-text="doc.name"></span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <button @click="window.open(doc.download_url, '_blank')" class="px-3 py-1.5 sm:px-4 sm:py-1.5 text-[10px] sm:text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200 hover:shadow-md">
+                                <button @click="openDoc(doc)" class="px-2 py-1 lg:px-4 lg:py-1.5 text-[10px] lg:text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200 hover:shadow-md">
+                                    View
+                                </button>
+                                <button @click="window.open(doc.download_url, '_blank')" class="px-2 py-1 lg:px-4 lg:py-1.5 text-[10px] lg:text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200 hover:shadow-md">
                                     Download
                                 </button>
                             </div>
@@ -355,11 +365,11 @@
                     </div>
                     <div class="text-center">
                         <p class="text-sm sm:text-base font-bold text-gray-800" x-text="activeDoc ? activeDoc.name : ''"></p>
-                        <p class="text-xs sm:text-sm text-gray-400 mt-1">PDF Document</p>
+                        <p class="text-xs sm:text-sm text-gray-400 mt-1">Document</p>
                     </div>
                     <div class="bg-white rounded-xl px-4 py-3 sm:px-6 sm:py-4 shadow-sm border border-gray-200 text-center max-w-[280px] sm:max-w-sm">
                         <p class="text-[10px] sm:text-xs text-gray-500 leading-relaxed">
-                            Preview is not available for this file type in demo mode.<br>
+                            Preview is not available for this file type.<br>
                             Use the <span class="font-semibold text-blue-600">Download</span> button to open the file.
                         </p>
                     </div>
@@ -393,6 +403,12 @@
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+    /* Mobile responsive overrides */
+    @media (max-width: 1024px) { 
+        .lg\:ml-20, .lg\:ml-64 { margin-left: 0 !important; } 
+    }
+
+    /* Page entrance */
     .profile-card {
         animation: cardSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
@@ -407,6 +423,7 @@
         to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* Avatar pop */
     .avatar-pop {
         animation: avatarBounce 0.7s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
     }
@@ -415,6 +432,7 @@
         to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
+    /* Name fade in */
     .name-fade {
         animation: nameFade 0.5s 0.4s ease both;
     }
@@ -423,6 +441,7 @@
         to   { opacity: 1; transform: translateX(0); }
     }
 
+    /* Info rows stagger */
     .info-row { animation: rowFade 0.4s ease both; }
     .info-row:nth-child(1) { animation-delay: 0.38s; }
     .info-row:nth-child(2) { animation-delay: 0.44s; }
@@ -431,6 +450,7 @@
     .info-row:nth-child(5) { animation-delay: 0.62s; }
     .info-row:nth-child(6) { animation-delay: 0.68s; }
 
+    /* Job fields stagger */
     .job-field { animation: rowFade 0.4s ease both; }
     .job-field:nth-child(1) { animation-delay: 0.18s; }
     .job-field:nth-child(2) { animation-delay: 0.24s; }
@@ -440,6 +460,7 @@
     .job-field:nth-child(6) { animation-delay: 0.48s; }
     .job-field:nth-child(7) { animation-delay: 0.54s; }
 
+    /* Doc rows stagger */
     .doc-row { animation: rowFade 0.4s ease both; }
     .doc-row:nth-child(1) { animation-delay: 0.28s; }
     .doc-row:nth-child(2) { animation-delay: 0.38s; }
@@ -449,6 +470,7 @@
         to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* Info row hover */
     .info-row {
         border-radius: 10px;
         transition: background 0.2s ease, transform 0.2s ease;
@@ -458,12 +480,23 @@
         transform: translateX(4px);
     }
 
+    /* Modal content fade */
     .modal-content-fade {
         animation: modalContentFade 0.4s 0.15s ease both;
     }
     @keyframes modalContentFade {
         from { opacity: 0; transform: translateY(10px); }
         to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mobile specific adjustments */
+    @media (max-width: 640px) {
+        .info-row {
+            padding: 0.75rem 0.5rem;
+        }
+        .border-b {
+            border-bottom-width: 1px;
+        }
     }
 </style>
 @endsection

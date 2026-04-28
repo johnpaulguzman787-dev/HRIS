@@ -459,62 +459,70 @@
                     </div>
                 </div>
 
-                <!-- COL 3: Calendar + Upcoming Events -->
-                <div x-data="calendarWidget({{ json_encode($allHolidays) }})" class="space-y-4 lg:space-y-5">
-                    <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.4s; border:1px solid #e5e7eb;">
-                        <div class="flex items-center justify-between mb-4">
-                            <button @click="prevMonth()" class="cal-nav-btn p-1.5 hover:bg-gray-100 rounded-lg">
-                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                                </svg>
-                            </button>
-                            <p class="text-xs font-bold uppercase tracking-widest" style="color:#3b82f6;" x-text="calMonthName"></p>
-                            <button @click="nextMonth()" class="cal-nav-btn p-1.5 hover:bg-gray-100 rounded-lg">
-                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="grid grid-cols-7 mb-1">
-                            <template x-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']">
-                                <div class="text-center text-xs text-gray-400 font-semibold py-1" x-text="d"></div>
-                            </template>
-                        </div>
-                        <div class="grid grid-cols-7 gap-0.5">
-                            <template x-for="_ in range(firstDay)"><div></div></template>
-                            <template x-for="day in days()">
-                                <div class="cal-cell">
-                                    <button class="cal-day w-full text-center text-xs py-2 rounded-full"
-                                        :class="isToday(day) ? 'today-pill text-white font-bold' : 'text-gray-600 hover:bg-gray-100'"
-                                        :style="isToday(day) ? 'background:#3b82f6;' : ''"
-                                        x-text="day"></button>
-                                    <template x-if="holidayMap[day]">
-                                        <span class="holiday-dot"></span>
-                                    </template>
-                                    <template x-if="holidayMap[day]">
-                                        <div class="holiday-tooltip" x-text="holidayMap[day]"></div>
-                                    </template>
-                                </div>
-                            </template>
-                        </div>
+                <!-- COL 3: Calendar + Upcoming Events (combined in ONE BOX) -->
+                <div x-data="calendarWidget({{ json_encode($allHolidays) }})" 
+                     class="bg-white rounded-xl p-4 lg:p-6 card-anim flex flex-col" 
+                     style="animation-delay:0.4s; border:1px solid #e5e7eb;">
+                    
+                    <!-- Calendar Header -->
+                    <div class="flex items-center justify-between mb-4">
+                        <button @click="prevMonth()" class="cal-nav-btn p-1.5 hover:bg-gray-100 rounded-lg">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <p class="text-xs font-bold uppercase tracking-widest" style="color:#3b82f6;" x-text="calMonthName"></p>
+                        <button @click="nextMonth()" class="cal-nav-btn p-1.5 hover:bg-gray-100 rounded-lg">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
                     </div>
-
-                    <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.5s; border:1px solid #e5e7eb;">
-                        <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4">Upcoming Events</h2>
-                        <div class="space-y-3">
-                            <template x-if="upcomingEvents.length === 0">
-                                <p class="text-xs text-gray-400 text-center py-3">No upcoming events this month.</p>
-                            </template>
-                            <template x-for="h in upcomingEvents" :key="h.date">
-                                <div class="flex items-center gap-3 p-3 rounded-lg" style="background:#eff6ff;">
-                                    <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:#3b82f6;"></div>
-                                    <div class="flex-1 min-w-0">
-                                        <p class="text-xs font-semibold text-gray-700 truncate" x-text="h.name"></p>
-                                        <p class="text-xs text-gray-400" x-text="new Date(h.date + 'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'2-digit',year:'numeric'}) + ' · ' + h.type.charAt(0).toUpperCase() + h.type.slice(1)"></p>
-                                    </div>
+                    
+                    <!-- Calendar Weekdays -->
+                    <div class="grid grid-cols-7 mb-1">
+                        <template x-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']">
+                            <div class="text-center text-xs text-gray-400 font-semibold py-1" x-text="d"></div>
+                        </template>
+                    </div>
+                    
+                    <!-- Calendar Days Grid -->
+                    <div class="grid grid-cols-7 gap-0.5 mb-5">
+                        <template x-for="_ in range(firstDay)"><div></div></template>
+                        <template x-for="day in days()">
+                            <div class="cal-cell">
+                                <button class="cal-day w-full text-center text-xs py-2 rounded-full"
+                                    :class="isToday(day) ? 'today-pill text-white font-bold' : 'text-gray-600 hover:bg-gray-100'"
+                                    :style="isToday(day) ? 'background:#3b82f6;' : ''"
+                                    x-text="day"></button>
+                                <template x-if="holidayMap[day]">
+                                    <span class="holiday-dot"></span>
+                                </template>
+                                <template x-if="holidayMap[day]">
+                                    <div class="holiday-tooltip" x-text="holidayMap[day]"></div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <!-- Divider -->
+                    <div class="border-t border-gray-100 mb-4"></div>
+                    
+                    <!-- Upcoming Events Section (inside same box) -->
+                    <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-3">Upcoming Events</h2>
+                    <div class="space-y-3">
+                        <template x-if="upcomingEvents.length === 0">
+                            <p class="text-xs text-gray-400 text-center py-3">No upcoming events this month.</p>
+                        </template>
+                        <template x-for="h in upcomingEvents" :key="h.date">
+                            <div class="flex items-center gap-3 p-3 rounded-lg" style="background:#eff6ff;">
+                                <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:#3b82f6;"></div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-semibold text-gray-700 truncate" x-text="h.name"></p>
+                                    <p class="text-xs text-gray-400" x-text="new Date(h.date + 'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'2-digit',year:'numeric'}) + ' · ' + h.type.charAt(0).toUpperCase() + h.type.slice(1)"></p>
                                 </div>
-                            </template>
-                        </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
 
@@ -793,5 +801,83 @@ a:hover .settings-icon { animation: spinOnce 0.45s ease forwards; }
     }
 }
 </style>
+
+<script>
+// Calendar Widget Component
+function calendarWidget(holidaysData) {
+    return {
+        currentYear: new Date().getFullYear(),
+        currentMonth: new Date().getMonth(),
+        holidays: holidaysData || [],
+        get calMonthName() {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            return months[this.currentMonth] + ' ' + this.currentYear;
+        },
+        get firstDay() {
+            const first = new Date(this.currentYear, this.currentMonth, 1);
+            return first.getDay();
+        },
+        get holidayMap() {
+            const map = {};
+            const month = this.currentMonth + 1;
+            const year = this.currentYear;
+            this.holidays.forEach(h => {
+                const parts = h.date.split('-');
+                if (parseInt(parts[0]) === year && parseInt(parts[1]) === month) {
+                    map[parseInt(parts[2])] = h.name;
+                }
+            });
+            return map;
+        },
+        get upcomingEvents() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const future = [];
+            this.holidays.forEach(h => {
+                const parts = h.date.split('-');
+                const hDate = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+                if (hDate >= today) {
+                    future.push({ date: h.date, name: h.name, type: h.type });
+                }
+            });
+            return future.sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0, 5);
+        },
+        days() {
+            const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+            return Array.from({ length: daysInMonth }, (_, i) => i + 1);
+        },
+        range(n) {
+            return Array.from({ length: n });
+        },
+        isToday(day) {
+            const today = new Date();
+            return today.getFullYear() === this.currentYear &&
+                   today.getMonth() === this.currentMonth &&
+                   today.getDate() === day;
+        },
+        prevMonth() {
+            let newMonth = this.currentMonth - 1;
+            let newYear = this.currentYear;
+            if (newMonth < 0) {
+                newMonth = 11;
+                newYear--;
+            }
+            this.currentMonth = newMonth;
+            this.currentYear = newYear;
+        },
+        nextMonth() {
+            let newMonth = this.currentMonth + 1;
+            let newYear = this.currentYear;
+            if (newMonth > 11) {
+                newMonth = 0;
+                newYear++;
+            }
+            this.currentMonth = newMonth;
+            this.currentYear = newYear;
+        }
+    }
+}
+</script>
+
 @include('partials.attendance-error-modal')
 @endsection

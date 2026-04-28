@@ -72,14 +72,14 @@ class HREmployeeController extends Controller
             'email'             => 'required|email:rfc,dns|unique:users,email',
             'contact_no'        => ['required', 'regex:/^\+?[\d\s\-\(\)]{7,20}$/'],
             'gender'            => 'required|string',
-            'date_of_birth'     => 'required|date',
+            'date_of_birth'     => 'required|date|before:today',
             'address'           => ['required', 'string', 'regex:/[a-zA-Z]/'],
             'department_id'     => 'required|exists:departments,id',
             'job_title_id'      => 'required|exists:job_titles,id',
             'employment_type'   => 'required|string',
             'employment_status' => 'required|string',
             'contract_period'   => 'nullable|string',
-            'end_date'          => 'nullable|date',
+            'end_date'          => 'nullable|date|after:today',
         ]);
 
         try {
@@ -159,7 +159,7 @@ class HREmployeeController extends Controller
             'mi'            => 'nullable|string|max:3',
             'suffix'        => 'nullable|string|max:20',
             'email'         => 'required|email|unique:users,email,' . $employee->user->id,
-            'contact_no'    => ['required', 'regex:/^(09|\+639)[0-9]{9}$/'],
+            'contact_no'    => ['required', 'regex:/^\+?[\d\s\-\(\)]{7,20}$/'],
             'department_id'   => 'required|exists:departments,id',
             'job_title_id'    => 'required|exists:job_titles,id',
             'start_date'        => 'required|date',
@@ -267,7 +267,7 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
     public function updateDepartment(Request $request, $id)
     {
         $request->validate([
-            'name'               => 'required|string|max:255',
+            'name'               => 'required|string|max:255|unique:departments,name,' . $id,
             'job_titles'         => 'array',
             'job_titles.*.id'    => 'nullable|integer|exists:job_titles,id',
             'job_titles.*.title' => 'required|string|max:255',
@@ -327,6 +327,43 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
         }
     }
 
+    public function updateJobTitle(Request $request, $id)
+    {
+        $request->validate([
+            'job_title_id' => 'required|exists:job_titles,id',
+        ]);
+
+        $employee = Employee::with('user')->findOrFail($id);
+
+        $jobTitle = \DB::table('job_titles')->where('id', $request->job_title_id)->value('title');
+
+        $role = match($jobTitle) {
+            'System Administrator' => 'admin',
+            'HR Manager'           => 'hr_manager',
+            'Finance Officer'      => 'finance_officer',
+            'Payroll Officer'      => 'payroll_officer',
+            'Supervisor'           => 'supervisor',
+            default                => 'employee',
+        };
+
+        try {
+            DB::transaction(function () use ($request, $employee, $role) {
+                $employee->update(['job_title_id' => $request->job_title_id]);
+                $employee->user->update(['role' => $role]);
+            });
+
+            return response()->json(['success' => true, 'message' => 'Job title updated successfully.']);
+        } catch (\Exception $e) {
+            \Log::error($e->getMessage());
+            $userMessage = match(true) {
+                str_contains($e->getMessage(), 'Duplicate entry') => 'This record already exists. Please check for duplicates.',
+                str_contains($e->getMessage(), 'foreign key constraint') => 'This record is linked to other data and cannot be modified.',
+                default => 'Something went wrong. Please try again.',
+            };
+            return response()->json(['success' => false, 'message' => $userMessage], 500);
+        }
+    }
+
     public function profile()
     {
         $user = auth()->user();
@@ -358,6 +395,9 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
                     $message = 'Cannot delete a department that has employees.';
                     return;
                 }
+                $department->employees()
+                    ->whereHas('user', fn($q) => $q->whereNull('email_verified_at'))
+                    ->update(['department_id' => null, 'job_title_id' => null]);
                 \App\Models\JobTitle::where('department_id', $department->id)->delete();
                 $department->delete();
             });
@@ -398,9 +438,11 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
         $employee = Employee::findOrFail($id);
         $file     = $request->file('document');
         $path     = $file->store('employee_documents', 'public');
+        $rawName  = basename($file->getClientOriginalName());
+        $safeName = mb_substr(preg_replace('/[^\w\s\-\.\(\)]/u', '_', $rawName), 0, 255);
         $doc = \App\Models\Document::create([
             'employee_id' => $employee->id,
-            'file_name'   => $file->getClientOriginalName(),
+            'file_name'   => $safeName,
             'file_path'   => $path,
             'file_type'   => strtolower($file->getClientOriginalExtension()),
             'file_size'   => $file->getSize(),
@@ -421,14 +463,19 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
     public function downloadDocument($docId)
     {
         $doc  = \App\Models\Document::findOrFail($docId);
+        Employee::findOrFail($doc->employee_id);
+        if (!str_starts_with($doc->file_path, 'employee_documents/')) {
+            abort(403, 'Invalid file path.');
+        }
         $path = storage_path('app/public/' . $doc->file_path);
         if (!file_exists($path)) {
             abort(404, 'File not found.');
         }
         if ($doc->file_type === 'pdf') {
+            $safeFileName = str_replace(['"', '\\', "\r", "\n"], '_', $doc->file_name);
             return response()->file($path, [
                 'Content-Type'        => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $doc->file_name . '"',
+                'Content-Disposition' => 'inline; filename="' . $safeFileName . '"',
             ]);
         }
         return response()->download($path, $doc->file_name);
@@ -437,6 +484,7 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
     public function deleteDocument($docId)
     {
         $doc = \App\Models\Document::findOrFail($docId);
+        Employee::findOrFail($doc->employee_id);
         \Illuminate\Support\Facades\Storage::disk('public')->delete($doc->file_path);
         $doc->delete();
         return response()->json(['success' => true, 'message' => 'Document deleted.']);

@@ -3,7 +3,30 @@
 @section('title', 'Employee Profile - Medisource HRMS')
 
 @section('content')
-<script>window._profileDocs = @json($documents);</script>
+@php
+$_employeeData = [
+    'initials'          => $employee ? strtoupper(substr($employee->fname, 0, 1) . substr($employee->lname, 0, 1)) : strtoupper(substr($user->email, 0, 2)),
+    'full_name'         => $employee ? trim($employee->fname . ' ' . ($employee->mi ? $employee->mi . '. ' : '') . $employee->lname) : $user->email,
+    'job_title'         => $employee?->jobTitle?->title ?? '—',
+    'email'             => $user->email,
+    'contact'           => $employee?->contact_no ?? '—',
+    'address'           => $employee?->address ?? '—',
+    'dob'               => $employee?->date_of_birth ? \Carbon\Carbon::parse($employee->date_of_birth)->format('m/d/Y') : '—',
+    'gender'            => $employee?->gender ?? '—',
+    'status'            => $employee?->employment_status ?? '—',
+    'department'        => $employee?->department?->name ?? '—',
+    'employment_type'   => $employee?->employment_type ?? '—',
+    'employment_status' => $employee?->employment_status ?? '—',
+    'contract_period'   => $employee?->contract_period ?? '—',
+    'start_date'        => $employee?->start_date ? \Carbon\Carbon::parse($employee->start_date)->format('m/d/Y') : '—',
+    'end_date'          => $employee?->end_date ? \Carbon\Carbon::parse($employee->end_date)->format('m/d/Y') : '',
+    'position'          => $employee?->jobTitle?->title ?? '—',
+];
+@endphp
+<script>
+window._profileDocs = @json($documents);
+window._employeeData = @json($_employeeData);
+</script>
 <div x-data="{
     sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
     init() { 
@@ -15,24 +38,7 @@
     reportsOpen: false,
     mobileMenuOpen: false,
 
-    employee: {
-        initials: '{{ $employee ? strtoupper(substr($employee->fname, 0, 1) . substr($employee->lname, 0, 1)) : strtoupper(substr($user->email, 0, 2)) }}',
-        full_name: '{{ $employee ? trim($employee->fname . " " . ($employee->mi ? $employee->mi . ". " : "") . $employee->lname) : $user->email }}',
-        job_title: '{{ $employee?->jobTitle?->title ?? "—" }}',
-        email: '{{ $user->email }}',
-        contact: '{{ $employee?->contact_no ?? "—" }}',
-        address: '{{ $employee?->address ?? "—" }}',
-        dob: '{{ $employee?->date_of_birth ? \Carbon\Carbon::parse($employee->date_of_birth)->format("m/d/Y") : "—" }}',
-        gender: '{{ $employee?->gender ?? "—" }}',
-        status: '{{ $employee?->employment_status ?? "—" }}',
-        department: '{{ $employee?->department?->name ?? "—" }}',
-        employment_type: '{{ $employee?->employment_type ?? "—" }}',
-        employment_status: '{{ $employee?->employment_status ?? "—" }}',
-        contract_period: '{{ $employee?->contract_period ?? "—" }}',
-        start_date: '{{ $employee?->start_date ? \Carbon\Carbon::parse($employee->start_date)->format("m/d/Y") : "—" }}',
-        end_date: '{{ $employee?->end_date ? \Carbon\Carbon::parse($employee->end_date)->format("m/d/Y") : "" }}',
-        position: '{{ $employee?->jobTitle?->title ?? "—" }}',
-    },
+    employee: window._employeeData,
 
     documents: window._profileDocs,
 

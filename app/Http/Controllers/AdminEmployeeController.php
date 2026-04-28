@@ -73,14 +73,14 @@ return view('admin.directory', compact('departments', 'employees', 'jobTitles', 
         'email'             => 'required|email:rfc,dns|unique:users,email',
         'contact_no'        => ['required', 'regex:/^\+?[\d\s\-\(\)]{7,20}$/'],
         'gender'            => 'required|string',
-        'date_of_birth'     => 'required|date',
+        'date_of_birth'     => 'required|date|before:today',
         'address'           => ['required', 'string', 'regex:/[a-zA-Z]/'],
         'department_id'     => 'required|exists:departments,id',
         'job_title_id'      => 'required|exists:job_titles,id',
         'employment_type'   => 'required|string',
         'employment_status' => 'required|string',
         'contract_period'   => 'nullable|string',
-        'end_date'          => 'nullable|date',
+        'end_date'          => 'nullable|date|after:today',
     ]);
 
     try { DB::transaction(function () use ($request) {
@@ -271,7 +271,7 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
 public function updateDepartment(Request $request, $id)
 {
     $request->validate([
-        'name'               => 'required|string|max:255',
+        'name'               => 'required|string|max:255|unique:departments,name,' . $id,
         'job_titles'         => 'array',
         'job_titles.*.id'    => 'nullable|integer|exists:job_titles,id',
         'job_titles.*.title' => 'required|string|max:255',
@@ -463,9 +463,11 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
         $employee = Employee::findOrFail($id);
         $file     = $request->file('document');
         $path     = $file->store('employee_documents', 'public');
+        $rawName  = basename($file->getClientOriginalName());
+        $safeName = mb_substr(preg_replace('/[^\w\s\-\.\(\)]/u', '_', $rawName), 0, 255);
         $doc = \App\Models\Document::create([
             'employee_id' => $employee->id,
-            'file_name'   => $file->getClientOriginalName(),
+            'file_name'   => $safeName,
             'file_path'   => $path,
             'file_type'   => strtolower($file->getClientOriginalExtension()),
             'file_size'   => $file->getSize(),
@@ -485,15 +487,20 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
 
     public function downloadDocument($docId)
     {
-        $doc  = \App\Models\Document::findOrFail($docId);
+        $doc      = \App\Models\Document::findOrFail($docId);
+        Employee::findOrFail($doc->employee_id);
+        if (!str_starts_with($doc->file_path, 'employee_documents/')) {
+            abort(403, 'Invalid file path.');
+        }
         $path = storage_path('app/public/' . $doc->file_path);
         if (!file_exists($path)) {
             abort(404, 'File not found.');
         }
         if ($doc->file_type === 'pdf') {
+            $safeFileName = str_replace(['"', '\\', "\r", "\n"], '_', $doc->file_name);
             return response()->file($path, [
                 'Content-Type'        => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $doc->file_name . '"',
+                'Content-Disposition' => 'inline; filename="' . $safeFileName . '"',
             ]);
         }
         return response()->download($path, $doc->file_name);
@@ -502,6 +509,7 @@ return response()->json(['success' => false, 'message' => $userMessage], 500);
     public function deleteDocument($docId)
     {
         $doc = \App\Models\Document::findOrFail($docId);
+        Employee::findOrFail($doc->employee_id);
         \Illuminate\Support\Facades\Storage::disk('public')->delete($doc->file_path);
         $doc->delete();
         return response()->json(['success' => true, 'message' => 'Document deleted.']);

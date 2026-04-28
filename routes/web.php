@@ -248,6 +248,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/documents/{docId}/download', [App\Http\Controllers\HREmployeeController::class, 'downloadDocument'])->name('documents.download');
             Route::delete('/documents/{docId}', [App\Http\Controllers\HREmployeeController::class, 'deleteDocument'])->name('documents.destroy');
             Route::put('/{id}', [App\Http\Controllers\HREmployeeController::class, 'update'])->name('update');
+            Route::put('/job-title/{id}', [App\Http\Controllers\HREmployeeController::class, 'updateJobTitle'])->name('job_title.update');
             Route::get('/profile', [App\Http\Controllers\HREmployeeController::class, 'profile'])->name('profile');
         });
 

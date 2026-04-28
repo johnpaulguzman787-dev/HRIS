@@ -12,6 +12,7 @@
         [x-cloak] { display: none !important; }
         body { background: #f0f2f5; }
 
+        .tabs-wrapper { background: #fff; border-bottom: 2px solid #e5e7eb; padding: 0 32px; margin: 0 16px; border-radius: 0 0 8px 8px }
         .tab-bar { display:flex; gap:0; border-bottom:1px solid #e5e7eb; }
         .tab-btn { position:relative; padding:12px 24px; font-size:0.9rem; font-weight:500; color:#9ca3af; border:none; background:none; cursor:pointer; white-space:nowrap; transition:color 0.2s ease; border-bottom:2px solid transparent; margin-bottom:-1px; }
         .tab-btn:hover:not(.active) { color:#374151; }
@@ -103,6 +104,9 @@
         padding: 12px 20px;
         font-size: 0.8rem;
     }
+    .tabs-wrapper {
+        padding: 0 16px;
+    }
 
     .cards-wrap {
         flex-direction: column;
@@ -182,7 +186,7 @@
     </style>
 </head>
 
-<body x-data="payrollApp()" x-init="init()" class="flex h-screen overflow-hidden">
+<body x-data="payrollApp()" x-init="init()" class="flex h-screen overflow-hidden bg-gray-50">
 
     <!-- ===================== DESKTOP SIDEBAR ===================== -->
     <div class="hidden lg:block">
@@ -212,16 +216,13 @@
         </div>
     </div>
     
-    {{-- ══════════════════════════════════════════════════
-         MAIN CONTENT
-    ══════════════════════════════════════════════════ --}}
     <!-- ===================== MAIN CONTENT ===================== -->
-    <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin p-3 lg:p-6"
-         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
+    <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin"
+         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
          style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
         {{-- Header with Hamburger --}}
-        <header class="bg-gradient-to-r from-blue-500 to-blue-600 sticky top-0 z-40 shadow-lg -mt-3 -mx-3 lg:-mt-6 lg:-mx-6 mb-3 lg:mb-6 rounded-2xl">
+         <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
             <div class="flex items-center justify-between px-8 py-4">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
@@ -230,7 +231,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
-                    <h1 class="text-white font-bold text-xl tracking-tight">Payroll</h1>
+                    <h1 class="text-white font-bold text-xl">Payroll</h1>
                 </div>
                 <x-notification-bell />
             </div>
@@ -243,7 +244,7 @@
         <div x-show="page === 'list'" x-cloak>
 
             {{-- Tab Bar --}}
-            <div class="bg-white -mx-3 lg:-mx-6 px-3 lg:px-6 pt-2 anim-2">
+            <div class="tabs-wrapper anim-2">
                 <div class="tab-bar">
                     <button class="tab-btn" :class="activeTab==='payroll-period' && 'active'"    @click="activeTab='payroll-period'">Payroll Period</button>
                     <button class="tab-btn" :class="activeTab==='salary-structure' && 'active'"  @click="activeTab='salary-structure'">Salary Structure</button>
@@ -252,11 +253,13 @@
                 </div>
             </div>
 
+            <div class="p-3 lg:p-6">
+
             {{-- ── TAB 1: PAYROLL PERIOD ── --}}
             <div x-show="activeTab==='payroll-period'" x-cloak class="tab-content">
 
                 {{-- Summary Cards --}}
-                <div class="pt-6 pb-4">
+                <div class="pb-4">
                     <div class="cards-wrap">
                         <div class="summary-card">
                             <div class="label">Gross Payroll</div>
@@ -375,7 +378,7 @@
 
                 {{-- Salary Grade --}}
                 <div>
-                    <div class="pt-6 pb-4">
+                    <div class="pb-4">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-base font-bold text-gray-800">Salary Grade</h3>
                             @canDo('Payroll', 'edit')
@@ -471,7 +474,7 @@
 
             {{-- ── TAB 3: BENEFITS ── --}}
             <div x-show="activeTab==='benefits'" x-cloak class="tab-content">
-                <div class="pt-6 pb-4">
+                <div class="pb-4">
                 <div class="flex items-center justify-between gap-3 mb-4">
                     <div class="search-wrap flex-1 max-w-xs">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>
@@ -527,7 +530,7 @@
 
 
             {{-- ── TAB 4: CONTRIBUTIONS ── --}}
-            <div x-show="activeTab==='contributions'" x-cloak class="pt-6 tab-content space-y-8">
+            <div x-show="activeTab==='contributions'" x-cloak class="tab-content space-y-8">
 
                 {{-- Rate Cards --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -673,6 +676,7 @@
                 </div>
 
             </div>{{-- /tab contributions --}}
+            </div>
 
         </div>{{-- /page list --}}
 

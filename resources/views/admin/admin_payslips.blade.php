@@ -351,7 +351,7 @@
         </header>
 
         {{-- Tab Bar --}}
-        <div class="tabs-wrapper">
+        <div class="tabs-wrapper anim-2">
             <div class="tab-bar">
                 <button class="tab-btn" :class="activeTab==='all'&&'active'" @click="activeTab='all'">All Payslips</button>
                 <button class="tab-btn" :class="activeTab==='my'&&'active'"  @click="activeTab='my'">My Payslip</button>
@@ -504,7 +504,7 @@
 
 
         {{-- ══════════════════════════
-             MY PAYSLIP (single row, no scroll, search longer)
+             MY PAYSLIP
         ══════════════════════════ --}}
         <div x-show="activeTab==='my'" x-cloak class="tab-content p-3 lg:p-6">
 
@@ -550,7 +550,7 @@
                 </button>
             </div>
 
-            {{-- Table + Panel (stacked) --}}
+            {{-- Table + Panel --}}
             <div class="pb-10 anim-3">
                 <div class="flex flex-col lg:flex-row gap-5 items-start">
 

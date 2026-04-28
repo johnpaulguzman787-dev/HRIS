@@ -263,7 +263,7 @@
     </style>
 </head>
 
-<body x-data="hrPayslipsApp()" x-init="init()" class="flex h-screen overflow-hidden">
+<body x-data="hrPayslipsApp()" x-init="init()" class="flex h-screen overflow-hidden bg-gray-50">
 
     <!-- ===================== DESKTOP SIDEBAR ===================== -->
     <div class="hidden lg:block">
@@ -294,12 +294,12 @@
     </div>
 
     <!-- ===================== MAIN CONTENT ===================== -->
-    <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin p-3 lg:p-6"
-         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
+    <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin"
+         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
          style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
         {{-- Header with Hamburger --}}
-        <header class="bg-gradient-to-r from-blue-500 to-blue-600 sticky top-0 z-40 shadow-lg -mt-3 -mx-3 lg:-mt-6 lg:-mx-6 mb-3 lg:mb-6 rounded-2xl">
+        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
             <div class="flex items-center justify-between px-8 py-4">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
@@ -308,14 +308,15 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
-                    <h1 class="text-white font-bold text-xl tracking-tight">My Payslips</h1>
+                    <h1 class="text-white font-bold text-xl">My Payslips</h1>
                 </div>
                 <x-notification-bell />
             </div>
         </header>
 
+        <div class = "p-3 lg:p-6">
         {{-- Summary Cards --}}
-        <div class="pt-6 pb-4 anim-1">
+        <div class="pb-4 anim-1">
             <div class="cards-wrap">
                 <div class="summary-card">
                     <div class="s-label">Gross Pay <span x-text="'('+myYearFilter+')'"></span></div>
@@ -441,6 +442,7 @@
                 </div>
 
             </div>
+        </div>
         </div>
 
     </div>{{-- /main-content --}}

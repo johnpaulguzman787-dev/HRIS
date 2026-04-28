@@ -17,7 +17,7 @@
         .tab-bar { display:flex; gap:0; border-bottom:1px solid #e5e7eb; }
         .tab-btn { position:relative; padding:12px 24px; font-size:0.9rem; font-weight:500; color:#9ca3af; border:none; background:none; cursor:pointer; white-space:nowrap; transition:color 0.2s ease; border-bottom:2px solid transparent; margin-bottom:-1px; }
         .tab-btn:hover:not(.active) { color:#374151; }
-        .tab-btn.active { color:#2563eb; font-weight:600; border-bottom:2px solid #2563eb; }
+        .tab-btn.active { color:#2563eb; font-weight:700; border-bottom:3px solid #2563eb; }
 
         @keyframes tabFadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
         .tab-content { animation:tabFadeIn 0.28s cubic-bezier(0.4,0,0.2,1); }
@@ -102,7 +102,7 @@
     .px-8 { padding-left: 16px; padding-right: 16px; }
 
     .tab-btn {
-        padding: 12px 20px;
+        padding: 12px 16px;
         font-size: 0.8rem;
     }
 
@@ -498,7 +498,7 @@
                     <div class="flex items-center justify-between gap-3 mb-4">
                         <div class="search-wrap flex-1 max-w-xs">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>
-                            <input type="text" placeholder="Search" class="ctrl w-full">
+                            <input type="text" placeholder="Search" class="ctrl w-full" x-model="benefitSearch">
                         </div>
                         <div class="flex items-center gap-3">
                             <select class="ctrl" x-model="benefitStatusFilter"><option value="">Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
@@ -520,7 +520,10 @@
                                 </thead>
                                 <tbody>
                                     @forelse($benefits as $benefit)
-                                    <tr x-show="!benefitStatusFilter || benefitStatusFilter === '{{ $benefit->status }}'">
+                                    <tr x-show="
+                                        (!benefitSearch || '{{ strtolower($benefit->name) }}'.includes(benefitSearch.toLowerCase())) &&
+                                        (!benefitStatusFilter || benefitStatusFilter === '{{ $benefit->status }}')">
+
                                         <td class="font-medium text-gray-700">{{ $benefit->name }}</td>
                                         <td><span class="px-3 py-1 rounded-full text-xs font-medium badge-allowance">{{ $benefit->type }}</span></td>
                                         <td class="text-gray-600">₱{{ number_format($benefit->amount, 2) }}</td>
@@ -716,6 +719,7 @@
         ══════════════════════════════════════ --}}
         <div x-show="page === 'view'" x-cloak>
 
+        <div class="p-3 lg:p-6">
             <div class="pt-5 pb-2 anim-1">
                 <div class="flex items-center gap-3 mb-5">
                     <button class="btn-back" @click="closePeriodView()">
@@ -879,6 +883,7 @@
                 </div>
             </div>
 
+        </div>
         </div>{{-- /page view --}}
 
     </div>{{-- /main-content --}}
@@ -1468,7 +1473,7 @@
             page: 'list',
             activeTab: location.hash.replace('#','') || new URLSearchParams(location.search).get('tab') || 'payroll-period',
 
-            periodSearch: '', periodStatusFilter: '', periodYearFilter: '{{ $year }}',
+            benefitSearch:'', periodSearch: '', periodStatusFilter: '', periodYearFilter: '{{ $year }}',
             benefitStatusFilter: '', itemStatusFilter: '',
 
             showCreatePeriod:     false,

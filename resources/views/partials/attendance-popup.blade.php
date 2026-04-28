@@ -53,11 +53,15 @@
                 <div class="flex items-center justify-between px-5 py-3">
                     <span class="text-base font-semibold text-gray-700">{{ $employeeShift->shift->name ?? '—' }}</span>
                     <span class="text-sm text-gray-400">
-                        {{ $employeeShift->shift
-                            ? \Carbon\Carbon::parse($employeeShift->shift->start_time)->format('g:i A')
-                              . ' – '
-                              . \Carbon\Carbon::parse($employeeShift->shift->end_time)->format('g:i A')
-                            : '—' }}
+                        @if($employeeShift->shift)
+                            @if($employeeShift->shift->is_flexi)
+                                {{ $employeeShift->shift->required_hours }}h required
+                            @else
+                                {{ \Carbon\Carbon::parse($employeeShift->shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($employeeShift->shift->end_time)->format('g:i A') }}
+                            @endif
+                        @else
+                            —
+                        @endif
                     </span>
                 </div>
                 <div class="flex items-center justify-between px-5 py-3 border-t border-gray-100">
@@ -104,9 +108,9 @@
 
             {{-- BREAK --}}
             <button @click="handleBreak().then(() => { showAttendancePopup = false })"
-                :disabled="!clockedIn || onBreak || onLeave || resumed"
+                :disabled="!clockedIn || onBreak || onLeave"
                 class="py-4 rounded-xl text-sm font-bold uppercase tracking-widest transition-all"
-                :class="(clockedIn && !onBreak && !onLeave && !resumed)
+                :class="(clockedIn && !onBreak && !onLeave)
                     ? 'bg-gray-700 text-white hover:bg-gray-800 shadow-sm'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
                 Break

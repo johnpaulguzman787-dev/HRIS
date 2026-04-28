@@ -705,7 +705,7 @@
                                     <span class="shift-sub">{{ $rec->work_setup ? strtoupper($rec->work_setup) : '—' }}</span>
                                 </div>
                             </td>
-                            <td style="color:#374151; font-size:13px;">{{ $rec->shift ? \Carbon\Carbon::parse($rec->shift->start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($rec->shift->end_time)->format('g:i A') : '—' }}</td>
+                            <td style="color:#374151; font-size:13px;">{{ $rec->shift ? ($rec->shift->is_flexi ? ($rec->shift->required_hours . 'h required') : \Carbon\Carbon::parse($rec->shift->start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($rec->shift->end_time)->format('g:i A')) : '—' }}</td>
                             <td style="font-weight:600;">{{ $rec->clock_in  ? \Carbon\Carbon::parse($rec->clock_in)->format('g:i A')  : '—' }}</td>
                             <td style="font-weight:600;">{{ $rec->clock_out ? \Carbon\Carbon::parse($rec->clock_out)->format('g:i A') : '—' }}</td>
                             <td><span class="hours-pill ot">{{ $rec->overtime_minutes > 0 ? floor($rec->overtime_minutes/60).'h '.str_pad($rec->overtime_minutes%60,2,'0',STR_PAD_LEFT).'m' : '00h 00m' }}</span></td>

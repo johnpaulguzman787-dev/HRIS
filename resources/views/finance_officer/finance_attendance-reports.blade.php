@@ -286,7 +286,7 @@
                             </td>
                             <td class="px-4 sm:px-6 py-4 text-sm text-gray-600">{{ $log->shift->name ?? '—' }}</td>
                             <td class="px-4 sm:px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                {{ $log->shift ? \Carbon\Carbon::parse($log->shift->start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($log->shift->end_time)->format('g:i A') : '—' }}
+                                {{ $log->shift ? ($log->shift->is_flexi ? ($log->shift->required_hours . 'h required') : \Carbon\Carbon::parse($log->shift->start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($log->shift->end_time)->format('g:i A')) : '—' }}
                             </td>
                             <td class="px-4 sm:px-6 py-4 text-sm font-semibold text-gray-800 whitespace-nowrap">
                                 {{ $log->clock_in ? \Carbon\Carbon::parse($log->clock_in)->format('g:i A') : '—' }}
@@ -518,7 +518,7 @@ function attendancePage() {
                     date:     new Date(log.attendance_date).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),
                     setup:    log.work_setup ? log.work_setup.toUpperCase() : '—',
                     shift:    log.shift?.name ?? '—',
-                    schedule: log.shift ? this.formatTime(log.shift.start_time) + ' – ' + this.formatTime(log.shift.end_time) : '—',
+                    schedule: log.shift ? (log.shift.is_flexi ? (log.shift.required_hours + 'h required') : this.formatTime(log.shift.start_time) + ' – ' + this.formatTime(log.shift.end_time)) : '—',
                     clockIn:  log.clock_in  ? new Date(log.clock_in).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})  : '—',
                     clockOut: log.clock_out ? new Date(log.clock_out).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true}) : '—',
                     overtime: log.overtime_minutes > 0 ? Math.floor(log.overtime_minutes/60)+'h '+String(log.overtime_minutes%60).padStart(2,'0')+'m' : '00h 00m',
@@ -547,7 +547,7 @@ function attendancePage() {
                 date:     new Date(log.attendance_date).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),
                 setup:    log.work_setup ? log.work_setup.toUpperCase() : '—',
                 shift:    log.shift?.name ?? '—',
-                schedule: log.shift ? this.formatTime(log.shift.start_time)+' – '+this.formatTime(log.shift.end_time) : '—',
+                schedule: log.shift ? (log.shift.is_flexi ? (log.shift.required_hours + 'h required') : this.formatTime(log.shift.start_time)+' – '+this.formatTime(log.shift.end_time)) : '—',
                 clockIn:  log.clock_in  ? new Date(log.clock_in).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})  : '—',
                 clockOut: log.clock_out ? new Date(log.clock_out).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true}) : '—',
                 overtime: log.overtime_minutes > 0 ? Math.floor(log.overtime_minutes/60)+'h '+String(log.overtime_minutes%60).padStart(2,'0')+'m' : '—',

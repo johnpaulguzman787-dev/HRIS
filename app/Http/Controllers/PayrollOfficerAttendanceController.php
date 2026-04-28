@@ -78,14 +78,17 @@ class PayrollOfficerAttendanceController extends Controller
         $openSession = $existing ? $existing->sessions()->whereNull('clock_out')->first() : null;
 
         if ($openSession && $openSession->break_start && !$openSession->break_end) {
-            $newBreakMinutes   = (int) Carbon::parse($openSession->break_start)->diffInMinutes($now);
+            $newBreakSeconds   = (int) Carbon::parse($openSession->break_start)->diffInSeconds($now);
+            $newBreakMinutes   = (int) floor($newBreakSeconds / 60);
             $totalBreakMinutes = $openSession->break_minutes + $newBreakMinutes;
+            $totalBreakSeconds = $openSession->break_minutes * 60 + $newBreakSeconds;
             $openSession->update(['break_end' => $now, 'break_minutes' => $totalBreakMinutes]);
             $existing->update(['break_minutes' => $existing->sessions()->sum('break_minutes')]);
             return response()->json([
-                'message'       => 'Break ended, resumed work.',
-                'break_end'     => $now->format('h:i A'),
-                'break_minutes' => $totalBreakMinutes,
+                'message'        => 'Break ended, resumed work.',
+                'break_end'      => $now->format('h:i A'),
+                'break_minutes'  => $totalBreakMinutes,
+                'break_seconds'  => $totalBreakSeconds,
             ]);
         }
 
@@ -1042,7 +1045,9 @@ class PayrollOfficerAttendanceController extends Controller
                     'work_setup'          => $log->work_setup ? strtoupper($log->work_setup) : '—',
                     'shift_type'          => $log->shift?->name ?? '—',
                     'schedule'            => $log->shift
-                        ? Carbon::parse($log->shift->start_time)->format('g:i A') . ' – ' . Carbon::parse($log->shift->end_time)->format('g:i A')
+                        ? ($log->shift->is_flexi
+                            ? ($log->shift->required_hours . 'h required')
+                            : Carbon::parse($log->shift->start_time)->format('g:i A') . ' – ' . Carbon::parse($log->shift->end_time)->format('g:i A'))
                         : '—',
                     'time_in'             => $log->clock_in,
                     'time_out'            => $log->clock_out,

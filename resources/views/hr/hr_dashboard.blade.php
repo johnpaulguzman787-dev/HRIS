@@ -125,22 +125,25 @@
         async handleClock() {
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             if (this.onBreak) {
-                const res = await fetch('{{ route("admin.attendance.clock-in") }}', {
+                const res = await fetch('{{ route("hr.attendance.clock-in") }}', {
                     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
                     body: JSON.stringify({ work_setup: this.workSetup, shift_id: this.assignedShiftId })
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    this.onBreak = false;
-                    this.resumed = true;
-                    this.clockedIn = true;
-                    this.breakMinutes = data.break_minutes;
-                    this.currentSessionBreakMinutes = data.break_minutes;
+                    const breakSecs = data.break_seconds ?? (data.break_minutes * 60);
+                    const snapped = this.currentSessionStart
+                        ? Math.max(0, this.completedWorkSeconds + Math.floor((Date.now() - this.currentSessionStart) / 1000) - breakSecs)
+                        : this.completedWorkSeconds;
+                    this.completedWorkSeconds = snapped;
+                    this.currentSessionStart = Date.now();
+                    this.currentSessionBreakMinutes = 0;
+                    this.onBreak = false; this.resumed = true; this.clockedIn = true; this.breakMinutes = data.break_minutes;
                 } else { this.showError(data.message ?? 'Resume failed.'); }
                 return;
             }
             if (!this.clockedIn) {
-                const res = await fetch('{{ route("admin.attendance.clock-in") }}', {
+                const res = await fetch('{{ route("hr.attendance.clock-in") }}', {
                     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
                     body: JSON.stringify({ work_setup: this.workSetup, shift_id: this.assignedShiftId })
                 });
@@ -159,12 +162,13 @@
         async handleBreak() {
             if (!this.clockedIn || this.onBreak) return;
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
-            const res = await fetch('{{ route("admin.attendance.break") }}', {
+            const res = await fetch('{{ route("hr.attendance.break") }}', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify({})
             });
             const data = await res.json();
             if (res.ok) {
                 this.onBreak = true;
+                this.resumed = false;
                 this.breakTime = data.break_start;
                 this.breakStartTimestamp = Date.now();
                 if (data.reminder) { this.breakReminder = data.reminder; setTimeout(() => { this.breakReminder = ''; }, 5000); } else { this.breakReminder = ''; }
@@ -173,7 +177,7 @@
         async handleClockOut() {
             if (!this.clockedIn) return;
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
-            const res = await fetch('{{ route("admin.attendance.clock-out") }}', {
+            const res = await fetch('{{ route("hr.attendance.clock-out") }}', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify({})
             });
             const data = await res.json();
@@ -380,7 +384,15 @@
                             <div class="flex items-center justify-between px-3 py-2">
                                 <span class="text-xs font-semibold text-gray-600">{{ $employeeShift->shift->name ?? '—' }}</span>
                                 <span class="text-xs text-gray-400">
-                                    {{ $employeeShift->shift ? \Carbon\Carbon::parse($employeeShift->shift->start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($employeeShift->shift->end_time)->format('g:i A') : '—' }}
+                                    @if($employeeShift->shift)
+                                        @if($employeeShift->shift->is_flexi)
+                                            {{ $employeeShift->shift->required_hours }}h required
+                                        @else
+                                            {{ \Carbon\Carbon::parse($employeeShift->shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($employeeShift->shift->end_time)->format('g:i A') }}
+                                        @endif
+                                    @else
+                                        —
+                                    @endif
                                 </span>
                             </div>
                             <div class="flex items-center justify-between px-3 py-2 border-t border-gray-100">

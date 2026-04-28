@@ -149,11 +149,14 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    this.onBreak = false;
-                    this.resumed = true;
-                    this.clockedIn = true;
-                    this.breakMinutes = data.break_minutes;
-                    this.currentSessionBreakMinutes = data.break_minutes;
+                    const breakSecs = data.break_seconds ?? (data.break_minutes * 60);
+                    const snapped = this.currentSessionStart
+                        ? Math.max(0, this.completedWorkSeconds + Math.floor((Date.now() - this.currentSessionStart) / 1000) - breakSecs)
+                        : this.completedWorkSeconds;
+                    this.completedWorkSeconds = snapped;
+                    this.currentSessionStart = Date.now();
+                    this.currentSessionBreakMinutes = 0;
+                    this.onBreak = false; this.resumed = true; this.clockedIn = true; this.breakMinutes = data.break_minutes;
                 } else { this.showError(data.message ?? 'Resume failed.'); }
                 return;
             }
@@ -187,6 +190,7 @@
             const data = await res.json();
             if (res.ok) {
                 this.onBreak = true;
+                this.resumed = false;
                 this.breakTime = data.break_start;
                 if (data.reminder) { this.breakReminder = data.reminder; setTimeout(() => { this.breakReminder = ''; }, 5000); } else { this.breakReminder = ''; }
             } else { this.showError(data.message ?? 'Break failed.'); }
@@ -399,7 +403,15 @@
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between px-3 py-2 gap-1">
                                 <span class="text-xs font-semibold text-gray-600">{{ $employeeShift->shift->name ?? '—' }}</span>
                                 <span class="text-xs text-gray-400">
-                                    {{ $employeeShift->shift ? \Carbon\Carbon::parse($employeeShift->shift->start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($employeeShift->shift->end_time)->format('g:i A') : '—' }}
+                                    @if($employeeShift->shift)
+                                        @if($employeeShift->shift->is_flexi)
+                                            {{ $employeeShift->shift->required_hours }}h required
+                                        @else
+                                            {{ \Carbon\Carbon::parse($employeeShift->shift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($employeeShift->shift->end_time)->format('g:i A') }}
+                                        @endif
+                                    @else
+                                        —
+                                    @endif
                                 </span>
                             </div>
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between px-3 py-2 border-t border-gray-100 gap-1">
@@ -442,7 +454,7 @@
                                 :disabled="onLeave || (clockedIn && !onBreak) || !assignedShiftId"
                                 class="clock-btn flex-1 py-3 text-white font-bold text-xs tracking-widest uppercase"
                                 :style="onLeave || (clockedIn && !onBreak) || !assignedShiftId ? 'background:#94a3b8;' : 'background:#3b82f6;'">
-                            TIME IN
+                            <span x-text="onBreak ? 'RESUME' : 'TIME IN'"></span>
                         </button>
                         <button @click="handleBreak()"
                                 :disabled="!clockedIn || onBreak || onLeave"

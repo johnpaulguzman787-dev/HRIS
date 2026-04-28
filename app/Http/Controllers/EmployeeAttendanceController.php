@@ -84,14 +84,17 @@ class EmployeeAttendanceController extends Controller
 
         // If on break → end break and resume
         if ($openSession && $openSession->break_start && !$openSession->break_end) {
-            $newBreakMinutes   = (int) Carbon::parse($openSession->break_start)->diffInMinutes($now);
+            $newBreakSeconds   = (int) Carbon::parse($openSession->break_start)->diffInSeconds($now);
+            $newBreakMinutes   = (int) floor($newBreakSeconds / 60);
             $totalBreakMinutes = $openSession->break_minutes + $newBreakMinutes;
+            $totalBreakSeconds = $openSession->break_minutes * 60 + $newBreakSeconds;
             $openSession->update(['break_end' => $now, 'break_minutes' => $totalBreakMinutes]);
             $existing->update(['break_minutes' => $existing->sessions()->sum('break_minutes')]);
             return response()->json([
-                'message'       => 'Break ended, resumed work.',
-                'break_end'     => $now->format('h:i A'),
-                'break_minutes' => $totalBreakMinutes,
+                'message'        => 'Break ended, resumed work.',
+                'break_end'      => $now->format('h:i A'),
+                'break_minutes'  => $totalBreakMinutes,
+                'break_seconds'  => $totalBreakSeconds,
             ]);
         }
 

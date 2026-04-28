@@ -192,7 +192,7 @@
     {{-- DESKTOP SIDEBAR (hidden on mobile)      --}}
     {{-- ═══════════════════════════════════════ --}}
     <div class="hidden lg:block">
-        @include('admin.admin_sidebar', ['activeMenu' => 'dashboard'])
+        @include('hr.hr_sidebar', ['activeMenu' => 'dashboard'])
     </div>
 
     {{-- ═══════════════════════════════════════ --}}

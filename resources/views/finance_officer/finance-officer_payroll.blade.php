@@ -1323,6 +1323,7 @@
     function payrollApp() {
         return {
             sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+            mobileMenuOpen: false,
             page: 'list',
             activeTab: location.hash.replace('#','') || new URLSearchParams(location.search).get('tab') || 'payroll-period',
 

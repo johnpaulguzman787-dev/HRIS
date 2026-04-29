@@ -142,7 +142,7 @@
 
         <!-- Time & Attendance -->
         <div>
-            <button @click="(isMobile || !sidebarCollapsed) ? attendanceOpen = !attendanceOpen : window.location='{{ route('finance_officer.attendance.reports') }}'"
+            <button @click="(isMobile || !sidebarCollapsed) ? attendanceOpen = !attendanceOpen : (window.location.href='{{ route('finance_officer.attendance.reports') }}')"
                 class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg
                     {{ in_array($currentRoute, $attendanceRoutes) ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50' }}">
                 <div class="flex items-center space-x-3">
@@ -191,7 +191,7 @@
 
         <!-- Payroll -->
         <div>
-            <button @click="(isMobile || !sidebarCollapsed) ? payrollOpen = !payrollOpen : window.location='{{ route('finance_officer.payroll') }}'"
+            <button @click="(isMobile || !sidebarCollapsed) ? payrollOpen = !payrollOpen : (window.location.href='{{ route('finance_officer.payroll') }}')"
                 class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
                 <div class="flex items-center space-x-3">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

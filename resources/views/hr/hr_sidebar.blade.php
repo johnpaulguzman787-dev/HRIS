@@ -57,8 +57,8 @@
             }
         });
     "
-    :class="isMobile 
-        ? 'w-72'
+    :class="isMobile
+        ? 'relative w-72 h-full'
         : (sidebarCollapsed ? 'w-20' : 'w-64')"
     style="transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 2px 0 20px rgba(0,0,0,0.06);">
 

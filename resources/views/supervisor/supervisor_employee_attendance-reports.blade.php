@@ -1,8 +1,22 @@
 @php
     $currentRoute = request()->route()->getName();
+    $sidebarUser = auth()->user();
+    $sidebarEmployee = $sidebarUser ? \App\Models\Employee::with('jobTitle')->where('user_id', $sidebarUser->id)->first() : null;
+    $sidebarInitials = $sidebarEmployee
+        ? strtoupper(substr($sidebarEmployee->fname, 0, 1) . substr($sidebarEmployee->lname, 0, 1))
+        : ($sidebarUser ? strtoupper(substr($sidebarUser->email, 0, 2)) : 'U');
+    $sidebarName = $sidebarEmployee
+        ? trim($sidebarEmployee->fname . ' ' . $sidebarEmployee->lname)
+        : ($sidebarUser?->email ?? 'User');
+    $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
+
+    $attendanceRoutes = ['supervisor.attendance.reports', 'supervisor.attendance.employee', 'supervisor.attendance.shift', 'supervisor.attendance.leave'];
+    $payrollRoutes    = ['hr.payroll', 'hr.payslips', 'hr.contributions'];
+    $requestRoutes    = ['hr.requests.pending', 'hr.requests.approved'];
 
     $currentView = request('view', 'daily');
 
+    // Detail view: active when employee_id is set in monthly mode
     $viewingDetail  = $currentView === 'monthly' && request()->filled('employee_id');
     $detailEmployee = null;
     $empName        = '';
@@ -11,7 +25,7 @@
     $empTitle       = '';
 
     if ($viewingDetail) {
-        $detailEmployee = \App\Models\Employee::with(['department', 'jobTitle'])
+        $detailEmployee = \App\Models\Employee::with(['department','jobTitle'])
             ->find(request('employee_id'));
         if ($detailEmployee) {
             $empName     = trim(($detailEmployee->fname ?? '') . ' ' . ($detailEmployee->lname ?? ''));
@@ -101,25 +115,21 @@
         .stat-card.present  .sc-label { color: #15803d; }
         .stat-card.present  .sc-value { color: #15803d; }
         .stat-card.present  .sc-sub   { color: #166534; }
-
         .stat-card.late     { background: #ffedd5; border-color: #fed7aa; }
         .stat-card.late     .sc-icon  { color: #ea580c; }
         .stat-card.late     .sc-label { color: #c2410c; }
         .stat-card.late     .sc-value { color: #c2410c; }
         .stat-card.late     .sc-sub   { color: #9a3412; }
-
         .stat-card.absent   { background: #fee2e2; border-color: #fecaca; }
         .stat-card.absent   .sc-icon  { color: #dc2626; }
         .stat-card.absent   .sc-label { color: #b91c1c; }
         .stat-card.absent   .sc-value { color: #b91c1c; }
         .stat-card.absent   .sc-sub   { color: #991b1b; }
-
         .stat-card.overtime { background: #dbeafe; border-color: #bfdbfe; }
         .stat-card.overtime .sc-icon  { color: #2563eb; }
         .stat-card.overtime .sc-label { color: #1d4ed8; }
         .stat-card.overtime .sc-value { color: #1d4ed8; }
         .stat-card.overtime .sc-sub   { color: #1e40af; }
-
         .stat-card.undertime { background: #ede9fe; border-color: #ddd6fe; }
         .stat-card.undertime .sc-icon  { color: #7c3aed; }
         .stat-card.undertime .sc-label { color: #6d28d9; }
@@ -245,7 +255,7 @@
             display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .emp-name { font-weight: 600; font-size: 13px; color: #111827; line-height: 1.3; }
-        .emp-dept { font-size: 11.5px; color: var(--muted); }
+        .emp-dept { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
 
         /* ── SHIFT BADGE ── */
         .shift-badge {
@@ -260,13 +270,16 @@
             display: inline-block; padding: 4px 12px;
             border-radius: 20px; font-size: 12px; font-weight: 600;
         }
-        .badge-present { background: #dcfce7; color: #16a34a; }
-        .badge-late    { background: #ffedd5; color: #ea580c; }
-        .badge-absent  { background: #fee2e2; color: #dc2626; }
-        .badge-leave   { background: #fef9c3; color: #a16207; }
-        .badge-rest    { background: #f3f4f6; color: #6b7280; }
-        .badge-holiday    { background: #ede9fe; color: #7c3aed; }
+        .badge-present   { background: var(--green-bg);  color: #16a34a; }
+        .badge-late      { background: var(--orange-bg); color: #ea580c; }
+        .badge-absent    { background: var(--red-bg);    color: #dc2626; }
+        .badge-overtime  { background: var(--blue-light); color: #1d4ed8; }
+        .badge-undertime { background: var(--purple-bg);  color: #6d28d9; }
+        .badge-on_leave  { background: var(--yellow-bg);  color: #a16207; }
+        .badge-holiday   { background: #ede9fe; color: #7c3aed; }
         .badge-incomplete { background: #fef3c7; color: #b45309; }
+        .badge-rest      { background: #f3f4f6; color: #6b7280; }
+        .badge-leave     { background: #fef9c3; color: #a16207; }
 
         /* ── PAGINATION ── */
         .att-pagination {
@@ -287,7 +300,6 @@
         .breadcrumb {
             display: flex; align-items: center; gap: 6px;
             font-size: 13px; color: var(--muted); margin-bottom: 20px;
-            flex-wrap: wrap;
         }
         .breadcrumb a {
             color: var(--muted); text-decoration: none;
@@ -305,10 +317,6 @@
             background: #fff; border: 1px solid var(--border); border-radius: 14px;
             padding: 20px 24px; display: flex; align-items: center; gap: 18px;
             margin-bottom: 20px; box-shadow: 0 1px 6px rgba(0,0,0,.04);
-            flex-wrap: wrap;
-        }
-        @media (max-width: 640px) {
-            .profile-card { flex-direction: column; text-align: center; justify-content: center; }
         }
         .profile-avatar {
             width: 62px; height: 62px; border-radius: 50%;
@@ -355,6 +363,7 @@
         .hp-zero { display:inline-block; font-size:12px; font-weight:600; color:#9ca3af; background:#f9fafb; border-radius:6px; padding:3px 9px; }
         .hp-ot   { display:inline-block; font-size:12px; font-weight:600; color:#1d4ed8; background:#dbeafe; border-radius:6px; padding:3px 9px; }
         .hp-ut   { display:inline-block; font-size:12px; font-weight:600; color:#6d28d9; background:#ede9fe; border-radius:6px; padding:3px 9px; }
+        .hp-norm { display:inline-block; font-size:12px; font-weight:600; color:#374151; background:#f3f4f6; border-radius:6px; padding:3px 9px; }
 
         .totals-row {
             display: grid; grid-template-columns: repeat(4, 1fr);
@@ -365,118 +374,170 @@
         .total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 4px; }
         .total-value { font-size: 18px; font-weight: 800; color: #111827; }
 
+        .main-content-padding { padding: 24px 32px; }
+
         /* ========== MOBILE RESPONSIVENESS ========== */
         @media (max-width: 1024px) {
             .desktop-sidebar { display: none !important; }
-            .main-content-margin { margin-left: 0 !important; }
 
-            /* ── Stat Cards: single column, full-width ── */
             .stat-cards-grid {
-                grid-template-columns: 1fr !important;
-                gap: 10px !important;
-                margin-bottom: 16px !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px !important;
+                margin-bottom: 18px !important;
             }
-            .stat-card {
-                padding: 16px 18px !important;
-                border-radius: 12px !important;
-                display: flex !important;
-                flex-direction: column !important;
-                position: relative !important;
-            }
-            .stat-card .sc-icon {
-                display: none !important;
-            }
-            .stat-card .sc-label {
-                font-size: 11px !important;
-                font-weight: 700 !important;
-                letter-spacing: .6px !important;
-                margin-bottom: 2px !important;
-            }
-            .stat-card .sc-value {
-                font-size: 32px !important;
-                font-weight: 800 !important;
-                line-height: 1.1 !important;
-                margin-bottom: 0 !important;
-            }
-            .stat-card .sc-sub {
-                font-size: 11px !important;
-                font-weight: 500 !important;
-                opacity: .75 !important;
-                text-align: right !important;
-                margin-top: 6px !important;
-            }
+            .stat-card { padding: 14px 16px !important; }
+            .stat-card .sc-icon { display: none !important; }
+            .stat-card .sc-label { font-size: 10px !important; letter-spacing: .3px !important; }
+            .stat-card .sc-value { font-size: 24px !important; }
+            .stat-card .sc-sub { font-size: 11px !important; }
+        }
 
-            /* ── Table toolbar stacks properly ── */
+        @media (max-width: 768px) {
+            .stat-card { padding: 14px 16px !important; }
+            .stat-card .sc-value { font-size: 24px !important; }
+            .stat-card .sc-label { font-size: 10px !important; letter-spacing: .3px !important; }
+            .stat-card .sc-icon { display: none !important; }
+
             .table-toolbar {
-                flex-direction: column;
+                flex-direction: column !important;
                 align-items: stretch !important;
                 padding: 14px 14px 12px !important;
+                gap: 10px !important;
             }
-            .toolbar-right {
-                justify-content: flex-start;
-                flex-wrap: wrap;
-                gap: 8px !important;
-            }
-            .search-box { flex: 1; min-width: 0; }
-            .search-box input { width: 100% !important; }
-            .date-picker { flex: 1; min-width: 0; }
-            .dept-select { flex: 1; min-width: 0; }
+            .table-toolbar h2 { margin-bottom: 0; }
 
-            /* ── Tables: horizontal scroll ── */
-            .att-table, .monthly-table, .detail-table { min-width: 700px; }
+            .toolbar-right {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 8px !important;
+                align-items: stretch !important;
+            }
+
+            .search-box {
+                grid-column: 1 / -1 !important;
+                width: 100% !important;
+            }
+            .search-box input { width: 100% !important; min-width: 0 !important; }
+
+            .date-picker {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+            .date-picker input { width: 100% !important; min-width: 0 !important; }
+
+            .dept-select {
+                width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+            }
+
+            .toggle-btns {
+                grid-column: 1 / -1 !important;
+                display: flex !important;
+                width: 100% !important;
+            }
+            .toggle-btn { flex: 1 !important; text-align: center !important; }
+
+            .period-btns {
+                grid-column: 1 / -1 !important;
+                display: flex !important;
+                width: 100% !important;
+            }
+            .period-btn { flex: 1 !important; text-align: center !important; }
+
+            .export-btn {
+                grid-column: 1 / -1 !important;
+                justify-content: center !important;
+                width: 100% !important;
+            }
+
+            .att-table, .monthly-table, .detail-table { min-width: 650px; }
             .overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-            /* ── Header padding ── */
             header .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
 
-            /* ── Content area padding ── */
             .main-content-padding { padding: 14px !important; }
 
-            /* ── Totals row: 2 columns ── */
+            .profile-card { flex-direction: column; text-align: center; }
+            .profile-avatar { margin: 0 auto; }
+
             .totals-row { grid-template-columns: repeat(2, 1fr) !important; }
             .total-cell { border-right: none !important; border-bottom: 1px solid var(--border); }
             .total-cell:nth-child(odd) { border-right: 1px solid var(--border) !important; }
             .total-cell:last-child { border-bottom: none; }
             .total-cell:nth-last-child(2) { border-bottom: none; }
 
-            /* ── Breadcrumb wrap ── */
-            .breadcrumb { flex-wrap: wrap; }
+            .att-pagination { justify-content: center; flex-wrap: wrap; }
+        }
+
+        @media (max-width: 480px) {
+            .stat-cards-grid { gap: 8px !important; }
+            .stat-card .sc-value { font-size: 20px !important; }
             .breadcrumb .sep,
             .breadcrumb .crumb-current:not(:last-child) { display: none; }
         }
 
-        @media (max-width: 640px) {
-            .stat-cards-grid { gap: 8px !important; }
-            .stat-card .sc-value { font-size: 28px !important; }
+        /* Notification Bell Styles */
+        .notif-bell-container {
+            position: relative;
+            z-index: 100;
+        }
+        .bell-btn {
+            transition: all 0.2s ease;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .bell-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: scale(1.05);
+        }
+        .bell-dot {
+            animation: blink 2.2s ease-in-out infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.4); }
+        }
+        .notification-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 380px;
+            max-width: calc(100vw - 20px);
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            z-index: 1000;
+            overflow: hidden;
+            animation: dropdownFade 0.2s ease;
+        }
+        @keyframes dropdownFade {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 <body class="bg-gray-50" x-data="{ mobileMenuOpen: false, collapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
      x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })">
 
-{{-- ══════════ SIDEBAR ══════════ --}}
-@php
-    $sidebarUser = auth()->user();
-    $sidebarEmployee = $sidebarUser ? \App\Models\Employee::with('jobTitle')->where('user_id', $sidebarUser->id)->first() : null;
-    $sidebarInitials = $sidebarEmployee
-        ? strtoupper(substr($sidebarEmployee->fname, 0, 1) . substr($sidebarEmployee->lname, 0, 1))
-        : ($sidebarUser ? strtoupper(substr($sidebarUser->email, 0, 2)) : 'U');
-    $sidebarName = $sidebarEmployee
-        ? trim($sidebarEmployee->fname . ' ' . $sidebarEmployee->lname)
-        : ($sidebarUser?->email ?? 'User');
-    $sidebarRole = $sidebarEmployee?->jobTitle?->title ?? ($sidebarUser?->role ?? '—');
-
-    $attendanceRoutes = ['supervisor.attendance.reports', 'supervisor.attendance.employee', 'supervisor.attendance.shift', 'supervisor.attendance.leave'];
-    $payrollRoutes    = ['supervisor.payroll', 'supervisor.payslips', 'supervisor.contributions'];
-    $requestRoutes    = ['supervisor.requests.pending', 'supervisor.requests.approved'];
-@endphp
-
-{{-- DESKTOP SIDEBAR (visible on large screens) --}}
+{{-- ═══════════ DESKTOP SIDEBAR ═══════════ --}}
 <div class="hidden lg:block desktop-sidebar">
     @include('supervisor.supervisor_sidebar')
 </div>
 
-{{-- MOBILE SLIDE-OUT DRAWER --}}
+{{-- ═══════════ MOBILE SLIDE-OUT DRAWER ═══════════ --}}
 <div x-show="mobileMenuOpen"
      x-transition:enter="transition ease-out duration-200"
      x-transition:enter-start="opacity-0"
@@ -500,29 +561,14 @@
 </div>
 
 {{-- ══════════ MAIN CONTENT ══════════ --}}
-<div x-data="{
-        collapsed: localStorage.getItem('sidebarCollapsed') === 'true',
-        editModal: false, editLogId: null, editClockIn: '', editClockOut: '', editError: '', editSaving: false,
-        openEdit(id, ci, co) { this.editLogId = id; this.editClockIn = ci; this.editClockOut = co; this.editError = ''; this.editModal = true; },
-        async saveEdit() {
-            this.editSaving = true; this.editError = '';
-            const res = await fetch(`/supervisor/attendance/log/${this.editLogId}/update`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                body: JSON.stringify({ clock_in: this.editClockIn, clock_out: this.editClockOut || null })
-            });
-            this.editSaving = false;
-            if (res.ok) { this.editModal = false; window.location.reload(); }
-            else { const d = await res.json(); this.editError = d.message || 'Update failed.'; }
-        }
-    }"
-     x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })"
+<div class="main-content-margin"
      :style="window.innerWidth >= 1024 ? (collapsed ? 'margin-left:5rem' : 'margin-left:16rem') : 'margin-left:0'"
      x-on:resize.window="$el.style.marginLeft = window.innerWidth >= 1024 ? (collapsed ? '5rem' : '16rem') : '0'"
      style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1); min-height:100vh;">
 
-    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
-        <div class="flex items-center justify-between px-6 py-4">
+    <!-- Blue Header with Hamburger - Removed overflow-hidden -->
+    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl">
+        <div class="flex items-center justify-between px-4 sm:px-8 py-4">
             <div class="flex items-center gap-3">
                 <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -530,8 +576,8 @@
                     </svg>
                 </button>
                 <div>
-                    <h1 class="text-white text-[22px] font-bold tracking-[0.3px] m-0">Employee Attendance</h1>
-                    <p class="text-white/65 text-[13px] mt-[3px] mb-0">Track and manage workforce attendance records</p>
+                    <h1 class="text-white text-lg sm:text-[22px] font-bold tracking-[0.3px] m-0">Employee Attendance</h1>
+                    <p class="text-white/65 text-[11px] sm:text-[13px] mt-[2px] mb-0">Track and manage workforce attendance records</p>
                 </div>
             </div>
             <div class="flex items-center gap-2.5">
@@ -540,33 +586,34 @@
         </div>
     </header>
 
-    <div class="main-content-padding" style="padding:24px 32px;">
+    <div class="main-content-padding">
 
         @if($viewingDetail)
-        {{-- ══════════ EMPLOYEE DETAIL VIEW ══════════ --}}
+        {{-- ══════════ DETAIL VIEW ══════════ --}}
 
+        {{-- Breadcrumb --}}
         <div class="breadcrumb">
             <a href="{{ route('supervisor.attendance.employee', ['view' => 'monthly', 'month' => $selectedMonth]) }}">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:12px;height:12px;">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
-                Back to Employee Attendance
+                Back
             </a>
-            <span class="sep">›</span>
-            <span>Employee Attendance</span>
             <span class="sep">›</span>
             <span class="crumb-current">{{ $empName ?: 'Employee' }}</span>
         </div>
 
+        {{-- Profile Card --}}
         <div class="profile-card">
             <div class="profile-avatar">{{ $empInitials }}</div>
             <div>
                 <div class="profile-name">{{ $empName ?: 'Juan Dela Cruz' }}</div>
-                <div class="profile-meta">{{ $empDept ?: 'IT/Information Technology Department' }}</div>
-                <div class="profile-meta">{{ $empTitle ?: 'Senior Programmer' }}</div>
+                <div class="profile-meta">{{ $empDept ?: '—' }}</div>
+                <div class="profile-meta">{{ $empTitle ?: '—' }}</div>
             </div>
         </div>
 
+        {{-- Attendance Detail Card --}}
         <div class="table-card">
             <div class="table-toolbar">
                 <h2>Attendance Records</h2>
@@ -582,7 +629,7 @@
                         <input type="hidden" name="period" id="periodInput" value="{{ $selectedPeriod }}">
 
                         <div class="date-picker">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:13px;height:13px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                             <input type="month" name="month" value="{{ $selectedMonth }}"
@@ -591,7 +638,7 @@
                     </form>
 
                     <button onclick="exportAttendancePdf()" class="export-btn" style="border:none;cursor:pointer;">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:13px;height:13px;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
                         Export
@@ -599,7 +646,7 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
                 <table class="detail-table">
                     <thead>
                         <tr>
@@ -612,7 +659,6 @@
                             <th>Overtime</th>
                             <th>Undertime</th>
                             <th>Status</th>
-                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -623,43 +669,30 @@
 
                         @forelse($dailyRecords ?? [] as $rec)
                         @php
-                            $st     = strtolower($rec->status ?? 'present');
-                            $isWknd = \Carbon\Carbon::parse($rec->date)->isWeekend();
-                            $isPast = \Carbon\Carbon::parse($rec->date)->lt(\Carbon\Carbon::today());
-                            $ot     = $rec->overtime_formatted  ?? '00h 00m';
-                            $ut     = $rec->undertime_formatted ?? '00h 00m';
-                            $ciVal  = $rec->time_in  ? \Carbon\Carbon::parse($rec->time_in)->format('H:i')  : '';
-                            $coVal  = $rec->time_out ? \Carbon\Carbon::parse($rec->time_out)->format('H:i') : '';
+                            $st      = strtolower($rec->status ?? 'present');
+                            $isWknd  = \Carbon\Carbon::parse($rec->date)->isWeekend();
+                            $ot      = $rec->overtime_formatted ?? '00h 00m';
+                            $ut      = $rec->undertime_formatted ?? '00h 00m';
                         @endphp
                         <tr class="{{ $isWknd ? 'rest-row' : '' }}">
-                            <td style="font-weight:600; color:#111827; white-space:nowrap;">
+                            <td style="font-weight:600; white-space:nowrap;">
                                 {{ \Carbon\Carbon::parse($rec->date)->format('F j, Y') }}
-                                @if($isWknd)<span style="font-size:10px;color:#9ca3af;font-weight:500;margin-left:4px;">(Rest Day)</span>@endif
+                                @if($isWknd)<span style="font-size:10px; color:#9ca3af; font-weight:500; margin-left:4px;">(Rest Day)</span>@endif
                             </td>
-                            <td style="color:var(--muted);font-size:12.5px;">{{ $rec->work_setup ?? 'WFH' }}</td>
-                            <td style="color:var(--muted);font-size:12.5px;">{{ $rec->shift_type ?? 'Day Shift' }}</td>
-                            <td style="color:var(--muted);font-size:12.5px;">{{ $rec->schedule ?? '7:00 AM – 4:00 PM' }}</td>
+                            <td style="color:var(--muted); font-size:12.5px;">{{ $rec->work_setup ?? 'WFH' }}</td>
+                            <td style="color:var(--muted); font-size:12.5px;">{{ $rec->shift_type ?? 'Day Shift' }}</td>
+                            <td style="color:var(--muted); font-size:12.5px;">{{ $rec->schedule ?? '7:00 AM – 4:00 PM' }}</td>
                             <td style="font-weight:700;">{{ $rec->time_in  ? \Carbon\Carbon::parse($rec->time_in)->format('g:i A')  : '—' }}</td>
                             <td style="font-weight:700;">{{ $rec->time_out ? \Carbon\Carbon::parse($rec->time_out)->format('g:i A') : '—' }}</td>
                             <td><span class="{{ $ot === '00h 00m' ? 'hp-zero' : 'hp-ot' }}">{{ $ot }}</span></td>
                             <td><span class="{{ $ut === '00h 00m' ? 'hp-zero' : 'hp-ut' }}">{{ $ut }}</span></td>
                             <td><span class="status-badge badge-{{ $st }}">{{ ucfirst($rec->status ?? 'Present') }}</span></td>
-                            <td>
-                                @if($isPast)
-                                <button @click="openEdit({{ $rec->id }}, '{{ $ciVal }}', '{{ $coVal }}')"
-                                    style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:3px 8px;cursor:pointer;color:#6b7280;font-size:11px;display:inline-flex;align-items:center;gap:4px;"
-                                    title="Edit time in/out">
-                                    <svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                    Edit
-                                </button>
-                                @endif
-                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="10" style="text-align:center; padding:40px 16px; color:#9ca3af; font-size:13px;">
+                            <td colspan="9" style="text-align:center; padding:40px 16px; color:#9ca3af; font-size:13px;">
                                 No attendance records found for this period.
-                            </td>
+                            <td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -667,22 +700,10 @@
             </div>
 
             <div class="totals-row">
-                <div class="total-cell">
-                    <div class="total-label">Total Work Hours</div>
-                    <div class="total-value">{{ $totalWorkHours }}</div>
-                </div>
-                <div class="total-cell">
-                    <div class="total-label">Total Overtime Hours</div>
-                    <div class="total-value" style="color:#1d4ed8;">{{ $totalOvertimeHours }}</div>
-                </div>
-                <div class="total-cell">
-                    <div class="total-label">Total Undertime Hours</div>
-                    <div class="total-value" style="color:#6d28d9;">{{ $totalUndertimeHours }}</div>
-                </div>
-                <div class="total-cell">
-                    <div class="total-label">Working Days</div>
-                    <div class="total-value">{{ $workingDays }}</div>
-                </div>
+                <div class="total-cell"><div class="total-label">Total Work Hours</div><div class="total-value">{{ $totalWorkHours }}</div></div>
+                <div class="total-cell"><div class="total-label">Total Overtime Hours</div><div class="total-value" style="color:#1d4ed8;">{{ $totalOvertimeHours }}</div></div>
+                <div class="total-cell"><div class="total-label">Total Undertime Hours</div><div class="total-value" style="color:#6d28d9;">{{ $totalUndertimeHours }}</div></div>
+                <div class="total-cell"><div class="total-label">Working Days</div><div class="total-value">{{ $workingDays }}</div></div>
             </div>
         </div>
 
@@ -691,55 +712,31 @@
 
         <div class="stat-cards-grid">
             <div class="stat-card present">
-                <div class="sc-icon">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
+                <div class="sc-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
                 <div class="sc-label">Present Today</div>
                 <div class="sc-value">{{ $presentCount ?? 0 }}</div>
                 <div class="sc-sub">{{ $presentRate ?? '0%' }} attendance rate</div>
             </div>
-
             <div class="stat-card late">
-                <div class="sc-icon">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
+                <div class="sc-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
                 <div class="sc-label">Late</div>
                 <div class="sc-value">{{ $lateCount ?? 0 }}</div>
                 <div class="sc-sub">{{ $lateRate ?? '0%' }} of workforce</div>
             </div>
-
             <div class="stat-card absent">
-                <div class="sc-icon">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
+                <div class="sc-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
                 <div class="sc-label">Absent</div>
                 <div class="sc-value">{{ $absentCount ?? 0 }}</div>
                 <div class="sc-sub">{{ $absentRate ?? '0%' }} absent today</div>
             </div>
-
             <div class="stat-card overtime">
-                <div class="sc-icon">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                    </svg>
-                </div>
+                <div class="sc-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></div>
                 <div class="sc-label">Overtime</div>
                 <div class="sc-value">{{ $overtimeHours ?? '0 hrs' }}</div>
                 <div class="sc-sub">Across {{ $overtimeEmployees ?? 0 }} employees</div>
             </div>
-
             <div class="stat-card undertime">
-                <div class="sc-icon">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
-                    </svg>
-                </div>
+                <div class="sc-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg></div>
                 <div class="sc-label">Undertime</div>
                 <div class="sc-value">{{ $undertimeHours ?? '0 hrs' }}</div>
                 <div class="sc-sub">Across {{ $undertimeEmployees ?? 0 }} employees</div>
@@ -751,61 +748,38 @@
                 <h2>Attendance Records</h2>
                 <div class="toolbar-right">
                     <form method="GET" action="{{ route('supervisor.attendance.employee') }}" id="filterForm" style="display:contents">
-
                         @if($currentView === 'daily')
                         <div class="search-box">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                            <input type="text" name="search" placeholder="Search employee…"
-                                value="{{ request('search') }}"
-                                oninput="document.getElementById('filterForm').submit()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <input type="text" name="search" placeholder="Search employee…" value="{{ request('search') }}" oninput="document.getElementById('filterForm').submit()">
                         </div>
                         <div class="date-picker">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            <input type="date" name="date"
-                                value="{{ request('date', now()->format('Y-m-d')) }}"
-                                onchange="document.getElementById('filterForm').submit()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <input type="date" name="date" value="{{ request('date', now()->format('Y-m-d')) }}" onchange="document.getElementById('filterForm').submit()">
                         </div>
                         @else
                         <div class="date-picker">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            <input type="month" name="month"
-                                value="{{ request('month', now()->format('Y-m')) }}"
-                                onchange="document.getElementById('filterForm').submit()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <input type="month" name="month" value="{{ request('month', now()->format('Y-m')) }}" onchange="document.getElementById('filterForm').submit()">
                         </div>
                         @endif
-
-                        <select name="department" class="dept-select"
-                            onchange="document.getElementById('filterForm').submit()">
+                        <select name="department" class="dept-select" onchange="document.getElementById('filterForm').submit()">
                             <option value="">All Departments</option>
                             @foreach($departments ?? [] as $dept)
-                                <option value="{{ $dept->id }}" {{ request('department') == $dept->id ? 'selected' : '' }}>
-                                    {{ $dept->name }}
-                                </option>
+                                <option value="{{ $dept->id }}" {{ request('department') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                             @endforeach
                         </select>
-
                         <div class="toggle-btns">
-                            <button type="button" class="toggle-btn {{ $currentView === 'daily' ? 'active' : '' }}"
-                                onclick="setView('daily')">Daily</button>
-                            <button type="button" class="toggle-btn {{ $currentView === 'monthly' ? 'active' : '' }}"
-                                onclick="setView('monthly')">Monthly</button>
+                            <button type="button" class="toggle-btn {{ $currentView === 'daily' ? 'active' : '' }}" onclick="setView('daily')">Daily</button>
+                            <button type="button" class="toggle-btn {{ $currentView === 'monthly' ? 'active' : '' }}" onclick="setView('monthly')">Monthly</button>
                         </div>
                         <input type="hidden" name="view" id="viewInput" value="{{ $currentView }}">
-
                     </form>
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-
+            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
                 @if($currentView === 'daily')
-                {{-- ── DAILY TABLE ── --}}
                 <table class="att-table">
                     <thead>
                         <tr>
@@ -818,7 +792,6 @@
                             <th>Overtime</th>
                             <th>Undertime</th>
                             <th>Status</th>
-                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -830,11 +803,9 @@
                         @endphp
                         <tr>
                             <td>
-                                <div style="display:flex;align-items:center;gap:10px;">
-                                    <div class="emp-avatar">
-                                        {{ strtoupper(substr($rec->employee->fname ?? 'J', 0, 1) . substr($rec->employee->lname ?? 'D', 0, 1)) }}
-                                    </div>
-                                    <div><div class="emp-name">{{ trim(($rec->employee->fname ?? '') . ' ' . ($rec->employee->lname ?? '')) ?: 'Juan Dela Cruz' }}</div></div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div class="emp-avatar">{{ strtoupper(substr($rec->employee->fname ?? 'J', 0, 1) . substr($rec->employee->lname ?? 'D', 0, 1)) }}</div>
+                                    <div class="emp-name">{{ trim(($rec->employee->fname ?? '') . ' ' . ($rec->employee->lname ?? '')) ?: '—' }}</div>
                                 </div>
                             </td>
                             <td class="emp-dept">{{ $rec->employee->department->name ?? '—' }}</td>
@@ -844,7 +815,7 @@
                                     <span class="shift-sub">{{ $rec->work_setup ? strtoupper($rec->work_setup) : '—' }}</span>
                                 </div>
                             </td>
-                            <td style="color:#374151;font-size:13px;">{{ $rec->shift ? ($rec->shift->is_flexi ? ($rec->shift->required_hours . 'h required') : \Carbon\Carbon::parse($rec->shift->start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($rec->shift->end_time)->format('g:i A')) : '—' }}</td>
+                            <td style="color:#374151; font-size:13px;">{{ $rec->shift ? ($rec->shift->is_flexi ? ($rec->shift->required_hours . 'h required') : \Carbon\Carbon::parse($rec->shift->start_time)->format('g:i A') . ' – ' . \Carbon\Carbon::parse($rec->shift->end_time)->format('g:i A')) : '—' }}</td>
                             <td style="font-weight:600;">{{ $rec->clock_in  ? \Carbon\Carbon::parse($rec->clock_in)->format('g:i A')  : '—' }}</td>
                             <td style="font-weight:600;">{{ $rec->clock_out ? \Carbon\Carbon::parse($rec->clock_out)->format('g:i A') : '—' }}</td>
                             <td><span class="hours-pill ot">{{ $rec->overtime_minutes > 0 ? floor($rec->overtime_minutes/60).'h '.str_pad($rec->overtime_minutes%60,2,'0',STR_PAD_LEFT).'m' : '00h 00m' }}</span></td>
@@ -853,29 +824,17 @@
                                 @php $st = strtolower($rec->status ?? 'present'); @endphp
                                 <span class="status-badge badge-{{ $st }}">{{ ucfirst($rec->status ?? 'Present') }}</span>
                             </td>
-                            <td>
-                                @if($isPast)
-                                <button @click="openEdit({{ $rec->id }}, '{{ $ciVal }}', '{{ $coVal }}')"
-                                    style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:3px 8px;cursor:pointer;color:#6b7280;font-size:11px;display:inline-flex;align-items:center;gap:4px;"
-                                    title="Edit time in/out">
-                                    <svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                    Edit
-                                </button>
-                                @endif
-                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="10" style="text-align:center; padding:40px 16px; color:#9ca3af; font-size:13px;">
+                            <td colspan="9" style="text-align:center; padding:40px 16px; color:#9ca3af; font-size:13px;">
                                 No attendance records found for this date.
                             </td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
-
                 @else
-                {{-- ── MONTHLY TABLE ── --}}
                 <table class="monthly-table">
                     <thead>
                         <tr>
@@ -895,11 +854,9 @@
                         @forelse($monthlyRecords ?? [] as $rec)
                         <tr>
                             <td>
-                                <div style="display:flex;align-items:center;gap:10px;">
-                                    <div class="emp-avatar">
-                                        {{ strtoupper(substr($rec->employee->fname ?? 'J', 0, 1) . substr($rec->employee->lname ?? 'D', 0, 1)) }}
-                                    </div>
-                                    <div><div class="emp-name">{{ trim(($rec->employee->fname ?? '') . ' ' . ($rec->employee->lname ?? '')) ?: 'Juan Dela Cruz' }}</div></div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div class="emp-avatar">{{ strtoupper(substr($rec->employee->fname ?? 'J', 0, 1) . substr($rec->employee->lname ?? 'D', 0, 1)) }}</div>
+                                    <div class="emp-name">{{ trim(($rec->employee->fname ?? '') . ' ' . ($rec->employee->lname ?? '')) ?: '—' }}</div>
                                 </div>
                             </td>
                             <td class="emp-dept">{{ $rec->employee->department->name ?? '—' }}</td>
@@ -913,7 +870,7 @@
                             <td>
                                 <a href="{{ route('supervisor.attendance.employee', ['employee_id' => $rec->employee_id ?? '', 'view' => 'monthly', 'month' => request('month', now()->format('Y-m'))]) }}"
                                    class="view-monthly-btn">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:12px;height:12px;">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                     </svg>
                                     View Monthly
@@ -930,10 +887,8 @@
                     </tbody>
                 </table>
                 @endif
-
             </div>
 
-            {{-- Pagination --}}
             @if(isset($records) && $records instanceof \Illuminate\Pagination\LengthAwarePaginator)
             <div class="att-pagination">
                 @for($p = 1; $p <= $records->lastPage(); $p++)
@@ -947,55 +902,22 @@
                 @endfor
             </div>
             @endif
-
         </div>
-        @endif {{-- end @if($viewingDetail) --}}
-
-    </div>
-
-    {{-- Edit Attendance Modal --}}
-    <div x-show="editModal" x-cloak style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.4);">
-        <div @click.outside="editModal=false" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:16px;padding:28px;width:90%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
-            <h3 style="font-size:15px;font-weight:700;color:#111827;margin-bottom:16px;">Edit Attendance</h3>
-            <div style="margin-bottom:14px;">
-                <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Time In</label>
-                <input type="time" x-model="editClockIn" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;">
-            </div>
-            <div style="margin-bottom:18px;">
-                <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Time Out <span style="font-weight:400;color:#9ca3af;">(optional)</span></label>
-                <input type="time" x-model="editClockOut" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;">
-            </div>
-            <div x-show="editError" x-text="editError" style="font-size:12px;color:#dc2626;margin-bottom:12px;"></div>
-            <div style="display:flex;justify-content:flex-end;gap:10px;">
-                <button @click="editModal=false" style="padding:8px 18px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#374151;">Cancel</button>
-                <button @click="saveEdit()" :disabled="editSaving" style="padding:8px 18px;border:none;border-radius:8px;font-size:13px;cursor:pointer;background:#2563eb;color:#fff;font-weight:600;" x-text="editSaving ? 'Saving…' : 'Save'"></button>
-            </div>
-        </div>
+        @endif
     </div>
 </div>
 
 <script>
-    function setView(viewType) {
-        document.getElementById('viewInput').value = viewType;
-        const btns = document.querySelectorAll('.toggle-btn');
-        btns.forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.innerText.toLowerCase() === viewType) {
-                btn.classList.add('active');
-            }
-        });
+    function setView(v) {
+        document.getElementById('viewInput').value = v;
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        if (event && event.target) event.target.classList.add('active');
         document.getElementById('filterForm').submit();
     }
-
-    function setPeriod(periodValue) {
-        document.getElementById('periodInput').value = periodValue;
-        const btns = document.querySelectorAll('.period-btn');
-        btns.forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.innerText === 'Period ' + periodValue) {
-                btn.classList.add('active');
-            }
-        });
+    function setPeriod(p) {
+        document.getElementById('periodInput').value = p;
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        if (event && event.target) event.target.classList.add('active');
         document.getElementById('detailForm').submit();
     }
 
@@ -1030,18 +952,15 @@
             <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.overtime}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;"><span style="background:${sBg(r.status)};color:${sClr(r.status)};padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;">${r.status}</span></td>
         </tr>`).join('');
-        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_empName} – ${_period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report — ${_empName}</div><div class="badge">${_period}</div></div></td><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></body></html>`;
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_empName} – ${_period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report — ${_empName}</div><div class="badge">${_period}</div></div><table><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></body></html>`;
         const w = window.open('', '_blank', 'width=1050,height=820,scrollbars=yes');
         if (!w) return;
         w.document.write(html);
         w.document.close();
-        w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove());
         w.focus();
         setTimeout(() => w.print(), 400);
     }
     @endif
 </script>
-
-
 </body>
 </html>

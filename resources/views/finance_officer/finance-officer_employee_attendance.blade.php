@@ -61,10 +61,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'DM Sans', sans-serif; }
-
-        .nav-item { transition: background 0.15s, color 0.15s; }
-        .chevron-icon { transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); }
+        * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
         [x-cloak] { display: none !important; }
 
         @keyframes pulseDot {
@@ -90,16 +87,7 @@
             --border: #e5e7eb;
         }
 
-        /* DESKTOP SIDEBAR */
-        .desktop-sidebar { display: none; }
-        @media (min-width: 1024px) {
-            .desktop-sidebar { display: block; }
-        }
-        @media (max-width: 1023px) {
-            .main-content-margin { margin-left: 0 !important; }
-        }
-
-        /* ── STAT CARDS (Responsive) ── */
+        /* ── STAT CARDS ── */
         .stat-cards-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -107,22 +95,20 @@
             margin-bottom: 28px;
         }
         .stat-card {
-            border-radius: 14px;
-            padding: 18px 20px;
-            border: 1px solid transparent;
-            transition: box-shadow .2s, transform .2s;
+            border-radius: 14px; padding: 18px 20px;
+            border: 1px solid transparent; position: relative;
+            overflow: hidden; transition: box-shadow .2s, transform .2s;
         }
         .stat-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.09); transform: translateY(-2px); }
         .stat-card .sc-icon {
             width: 36px; height: 36px; border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            margin-bottom: 14px;
-            background: rgba(255,255,255,0.55);
+            margin-bottom: 14px; background: rgba(255,255,255,0.55);
         }
         .stat-card .sc-icon svg { width: 18px; height: 18px; }
         .stat-card .sc-label { font-size: 11px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; margin-bottom: 4px; }
         .stat-card .sc-value { font-size: 28px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-        .stat-card .sc-sub { font-size: 11.5px; font-weight: 500; opacity: .7; }
+        .stat-card .sc-sub   { font-size: 11.5px; font-weight: 500; opacity: .7; }
 
         .stat-card.present  { background: #dcfce7; border-color: #bbf7d0; }
         .stat-card.present  .sc-icon  { color: #16a34a; }
@@ -152,10 +138,8 @@
 
         /* ── TABLE CARD ── */
         .table-card {
-            background: #fff;
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            overflow: hidden;
+            background: #fff; border-radius: 14px;
+            border: 1px solid var(--border); overflow: hidden;
             box-shadow: 0 1px 8px rgba(0,0,0,.04);
         }
         .table-toolbar {
@@ -172,7 +156,10 @@
             border-radius: 8px; padding: 7px 12px;
         }
         .search-box svg { color: var(--muted); width: 14px; height: 14px; flex-shrink: 0; }
-        .search-box input { width: 140px; border: none; background: transparent; outline: none; font-size: 13px; color: #111827; font-family: inherit; }
+        .search-box input {
+            border: none; background: transparent; outline: none;
+            font-size: 13px; color: #111827; width: 140px;
+        }
         .search-box input::placeholder { color: var(--muted); }
 
         .date-picker {
@@ -181,7 +168,10 @@
             border-radius: 8px; padding: 7px 12px;
         }
         .date-picker svg { color: var(--muted); width: 14px; height: 14px; flex-shrink: 0; }
-        .date-picker input { border: none; background: transparent; outline: none; font-size: 13px; color: #111827; cursor: pointer; font-family: inherit; }
+        .date-picker input {
+            border: none; background: transparent; outline: none;
+            font-size: 13px; color: #111827; cursor: pointer; font-family: inherit;
+        }
 
         .dept-select {
             appearance: none; background: #f9fafb; border: 1px solid var(--border);
@@ -199,25 +189,33 @@
         }
         .toggle-btn.active { background: var(--blue); color: #fff; }
 
+        /* ── DAILY TABLE ── */
         .att-table { width: 100%; border-collapse: collapse; }
         .att-table thead tr { background: #f9fafb; }
         .att-table th {
             padding: 11px 16px; font-size: 11.5px; font-weight: 600;
-            color: var(--muted); text-align: left; white-space: nowrap;
-            border-bottom: 1px solid var(--border); letter-spacing: .4px; text-transform: uppercase;
+            color: var(--muted); text-align: left; border-bottom: 1px solid var(--border);
+            white-space: nowrap; letter-spacing: .4px; text-transform: uppercase;
         }
-        .att-table td { padding: 13px 16px; font-size: 13px; color: #111827; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+        .att-table td {
+            padding: 13px 16px; font-size: 13px; color: #111827;
+            border-bottom: 1px solid #f3f4f6; vertical-align: middle;
+        }
         .att-table tr:last-child td { border-bottom: none; }
         .att-table tbody tr:hover { background: #fafafa; }
 
+        /* ── MONTHLY TABLE ── */
         .monthly-table { width: 100%; border-collapse: collapse; }
         .monthly-table thead tr { background: #f9fafb; }
         .monthly-table th {
             padding: 11px 14px; font-size: 11.5px; font-weight: 600;
-            color: var(--muted); text-align: left; white-space: nowrap;
-            border-bottom: 1px solid var(--border); letter-spacing: .4px; text-transform: uppercase;
+            color: var(--muted); text-align: left; border-bottom: 1px solid var(--border);
+            white-space: nowrap; letter-spacing: .4px; text-transform: uppercase;
         }
-        .monthly-table td { padding: 13px 14px; font-size: 13px; color: #111827; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+        .monthly-table td {
+            padding: 13px 14px; font-size: 13px; color: #111827;
+            border-bottom: 1px solid #f3f4f6; vertical-align: middle;
+        }
         .monthly-table tr:last-child td { border-bottom: none; }
         .monthly-table tbody tr:hover { background: #fafafa; }
 
@@ -226,9 +224,9 @@
             min-width: 36px; height: 28px; border-radius: 7px;
             font-size: 13px; font-weight: 700; padding: 0 8px;
         }
-        .ms-present { background: var(--green-bg); color: #16a34a; }
+        .ms-present { background: var(--green-bg);  color: #16a34a; }
         .ms-late    { background: var(--orange-bg); color: #ea580c; }
-        .ms-absent  { background: var(--red-bg); color: #dc2626; }
+        .ms-absent  { background: var(--red-bg);    color: #dc2626; }
         .ms-leave   { background: var(--yellow-bg); color: #a16207; }
 
         .hours-pill {
@@ -236,7 +234,7 @@
             color: #374151; background: #f3f4f6; border-radius: 6px; padding: 3px 9px;
         }
         .hours-pill.ot { background: var(--blue-light); color: var(--blue-dark); }
-        .hours-pill.ut { background: var(--purple-bg); color: #6d28d9; }
+        .hours-pill.ut { background: var(--purple-bg);  color: #6d28d9; }
 
         .view-monthly-btn {
             display: inline-flex; align-items: center; gap: 5px;
@@ -247,7 +245,9 @@
             text-decoration: none;
         }
         .view-monthly-btn:hover { background: #dbeafe; border-color: #93c5fd; }
+        .view-monthly-btn svg { width: 12px; height: 12px; }
 
+        /* ── EMPLOYEE CELL ── */
         .emp-avatar {
             width: 33px; height: 33px; border-radius: 50%;
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
@@ -255,8 +255,9 @@
             display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .emp-name { font-weight: 600; font-size: 13px; color: #111827; line-height: 1.3; }
-        .emp-dept { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+        .emp-dept { font-size: 11.5px; color: var(--muted); }
 
+        /* ── SHIFT BADGE ── */
         .shift-badge {
             display: inline-flex; flex-direction: column; align-items: center;
             background: #eff6ff; color: #1d4ed8; border-radius: 6px;
@@ -264,19 +265,21 @@
         }
         .shift-badge .shift-sub { font-size: 10px; font-weight: 500; opacity: .7; }
 
+        /* ── STATUS BADGE ── */
         .status-badge {
             display: inline-block; padding: 4px 12px;
             border-radius: 20px; font-size: 12px; font-weight: 600;
         }
-        .badge-present  { background: var(--green-bg); color: #16a34a; }
-        .badge-late     { background: var(--orange-bg); color: #ea580c; }
-        .badge-absent   { background: var(--red-bg); color: #dc2626; }
+        .badge-present  { background: #dcfce7; color: #16a34a; }
+        .badge-late     { background: #ffedd5; color: #ea580c; }
+        .badge-absent   { background: #fee2e2; color: #dc2626; }
         .badge-overtime { background: var(--blue-light); color: #1d4ed8; }
         .badge-undertime { background: var(--purple-bg); color: #6d28d9; }
         .badge-on_leave  { background: var(--yellow-bg); color: #a16207; }
         .badge-rest    { background: #f3f4f6; color: #6b7280; }
         .badge-holiday { background: #ede9fe; color: #7c3aed; }
 
+        /* ── PAGINATION ── */
         .att-pagination {
             display: flex; align-items: center; justify-content: flex-end;
             gap: 5px; padding: 14px 20px; border-top: 1px solid var(--border);
@@ -291,10 +294,10 @@
         .page-btn:hover  { background: #eff6ff; color: var(--blue); }
         .page-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
 
+        /* ── DETAIL VIEW ── */
         .breadcrumb {
             display: flex; align-items: center; gap: 6px;
             font-size: 13px; color: var(--muted); margin-bottom: 20px;
-            flex-wrap: wrap;
         }
         .breadcrumb a {
             color: var(--muted); text-decoration: none;
@@ -311,7 +314,7 @@
         .profile-card {
             background: #fff; border: 1px solid var(--border); border-radius: 14px;
             padding: 20px 24px; display: flex; align-items: center; gap: 18px;
-            margin-bottom: 20px; flex-wrap: wrap;
+            margin-bottom: 20px; box-shadow: 0 1px 6px rgba(0,0,0,.04);
         }
         .profile-avatar {
             width: 62px; height: 62px; border-radius: 50%;
@@ -319,11 +322,11 @@
             color: #fff; font-weight: 800; font-size: 20px;
             display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
-        .profile-name  { font-size: 18px; font-weight: 800; color: #111827; line-height: 1.2; }
-        .profile-meta  { font-size: 13px; color: var(--muted); margin-top: 3px; font-weight: 500; }
+        .profile-name { font-size: 18px; font-weight: 800; color: #111827; line-height: 1.2; }
+        .profile-meta { font-size: 13px; color: var(--muted); margin-top: 3px; font-weight: 500; }
 
         .period-btns { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-        .period-btn  {
+        .period-btn {
             padding: 7px 16px; font-size: 13px; font-family: inherit; font-weight: 500;
             border: none; background: #fff; color: var(--muted); cursor: pointer;
             transition: background .15s, color .15s;
@@ -334,92 +337,157 @@
             display: inline-flex; align-items: center; gap: 6px;
             padding: 7px 16px; border-radius: 8px; font-size: 13px;
             font-weight: 600; font-family: inherit; cursor: pointer;
-            border: none; background: var(--blue); color: #fff; text-decoration: none;
+            border: none; background: var(--blue); color: #fff;
+            text-decoration: none; transition: background .15s;
         }
         .export-btn:hover { background: var(--blue-dark); }
         .export-btn svg { width: 14px; height: 14px; }
 
-        .detail-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        .detail-table { width: 100%; border-collapse: collapse; }
         .detail-table thead tr { background: #f9fafb; }
         .detail-table th {
             padding: 10px 16px; font-size: 11px; font-weight: 600;
-            color: var(--muted); text-align: left; white-space: nowrap;
-            border-bottom: 1px solid var(--border); letter-spacing: .5px; text-transform: uppercase;
+            color: var(--muted); text-align: left; border-bottom: 1px solid var(--border);
+            white-space: nowrap; letter-spacing: .5px; text-transform: uppercase;
         }
         .detail-table td {
             padding: 11px 16px; font-size: 13px; color: #374151;
             border-bottom: 1px solid #f3f4f6; vertical-align: middle;
         }
+        .detail-table tr:last-child td { border-bottom: none; }
+        .detail-table tbody tr:hover { background: #fafafa; }
         .detail-table .rest-row { background: #fafafa; }
 
         .hp-zero { display:inline-block; font-size:12px; font-weight:600; color:#9ca3af; background:#f9fafb; border-radius:6px; padding:3px 9px; }
         .hp-ot   { display:inline-block; font-size:12px; font-weight:600; color:#1d4ed8; background:#dbeafe; border-radius:6px; padding:3px 9px; }
         .hp-ut   { display:inline-block; font-size:12px; font-weight:600; color:#6d28d9; background:#ede9fe; border-radius:6px; padding:3px 9px; }
-        .hp-norm { display:inline-block; font-size:12px; font-weight:600; color:#374151; background:#f3f4f6; border-radius:6px; padding:3px 9px; }
-
-        .badge-rest    { background: #f3f4f6; color: #6b7280; }
-        .badge-leave   { background: #fef9c3; color: #a16207; }
-        .badge-holiday { background: #ede9fe; color: #7c3aed; }
 
         .totals-row {
             display: grid; grid-template-columns: repeat(4, 1fr);
             border-top: 2px solid var(--border);
         }
-        .total-cell {
-            padding: 16px 20px; border-right: 1px solid var(--border);
-        }
+        .total-cell { padding: 16px 20px; border-right: 1px solid var(--border); }
         .total-cell:last-child { border-right: none; }
         .total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 4px; }
         .total-value { font-size: 18px; font-weight: 800; color: #111827; }
 
-        /* MOBILE RESPONSIVE */
-        @media (max-width: 768px) {
+        .main-content-padding { padding: 24px 32px; }
+
+        /* ========== MOBILE RESPONSIVENESS ========== */
+        @@media (max-width: 1024px) {
+            .desktop-sidebar { display: none !important; }
+
+            /* ── Stat Cards: 2 columns on tablet/mobile ── */
             .stat-cards-grid {
                 grid-template-columns: repeat(2, 1fr) !important;
                 gap: 12px !important;
                 margin-bottom: 18px !important;
             }
             .stat-card { padding: 14px 16px !important; }
+            .stat-card .sc-icon { display: none !important; }
+            .stat-card .sc-label { font-size: 10px !important; letter-spacing: .3px !important; }
+            .stat-card .sc-value { font-size: 24px !important; }
+            .stat-card .sc-sub { font-size: 11px !important; }
+        }
+
+        @@media (max-width: 768px) {
+            /* ── Stat Cards already 2-col from above ── */
+            .stat-card { padding: 14px 16px !important; }
             .stat-card .sc-value { font-size: 24px !important; }
             .stat-card .sc-label { font-size: 10px !important; letter-spacing: .3px !important; }
             .stat-card .sc-icon { display: none !important; }
-            
-            .table-toolbar { flex-direction: column; align-items: stretch; padding: 14px 16px !important; }
-            .toolbar-right { flex-direction: column; align-items: stretch; }
-            .search-box, .date-picker, .dept-select, .toggle-btns { width: 100%; }
-            .toggle-btns { display: flex; width: 100%; }
-            .toggle-btn { flex: 1; text-align: center; }
-            
-            .table-card { overflow-x: auto; }
-            .att-table, .monthly-table { min-width: 650px; }
-            
-            .breadcrumb { gap: 4px; }
-            .breadcrumb a { padding: 4px 8px; font-size: 11px; }
-            
+
+            /* ── Table toolbar: title row + controls row ── */
+            .table-toolbar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                padding: 14px 14px 12px !important;
+                gap: 10px !important;
+            }
+            .table-toolbar h2 { margin-bottom: 0; }
+
+            /* ── toolbar-right: wrap into a 2-row grid ── */
+            .toolbar-right {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 8px !important;
+                align-items: stretch !important;
+            }
+
+            /* Search box spans full width (row 1) */
+            .search-box {
+                grid-column: 1 / -1 !important;
+                width: 100% !important;
+            }
+            .search-box input { width: 100% !important; min-width: 0 !important; }
+
+            /* Date picker - left cell (row 2) */
+            .date-picker {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+            .date-picker input { width: 100% !important; min-width: 0 !important; }
+
+            /* Dept select - right cell (row 2) */
+            .dept-select {
+                width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Toggle btns span full width (row 3) */
+            .toggle-btns {
+                grid-column: 1 / -1 !important;
+                display: flex !important;
+                width: 100% !important;
+            }
+            .toggle-btn { flex: 1 !important; text-align: center !important; }
+
+            /* detail view toolbar-right (period btns + date + export) */
+            .period-btns {
+                grid-column: 1 / -1 !important;
+                display: flex !important;
+                width: 100% !important;
+            }
+            .period-btn { flex: 1 !important; text-align: center !important; }
+
+            .export-btn {
+                grid-column: 1 / -1 !important;
+                justify-content: center !important;
+                width: 100% !important;
+            }
+
+            /* ── Tables: horizontal scroll ── */
+            .att-table, .monthly-table, .detail-table { min-width: 650px; }
+            .overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+            /* ── Header padding ── */
+            header .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+
+            /* ── Content area padding ── */
+            .main-content-padding { padding: 14px !important; }
+
+            /* ── Profile card ── */
             .profile-card { flex-direction: column; text-align: center; }
             .profile-avatar { margin: 0 auto; }
-            
-            .period-btns { width: 100%; display: flex; }
-            .period-btn { flex: 1; text-align: center; }
-            
+
+            /* ── Totals row: 2 columns ── */
             .totals-row { grid-template-columns: repeat(2, 1fr) !important; }
             .total-cell { border-right: none !important; border-bottom: 1px solid var(--border); }
             .total-cell:nth-child(odd) { border-right: 1px solid var(--border) !important; }
-            .total-cell:last-child, .total-cell:nth-last-child(2) { border-bottom: none; }
-            
-            .main-content-padding { padding: 14px !important; }
-            
-            header .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
-        }
-        
-        @media (max-width: 480px) {
-            .stat-cards-grid { gap: 8px !important; }
-            .stat-card .sc-value { font-size: 20px !important; }
+            .total-cell:last-child { border-bottom: none; }
+            .total-cell:nth-last-child(2) { border-bottom: none; }
+
+            /* ── Pagination ── */
             .att-pagination { justify-content: center; flex-wrap: wrap; }
         }
-        
-        .main-content-padding { padding: 24px 32px; }
-        @media (max-width: 768px) { .main-content-padding { padding: 14px !important; } }
+
+        @@media (max-width: 480px) {
+            .stat-cards-grid { gap: 8px !important; }
+            .stat-card .sc-value { font-size: 20px !important; }
+            .breadcrumb .sep,
+            .breadcrumb .crumb-current:not(:last-child) { display: none; }
+        }
     </style>
 </head>
 <body class="bg-gray-50" x-data="{ mobileMenuOpen: false, collapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
@@ -460,7 +528,7 @@
      style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1); min-height:100vh;">
 
     <!-- Blue Header with Hamburger -->
-    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-hidden">
+    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
         <div class="flex items-center justify-between px-4 sm:px-8 py-4">
             <div class="flex items-center gap-3">
                 <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
@@ -496,7 +564,7 @@
             <span class="crumb-current">{{ $empName ?: 'Employee' }}</span>
         </div>
 
-        {{-- Profile Card (optimized for mobile) --}}
+        {{-- Profile Card --}}
         <div class="profile-card">
             <div class="profile-avatar">{{ $empInitials }}</div>
             <div>
@@ -539,7 +607,7 @@
                 </div>
             </div>
 
-            <div style="overflow-x:auto;">
+            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
                 <table class="detail-table">
                     <thead>
                         <tr>
@@ -603,7 +671,6 @@
         @else
         {{-- ══════════ STAT CARDS + LIST VIEW ══════════ --}}
 
-        <!-- Stat Cards Grid (Mobile Responsive) -->
         <div class="stat-cards-grid">
             <div class="stat-card present">
                 <div class="sc-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
@@ -637,7 +704,6 @@
             </div>
         </div>
 
-        <!-- Table Card -->
         <div class="table-card">
             <div class="table-toolbar">
                 <h2>Attendance Records</h2>
@@ -673,7 +739,7 @@
                 </div>
             </div>
 
-            <div style="overflow-x:auto;">
+            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
                 @if($currentView === 'daily')
                 <table class="att-table">
                     <thead>
@@ -697,7 +763,7 @@
                                     <div class="emp-avatar">{{ strtoupper(substr($rec->employee->fname ?? 'J', 0, 1) . substr($rec->employee->lname ?? 'D', 0, 1)) }}</div>
                                     <div class="emp-name">{{ trim(($rec->employee->fname ?? '') . ' ' . ($rec->employee->lname ?? '')) ?: '—' }}</div>
                                 </div>
-                            </table>
+                            </td>
                             <td class="emp-dept">{{ $rec->employee->department->name ?? '—' }}</td>
                             <td>
                                 <div class="shift-badge">
@@ -842,12 +908,11 @@
             <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;white-space:nowrap;">${r.overtime}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;"><span style="background:${sBg(r.status)};color:${sClr(r.status)};padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;">${r.status}</span></td>
         </tr>`).join('');
-        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_empName} – ${_period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report — ${_empName}</div><div class="badge">${_period}</div></div></table><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></body></html>`;
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_empName} – ${_period}</title><style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:32px;color:#1e293b;}.hdr{border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px;}.co{font-size:20px;font-weight:700;color:#2563eb;}.sub{font-size:12px;color:#64748b;margin-top:2px;}.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:3px 12px;font-size:11px;font-weight:600;margin-top:6px;}table{width:100%;border-collapse:collapse;}thead tr{background:#1d4ed8;}thead th{padding:9px 10px;text-align:left;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}.footer{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}@media print{body{padding:16px;}@page{margin:.8cm;size:landscape;}}</style></head><body><div class="hdr"><div class="co">MediSource</div><div class="sub">Attendance Report — ${_empName}</div><div class="badge">${_period}</div></div><table><thead><tr><th>Date</th><th>Setup</th><th>Shift</th><th>Schedule</th><th>Clock In</th><th>Clock Out</th><th>Overtime</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table><div class="footer">System-generated attendance report — MediSource HRIS · Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></body></html>`;
         const w = window.open('', '_blank', 'width=1050,height=820,scrollbars=yes');
         if (!w) return;
         w.document.write(html);
         w.document.close();
-        w.document.querySelectorAll('[x-show],[x-cloak]').forEach(el => el.remove());
         w.focus();
         setTimeout(() => w.print(), 400);
     }

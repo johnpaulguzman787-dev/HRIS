@@ -13,33 +13,34 @@
     <style>
         [x-cloak] { display: none !important; }
         * { font-family: 'Inter', sans-serif; }
-        body { background: #f0f2f5; }
-
-        .tabs-wrapper {
-            background: #fff;
-            border-bottom: 2px solid #e5e7eb;
-            padding: 0 32px;
-            margin: 0 16px;
-            border-radius: 0 0 8px 8px;
+        body { background: #eef2f7; }
+        :root {
+            --blue: #3b82f6;
+            --blue-dark: #1d4ed8;
+            --blue-light: #eff6ff;
+            --muted: #6b7280;
+            --border: #e5e7eb;
         }
 
-        .tab-bar { display:flex;}
+        .tabs-wrapper {display: flex; border-bottom: 2px solid var(--border); margin-bottom:20px ;}
         .tab-btn {
-            padding: 16px 0;
-            margin-right: 32px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            background: none;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 500 !important;
+            color: var(--muted);
             border: none;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -2px;
+            background: none;
             cursor: pointer;
-            color: #9ca3af;
-            transition: color 0.15s, border-color 0.15s;
+            font-family: inherit;
+            border-bottom: 1px solid transparent;
+            margin-bottom: -2px;
             white-space: nowrap;
+            text-decoration: none;
+            display: inline-block;
+            transition: color .15s, border-color .15s;
         }
-        .tab-btn:hover:not(.active) { color:#374151; }
-        .tab-btn.active { color:#2563eb; font-weight:700; border-bottom:3px solid #2563eb; }
+        .tab-btn:hover { color: #374151; }
+        .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 700 !important; }
 
         /* ── Animations ── */
         @keyframes fadeUp {
@@ -221,9 +222,6 @@
                 flex-direction: column;
                 gap: 12px;
             }
-            .tabs-wrapper {
-                padding: 0 16px;
-            }
             .summary-card {
                 padding: 16px 20px;
             }
@@ -238,7 +236,6 @@
                 margin-top: 24px;
             }
             .tab-btn {
-                padding: 12px 20px;
                 font-size: 0.8rem;
             }
             .ctrl {
@@ -350,18 +347,18 @@
             </div>
         </header>
 
+        <div class="p-3 lg:p-6">
+
         {{-- Tab Bar --}}
         <div class="tabs-wrapper anim-2">
-            <div class="tab-bar">
                 <button class="tab-btn" :class="activeTab==='all'&&'active'" @click="activeTab='all'">All Payslips</button>
                 <button class="tab-btn" :class="activeTab==='my'&&'active'"  @click="activeTab='my'">My Payslip</button>
-            </div>
         </div>
 
         {{-- ══════════════════════════
              ALL PAYSLIPS
         ══════════════════════════ --}}
-        <div x-show="activeTab==='all'" x-cloak class="tab-content p-3 lg:p-6">
+        <div x-show="activeTab==='all'" x-cloak class="tab-content">
 
             {{-- Summary Cards --}}
             <div class="pb-4">
@@ -637,6 +634,7 @@
             </div>
 
         </div>{{-- /my --}}
+        </div>
 
     </div>{{-- /main-content --}}
 

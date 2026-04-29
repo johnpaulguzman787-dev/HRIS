@@ -10,13 +10,34 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
-        body { background: #f0f2f5; }
-        /* ── Tabs ── */
-        .tabs-wrapper { background: #fff; border-bottom: 2px solid #e5e7eb; padding: 0 32px; margin: 0 16px; border-radius: 0 0 8px 8px }
-        .tab-bar {display: flex; gap: 0; border-bottom: 1px solid #e5e7eb;}
-        .tab-btn {position: relative; padding: 12px 24px; font-size: 0.9rem; font-weight: 500; color: #9ca3af; border: none; background: none; cursor: pointer; white-space: nowrap; transition: color 0.2s ease; border-bottom: 2px solid transparent; margin-bottom: -1px;}
-        .tab-btn:hover:not(.active) { color:#374151; }
-        .tab-btn.active { color:#2563eb; font-weight:700; border-bottom:3px solid #2563eb; }
+        body { background: #eef2f7; }
+        :root {
+            --blue: #3b82f6;
+            --blue-dark: #1d4ed8;
+            --blue-light: #eff6ff;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        .tabs-wrapper {display: flex; border-bottom: 2px solid var(--border); margin-bottom:20px ;}
+        .tab-btn {
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 500 !important;
+            color: var(--muted);
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-family: inherit;
+            border-bottom: 1px solid transparent;
+            margin-bottom: -2px;
+            white-space: nowrap;
+            text-decoration: none;
+            display: inline-block;
+            transition: color .15s, border-color .15s;
+        }
+        .tab-btn:hover { color: #374151; }
+        .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 700 !important; }
         /* ── Animations ── */
         @keyframes tabFadeIn { from { opacity: 0; transform: translateY(8px); } to   { opacity: 1; transform: translateY(0); }}
         .tab-content { animation: tabFadeIn 0.28s cubic-bezier(0.4,0,0.2,1); }
@@ -102,11 +123,7 @@
     .px-8 { padding-left: 16px; padding-right: 16px; }
 
     .tab-btn {
-        padding: 12px 16px;
         font-size: 0.8rem;
-    }
-    .tabs-wrapper {
-        padding: 0 16px;
     }
     .cards-wrap {
         flex-direction: column;
@@ -284,18 +301,17 @@
              PAGE: PAYROLL LIST (tabs view)
         ══════════════════════════════════════ --}}
         <div x-show="page === 'list'" x-cloak>
+            
+            <div class="p-3 lg:p-6">
 
             {{-- Tab Bar --}}
-            <div class="tabs-wrapper anim-2">
-                <div class="tab-bar">
+            <div class="tabs-wrapper">
                     <button class="tab-btn" :class="activeTab==='payroll-period' && 'active'"    @click="activeTab='payroll-period'">Payroll Period</button>
                     <button class="tab-btn" :class="activeTab==='salary-structure' && 'active'"  @click="activeTab='salary-structure'">Salary Structure</button>
                     <button class="tab-btn" :class="activeTab==='benefits' && 'active'"          @click="activeTab='benefits'">Benefits</button>
                     <button class="tab-btn" :class="activeTab==='contributions' && 'active'"     @click="activeTab='contributions'">Contributions</button>
-                </div>
             </div>
 
-            <div class="p-3 lg:p-6">
 
             {{-- ── TAB 1: PAYROLL PERIOD ── --}}
             <div x-show="activeTab==='payroll-period'" x-cloak class=" tab-content">

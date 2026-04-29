@@ -12,33 +12,34 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <style>
         * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
-        body { background: #f3f4f6; margin: 0; }
+        body { background: #eef2f7; }
+        :root {
+            --blue: #3b82f6;
+            --blue-dark: #1d4ed8;
+            --blue-light: #eff6ff;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+        }
 
-        /* ── Tab bar ── */
-        .tabs-wrapper {
-            background: #fff;
-            border-bottom: 2px solid #e5e7eb;
-            padding: 0 32px;
-            margin: 0 16px;
-            border-radius: 0 0 8px 8px;
-        }
-        .tabs-row { display: flex; }
+        .tabs-wrapper {display: flex; border-bottom: 2px solid var(--border); margin-bottom:20px ;}
         .tab-btn {
-            padding: 16px 0;
-            margin-right: 32px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            background: none;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 500 !important;
+            color: var(--muted);
             border: none;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -2px;
+            background: none;
             cursor: pointer;
-            color: #9ca3af;
-            transition: color 0.15s, border-color 0.15s;
+            font-family: inherit;
+            border-bottom: 1px solid transparent;
+            margin-bottom: -2px;
             white-space: nowrap;
+            text-decoration: none;
+            display: inline-block;
+            transition: color .15s, border-color .15s;
         }
-        .tab-btn:hover:not(.active) { color:#374151; }
-        .tab-btn.active { color:#2563eb; font-weight:700; border-bottom:3px solid #2563eb; }
+        .tab-btn:hover { color: #374151; }
+        .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 700 !important; }
 
         /* ── Card ── */
         .card {
@@ -208,11 +209,7 @@
             .year-select {
                 width: 100%;
             }
-            .tabs-wrapper {
-                padding: 0 16px;
-            }
             .tab-btn {
-                margin-right: 24px;
                 font-size: 0.8rem;
             }
             .btn-back {
@@ -333,15 +330,14 @@
         ══════════════════════════════════════ --}}
         @if(!$isView)
 
+        <div class="p-3 lg:p-6">
             <!-- Tab Bar -->
             <div class="tabs-wrapper">
-                <div class="tabs-row">
                     <button id="tabAll"  class="tab-btn active" onclick="switchTab('all')">All Contributions</button>
                     <button id="tabMine" class="tab-btn"        onclick="switchTab('mine')">My Contributions</button>
-                </div>
             </div>
 
-            <div class="p-3 lg:p-6">
+
 
                 {{-- ALL CONTRIBUTIONS --}}
                 <div id="panelAll">

@@ -173,7 +173,19 @@ class EmployeeAttendanceController extends Controller
 
         $log = AttendanceLog::where('employee_id', $employee->id)
             ->whereDate('attendance_date', $today)
-            ->firstOrFail();
+            ->first();
+
+        // Night-shift fallback: log may belong to yesterday if shift crosses midnight
+        if (!$log) {
+            $log = AttendanceLog::where('employee_id', $employee->id)
+                ->whereDate('attendance_date', Carbon::yesterday())
+                ->whereNull('clock_out')
+                ->first();
+        }
+
+        if (!$log) {
+            return response()->json(['message' => 'No clock-in record found for today.'], 422);
+        }
 
         if (!$log->clock_in) {
             return response()->json(['message' => 'No clock-in record found for today.'], 422);
@@ -225,7 +237,7 @@ class EmployeeAttendanceController extends Controller
         if ($selectedShift) {
             if ($selectedShift->is_flexi) {
                 $requiredMinutes = (int) (($selectedShift->required_hours ?? 8) * 60);
-                $workedMinutes   = (int) ($totalHours * 60);
+                $workedMinutes   = $totalWorkMinutes;
                 if ($workedMinutes < $requiredMinutes) {
                     $undertimeMinutes = $requiredMinutes - $workedMinutes;
                     if ($clockOutStatus !== 'late') $clockOutStatus = 'undertime';
@@ -243,7 +255,7 @@ class EmployeeAttendanceController extends Controller
                 }
 
                 if ($now->gt($shiftEnd)) {
-                    $approvedOt = OvertimeRequest::where('employee_id', $employee->id)
+                    $approvedOts = OvertimeRequest::where('employee_id', $employee->id)
                         ->where('status', 'approved')
                         ->where(function ($q) use ($today) {
                             $yesterday = Carbon::yesterday()->toDateString();
@@ -253,15 +265,19 @@ class EmployeeAttendanceController extends Controller
                                      ->whereColumn('ot_end_time', '<', 'ot_start_time');
                               });
                         })
-                        ->first();
+                        ->get();
 
-                    if ($approvedOt) {
-                        $otDateBase  = Carbon::parse($approvedOt->ot_date)->toDateString();
-                        $approvedEnd = Carbon::createFromTimeString($otDateBase . ' ' . $approvedOt->ot_end_time);
-                        if ($approvedEnd->lt($shiftEnd)) {
-                            $approvedEnd->addDay();
+                    if ($approvedOts->isNotEmpty()) {
+                        $maxApprovedEnd = null;
+                        foreach ($approvedOts as $ot) {
+                            $otDateBase = Carbon::parse($ot->ot_date)->toDateString();
+                            $otEnd      = Carbon::createFromTimeString($otDateBase . ' ' . $ot->ot_end_time);
+                            if ($otEnd->lt($shiftEnd)) $otEnd->addDay();
+                            if (!$maxApprovedEnd || $otEnd->gt($maxApprovedEnd)) {
+                                $maxApprovedEnd = $otEnd;
+                            }
                         }
-                        $overtimeMinutes = (int) $shiftEnd->diffInMinutes($approvedEnd);
+                        $overtimeMinutes = (int) $shiftEnd->diffInMinutes($maxApprovedEnd);
                         if ($clockOutStatus !== 'late') $clockOutStatus = 'overtime';
                     }
                 } elseif ($now->lt($shiftEnd)) {
@@ -481,8 +497,20 @@ class EmployeeAttendanceController extends Controller
         $end       = Carbon::parse($request->end_date);
         $totalDays = 0;
         $cursor    = $start->copy();
+        $holidayDates = \App\Models\Holiday::whereBetween('date', [$start->toDateString(), $end->toDateString()])
+            ->pluck('date')
+            ->map(fn($d) => Carbon::parse($d)->toDateString())
+            ->toArray();
+        $activeShift = EmployeeShift::where('employee_id', $employee->id)
+            ->where('is_active', true)
+            ->whereDate('effective_date', '<=', $start->toDateString())
+            ->where(fn($q) => $q->whereNull('end_date')->orWhereDate('end_date', '>=', $start->toDateString()))
+            ->latest('effective_date')
+            ->first();
+        $daysOff = $activeShift?->days_off;
         while ($cursor->lte($end)) {
-            if (!$cursor->isWeekend()) $totalDays++;
+            $isOff = $daysOff ? in_array($cursor->format('D'), $daysOff) : $cursor->isWeekend();
+            if (!$isOff && !in_array($cursor->toDateString(), $holidayDates)) $totalDays++;
             $cursor->addDay();
         }
 
@@ -1060,7 +1088,7 @@ class EmployeeAttendanceController extends Controller
                 fputcsv($h, [
                     Carbon::parse($log->attendance_date)->format('Y-m-d'),
                     $log->work_setup ? strtoupper($log->work_setup) : '',
-                    $shift->name ?? '',
+                    $shift?->name ?? '',
                     $schedule,
                     $log->clock_in  ? Carbon::parse($log->clock_in)->format('h:i A')  : '',
                     $log->clock_out ? Carbon::parse($log->clock_out)->format('h:i A') : '',

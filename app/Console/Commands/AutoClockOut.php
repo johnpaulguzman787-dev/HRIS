@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Carbon\Carbon;
 use App\Models\AttendanceLog;
-use App\Models\Shift;
 
 class AutoClockOut extends Command
 {
@@ -14,11 +13,9 @@ class AutoClockOut extends Command
 
     public function handle()
     {
-        $yesterday = Carbon::yesterday();
-
-        // Find all logs from yesterday with clock_in but no clock_out
+        // Find all logs before today with clock_in but no clock_out
         $incompleteLogs = AttendanceLog::with('shift')
-            ->whereDate('attendance_date', $yesterday)
+            ->whereDate('attendance_date', '<', Carbon::today())
             ->whereNotNull('clock_in')
             ->whereNull('clock_out')
             ->get();
@@ -29,30 +26,31 @@ class AutoClockOut extends Command
         }
 
         foreach ($incompleteLogs as $log) {
-            $shift = $log->shift;
+            $shift   = $log->shift;
+            $dateStr = Carbon::parse($log->attendance_date)->toDateString();
 
             if (!$shift) {
                 $this->warn("Log ID {$log->id} has no shift — skipping.");
                 continue;
             }
 
-            // Auto clock-out time = shift end time on that day
-            $autoClockOut = Carbon::createFromTimeString(
-                $yesterday->toDateString() . ' ' . $shift->end_time
-            );
+            // Auto clock-out time = shift end time on the log's actual date
+            $autoClockOut = Carbon::createFromTimeString($dateStr . ' ' . $shift->end_time);
 
             // Night shift: if end_time is earlier than start_time, it crosses midnight
-            if ($autoClockOut->lt(Carbon::createFromTimeString(
-                $yesterday->toDateString() . ' ' . $shift->start_time
-            ))) {
+            if ($autoClockOut->lt(Carbon::createFromTimeString($dateStr . ' ' . $shift->start_time))) {
                 $autoClockOut->addDay();
             }
 
             // If they were on break and never resumed, close the break too
             $breakMinutes = $log->break_minutes;
             if ($log->break_start && !$log->break_end) {
-                $breakEnd     = $autoClockOut;
-                $breakMinutes = (int) Carbon::parse($log->break_start)->diffInMinutes($breakEnd);
+                $breakEnd         = $autoClockOut;
+                $maxBreakMinutes  = max(0, (int) Carbon::parse($log->clock_in)->diffInMinutes($autoClockOut));
+                $breakMinutes     = min(
+                    (int) Carbon::parse($log->break_start)->diffInMinutes($breakEnd),
+                    $maxBreakMinutes
+                );
                 $log->break_end     = $breakEnd;
                 $log->break_minutes = $breakMinutes;
             }
@@ -61,8 +59,6 @@ class AutoClockOut extends Command
             $clockIn    = Carbon::parse($log->clock_in);
             $totalHours = round(($clockIn->diffInMinutes($autoClockOut) - $breakMinutes) / 60, 2);
 
-            // Determine overtime or undertime
-            $shiftEnd         = Carbon::createFromTimeString($yesterday->toDateString() . ' ' . $shift->end_time);
             $overtimeMinutes  = 0;
             $undertimeMinutes = 0;
 

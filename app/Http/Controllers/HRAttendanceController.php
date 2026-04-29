@@ -1133,11 +1133,25 @@ class HRAttendanceController extends Controller
 
         $cursor = Carbon::parse($leave->start_date);
         $end    = Carbon::parse($leave->end_date);
+        $holidayDates = \App\Models\Holiday::whereBetween('date', [$cursor->toDateString(), $end->toDateString()])
+            ->pluck('date')
+            ->map(fn($d) => \Carbon\Carbon::parse($d)->toDateString())
+            ->toArray();
+        $leaveEmployeeShift = EmployeeShift::where('employee_id', $leave->employee_id)
+            ->where('is_active', true)
+            ->whereDate('effective_date', '<=', $cursor->toDateString())
+            ->where(fn($q) => $q->whereNull('end_date')->orWhereDate('end_date', '>=', $cursor->toDateString()))
+            ->latest('effective_date')
+            ->first();
+        $leaveDaysOff = $leaveEmployeeShift?->days_off;
         while ($cursor->lte($end)) {
-            AttendanceLog::updateOrCreate(
-                ['employee_id' => $leave->employee_id, 'attendance_date' => $cursor->toDateString()],
-                ['status' => 'on_leave', 'work_setup' => null]
-            );
+            $isOff = $leaveDaysOff ? in_array($cursor->format('D'), $leaveDaysOff) : $cursor->isWeekend();
+            if (!$isOff && !in_array($cursor->toDateString(), $holidayDates)) {
+                AttendanceLog::updateOrCreate(
+                    ['employee_id' => $leave->employee_id, 'attendance_date' => $cursor->toDateString()],
+                    ['status' => 'on_leave', 'work_setup' => null]
+                );
+            }
             $cursor->addDay();
         }
 
@@ -2154,6 +2168,8 @@ class HRAttendanceController extends Controller
             } else {
                 $status = $isLate ? 'late' : 'present';
             }
+        } else {
+            if ($status === 'absent') $status = 'present';
         }
 
         $log->update([

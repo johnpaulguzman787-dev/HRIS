@@ -479,8 +479,9 @@ class AdminPayrollController extends Controller
     public function updateContrib(Request $request)
     {
         $data = $request->validate([
-            'keys'   => 'required|array',
-            'values' => 'required|array',
+            'keys'      => 'required|array',
+            'values'    => 'required|array',
+            'values.*'  => 'required|numeric|min:0',
         ]);
 
         foreach ($data['keys'] as $i => $key) {
@@ -844,7 +845,7 @@ class AdminPayrollController extends Controller
         $request->validate([
             'rows'                   => 'required|array|min:1',
             'rows.*.salary_from'     => 'required|numeric|min:0',
-            'rows.*.salary_to'       => 'nullable|numeric',
+            'rows.*.salary_to'       => 'nullable|numeric|gt:rows.*.salary_from',
             'rows.*.employee_share'  => 'required|numeric|min:0',
             'rows.*.employer_share'  => 'required|numeric|min:0',
         ]);

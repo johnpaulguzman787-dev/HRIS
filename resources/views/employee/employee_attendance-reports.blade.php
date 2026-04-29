@@ -92,26 +92,59 @@
 </head>
 <body class="bg-gray-100" x-data="attendancePage()" x-init="init()">
 
-{{-- ═══════════ SIDEBAR ═══════════ --}}
-@include('employee.employee_sidebar')
+{{-- ═══════════ DESKTOP SIDEBAR ═══════════ --}}
+<div class="hidden lg:block">
+    @include('employee.employee_sidebar')
+</div>
+
+{{-- ═══════════ MOBILE SLIDE-OUT DRAWER ═══════════ --}}
+<div x-show="mobileMenuOpen"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-50 lg:hidden"
+     style="display:none;">
+    <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen = false"></div>
+    <div x-show="mobileMenuOpen"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="-translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="-translate-x-full"
+         class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
+        @include('employee.employee_sidebar')
+    </div>
+</div>
 
 {{-- ═══════════ MAIN ═══════════ --}}
 <div id="main-content" class="min-h-screen bg-gray-100"
-     :style="sidebarCollapsed ? 'margin-left:5rem' : 'margin-left:16rem'"
+     :style="window.innerWidth >= 1024 ? (sidebarCollapsed ? 'margin-left:5rem' : 'margin-left:16rem') : 'margin-left:0'"
+     x-on:resize.window="$el.style.marginLeft = window.innerWidth >= 1024 ? (sidebarCollapsed ? '5rem' : '16rem') : '0'"
      style="transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1);">
 
-   {{-- Blue Header --}}
-<header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
-    <div class="flex items-center justify-between px-8 py-4">
-        <h1 class="text-white font-bold text-xl">My Attendance</h1>
-        <x-employee-notif />
-    </div>
-</header>
+    {{-- Blue Header --}}
+    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
+        <div class="flex items-center justify-between px-4 sm:px-8 py-4">
+            <div class="flex items-center gap-3">
+                <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <h1 class="text-white font-bold text-lg sm:text-xl">My Attendance</h1>
+            </div>
+            <x-employee-notif />
+        </div>
+    </header>
 
-    <div class="p-6 space-y-5">
+    <div class="p-4 sm:p-6 space-y-5">
 
         {{-- STAT CARDS --}}
-        <div class="grid grid-cols-6 gap-3 mb-6">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
             <div class="stat-card p-4 flex flex-col justify-between" style="background:#c8f0d8; animation-delay:0.08s;">
                 <p class="text-xs font-bold uppercase tracking-wider" style="color:#14532d;">Total Days Present</p>
                 <div><p class="font-black leading-none mt-2" style="font-size:2rem; color:#2563eb;">{{ $stats['present'] }}</p><p class="text-xs font-semibold mt-1 uppercase tracking-wider" style="color:#15803d;">{{ \Carbon\Carbon::create($year, $month)->format('F Y') }}</p></div>
@@ -260,6 +293,7 @@
 function attendancePage() {
     return {
         sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+        mobileMenuOpen: false,
         workSetup: '{{ $todayLog?->work_setup ?? ($employeeShift?->work_setup ?? "wfh") }}',
         assignedShiftId: {{ $employeeShift?->shift_id ?? 'null' }},
         breakAllowed: {{ $employeeShift?->shift?->break_schedule ? 'true' : 'false' }},

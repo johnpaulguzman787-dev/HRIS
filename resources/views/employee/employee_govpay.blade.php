@@ -150,6 +150,38 @@
             color: #fff !important;
             border-color: #2563eb !important;
         }
+        .card-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+                padding: 16px 20px;
+        }
+        .card-header .card-title {
+            margin-bottom: 0;
+            display: block;
+            width: 100%;
+        }
+        .card-header .flex.items-center.gap-3 {
+            width: 100%;
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 12px;
+        }
+        .card-header .flex.items-center.gap-3 > * {
+            flex: 1;
+            min-width: 0;
+        }
+        .card-header .flex.items-center.gap-3 form {
+            flex: 1;
+            display: flex;
+        }
+        .card-header .flex.items-center.gap-3 .year-select {
+            width: 100%;
+            min-width: 0;
+        }
+        .btn-view {
+            justify-content: center;
+        }
     </style>
 </head>
 @php

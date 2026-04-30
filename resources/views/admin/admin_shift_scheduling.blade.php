@@ -288,31 +288,22 @@
         /* ── MODAL ── */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,.4);
-            display: flex; align-items: flex-end; justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             z-index: 999;
-            padding: 0;
+            padding: 16px;
         }
         .modal-box {
             background: #fff;
-            border-radius: 20px 20px 0 0;
+            border-radius: 16px;
             padding: 24px 20px 32px;
             width: 100%;
             max-width: 520px;
             max-height: 90vh;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            box-shadow: 0 -8px 40px rgba(0,0,0,.15);
+            box-shadow: 0 4px 30px rgba(0,0,0,.15);
         }
-        /* Drag indicator */
-        .modal-box::before {
-            content: '';
-            display: block;
-            width: 40px;
-            height: 4px;
-            background: #e5e7eb;
-            border-radius: 2px;
-            margin: 0 auto 20px;
-        }
+        .modal-box::before { display: none; }
         .modal-title { font-size: 17px; font-weight: 800; color: #111827; margin-bottom: 20px; }
         .form-label { font-size: 12px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; display: block; }
         .form-input {

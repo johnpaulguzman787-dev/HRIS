@@ -386,7 +386,7 @@
                         <p x-show="onLeave" class="text-xs text-center font-semibold" style="color:#6366f1;">You are on approved leave today.</p>
                         <p x-show="breakReminder" x-cloak x-text="breakReminder" class="text-xs text-center font-medium mt-1" style="color:#d97706;"></p>
                     </div>
-                    <div class="mt-auto flex gap-2">
+                    <div class="mt-4 lg:mt-auto flex gap-2">
                         <button @click="handleClock()"
                                 :disabled="onLeave || (clockedIn && !onBreak) || !assignedShiftId"
                                 class="clock-btn flex-1 py-3 text-white font-bold text-xs tracking-widest uppercase"

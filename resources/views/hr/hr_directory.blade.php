@@ -1783,7 +1783,8 @@
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mx-4 sm:mx-8">
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                     <div class="relative flex-1 sm:flex-none sm:w-80 group">
-                        <input type="text" x-model="searchQuery" placeholder="Search employees..."
+                        <input type="text" x-model="searchQuery" @input="searchQuery = $event.target.value" placeholder="Search employees..."
+                            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
                             class="w-full pl-10 pr-10 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 group-hover:shadow-md">
                         <svg class="absolute left-3 top-3.5 w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>

@@ -77,9 +77,19 @@
         /* ── STAT CARDS ── */
         .stat-cards-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 16px;
-            margin-bottom: 28px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        @@media screen and (min-width: 1024px) {
+            .stat-cards-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 16px;
+                margin-bottom: 28px;
+            }
+            .stat-card .sc-icon { display: flex !important; }
+            .stat-card .sc-label { font-size: 11px !important; letter-spacing: .7px !important; }
+            .stat-card .sc-value { font-size: 28px !important; }
         }
         .stat-card {
             border-radius: 14px; padding: 18px 20px;
@@ -360,64 +370,94 @@
         .total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 4px; }
         .total-value { font-size: 18px; font-weight: 800; color: #111827; }
 
+        .main-content-padding { padding: 24px 32px; }
+
         /* ========== MOBILE RESPONSIVENESS ========== */
-        @media (max-width: 1024px) {
+        @@media (max-width: 1024px) {
             .desktop-sidebar { display: none !important; }
 
-            /* ── Stat Cards: single column, full-width ── */
+            /* ── Stat Cards: 2 columns on tablet/mobile ── */
             .stat-cards-grid {
-                grid-template-columns: 1fr !important;
-                gap: 10px !important;
-                margin-bottom: 16px !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px !important;
+                margin-bottom: 18px !important;
             }
-            .stat-card {
-                padding: 16px 18px !important;
-                border-radius: 12px !important;
-                display: flex !important;
-                flex-direction: column !important;
-                position: relative !important;
-            }
-            .stat-card .sc-icon {
-                display: none !important;
-            }
-            .stat-card .sc-label {
-                font-size: 11px !important;
-                font-weight: 700 !important;
-                letter-spacing: .6px !important;
-                margin-bottom: 2px !important;
-            }
-            .stat-card .sc-value {
-                font-size: 32px !important;
-                font-weight: 800 !important;
-                line-height: 1.1 !important;
-                margin-bottom: 0 !important;
-            }
-            .stat-card .sc-sub {
-                font-size: 11px !important;
-                font-weight: 500 !important;
-                opacity: .75 !important;
-                text-align: right !important;
-                margin-top: 6px !important;
-            }
+            .stat-card { padding: 14px 16px !important; }
+            .stat-card .sc-icon { display: none !important; }
+            .stat-card .sc-label { font-size: 10px !important; letter-spacing: .3px !important; }
+            .stat-card .sc-value { font-size: 24px !important; }
+            .stat-card .sc-sub { font-size: 11px !important; }
+        }
 
-            /* ── Table toolbar stacks properly ── */
+        @@media (max-width: 768px) {
+            /* ── Stat Cards already 2-col from above ── */
+            .stat-card { padding: 14px 16px !important; }
+            .stat-card .sc-value { font-size: 24px !important; }
+            .stat-card .sc-label { font-size: 10px !important; letter-spacing: .3px !important; }
+            .stat-card .sc-icon { display: none !important; }
+
+            /* ── Table toolbar: title row + controls row ── */
             .table-toolbar {
-                flex-direction: column;
+                flex-direction: column !important;
                 align-items: stretch !important;
                 padding: 14px 14px 12px !important;
+                gap: 10px !important;
             }
+            .table-toolbar h2 { margin-bottom: 0; }
+
+            /* ── toolbar-right: wrap into a 2-row grid ── */
             .toolbar-right {
-                justify-content: flex-start;
-                flex-wrap: wrap;
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
                 gap: 8px !important;
+                align-items: stretch !important;
             }
-            .search-box { flex: 1; min-width: 0; }
-            .search-box input { width: 100% !important; }
-            .date-picker { flex: 1; min-width: 0; }
-            .dept-select { flex: 1; min-width: 0; }
+
+            /* Search box spans full width (row 1) */
+            .search-box {
+                grid-column: 1 / -1 !important;
+                width: 100% !important;
+            }
+            .search-box input { width: 100% !important; min-width: 0 !important; }
+
+            /* Date picker - left cell (row 2) */
+            .date-picker {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+            .date-picker input { width: 100% !important; min-width: 0 !important; }
+
+            /* Dept select - right cell (row 2) */
+            .dept-select {
+                width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Toggle btns span full width (row 3) */
+            .toggle-btns {
+                grid-column: 1 / -1 !important;
+                display: flex !important;
+                width: 100% !important;
+            }
+            .toggle-btn { flex: 1 !important; text-align: center !important; }
+
+            /* detail view toolbar-right (period btns + date + export) */
+            .period-btns {
+                grid-column: 1 / -1 !important;
+                display: flex !important;
+                width: 100% !important;
+            }
+            .period-btn { flex: 1 !important; text-align: center !important; }
+
+            .export-btn {
+                grid-column: 1 / -1 !important;
+                justify-content: center !important;
+                width: 100% !important;
+            }
 
             /* ── Tables: horizontal scroll ── */
-            .att-table, .monthly-table, .detail-table { min-width: 700px; }
+            .att-table, .monthly-table, .detail-table { min-width: 650px; }
             .overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
             /* ── Header padding ── */
@@ -428,6 +468,7 @@
 
             /* ── Profile card ── */
             .profile-card { flex-direction: column; text-align: center; }
+            .profile-avatar { margin: 0 auto; }
 
             /* ── Totals row: 2 columns ── */
             .totals-row { grid-template-columns: repeat(2, 1fr) !important; }
@@ -435,11 +476,14 @@
             .total-cell:nth-child(odd) { border-right: 1px solid var(--border) !important; }
             .total-cell:last-child { border-bottom: none; }
             .total-cell:nth-last-child(2) { border-bottom: none; }
+
+            /* ── Pagination ── */
+            .att-pagination { justify-content: center; flex-wrap: wrap; }
         }
 
-        @media (max-width: 640px) {
+        @@media (max-width: 480px) {
             .stat-cards-grid { gap: 8px !important; }
-            .stat-card .sc-value { font-size: 28px !important; }
+            .stat-card .sc-value { font-size: 20px !important; }
             .breadcrumb .sep,
             .breadcrumb .crumb-current:not(:last-child) { display: none; }
         }
@@ -533,7 +577,7 @@
         </div>
     </header>
 
-    <div class="main-content-padding" style="padding:24px 32px;">
+    <div class="main-content-padding">
 
         @if($viewingDetail)
         {{-- ══════════ EMPLOYEE DETAIL VIEW ══════════ --}}

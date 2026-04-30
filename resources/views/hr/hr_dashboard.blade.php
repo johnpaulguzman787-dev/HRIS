@@ -220,7 +220,7 @@
              x-transition:leave-start="translate-x-0"
              x-transition:leave-end="-translate-x-full"
              class="relative w-72 h-full bg-white shadow-2xl overflow-y-auto">
-            @include('admin.admin_sidebar', ['activeMenu' => 'dashboard'])
+            @include('hr.hr_sidebar', ['activeMenu' => 'dashboard'])
         </div>
     </div>
 

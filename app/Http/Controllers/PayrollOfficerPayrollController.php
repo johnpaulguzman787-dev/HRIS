@@ -612,8 +612,9 @@ class PayrollOfficerPayrollController extends Controller
     public function updateContrib(Request $request)
     {
         $data = $request->validate([
-            'keys'   => 'required|array',
-            'values' => 'required|array',
+            'keys'      => 'required|array',
+            'values'    => 'required|array',
+            'values.*'  => 'required|numeric|min:0',
         ]);
 
         foreach ($data['keys'] as $i => $key) {

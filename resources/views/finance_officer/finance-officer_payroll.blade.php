@@ -92,8 +92,13 @@
         .info-label { font-size:0.72rem; color:rgba(255,255,255,0.75); }
         .info-value { font-size:0.82rem; color:#fff; font-weight:500; }
 
-        .ctrl { border:1px solid #e2e8f0; border-radius:8px; padding:9px 14px; font-size:0.875rem; background:#fff; color:#374151; outline:none; transition:border-color 0.2s,box-shadow 0.2s; }
+        .ctrl { border:1px solid #e2e8f0; border-radius:8px; padding:9px 14px; font-size:0.875rem; background:#fff; color:#374151; outline:none; transition:border-color 0.2s,box-shadow 0.2s; box-sizing: ;}
         .ctrl:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
+        .ctrl-select {
+            appearance:none;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat:no-repeat; background-position:right 12px center; padding-right:36px;
+        }
         .search-wrap { position:relative; }
         .search-wrap svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:#9ca3af; }
         .search-wrap input { padding-left:38px; }
@@ -311,18 +316,18 @@
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                         </svg>
-                        <input type="text" placeholder="Search..." class="ctrl w-full" x-model="periodSearch">
+                        <input type="text" placeholder="Search..." class="ctrl ctrl-select w-full" x-model="periodSearch">
                     </div>
 
                     <div class="right-group">
-                        <select class="ctrl" x-model="periodStatusFilter">
+                        <select class="ctrl ctrl-select" x-model="periodStatusFilter">
                             <option value="">All status</option>
                             <option value="Pending">Pending</option>
                             <option value="Submitted">Submitted</option>
                             <option value="Released">Released</option>
                         </select>
 
-                        <select class="ctrl" x-model="periodYearFilter">
+                        <select class="ctrl ctrl-select" x-model="periodYearFilter">
                             @for($y = now()->year; $y >= now()->year - 3; $y--)
                             <option value="{{ $y }}">{{ $y }}</option>
                             @endfor
@@ -443,7 +448,7 @@
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-base font-bold text-gray-800">Payroll Items</h3>
                         <div class="flex items-center gap-3">
-                            <select class="ctrl" x-model="itemStatusFilter"><option value="">Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+                            <select class="ctrl ctrl-select w-28" x-model="itemStatusFilter"><option value="">Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
                             @canDo('Payroll', 'edit')
                             <button class="btn-primary" @click="showAddItemModal=true">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -496,7 +501,7 @@
                         <input type="text" placeholder="Search" class="ctrl w-full" x-model="benefitSearch">
                     </div>
                     <div class="flex items-center gap-3">
-                        <select class="ctrl" x-model="benefitStatusFilter"><option value="">Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+                        <select class="ctrl ctrl-select w-28" x-model="benefitStatusFilter"><option value="">Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
                         @canDo('Payroll', 'edit')
                         <button class="btn-primary" @click="showAddBenefitModal=true">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -608,19 +613,40 @@
 
                     {{-- W/Tax --}}
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-                        <div class="flex items-center justify-between mb-4">
-                            <h4 class="text-sm font-bold text-gray-700">WITHHOLDING TAX</h4>
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Withholding Tax</h4>
                             <button @click="openEditContrib('wtax')" class="text-gray-400 hover:text-blue-500 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                </svg>
                             </button>
                         </div>
                         <div class="space-y-1.5 text-xs max-h-36 overflow-y-auto pr-1">
-                            <div class="flex justify-between"><span class="text-gray-500">₱0 – ₱{{ number_format($contrib['wtax_bracket_1']) }}</span><span class="font-medium text-gray-700">₱0.00 + 0%</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_1']) }} – ₱{{ number_format($contrib['wtax_bracket_2']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_1'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_1']) }})</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_2']) }} – ₱{{ number_format($contrib['wtax_bracket_3']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_2'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_2']) }})</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_3']) }} – ₱{{ number_format($contrib['wtax_bracket_4']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_3'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_3']) }})</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_4']) }} – ₱{{ number_format($contrib['wtax_bracket_5']) }}</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_4'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_4']) }})</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_5']) }}+</span><span class="font-medium text-gray-700">{{ $contrib['wtax_rate_5'] }}% (Excess over ₱{{ number_format($contrib['wtax_bracket_5']) }})</span></div>
+                            <div class="flex justify-between items-center py-0.5">
+                                <span class="text-gray-500">₱0 – ₱{{ number_format($contrib['wtax_bracket_1']) }}</span>
+                                <span class="font-medium text-gray-700">₱0.00 + 0%</span>
+                            </div>
+                            <div class="flex justify-between items-center py-0.5">
+                                <span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_1']) }} – ₱{{ number_format($contrib['wtax_bracket_2']) }}</span>
+                                <span class="font-medium text-gray-700">{{ $contrib['wtax_rate_1'] }}% (excess over ₱{{ number_format($contrib['wtax_bracket_1']) }})</span>
+                            </div>
+                            <div class="flex justify-between items-center py-0.5">
+                                <span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_2']) }} – ₱{{ number_format($contrib['wtax_bracket_3']) }}</span>
+                                <span class="font-medium text-gray-700">{{ $contrib['wtax_rate_2'] }}% (excess over ₱{{ number_format($contrib['wtax_bracket_2']) }})</span>
+                            </div>
+                            <div class="flex justify-between items-center py-0.5">
+                                <span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_3']) }} – ₱{{ number_format($contrib['wtax_bracket_4']) }}</span>
+                                <span class="font-medium text-gray-700">{{ $contrib['wtax_rate_3'] }}% (excess over ₱{{ number_format($contrib['wtax_bracket_3']) }})</span>
+                            </div>
+                            <div class="flex justify-between items-center py-0.5">
+                                <span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_4']) }} – ₱{{ number_format($contrib['wtax_bracket_5']) }}</span>
+                                <span class="font-medium text-gray-700">{{ $contrib['wtax_rate_4'] }}% (excess over ₱{{ number_format($contrib['wtax_bracket_4']) }})
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center py-0.5">
+                                <span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_5']) }}+</span>
+                                <span class="font-medium text-gray-700">{{ $contrib['wtax_rate_5'] }}% (excess over ₱{{ number_format($contrib['wtax_bracket_5']) }})</span>
+                            </div>
                         </div>
                     </div>
                 </div>

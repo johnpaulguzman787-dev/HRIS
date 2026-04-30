@@ -68,21 +68,16 @@
 
         /* ── Summary Cards (mobile stack) ── */
         .cards-wrap {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr;
             gap: 16px;
-            flex-wrap: wrap;
         }
-        .summary-card {
-            background:#fff; border-radius:10px; border:1px solid #e5e7eb;
-            padding:22px 26px; flex:1 1 200px;
-            transition:transform 0.2s ease, box-shadow 0.2s ease;
-            animation:scaleIn 0.44s cubic-bezier(0.22,1,0.36,1) both;
-        }
+        .summary-card { background:#fff; border-radius:10px; border:1px solid #e5e7eb; padding:22px 26px; flex:1; transition:transform 0.2s ease,box-shadow 0.2s ease; }
         .summary-card:nth-child(1) { animation-delay:0.04s; }
         .summary-card:nth-child(2) { animation-delay:0.11s; }
         .summary-card:nth-child(3) { animation-delay:0.18s; }
         .summary-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(59,130,246,0.10); }
-        .s-label { font-size:0.78rem; color:#9ca3af; margin-bottom:6px; }
+        .s-label { font-size:0.875rem; margin-bottom:6px; }
         .s-value { font-size:1.75rem; font-weight:700; color:#1e293b; letter-spacing:-0.5px; }
         .s-sub   { font-size:0.72rem; color:#9ca3af; margin-top:4px; }
 
@@ -222,9 +217,6 @@
                 flex-direction: column;
                 gap: 12px;
             }
-            .summary-card {
-                padding: 16px 20px;
-            }
             .s-value {
                 font-size: 1.5rem;
             }
@@ -362,18 +354,18 @@
             {{-- Summary Cards --}}
             <div class="pb-4">
                 <div class="cards-wrap">
-                    <div class="summary-card">
-                        <div class="s-label">Gross Payroll</div>
+                    <div class="summary-card ">
+                        <div class="s-label text-gray-500">Gross Payroll</div>
                         <div class="s-value">&#8369; <span x-text="fmt(allGross)"></span></div>
-                        <div class="s-sub" x-text="currentPeriodName || 'No period selected'"></div>
+                        <div class="s-sub " x-text="currentPeriodName || 'No period selected'"></div>
                     </div>
                     <div class="summary-card">
-                        <div class="s-label">Net Pay</div>
+                        <div class="s-label text-gray-500">Net Pay</div>
                         <div class="s-value">&#8369; <span x-text="fmt(allNet)"></span></div>
                         <div class="s-sub" x-text="currentPeriodName || 'No period selected'"></div>
                     </div>
                     <div class="summary-card">
-                        <div class="s-label">Total Deductions</div>
+                        <div class="s-label text-gray-500">Total Deductions</div>
                         <div class="s-value">&#8369; <span x-text="fmt(allDeductions)"></span></div>
                         <div class="s-sub" x-text="currentPeriodName || 'No period selected'"></div>
                     </div>
@@ -506,23 +498,23 @@
         {{-- ══════════════════════════
              MY PAYSLIP
         ══════════════════════════ --}}
-        <div x-show="activeTab==='my'" x-cloak class="tab-content p-3 lg:p-6">
+        <div x-show="activeTab==='my'" x-cloak class="tab-content">
 
             {{-- Summary Cards --}}
             <div class="pb-4">
                 <div class="cards-wrap">
                     <div class="summary-card">
-                        <div class="s-label">Gross Pay <span x-text="'('+myYearFilter+')'"></span></div>
+                        <div class="s-label text-gray-500">Gross Pay <span x-text="'('+myYearFilter+')'"></span></div>
                         <div class="s-value">&#8369; <span x-text="fmt(myYearGross)"></span></div>
                         <div class="s-sub" x-text="filteredMyPayslips.length + ' payslip(s)'"></div>
                     </div>
                     <div class="summary-card">
-                        <div class="s-label">Net Pay <span x-text="'('+myYearFilter+')'"></span></div>
+                        <div class="s-label text-gray-500">Net Pay <span x-text="'('+myYearFilter+')'"></span></div>
                         <div class="s-value">&#8369; <span x-text="fmt(myYearNet)"></span></div>
                         <div class="s-sub" x-text="filteredMyPayslips.length + ' payslip(s)'"></div>
                     </div>
                     <div class="summary-card">
-                        <div class="s-label">Total Deductions <span x-text="'('+myYearFilter+')'"></span></div>
+                        <div class="s-label text-gray-500">Total Deductions <span x-text="'('+myYearFilter+')'"></span></div>
                         <div class="s-value">&#8369; <span x-text="fmt(myYearDeductions)"></span></div>
                         <div class="s-sub" x-text="filteredMyPayslips.length + ' payslip(s)'"></div>
                     </div>

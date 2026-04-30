@@ -1049,6 +1049,15 @@ class EmployeeAttendanceController extends Controller
             return response()->json(['message' => 'Shift change request cancelled.']);
         }
 
+        $adj = AttendanceAdjustmentRequest::where('id', $id)->where('employee_id', $employee->id)->first();
+        if ($adj) {
+            if (!in_array($adj->status, ['pending', 'supervisor_approved'])) {
+                return response()->json(['message' => 'This request cannot be cancelled.'], 409);
+            }
+            $adj->update(['status' => 'cancelled']);
+            return response()->json(['message' => 'Attendance adjustment request cancelled.']);
+        }
+
         return response()->json(['message' => 'Request not found.']);
     }
 

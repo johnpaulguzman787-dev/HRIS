@@ -129,15 +129,17 @@
     {{-- Blue Header --}}
     <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl overflow-visible">
         <div class="flex items-center justify-between px-4 sm:px-8 py-4">
-            <div class="flex items-center gap-3">
-                <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+                <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white shrink-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
-                <h1 class="text-white font-bold text-lg sm:text-xl">My Attendance</h1>
+                <h1 class="text-white font-bold text-lg sm:text-xl truncate">My Attendance</h1>
             </div>
-            <x-employee-notif />
+            <div class="shrink-0 ml-3">
+                <x-employee-notif />
+            </div>
         </div>
     </header>
 
@@ -175,7 +177,7 @@
         <div class="anim-up bg-white rounded-2xl overflow-hidden"
              style="animation-delay:0.26s; box-shadow:0 1px 12px rgba(0,0,0,0.07);">
 
-            <div class="px-6 py-4 flex items-center justify-between">
+            <div class="px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                 <h3 class="font-bold text-gray-800 text-base">Attendance Records</h3>
                 <div class="flex items-center gap-3">
                     <div class="relative">

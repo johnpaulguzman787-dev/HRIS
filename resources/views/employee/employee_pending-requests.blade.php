@@ -226,7 +226,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true', showFileReq: false, reqType: '', showCancel: false, selId: null, selName: '', selCancelUrl: '', showResult: false, resultType: 'success', resultTitle: '', resultMessage: '' }"
      x-init="window.addEventListener('sidebar-toggle', e => { sidebarCollapsed = e.detail.collapsed })">
 
 {{-- ══════════ SIDEBAR (Desktop & Mobile Drawer) ══════════ --}}
@@ -422,7 +422,7 @@
                 </div></div>
             </div>
             <div class="action-row">
-                <button class="btn-cancel-req" @click="selId={{ $req->id }};selName='{{ addslashes(trim((auth()->user()->employee->fname ?? '').' '.(auth()->user()->employee->lname ?? ''))) }}';selCancelUrl='/employee/requests/{{ $req->id }}/cancel';showCancel=true">
+                <button class="btn-cancel-req" @click="selId={{ $req->id }};selName='{{ addslashes(trim((auth()->user()->employee->fname ?? '').' '.(auth()->user()->employee->lname ?? ''))) }}';selCancelUrl='{{ route('employee.requests.cancel', $req->id) }}';showCancel=true">
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Cancel Request
                 </button>
             </div>
@@ -510,7 +510,7 @@
                     </label>
                 </div>
                 <div class="mactions">
-                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
+                    <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
                     <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
@@ -554,7 +554,7 @@
                     </label>
                 </div>
                 <div class="mactions">
-                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
+                    <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
                     <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
@@ -606,7 +606,7 @@
                     </label>
                 </div>
                 <div class="mactions">
-                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
+                    <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
                     <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
@@ -650,7 +650,7 @@
                     </label>
                 </div>
                 <div class="mactions">
-                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
+                    <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
                     <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>

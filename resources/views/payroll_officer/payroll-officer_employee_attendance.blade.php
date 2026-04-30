@@ -406,53 +406,47 @@
             }
             .table-toolbar h2 { margin-bottom: 0; }
 
-            /* ── toolbar-right: wrap into a 2-row grid ── */
+            /* ── toolbar-right: flex-wrap (iOS Safari compatible) ── */
             .toolbar-right {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr !important;
+                display: block !important;
+                width: 100% !important;
+            }
+            .toolbar-right form {
+                display: flex !important;
+                flex-wrap: wrap !important;
                 gap: 8px !important;
+                width: 100% !important;
                 align-items: stretch !important;
             }
-
-            /* Search box spans full width (row 1) */
             .search-box {
-                grid-column: 1 / -1 !important;
+                flex: 0 0 100% !important;
                 width: 100% !important;
             }
             .search-box input { width: 100% !important; min-width: 0 !important; }
-
-            /* Date picker - left cell (row 2) */
             .date-picker {
-                width: 100% !important;
+                flex: 1 !important;
                 min-width: 0 !important;
             }
             .date-picker input { width: 100% !important; min-width: 0 !important; }
-
-            /* Dept select - right cell (row 2) */
             .dept-select {
-                width: 100% !important;
+                flex: 1 !important;
                 min-width: 0 !important;
                 box-sizing: border-box !important;
             }
-
-            /* Toggle btns span full width (row 3) */
             .toggle-btns {
-                grid-column: 1 / -1 !important;
+                flex: 0 0 100% !important;
                 display: flex !important;
                 width: 100% !important;
             }
             .toggle-btn { flex: 1 !important; text-align: center !important; }
-
-            /* detail view toolbar-right (period btns + date + export) */
             .period-btns {
-                grid-column: 1 / -1 !important;
+                flex: 0 0 100% !important;
                 display: flex !important;
                 width: 100% !important;
             }
             .period-btn { flex: 1 !important; text-align: center !important; }
-
             .export-btn {
-                grid-column: 1 / -1 !important;
+                flex: 0 0 100% !important;
                 justify-content: center !important;
                 width: 100% !important;
             }
@@ -546,18 +540,18 @@
     <!-- Blue Header with Hamburger -->
     <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-hidden">
         <div class="flex items-center justify-between px-4 sm:px-8 py-4">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
                 <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
-                <div>
+                <div class="min-w-0">
                     <h1 class="text-white text-lg sm:text-[22px] font-bold tracking-[0.3px] m-0">Employee Attendance</h1>
                     <p class="text-white/65 text-[11px] sm:text-[13px] mt-[2px] mb-0">Track and manage workforce attendance records</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-2.5 shrink-0">
                 <x-notification-bell />
             </div>
         </div>

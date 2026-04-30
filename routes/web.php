@@ -454,6 +454,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/payroll_officer/requests/{id}/cancel',    [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'cancelRequest'])->name('payroll_officer.requests.cancel');
         Route::post('/payroll_officer/requests/overtime/file',  [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'fileOvertimeRequest'])->name('payroll_officer.requests.overtime.file');
         Route::post('/payroll_officer/requests/shift/file',     [\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'fileShiftChangeRequest'])->name('payroll_officer.requests.shift.file');
+        Route::post('/payroll_officer/requests/adjustment/file',[\App\Http\Controllers\PayrollOfficerAttendanceController::class, 'fileAttendanceAdjustment'])->name('payroll_officer.requests.adjustment.file');
 
         // Payroll officer payroll
         Route::get('/payroll_officer/payroll',  [\App\Http\Controllers\PayrollOfficerPayrollController::class, 'index'])->name('payroll_officer.payroll');
@@ -557,6 +558,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/finance_officer/requests/{id}/cancel',    [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'cancelRequest'])->name('finance_officer.requests.cancel');
         Route::post('/finance_officer/requests/overtime/file',  [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'fileOvertimeRequest'])->name('finance_officer.requests.overtime.file');
         Route::post('/finance_officer/requests/shift/file',     [\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'fileShiftChangeRequest'])->name('finance_officer.requests.shift.file');
+        Route::post('/finance_officer/requests/adjustment/file',[\App\Http\Controllers\FinanceOfficerAttendanceController::class, 'fileAttendanceAdjustment'])->name('finance_officer.requests.adjustment.file');
 
     }); // end role:finance_officer
 

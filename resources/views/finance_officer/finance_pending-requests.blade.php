@@ -200,7 +200,7 @@
         @media (max-width: 768px) { .page-content { padding: 14px 14px !important; } }
     </style>
 </head>
-<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true', showFileReq: false, reqType: '', showCancel: false, selId: null, selName: '', selCancelUrl: '', showResult: false, resultType: 'success', resultTitle: '', resultMessage: '' }"
      x-init="window.addEventListener('sidebar-toggle', e => { sidebarCollapsed = e.detail.collapsed })">
 
 {{-- ═══════════ DESKTOP SIDEBAR ═══════════ --}}
@@ -324,6 +324,7 @@
                     @if($req->type === 'leave')   <span class="badge b-leave">Leave Request</span>
                     @elseif($req->type === 'overtime') <span class="badge b-ot">Overtime Request</span>
                     @elseif($req->type === 'shift')    <span class="badge b-shift">Shift Arrangement Request</span>
+                    @elseif($req->type === 'adjustment') <span class="badge" style="background:#fef3c7;color:#92400e;">Attendance Adjustment</span>
                     @endif
                     <span class="badge b-await">Awaiting Approval</span>
                 </div>
@@ -350,6 +351,13 @@
                     <div><div class="dlabel">Effective From</div><div class="dval">{{ \Carbon\Carbon::parse($req->effective_from)->format('F j, Y') }}</div></div>
                     <div><div class="dlabel">Until</div><div class="dval">{{ $req->effective_until ? \Carbon\Carbon::parse($req->effective_until)->format('F j, Y') : 'Ongoing' }}</div></div>
                 </div>
+                @elseif($req->type === 'adjustment')
+                <div class="dgrid">
+                    <div><div class="dlabel">Date</div><div class="dval">{{ \Carbon\Carbon::parse($req->attendance_date)->format('F j, Y') }}</div></div>
+                    <div><div class="dlabel">Original Time</div><div class="dval">{{ $req->original_clock_in ? \Carbon\Carbon::parse($req->original_clock_in)->format('g:i A') : '—' }} – {{ $req->original_clock_out ? \Carbon\Carbon::parse($req->original_clock_out)->format('g:i A') : '—' }}</div></div>
+                    <div><div class="dlabel">Requested Time</div><div class="dval">{{ \Carbon\Carbon::parse($req->requested_clock_in)->format('g:i A') }} – {{ $req->requested_clock_out ? \Carbon\Carbon::parse($req->requested_clock_out)->format('g:i A') : 'N/A' }}</div></div>
+                    <div><div class="dlabel">Filed On</div><div class="dval">{{ $req->created_at->format('F j, Y') }}</div></div>
+                </div>
                 @endif
                 <div class="rsection"><div class="rlabel">Reason</div><div class="rtext">{{ $req->reason ?? '—' }}</div></div>
                 @if($req->document_path)<div style="margin-bottom:10px;"><div class="rlabel">Documents</div><div style="font-size:13px;color:#3b82f6;font-weight:500;">{{ basename($req->document_path) }}</div></div>@endif
@@ -367,7 +375,7 @@
                 </div></div>
             </div>
             <div class="action-row">
-                <button class="btn-cancel-req" @click="selId={{ $req->id }};selName='{{ addslashes(trim((auth()->user()->employee->fname ?? '').' '.(auth()->user()->employee->lname ?? ''))) }}';selCancelUrl='/finance_officer/requests/{{ $req->id }}/cancel';showCancel=true">
+                <button class="btn-cancel-req" @click="selId={{ $req->id }};selName='{{ addslashes(trim((auth()->user()->employee->fname ?? '').' '.(auth()->user()->employee->lname ?? ''))) }}';selCancelUrl='{{ route('finance_officer.requests.cancel', $req->id) }}';showCancel=true">
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Cancel Request
                 </button>
             </div>
@@ -396,6 +404,7 @@
                     <option value="leave">Leave Request</option>
                     <option value="overtime">Overtime Request</option>
                     <option value="shift">Shift Arrangement</option>
+                    <option value="adjustment">Attendance Adjustment</option>
                 </select>
             </div>
 
@@ -449,7 +458,7 @@
                     </label>
                 </div>
                 <div class="mactions">
-                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
+                    <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
                     <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
@@ -499,7 +508,7 @@
                     </label>
                 </div>
                 <div class="mactions">
-                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
+                    <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
                     <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
@@ -554,8 +563,51 @@
                     </label>
                 </div>
                 <div class="mactions">
-                    <button class="btn-cancel" @click="$root.showFileReq=false;$root.reqType=''">Cancel</button>
+                    <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
                     <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving" style="display:inline-flex;align-items:center;gap:5px;"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;flex-shrink:0;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
+                </div>
+            </div>
+
+            {{-- ATTENDANCE ADJUSTMENT --}}
+            <div x-show="reqType==='adjustment'" x-transition
+                 x-data="{ adjDate:'', adjIn:'', adjOut:'', reason:'', fileName:'', saving:false,
+                     handleFile(e){ const f=e.target.files[0]; this.fileName=f?f.name:''; },
+                     async submit(){
+                         if(!this.adjDate||!this.adjIn||!this.reason){ $root.resultType='error'; $root.resultTitle='Missing Fields'; $root.resultMessage='Please fill in all required fields.'; $root.showResult=true; return; }
+                         this.saving=true;
+                         const form=new FormData();
+                         form.append('attendance_date',this.adjDate);
+                         form.append('requested_clock_in',this.adjIn);
+                         if(this.adjOut) form.append('requested_clock_out',this.adjOut);
+                         form.append('reason',this.reason);
+                         const fi=document.getElementById('finReqAdjDoc');
+                         if(fi.files[0]) form.append('document',fi.files[0]);
+                         form.append('_token',document.querySelector('meta[name=csrf-token]').content);
+                         const res=await fetch('{{ route('finance_officer.requests.adjustment.file') }}',{method:'POST',body:form});
+                         this.saving=false;
+                         const data=await res.json();
+                         if(res.ok){ $root.showFileReq=false; $root.reqType=''; $root.resultType='success'; $root.resultTitle='Adjustment Request Filed'; $root.resultMessage='Ref: '+(data.ref_no??''); $root.showResult=true; setTimeout(()=>window.location.reload(),2500); }
+                         else{ $root.resultType='error'; $root.resultTitle='Submission Failed'; $root.resultMessage=data.message??'Something went wrong.'; $root.showResult=true; }
+                     }
+                 }">
+                <div style="margin-bottom:16px;"><label class="flabel">Attendance Date</label><input type="date" class="finput" x-model="adjDate" :max="new Date(Date.now()-86400000).toISOString().split('T')[0]"></div>
+                <div class="frow" style="margin-bottom:16px;">
+                    <div><label class="flabel">Correct Time In</label><input type="time" class="finput" x-model="adjIn"></div>
+                    <div><label class="flabel">Correct Time Out <span style="font-weight:400;color:#9ca3af;">(optional)</span></label><input type="time" class="finput" x-model="adjOut"></div>
+                </div>
+                <div style="margin-bottom:16px;"><label class="flabel">Reason/Remarks</label><input type="text" class="finput" x-model="reason" placeholder="Why is this adjustment needed?"></div>
+                <div style="margin-bottom:16px;">
+                    <label class="flabel">Supporting Document (optional)</label>
+                    <label class="doc-upload">
+                        <svg style="width:28px;height:28px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <div style="font-size:13px;font-weight:600;color:#374151;" x-text="fileName||'Choose a file to upload'"></div>
+                        <div style="font-size:12px;color:#9ca3af;">PDF or DOCX, max 10MB</div>
+                        <input id="finReqAdjDoc" type="file" accept=".pdf,.docx" style="display:none;" @change="handleFile($event)">
+                    </label>
+                </div>
+                <div class="mactions">
+                    <button class="btn-cancel" @click="showFileReq=false;reqType=''">Cancel</button>
+                    <button class="btn-save" @click="submit()" :disabled="saving"><span x-show="saving"><svg style="width:13px;height:13px;animation:spin 0.8s linear infinite;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:.3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting…</span><span x-show="!saving">Submit</span></button>
                 </div>
             </div>
 

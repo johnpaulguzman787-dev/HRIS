@@ -67,7 +67,6 @@
             border-collapse: collapse;
             min-width: 700px;
         }
-        .contrib-table thead tr { background: #f9fafb; }
         .contrib-table thead th {
             padding: 13px 24px;
             font-size: 0.75rem;
@@ -393,7 +392,7 @@
                         <div class="table-wrapper">
                             <table class="contrib-table">
                                 <thead>
-                                    <tr>
+                                    <tr class="border-t border-b border-gray-100 bg-gray-50/60">
                                         <th class="text-left">Period Name</th>
                                         <th class="td-center">SSS Total</th>
                                         <th class="td-center">PhilHealth Total</th>
@@ -446,7 +445,7 @@
                         <div class="table-wrapper">
                             <table class="contrib-table">
                                 <thead>
-                                    <tr>
+                                    <tr class="border-t border-b border-gray-100 bg-gray-50/60">
                                         <th class="text-left">Period Name</th>
                                         <th class="td-center">SSS</th>
                                         <th class="td-center">PhilHealth</th>
@@ -526,7 +525,7 @@
                 <div class="table-wrapper">
                     <table class="contrib-table">
                         <thead>
-                            <tr>
+                            <tr class="border-t border-b border-gray-100 bg-gray-50/60">
                                 <th class="text-left">Employee</th>
                                 <th class="td-center">SSS</th>
                                 <th class="td-center">PhilHealth</th>

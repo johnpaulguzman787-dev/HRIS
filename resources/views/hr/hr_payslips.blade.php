@@ -69,10 +69,15 @@
             border-collapse: collapse;
             min-width: 500px;
         }
-        .data-table thead tr { border-bottom:1px solid #e5e7eb; }
         .data-table thead th {
-            text-align:left; padding:13px 16px;
-            font-size:0.82rem; font-weight:700; color:#374151;
+            padding: 13px 24px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+            border-bottom: 1px solid #f1f5f9;
         }
         .data-table tbody tr {
             border-bottom:1px solid #f1f5f9;
@@ -365,7 +370,7 @@
                     <h3 class="text-base font-bold text-gray-800 mb-3">My Payroll Periods</h3>
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm table-wrapper">
                         <table class="data-table">
-                            <thead><tr>
+                            <thead><tr class="border-t border-b border-gray-100 bg-gray-50/60">
                                 <th>Period Name</th><th>Start Date</th><th>End Date</th><th>Status</th><th></th>
                             </tr></thead>
                             <tbody>

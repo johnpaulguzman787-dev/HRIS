@@ -166,7 +166,6 @@
             gap:7px;
         }
         .btn-close:hover { background:#f3f4f6; }
-        /* Make Close and Export buttons equal width on all screen sizes */
         .btn-primary, .btn-close {
             flex: 1;
             width: auto;

@@ -68,8 +68,16 @@
         .multiplier-badge { background:#fff8e1; color:#f57c00; padding:2px 10px; border-radius:20px; font-size:0.78rem; font-weight:600; }
 
         .data-table { width:100%; border-collapse:collapse; min-width:600px; }
-        .data-table thead tr { border-bottom:1px solid #e5e7eb; }
-        .data-table thead th { text-align:left; padding:13px 16px; font-size:0.82rem; font-weight:700; color:#374151  }
+        .data-table thead th {
+            padding: 13px 24px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+            border-bottom: 1px solid #f1f5f9;
+        }
         .data-table tbody tr { border-bottom:1px solid #f1f5f9; transition:background 0.14s ease; cursor:pointer  }
         .data-table tbody tr:hover { background:#f8faff; }
         .data-table tbody tr.row-active { background:#eff6ff; }
@@ -170,10 +178,9 @@
     padding: 8px 12px;
 }
 .period-title-wrapper {
-        height: 70px;           /* fixed height – never changes */
+        height: 70px;
         align-items: center;
     }
-    /* Allow the title to scroll horizontally if too long (no wrapping) */
     .period-title-scroll {
         max-width: 60%;
         overflow-x: auto;
@@ -181,8 +188,8 @@
         scrollbar-width: thin;
     }
     .period-title-scroll h2 {
-        white-space: nowrap;    /* force one line */
-        font-size: 1.1rem;      /* slightly smaller on mobile */
+        white-space: nowrap; 
+        font-size: 1.1rem;
     }
 
 .data-table thead th,
@@ -356,7 +363,7 @@
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                         <table class="data-table">
                             <thead>
-                                <tr>
+                                <tr class="border-t border-b border-gray-100 bg-gray-50/60">
                                     <th>Period Name</th><th>Start Date</th><th>End Date</th><th>Status</th><th style="text-align:center"></th>
                                 </tr>
                             </thead>
@@ -429,7 +436,7 @@
                             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                                 <table class="data-table">
                                     <thead>
-                                        <tr>
+                                        <tr class="border-t border-b border-gray-100 bg-gray-50/60">
                                             <th>Grade Code</th><th>Level Name</th><th>Monthly Basic Salary</th><th>Semi-Monthly Pay</th><th>Assigned Employees</th><th></th>
                                         </tr>
                                     </thead>
@@ -485,7 +492,7 @@
                             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                                 <table class="data-table">
                                     <thead>
-                                        <tr>
+                                        <tr class="border-t border-b border-gray-100 bg-gray-50/60">
                                             <th>Payroll Item</th><th>Multiplier</th><th>Type</th><th>Basis</th><th>Status</th><th></th>
                                         </tr>
                                     </thead>
@@ -548,7 +555,7 @@
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                             <table class="data-table">
                                 <thead>
-                                    <tr>
+                                    <tr class="border-t border-b border-gray-100 bg-gray-50/60">
                                         <th>Benefit Item</th><th>Type</th><th>Amount</th><th>Tax Type</th><th>Frequency</th><th>Eligibility</th><th>Status</th><th></th>
                                     </tr>
                                 </thead>
@@ -714,7 +721,7 @@
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto mb-4">
                         <table class="data-table" style="min-width:900px">
                             <thead>
-                                <tr>
+                                <tr class="border-t border-b border-gray-100 bg-gray-50/60">
                                     <th>Grade Code</th><th>Level Name</th><th>Monthly Basic Salary</th>
                                     <th>SSS (Employee)</th><th>SSS (Employer)</th><th>PhilHealth</th>
                                     <th>Pag-IBIG</th><th>Monthly W/Tax</th>
@@ -882,7 +889,7 @@
                         <h3 class="text-base font-bold text-gray-800 mb-3">Employee Payroll</h3>
                         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                         <table class="data-table min-w-[600px]">
-                                <thead><tr><th>Employee</th><th>Gross Pay</th><th>Net Pay</th><th>Status</th><th></th></tr></thead>
+                                <thead><tr class="border-t border-b border-gray-100 bg-gray-50/60"><th>Employee</th><th>Gross Pay</th><th>Net Pay</th><th>Status</th><th></th></tr></thead>
                                 <tbody>
                                     <template x-for="ps in pvPayslips" :key="ps.id">
                                         <tr :class="pvSelectedId===ps.id&&'row-active'" @click="pvSelectPayslip(ps)">

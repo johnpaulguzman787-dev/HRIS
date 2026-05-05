@@ -13,8 +13,6 @@
     <style>
         * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
         body { background: #f3f4f6; margin: 0; }
-
-        /* ── Card ── */
         .card {
             background: #fff;
             border-radius: 14px;
@@ -30,8 +28,6 @@
             border-bottom: 1px solid #f1f5f9;
         }
         .card-title { font-size: 1.05rem; font-weight: 700; color: #111827; }
-
-        /* ── Table wrapper (mobile horizontal scroll) ── */
         .table-wrapper {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -79,6 +75,31 @@
             font-size: 0.73rem; font-weight: 600; white-space: nowrap;
         }
 
+        .btn-view {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff !important;
+            color: #2563eb !important;
+            border: 1.5px solid #93c5fd;
+            padding: 8px 18px;
+            border-radius: 7px;
+            font-size: 0.775rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .btn-view:hover {
+            background: #2563eb !important;
+            color: #fff !important;
+            border-color: #2563eb !important;
+        }
+        .btn-view {
+            justify-content: center;
+        }
+
         /* ── Year select ── */
         .year-select {
             appearance: none;
@@ -104,8 +125,6 @@
         .transition-margin {
             transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        /* ── Mobile overrides (force filter below title) ── */
         @media (max-width: 768px) {
             .card-header {
                 flex-direction: column !important;
@@ -119,36 +138,13 @@
             }
             .card-title {
                 font-size: 0.95rem;
-                margin-bottom: 0;
             }
             .year-select {
                 width: auto;
             }
             .p-8 {
                 padding: 1rem !important;
-            }
-        }
-        .btn-view {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #eff6ff !important;
-            color: #2563eb !important;
-            border: 1.5px solid #93c5fd;
-            padding: 8px 18px;
-            border-radius: 7px;
-            font-size: 0.775rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: background 0.15s, color 0.15s, border-color 0.15s;
-        }
-        .btn-view:hover {
-            background: #2563eb !important;
-            color: #fff !important;
-            border-color: #2563eb !important;
-        }
+            }    
         .card-header {
             flex-direction: column;
             align-items: stretch;
@@ -178,9 +174,8 @@
             width: 100%;
             min-width: 0;
         }
-        .btn-view {
-            justify-content: center;
-        }
+
+}
     </style>
 </head>
 @php
@@ -255,7 +250,7 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">My Government Contributions</span>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 flex-nowrap">
                         <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;display:inline-flex;align-items:center;gap:6px;">
                             <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Export PDF

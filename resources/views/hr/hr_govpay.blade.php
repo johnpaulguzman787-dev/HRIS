@@ -93,28 +93,6 @@
         }
         .year-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
 
-        /* ── Transition for margin ── */
-        .transition-margin {
-            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @media (max-width: 768px) {
-            .card-header {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 12px;
-                padding: 16px 20px;
-            }
-            .card-title {
-                font-size: 0.95rem;
-            }
-            .year-select {
-                width: auto;
-            }
-            .p-8 {
-                padding: 1rem !important;
-            }
-        }
         .btn-view {
             display: inline-flex;
             align-items: center;
@@ -136,6 +114,30 @@
             color: #fff !important;
             border-color: #2563eb !important;
         }
+        .btn-view {
+            justify-content: center;
+        }
+        /* ── Transition for margin ── */
+        .transition-margin {
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @media (max-width: 768px) {
+            .card-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                padding: 16px 20px;
+            }
+            .card-title {
+                font-size: 0.95rem;
+            }
+            .year-select {
+                width: auto;
+            }
+            .p-8 {
+                padding: 1rem !important;
+            }
         .card-header {
             flex-direction: column;
             align-items: stretch;
@@ -165,9 +167,8 @@
             width: 100%;
             min-width: 0;
         }
-        .btn-view {
-            justify-content: center;
-        }
+
+}
     </style>
 </head>
 @php
@@ -242,7 +243,7 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">My Government Contributions</span>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 flex-nowrap">
                         <button onclick="exportGovpay()" class="btn-view" style="background:#2563eb;color:#fff;border-color:#2563eb;display:inline-flex;align-items:center;gap:6px;">
                             <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Export PDF

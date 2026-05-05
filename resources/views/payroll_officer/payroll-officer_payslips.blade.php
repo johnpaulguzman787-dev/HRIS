@@ -264,6 +264,10 @@
                 flex: 1 1 auto;
                 min-width: 120px;
             }
+            .btn-close {
+                padding: 8px 16px;
+                font-size: 0.75rem;
+            }
             /* My Payslip toolbar: single row, no scroll, search longer */
             .my-toolbar {
                 flex-wrap: nowrap !important;
@@ -278,10 +282,6 @@
                 flex: 1 !important;
                 min-width: 80px !important;
                 width: auto !important;
-            }
-            .my-toolbar .btn-primary {
-                flex: 0 0 auto !important;
-                white-space: nowrap;
             }
         }
     </style>
@@ -349,7 +349,7 @@
         {{-- ══════════════════════════
              ALL PAYSLIPS
         ══════════════════════════ --}}
-        <div x-show="activeTab==='all'" x-cloak class="tab-content p-3 lg:p-6">
+        <div x-show="activeTab==='all'" x-cloak class="tab-content">
 
             {{-- Summary Cards --}}
             <div class="pb-4">
@@ -397,8 +397,7 @@
                 @canDo('Payroll', 'export')
                 <button @click="exportAllPayslips()"
                         :disabled="filteredAllPayslips.length === 0"
-                        :style="filteredAllPayslips.length === 0 ? 'background:#d1d5db;cursor:not-allowed;' : ''"
-                        class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl border-none cursor-pointer transition-colors whitespace-nowrap">
+                        class="btn-primary" style="flex:0 0 auto; white-space:nowrap;">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 16v4a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 8.414V12M12 10v6m0 0l-3-3m3 3l3-3"/></svg>
                     Export All PDF
                 </button>

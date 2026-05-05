@@ -232,7 +232,6 @@
                 padding: 8px 16px;
                 font-size: 0.75rem;
             }
-            /* My Payslip toolbar: single row, no scroll, search longer */
             .my-toolbar {
                 flex-wrap: nowrap !important;
                 overflow: hidden !important;

@@ -1,6 +1,6 @@
 {{-- resources/views/components/notification-bell.blade.php --}}
 
-<div x-data="notificationBell()" x-init="init()" @click.away="open = false" class="relative">
+<div x-data="notificationBell()" x-init="init()" @click.away="open = false" class="relative flex-shrink-0">
 
     {{-- Notification Popup Modal --}}
     <div x-show="popup.show" x-cloak
@@ -30,7 +30,7 @@
 
     {{-- Bell Button --}}
     <button @click="toggle()"
-        class="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/20 transition-all focus:outline-none">
+        class="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/20 transition-all focus:outline-none flex-shrink-0">
 
         <svg class="w-5 h-5 text-white"
              :class="unreadCount > 0 ? 'bell-ring' : ''"
@@ -47,7 +47,7 @@
         </template>
     </button>
 
-    {{-- Dropdown Panel --}}
+    {{-- Dropdown Panel -- Mobile responsive --}}
     <div x-show="open" x-cloak
         x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0 -translate-y-2 scale-95"
@@ -55,8 +55,8 @@
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 -translate-y-2 scale-95"
-        class="absolute right-0 mt-3 w-[400px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-[999]"
-        style="top: 100%;">
+        class="absolute right-0 mt-3 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[999] notification-dropdown"
+        style="top: 100%; width: 400px; max-width: 90vw;">
 
         {{-- Header --}}
         <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -293,4 +293,17 @@ function notificationBell() {
     animation: bell-shake 2s ease-in-out infinite;
     transform-origin: top center;
 }
+
+/* Mobile responsiveness for notification */
+@media (max-width: 640px) {
+    .notification-dropdown {
+        width: auto !important;
+        min-width: 300px;
+        max-width: calc(100vw - 32px) !important;
+        right: 0 !important;
+        left: auto !important;
+        max-width: none !important;
+    }
+}	
+
 </style>

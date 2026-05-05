@@ -1100,8 +1100,8 @@
 
     {{-- Create Payroll Period --}}
     <div x-show="showCreatePeriod" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showCreatePeriod=false">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8"
-             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 sm:p-8"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-lg font-bold text-gray-900">Create Payroll Period</h3>
                 <button @click="showCreatePeriod=false" class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-50">
@@ -1115,7 +1115,8 @@
                         <label class="block text-xs font-semibold text-gray-500 mb-1">Period Name</label>
                         <input type="text" name="name" class="ctrl w-full" placeholder="e.g. March 2026 – 1st Half" required>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
+                    {{-- Responsive grid: 1 column on mobile, 2 columns on tablet/desktop --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-gray-500 mb-1">Start Date</label>
                             <input type="date" name="start_date" class="ctrl w-full" required>
@@ -1130,6 +1131,7 @@
                         <input type="date" name="payout_date" class="ctrl w-full" required>
                     </div>
                 </div>
+                {{-- Buttons remain on one row (unchanged) --}}
                 <div class="flex justify-end gap-3 mt-6">
                     <button type="button" @click="showCreatePeriod=false" class="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
                     <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Create & Generate Payslips</button>
@@ -1359,25 +1361,33 @@
     {{-- Add Salary Grade --}}
     <div x-show="showAddGradeModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showAddGradeModal=false">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-7"
-             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-lg font-bold text-gray-800">Add Salary Grade</h2>
-                <button @click="showAddGradeModal=false" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                <button @click="showAddGradeModal=false" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
             <form action="{{ route('admin.payroll.grade.store') }}" method="POST" class="space-y-4"
-                  @submit.prevent="if(!addGradeCodeDuplicate) $el.submit()">
+                @submit.prevent="if(!addGradeCodeDuplicate) $el.submit()">
                 @csrf
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Grade Code</label>
                         <input type="text" name="grade_code" required placeholder="e.g. Grade 1" class="ctrl w-full"
-                               x-model="addGradeCode"
-                               :class="addGradeCodeDuplicate ? 'border-red-400 focus:border-red-400 focus:shadow-none' : ''">
+                            x-model="addGradeCode"
+                            :class="addGradeCodeDuplicate ? 'border-red-400 focus:border-red-400 focus:shadow-none' : ''">
                         <p x-show="addGradeCodeDuplicate" class="text-red-500 text-xs mt-1">Grade code already exists.</p>
                     </div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Monthly Basic Salary (₱)</label><input type="number" name="monthly_basic_salary" step="0.01" required placeholder="₱22,000.00" class="ctrl w-full"></div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Monthly Basic Salary (₱)</label>
+                        <input type="number" name="monthly_basic_salary" step="0.01" required placeholder="₱22,000.00" class="ctrl w-full">
+                    </div>
                 </div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Level Name</label><input type="text" name="level_name" required placeholder="e.g. Entry Level" class="ctrl w-full"></div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Level Name</label>
+                    <input type="text" name="level_name" required placeholder="e.g. Entry Level" class="ctrl w-full">
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">Assign Employees</label>
                     <div class="flex flex-wrap gap-1.5 mb-2" x-show="gradeSelectedEmps.length > 0">
@@ -1391,17 +1401,17 @@
                     </div>
                     <div class="relative">
                         <input type="text" x-ref="empInput" x-model="gradeEmpSearch"
-                               @focus="gradeShowDrop=true" @blur="setTimeout(()=>{gradeShowDrop=false},200)"
-                               placeholder="Search and add employees…" class="ctrl w-full">
+                            @focus="gradeShowDrop=true" @blur="setTimeout(()=>{gradeShowDrop=false},200)"
+                            placeholder="Search and add employees…" class="ctrl w-full">
                         <div x-show="gradeShowDrop && gradeFiltered.length > 0"
-                             class="absolute top-full left-0 right-0 mt-1 border border-gray-200 rounded-lg bg-white shadow-md max-h-44 overflow-y-auto z-20">
+                            class="absolute top-full left-0 right-0 mt-1 border border-gray-200 rounded-lg bg-white shadow-md max-h-44 overflow-y-auto z-20">
                             <template x-for="opt in gradeFiltered" :key="opt.id">
                                 <div class="px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer" @mousedown.prevent="gradeAddEmp(opt)" x-text="opt.name"></div>
                             </template>
                         </div>
                     </div>
                 </div>
-                <div class="flex justify-end gap-3 pt-2">
+                <div class="flex flex-row justify-end gap-3 pt-2">
                     <button type="button" @click="showAddGradeModal=false" class="btn-outline">Cancel</button>
                     <button type="submit" class="btn-primary">Submit</button>
                 </div>

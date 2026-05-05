@@ -357,7 +357,7 @@
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                         </svg>
-                        <input type="text" placeholder="Search..." class="ctrl ctrl-select w-full" x-model="periodSearch">
+                        <input type="text" placeholder="Search..." class="ctrl w-full" x-model="periodSearch">
                     </div>
 
                     <div class="right-group">

@@ -1772,7 +1772,7 @@
             </div>
 
             <!-- Department Summary Cards - Responsive Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 mx-4 sm:mx-8">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 mx-4 sm:mx-8">
                 <template x-for="dept in departments" :key="dept.id">
                     <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
                         <p class="text-sm text-gray-500 mb-1" x-text="dept.name"></p>
@@ -1941,14 +1941,14 @@
             <!-- Employee Table - Responsive with mobile cards -->
             <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden mx-4 sm:mx-8">
                 <!-- Desktop Table -->
-                <div class="hidden md:block">
+                <div class="hidden lg:block">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
                         <div class="grid grid-cols-12 gap-4">
                             <div class="col-span-3"><span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee Name</span></div>
                             <div class="col-span-3"><span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Department</span></div>
                             <div class="col-span-3"><span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Position</span></div>
-                            <div class="col-span-1 pr-6"><span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</span></div>
-                            <div class="col-span-2 pl-12"><span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</span></div>
+                            <div class="col-span-1 lg:pr-6"><span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</span></div>
+                            <div class="col-span-2 md:pl-3 lg:pl-12"><span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</span></div>
                         </div>
                     </div>
                     <div class="divide-y divide-gray-100">
@@ -1976,14 +1976,14 @@
                                     <div class="col-span-3">
                                         <p class="text-sm font-medium text-gray-800 truncate" x-text="employee.job_title"></p>
                                     </div>
-                                    <div class="col-span-1 pr-6">
+                                    <div class="col-span-1 lg:pr-6">
                                         <span class="inline-flex px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap"
                                             :class="employee.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'"
                                             x-text="employee.status"></span>
                                     </div>
-                                    <div class="col-span-2 pl-12">
+                                    <div class="col-span-2 md:pl-3 lg:pl-12">
                                         <button @click="viewEmployee(employee)"
-                                            class="whitespace-nowrap px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">View Details</button>
+                                            class="whitespace-nowrap px-3 md:px-4 py-2 bg-blue-500 text-white text-xs md:text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">View Details</button>
                                     </div>
                                 </div>
                             </div>
@@ -2000,7 +2000,7 @@
                 </div>
 
                 <!-- Mobile Cards -->
-                <div class="md:hidden">
+                <div class="lg:hidden">
                     <template x-for="employee in pagedEmployees" :key="employee.email">
                         <div class="p-4 border-b border-gray-100 hover:bg-blue-50 transition-all duration-300">
                             <div class="flex items-start space-x-3">

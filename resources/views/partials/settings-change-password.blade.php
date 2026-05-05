@@ -19,8 +19,12 @@
     showCurrent: false,
     showNew: false,
     showConfirm: false,
+    showSuccess: {{ session('success') ? 'true' : 'false' }},
     init() {
         window.addEventListener('sidebar-toggle', e => { this.sidebarCollapsed = e.detail.collapsed; });
+        if (this.showSuccess) {
+            setTimeout(() => { this.showSuccess = false; }, 3000);
+        }
     }
 }" class="flex h-screen overflow-hidden bg-gray-50">
 
@@ -80,13 +84,6 @@
 
         <div class="p-3 sm:p-6 lg:p-6 max-w-xl">
 
-            {{-- Success banner --}}
-            @if(session('success'))
-            <div class="mb-6 flex items-center gap-3 bg-green-50 border border-green-200 text-green-800 rounded-xl px-5 py-4 text-sm font-medium">
-                <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                {{ session('success') }}
-            </div>
-            @endif
 
             <!-- Account Settings Card -->
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
@@ -116,7 +113,38 @@
                 </div>
             </div>
         </div>
-    </main>
+    </div>
+
+    <!-- Success Modal -->
+    <div x-show="showSuccess" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         style="background:rgba(0,0,0,0.35);backdrop-filter:blur(2px);"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 flex flex-col items-center text-center"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+            <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-1">Password Changed!</h3>
+            <p class="text-sm text-gray-500 mb-6">Your password has been updated successfully.</p>
+            <button @click="showSuccess = false"
+                    class="px-6 py-2.5 text-sm font-semibold text-white bg-green-500 rounded-xl hover:bg-green-600 transition-colors duration-200">
+                Got it
+            </button>
+        </div>
+    </div>
 
     <!-- Change Password Modal -->
     <div x-show="showModal" x-cloak

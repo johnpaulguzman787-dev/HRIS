@@ -386,11 +386,11 @@
             <div class="rcard-head">
                 <div class="rcard-left">
                     <div class="emp-av" style="background:{{ $req->type === 'overtime' ? '#ef4444' : ($req->type === 'shift' ? '#8b5cf6' : '#3b82f6') }};">
-                        {{ strtoupper(substr($req->employee->fname ?? 'M', 0, 1) . substr($req->employee->lname ?? 'E', 0, 1)) }}
+                        {{ strtoupper(substr($req->employee?->fname ?? 'M', 0, 1) . substr($req->employee?->lname ?? 'E', 0, 1)) }}
                     </div>
                     <div>
-                        <div class="emp-name">{{ trim(($req->employee->fname ?? '') . ' ' . ($req->employee->lname ?? '')) }}</div>
-                        <div class="emp-dept">{{ $req->employee->department->name ?? '—' }}</div>
+                        <div class="emp-name">{{ trim(($req->employee?->fname ?? '') . ' ' . ($req->employee?->lname ?? '')) }}</div>
+                        <div class="emp-dept">{{ $req->employee?->department?->name ?? '—' }}</div>
                     </div>
                 </div>
                 <div class="rcard-right">
@@ -455,7 +455,7 @@
                 </div></div>
             </div>
             @php
-                $empName    = trim(($req->employee->fname ?? '') . ' ' . ($req->employee->lname ?? ''));
+                $empName    = trim(($req->employee?->fname ?? '') . ' ' . ($req->employee?->lname ?? ''));
                 $approveUrl = match($req->type) {
                     'overtime'   => '/admin/requests/overtime/'   . $req->id . '/approve',
                     'shift'      => '/admin/requests/shift/'      . $req->id . '/approve',

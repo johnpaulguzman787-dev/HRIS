@@ -36,9 +36,9 @@
 
         /* ── Summary Cards (mobile stack) ── */
         .cards-wrap {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
-            flex-wrap: wrap;
         }
         .summary-card {
             background:#fff; border-radius:10px; border:1px solid #e5e7eb;
@@ -223,7 +223,7 @@
         /* ── Mobile responsiveness ── */
         @media (max-width: 768px) {
             .cards-wrap {
-                flex-direction: column;
+                grid-template-columns: 1fr;
                 gap: 12px;
             }
             .summary-card {

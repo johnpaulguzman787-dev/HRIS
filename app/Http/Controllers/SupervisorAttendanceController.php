@@ -914,6 +914,29 @@ class SupervisorAttendanceController extends Controller
         $authEmployee = Employee::where('user_id', Auth::id())->first();
         $authDeptId   = $authEmployee?->department_id;
 
+        if ($request->filled('employee_id')) {
+            $empShift = EmployeeShift::with('shift')
+                ->where('employee_id', $request->employee_id)
+                ->where('is_active', true)
+                ->latest('effective_date')
+                ->first();
+
+            return response()->json([
+                'shift' => $empShift ? [
+                    'id'             => $empShift->id,
+                    'shift_id'       => $empShift->shift_id,
+                    'shift_name'     => $empShift->shift?->name,
+                    'schedule'       => $empShift->shift
+                        ? Carbon::parse($empShift->shift->start_time)->format('g:i A') . ' – ' . Carbon::parse($empShift->shift->end_time)->format('g:i A')
+                        : null,
+                    'work_setup'     => $empShift->work_setup,
+                    'effective_date' => $empShift->effective_date,
+                    'end_date'       => $empShift->end_date,
+                    'days_off'       => $empShift->days_off,
+                ] : null
+            ]);
+        }
+
         $employees = Employee::where('department_id', $authDeptId)
             ->where('employment_status', 'Active')
             ->whereHas('user', fn($q) => $q->whereNotNull('email_verified_at'))

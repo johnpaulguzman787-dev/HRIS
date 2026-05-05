@@ -337,7 +337,7 @@
                             $jsApprover   = addslashes($approverName);
                             $jsApprovedAt = $req->approved_at ? \Carbon\Carbon::parse($req->approved_at)->format('F j, Y') : '—';
                             $jsStatus     = $req->status;
-                            $jsDept       = addslashes(($req->employee->department->name ?? '') . ' - ' . trim(($req->employee->fname ?? '') . ' ' . ($req->employee->lname ?? '')));
+                            $jsDept       = addslashes(($req->employee?->department?->name ?? '') . ' - ' . trim(($req->employee?->fname ?? '') . ' ' . ($req->employee?->lname ?? '')));
                         @endphp
                         <tr>
                             <td class="font-semibold text-gray-700">{{ $req->ref_no }}</td>
@@ -441,7 +441,7 @@
                     $jsApprover   = addslashes($approverName);
                     $jsApprovedAt = $req->approved_at ? \Carbon\Carbon::parse($req->approved_at)->format('F j, Y') : '—';
                     $jsStatus     = $req->status;
-                    $jsDept       = addslashes(($req->employee->department->name ?? '') . ' - ' . trim(($req->employee->fname ?? '') . ' ' . ($req->employee->lname ?? '')));
+                    $jsDept       = addslashes(($req->employee?->department?->name ?? '') . ' - ' . trim(($req->employee?->fname ?? '') . ' ' . ($req->employee?->lname ?? '')));
                 @endphp
                 <div class="req-card">
                     <div class="req-card-header">

@@ -1054,6 +1054,7 @@ public function getLeaveRequest($id)
                     'id'               => $r->id,
                     'ref_no'           => $r->ref_no,
                     'status'           => $r->status,
+                    'employee'         => $r->employee,
                     'ot_date'          => $r->ot_date,
                     'ot_start_time'    => $r->ot_start_time,
                     'ot_end_time'      => $r->ot_end_time,
@@ -1080,6 +1081,7 @@ public function getLeaveRequest($id)
                     'id'               => $r->id,
                     'ref_no'           => $r->ref_no,
                     'status'           => $r->status,
+                    'employee'         => $r->employee,
                     'current_shift'    => $r->currentShift,
                     'requested_shift'  => $r->requestedShift,
                     'effective_from'   => $r->effective_from,
@@ -2113,7 +2115,7 @@ public function getLeaveRequest($id)
             'approved_at'         => now(),
         ]);
 
-        $this->applyAdjustment($aar);
+        $this->applyAttendanceAdjustment($aar);
 
         return response()->json(['message' => 'Attendance adjustment applied successfully.', 'ref_no' => $refNo]);
     }
@@ -2172,9 +2174,9 @@ public function getLeaveRequest($id)
     private function applyAttendanceAdjustment(AttendanceAdjustmentRequest $aar): void
     {
         $date     = $aar->attendance_date->toDateString();
-        $clockIn  = Carbon::createFromFormat('Y-m-d H:i', "$date {$aar->requested_clock_in}");
+        $clockIn  = Carbon::parse("$date {$aar->requested_clock_in}");
         $clockOut = $aar->requested_clock_out
-            ? Carbon::createFromFormat('Y-m-d H:i', "$date {$aar->requested_clock_out}")
+            ? Carbon::parse("$date {$aar->requested_clock_out}")
             : null;
 
         $log = $aar->attendanceLog ?? AttendanceLog::where('employee_id', $aar->employee_id)

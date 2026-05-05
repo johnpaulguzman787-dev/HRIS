@@ -104,16 +104,16 @@ class AdminPayrollController extends Controller
     public function periodPayslips($id)
     {
         $period   = PayrollPeriod::findOrFail($id);
-        $payslips = Payslip::with('employee.department', 'employee.jobTitle')
+        $payslips = Payslip::with(['employee' => fn($q) => $q->withTrashed()->with(['department', 'jobTitle'])])
             ->where('payroll_period_id', $id)
             ->get();
 
         $data = $payslips->map(fn($p) => [
             'id'             => $p->id,
             'employeeId'     => $p->employee_id,
-            'employeeName'   => $p->employee->full_name,
-            'jobTitle'       => $p->employee->jobTitle->title ?? '—',
-            'department'     => $p->employee->department->name ?? '—',
+            'employeeName'   => $p->employee?->full_name ?? '—',
+            'jobTitle'       => $p->employee?->jobTitle?->title ?? '—',
+            'department'     => $p->employee?->department?->name ?? '—',
             'basicPay'       => (float) $p->basic_pay,
             'otPay'          => (float) $p->ot_pay,
             'benefits'        => (float) $p->benefits_total,
@@ -150,7 +150,7 @@ class AdminPayrollController extends Controller
         $allTotalDeductions = 0;
 
         if ($latestPeriod) {
-            $query = Payslip::with('employee.department', 'employee.jobTitle')
+            $query = Payslip::with(['employee' => fn($q) => $q->withTrashed()->with(['department', 'jobTitle'])])
                 ->where('payroll_period_id', $latestPeriod->id)
                 ->where('status', 'Released');
             if ($authEmployee) {
@@ -163,9 +163,9 @@ class AdminPayrollController extends Controller
             $allPayslips = $slips->map(fn($p) => [
                 'id'             => $p->id,
                 'employeeId'     => $p->employee_id,
-                'employeeName'   => $p->employee->full_name,
-                'jobTitle'       => $p->employee->jobTitle->title ?? '—',
-                'department'     => $p->employee->department->name ?? '—',
+                'employeeName'   => $p->employee?->full_name ?? '—',
+                'jobTitle'       => $p->employee?->jobTitle?->title ?? '—',
+                'department'     => $p->employee?->department?->name ?? '—',
                 'basicPay'       => (float) $p->basic_pay,
                 'otPay'          => (float) $p->ot_pay,
                 'benefits'       => (float) $p->benefits_total,
@@ -236,7 +236,7 @@ class AdminPayrollController extends Controller
     public function releasedPeriodPayslips($id)
     {
         $period   = PayrollPeriod::findOrFail($id);
-        $payslips = Payslip::with('employee.department', 'employee.jobTitle')
+        $payslips = Payslip::with(['employee' => fn($q) => $q->withTrashed()->with(['department', 'jobTitle'])])
             ->where('payroll_period_id', $id)
             ->where('status', 'Released')
             ->get();
@@ -244,9 +244,9 @@ class AdminPayrollController extends Controller
         $data = $payslips->map(fn($p) => [
             'id'             => $p->id,
             'employeeId'     => $p->employee_id,
-            'employeeName'   => $p->employee->full_name,
-            'jobTitle'       => $p->employee->jobTitle->title ?? '—',
-            'department'     => $p->employee->department->name ?? '—',
+            'employeeName'   => $p->employee?->full_name ?? '—',
+            'jobTitle'       => $p->employee?->jobTitle?->title ?? '—',
+            'department'     => $p->employee?->department?->name ?? '—',
             'basicPay'       => (float) $p->basic_pay,
             'otPay'          => (float) $p->ot_pay,
             'benefits'        => (float) $p->benefits_total,

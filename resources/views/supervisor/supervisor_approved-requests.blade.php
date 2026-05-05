@@ -247,8 +247,8 @@
                     <tbody>
                         @forelse($requests ?? [] as $req)
                         @php
-                            $empName  = trim(($req->employee->fname ?? '') . ' ' . ($req->employee->lname ?? ''));
-                            $deptName = $req->employee->department->name ?? '—';
+                            $empName  = trim(($req->employee?->fname ?? '') . ' ' . ($req->employee?->lname ?? ''));
+                            $deptName = $req->employee?->department?->name ?? '—';
                             $approverName = '';
                             if ($req->type === 'leave' && isset($req->approver)) {
                                 $approverName = trim(($req->approver->fname ?? '') . ' ' . ($req->approver->lname ?? ''));

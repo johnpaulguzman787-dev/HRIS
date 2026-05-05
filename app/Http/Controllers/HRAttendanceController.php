@@ -2132,9 +2132,9 @@ class HRAttendanceController extends Controller
     private function applyAdjustment(AttendanceAdjustmentRequest $aar): void
     {
         $date     = $aar->attendance_date->toDateString();
-        $clockIn  = Carbon::createFromFormat('Y-m-d H:i', "$date {$aar->requested_clock_in}");
+        $clockIn  = Carbon::parse("$date {$aar->requested_clock_in}");
         $clockOut = $aar->requested_clock_out
-            ? Carbon::createFromFormat('Y-m-d H:i', "$date {$aar->requested_clock_out}") : null;
+            ? Carbon::parse("$date {$aar->requested_clock_out}") : null;
 
         $log = $aar->attendanceLog ?? AttendanceLog::where('employee_id', $aar->employee_id)
             ->whereDate('attendance_date', $date)->first();

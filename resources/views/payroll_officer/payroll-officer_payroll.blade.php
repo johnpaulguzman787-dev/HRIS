@@ -19,7 +19,8 @@
             --border: #e5e7eb;
         }
 
-        .tabs-wrapper {display: flex; border-bottom: 2px solid var(--border); margin-bottom:20px ;}
+        .tabs-wrapper { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;}
+        .tab-wrapper::-webkit-scrollbar { display: none; }
         .tab-btn {
             padding: 10px 16px;
             font-size: 13px;
@@ -70,13 +71,13 @@
         .multiplier-badge { background: #fff8e1; color: #f57c00; padding: 2px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600}
 
         /* ── Tables ── */
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table thead tr { background: #f8fafc; border-bottom: 1px solid #e5e7eb; }
-        .data-table thead th { text-align: left; padding: 11px 20px; font-size: 0.75rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em}
-        .data-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
-        .data-table tbody tr:hover { background: #f8faff; }
-        .data-table tbody td { padding: 14px 20px; font-size: 0.875rem; color: #374151; }
-        .data-table tbody tr.row-active { background: #eff6ff; }
+        .data-table { width:100%; border-collapse:collapse; min-width:600px; }
+        .data-table thead tr { border-bottom:1px solid #e5e7eb; }
+        .data-table thead th { text-align:left; padding:13px 16px; font-size:0.82rem; font-weight:700; color:#374151  }
+        .data-table tbody tr { border-bottom:1px solid #f1f5f9; transition:background 0.14s ease; cursor:pointer  }
+        .data-table tbody tr:hover { background:#f8faff; }
+        .data-table tbody tr.row-active { background:#eff6ff; }
+        .data-table tbody td { padding:15px 16px; font-size:0.875rem; color:#374151; }
         /* Period view table — lighter header */
         .pv-table { width: 100%; border-collapse: collapse; }
         .pv-table thead tr { border-bottom: 1px solid #e5e7eb; }
@@ -170,11 +171,48 @@
         font-size: 0.8rem;
         padding: 8px 12px;
     }
+
+    .period-title-wrapper {
+        height: 70px;           /* fixed height – never changes */
+        align-items: center;
+    }
+    /* Allow the title to scroll horizontally if too long (no wrapping) */
+    .period-title-scroll {
+        max-width: 60%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    .period-title-scroll h2 {
+        white-space: nowrap;    /* force one line */
+        font-size: 1.1rem;      /* slightly smaller on mobile */
+    }
+
+    .data-table thead th,
+    .data-table tbody td {
+        padding: 10px 12px;
+        font-size: 0.75rem;
+    }
 }
 }
 
 @media (max-width: 768px) {
 
+}
+
+@media (max-width: 480px) {
+    .flex.flex-wrap-nowrap.items-center.justify-between.gap-3 {
+        flex-wrap: nowrap !important;
+        gap: 0.5rem;
+    }
+    .flex.flex-wrap-nowrap.items-center.justify-between.gap-3 h3 {
+        font-size: 0.9rem;
+    }
+    .flex.flex-wrap-nowrap.items-center.justify-between.gap-3 select,
+    .flex.flex-wrap-nowrap.items-center.justify-between.gap-3 button {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+    }
 }
     </style>
 </head>
@@ -366,7 +404,7 @@
                 </div>
 
                 {{-- Table --}}
-                <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-4">
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                     <table class="data-table">
                         <thead>
@@ -478,19 +516,25 @@
 
                     {{-- ── Payroll Items ── --}}
                     <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-base font-bold text-gray-800">Payroll Items</h3>
-                            <div class="flex items-center gap-3">
-                                <select class="ctrl ctrl-select w-28" x-model="itemStatusFilter"><option value="">Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+                        <div class="flex flex-wrap-nowrap items-center justify-between gap-3 mb-4">
+                            <h3 class="text-base font-bold text-gray-800 flex-shrink-0">Payroll Items</h3>
+                            <div class="flex flex-nowrap items-center gap-2">
+                                <select class="ctrl ctrl-select" x-model="itemStatusFilter" style="min-width:100px; width:auto;">
+                                    <option value="">Status</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
                                 @canDo('Payroll', 'create')
-                                <button class="btn-primary" @click="showAddItemModal=true">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                <button class="btn-primary flex-shrink-0 whitespace-nowrap" @click="showAddItemModal=true">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
                                     Add Payroll Item
                                 </button>
                                 @endcanDo
                             </div>
                         </div>
-                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-4">
                             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                                 <table class="data-table">
                                     <thead>
@@ -685,41 +729,54 @@
                                 </svg>
                             </button>
                         </div>
-                        <div class="space-y-1.5 text-xs max-h-36 overflow-y-auto pr-1">
-                            <div class="flex justify-between items-center py-0.5">
+                        <div class="space-y-2 text-xs max-h-36 overflow-y-auto pr-1">
+                            <div class="flex justify-between items-center gap-2">
                                 <span class="text-gray-500">₱0 – ₱{{ number_format($contrib['wtax_bracket_1']) }}</span>
-                                <span class="font-medium text-gray-700">₱0.00 + 0%</span>
+                                <span class="font-medium text-gray-700">0%</span>
                             </div>
-                            <div class="flex justify-between items-center py-0.5">
+                            <div class="flex justify-between items-start gap-5">
                                 <span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_1']) }} – ₱{{ number_format($contrib['wtax_bracket_2']) }}</span>
-                                <span class="font-medium text-gray-700">{{ $contrib['wtax_rate_1'] }}% (excess over ₱{{ number_format($contrib['wtax_bracket_1']) }})</span>
+                                <div class="text-right">
+                                    <div class="font-medium text-gray-700">{{ $contrib['wtax_rate_1'] }}%</div>
+                                    <div class="text-[0.65rem] text-gray-400 whitespace-nowrap">excess over ₱{{ number_format($contrib['wtax_bracket_1']) }}</div>
+                                </div>
                             </div>
-                            <div class="flex justify-between items-center py-0.5">
+                            <div class="flex justify-between items-start gap-5">
                                 <span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_2']) }} – ₱{{ number_format($contrib['wtax_bracket_3']) }}</span>
-                                <span class="font-medium text-gray-700">{{ $contrib['wtax_rate_2'] }}% (excess over ₱{{ number_format($contrib['wtax_bracket_2']) }})</span>
+                                <div class="text-right">
+                                    <div class="font-medium text-gray-700">{{ $contrib['wtax_rate_2'] }}%</div>
+                                    <div class="text-[0.65rem] text-gray-400 whitespace-nowrap">excess over ₱{{ number_format($contrib['wtax_bracket_2']) }}</div>
+                                </div>
                             </div>
-                            <div class="flex justify-between items-center py-0.5">
+                            <div class="flex justify-between items-start gap-3">
                                 <span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_3']) }} – ₱{{ number_format($contrib['wtax_bracket_4']) }}</span>
-                                <span class="font-medium text-gray-700">{{ $contrib['wtax_rate_3'] }}% (excess over ₱{{ number_format($contrib['wtax_bracket_3']) }})</span>
+                                <div class="text-right">
+                                    <div class="font-medium text-gray-700">{{ $contrib['wtax_rate_3'] }}%</div>
+                                    <div class="text-[0.65rem] text-gray-400 whitespace-nowrap">excess over ₱{{ number_format($contrib['wtax_bracket_3']) }}</div>
+                                </div>
                             </div>
-                            <div class="flex justify-between items-center py-0.5">
+                            <div class="flex justify-between items-start gap-3">
                                 <span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_4']) }} – ₱{{ number_format($contrib['wtax_bracket_5']) }}</span>
-                                <span class="font-medium text-gray-700">{{ $contrib['wtax_rate_4'] }}% (excess over ₱{{ number_format($contrib['wtax_bracket_4']) }})
-                                </span>
+                                <div class="text-right">
+                                    <div class="font-medium text-gray-700">{{ $contrib['wtax_rate_4'] }}%</div>
+                                    <div class="text-[0.65rem] text-gray-400 whitespace-nowrap">excess over ₱{{ number_format($contrib['wtax_bracket_4']) }}</div>
+                                </div>
                             </div>
-                            <div class="flex justify-between items-center py-0.5">
+                            <div class="flex justify-between items-start gap-3">
                                 <span class="text-gray-500">₱{{ number_format($contrib['wtax_bracket_5']) }}+</span>
-                                <span class="font-medium text-gray-700">{{ $contrib['wtax_rate_5'] }}% (excess over ₱{{ number_format($contrib['wtax_bracket_5']) }})</span>
+                                <div class="text-right">
+                                    <div class="font-medium text-gray-700">{{ $contrib['wtax_rate_5'] }}%</div>
+                                    <div class="text-[0.65rem] text-gray-400 whitespace-nowrap">excess over ₱{{ number_format($contrib['wtax_bracket_5']) }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 {{-- Contribution Rates by Salary Grade Table --}}
                 <div>
                     <h3 class="text-base font-bold text-gray-800 mb-4">Contribution Rates by Salary Grade</h3>
-                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto mb-4">
                         <table class="data-table" style="min-width:900px">
                             <thead>
                                 <tr>
@@ -826,8 +883,10 @@
                 </div>
 
                 {{-- Title + Submit Button --}}
-                <div class="px-8 flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800" x-text="viewPeriod.name"></h2>
+                <div class="period-title-wrapper flex items-center justify-between mb-6">
+                    <div class="period-title-scroll overflow-x-auto">
+                        <h2 class="text-2xl font-bold text-gray-800 whitespace-nowrap" x-text="viewPeriod.name"></h2>
+                    </div>
                     <div class="flex items-center gap-2">
                         <template x-if="viewPeriod.status === 'Pending'">
                             <button class="btn-primary"
@@ -850,7 +909,9 @@
                                     :disabled="pvPayslips.length === 0"
                                     :style="pvPayslips.length === 0 ? 'opacity:0.45;cursor:not-allowed;' : ''"
                                     class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg border-none cursor-pointer transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 16v4a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 8.414V12M12 10v6m0 0l-3-3m3 3l3-3"/></svg>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 16v4a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 8.414V12M12 10v6m0 0l-3-3m3 3l3-3"/>
+                                </svg>
                                 Export All PDF
                             </button>
                         </template>
@@ -941,10 +1002,10 @@
                 <div class="flex flex-col md:flex-row gap-4 items-start">
 
                     {{-- Employee Table --}}
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-0 w-full">
                         <h3 class="text-base font-bold text-gray-800 mb-3">Employee Payroll</h3>
                         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
-                        <table class="pv-table w-full">
+                        <table class="data-table min-w-[600px]">
                                 <thead>
                                     <tr>
                                         <th>Employee</th>

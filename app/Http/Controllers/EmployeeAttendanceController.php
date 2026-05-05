@@ -820,7 +820,8 @@ class EmployeeAttendanceController extends Controller
         }
 
         if ($filterType === 'all' || $filterType === 'overtime') {
-            $q = OvertimeRequest::where('employee_id', $employee->id)
+            $q = OvertimeRequest::with(['employee.department'])
+                ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'supervisor_approved']);
             if ($search) $q->where('ref_no', 'like', "%$search%");
             foreach ($q->get() as $r) {
@@ -829,6 +830,7 @@ class EmployeeAttendanceController extends Controller
                     'id'               => $r->id,
                     'ref_no'           => $r->ref_no,
                     'status'           => $r->status,
+                    'employee'         => $r->employee,
                     'ot_date'          => $r->ot_date,
                     'ot_start_time'    => $r->ot_start_time,
                     'ot_end_time'      => $r->ot_end_time,
@@ -844,7 +846,7 @@ class EmployeeAttendanceController extends Controller
         }
 
         if ($filterType === 'all' || $filterType === 'shift') {
-            $q = ShiftChangeRequest::with(['currentShift', 'requestedShift'])
+            $q = ShiftChangeRequest::with(['employee.department', 'currentShift', 'requestedShift'])
                 ->where('employee_id', $employee->id)
                 ->whereIn('status', ['approved', 'rejected', 'supervisor_approved']);
             if ($search) $q->where('ref_no', 'like', "%$search%");
@@ -854,6 +856,7 @@ class EmployeeAttendanceController extends Controller
                     'id'               => $r->id,
                     'ref_no'           => $r->ref_no,
                     'status'           => $r->status,
+                    'employee'         => $r->employee,
                     'current_shift'    => $r->currentShift,
                     'requested_shift'  => $r->requestedShift,
                     'effective_from'   => $r->effective_from,

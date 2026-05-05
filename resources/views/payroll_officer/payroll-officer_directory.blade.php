@@ -70,7 +70,7 @@
     async loadDocuments(employeeId) {
         this.isLoadingDocs = true;
         try {
-            const res = await fetch(`/hr/employees/${employeeId}/documents`, {
+            const res = await fetch(`/payroll_officer/employees/${employeeId}/documents`, {
                 headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') }
             });
             const data = await res.json();
@@ -444,7 +444,7 @@
                                         </template>
                                         <div class="space-y-2">
                                             <template x-for="doc in employeeDocuments" :key="doc.id">
-                                                <a :href="`/hr/employees/documents/${doc.id}/download`" target="_blank"
+                                                <a :href="`/payroll_officer/employees/documents/${doc.id}/download`" target="_blank"
                                                     class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all group">
                                                     <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                                                         :class="doc.file_type === 'pdf' ? 'bg-red-100' : 'bg-blue-100'">

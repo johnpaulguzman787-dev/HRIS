@@ -456,7 +456,9 @@
         setTimeout(() => { document.body.style.overflow = 'hidden'; }, 100);
     },
 
-    enableEditMode() { this.isEditMode = true; },
+    _originalEmployee: null,
+    enableEditMode() { this._originalEmployee = { ...this.selectedEmployee }; this.isEditMode = true; },
+    cancelEdit() { if (this._originalEmployee) Object.assign(this.selectedEmployee, this._originalEmployee); this.isEditMode = false; },
 
     async saveChanges() {
         if (!this.selectedEmployee.contact_number || this.selectedEmployee.contact_number.length < 10) {
@@ -1748,7 +1750,7 @@
                             Edit
                         </button>
                         @endcanDo
-                        <button x-show="isEditMode" @click="isEditMode = false"
+                        <button x-show="isEditMode" @click="cancelEdit()"
                             class="px-7 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-all">
                             Cancel
                         </button>

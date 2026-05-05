@@ -238,7 +238,7 @@
 
             {{-- ── STAT CARDS ── --}}
             {{-- Mobile: 2-col grid | Desktop: 4-col grid --}}
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5 mb-4 lg:mb-5">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-5 mb-4 lg:mb-5">
                 <div class="stat-card bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.05s; border:1px solid #e5e7eb;">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Total Employees</p>
                     <p class="text-3xl lg:text-5xl font-bold" style="color:#3b82f6;">{{ $totalEmployees }}</p>
@@ -265,7 +265,7 @@
 
             {{-- ── MAIN GRID ── --}}
             {{-- Mobile: single column stacked | Desktop: 3-col grid --}}
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
 
                 {{-- ── LEFT COLUMN ── --}}
                 <div class="space-y-4 lg:space-y-5">
@@ -286,7 +286,7 @@
                         </div>
 
                         {{-- Mobile: vertical stacked big stat boxes (as in mockup) --}}
-                        <div class="space-y-2 mb-4 lg:hidden">
+                        <div class="space-y-2 mb-4 md:hidden">
                             <div class="rounded-xl p-4 text-center" style="background:#dcfce7;">
                                 <p id="stat-present-mobile" class="text-2xl font-bold" style="color:#16a34a;">{{ $attendanceSummary['present'] }}</p>
                                 <p class="text-xs font-bold uppercase mt-1" style="color:#16a34a;">Present</p>
@@ -306,7 +306,7 @@
                         </div>
 
                         {{-- Desktop: 4-col grid --}}
-                        <div class="hidden lg:grid grid-cols-4 gap-2 mb-5">
+                        <div class="hidden md:grid grid-cols-4 gap-2 mb-5">
                             <div class="stat-box rounded-xl p-2 text-center" style="background:#dcfce7;">
                                 <p id="stat-present-desktop" class="text-base font-bold" style="color:#16a34a;">{{ $attendanceSummary['present'] }}</p>
                                 <p class="text-xs font-semibold uppercase" style="color:#16a34a;">Present</p>
@@ -440,7 +440,7 @@
 
                 {{-- ── RIGHT COLUMN: CALENDAR ── --}}
                 <div x-data="calendarWidget({{ json_encode($allHolidays) }})"
-                     class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.4s; border:1px solid #e5e7eb;">
+                     class="bg-white rounded-xl p-4 lg:p-6 card-anim md:col-span-2 lg:col-span-1" style="animation-delay:0.4s; border:1px solid #e5e7eb;">
                     <div class="flex items-center justify-between mb-4">
                         <button @click="prevMonth()" class="cal-nav-btn p-1.5 hover:bg-gray-100 rounded-lg">
                             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

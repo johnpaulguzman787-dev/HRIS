@@ -505,12 +505,11 @@
                             @endcanDo
                         </div>
                     </div>
-                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Benefit Item</th><th>Type</th><th>Amount</th><th>Taxable</th><th>Frequency</th><th>Eligibility</th><th>Status</th><th></th>
+                                        <th>Benefit Item</th><th>Type</th><th>Amount</th><th>Tax Type</th><th>Frequency</th><th>Eligibility</th><th>Status</th><th></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -523,7 +522,7 @@
                                         <td><span class="px-3 py-1 rounded-full text-xs font-medium badge-allowance">{{ $benefit->type }}</span></td>
                                         <td class="text-gray-600">₱{{ number_format($benefit->amount, 2) }}</td>
                                         <td>
-                                            <span class="px-3 py-1 rounded-full text-xs font-medium {{ strtolower($benefit->tax)==='non-taxable' ? 'badge-nontaxable' : 'badge-taxable' }}">
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap {{ strtolower($benefit->tax)==='non-taxable' ? 'badge-nontaxable' : 'badge-taxable' }}">
                                                 {{ $benefit->tax }}
                                             </span>
                                         </td>
@@ -551,7 +550,6 @@
                                     @endforelse
                                 </tbody>
                             </table>
-                        </div>
                     </div>
                 </div>
             </div>

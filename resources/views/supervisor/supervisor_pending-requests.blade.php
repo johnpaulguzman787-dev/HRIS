@@ -620,8 +620,8 @@
         {{-- REQUEST CARDS --}}
         @forelse($requests as $req)
         @php
-            $empName  = trim(($req->employee->fname ?? '') . ' ' . ($req->employee->lname ?? ''));
-            $initials = strtoupper(substr($req->employee->fname ?? 'U', 0, 1) . substr($req->employee->lname ?? 'K', 0, 1));
+            $empName  = trim(($req->employee?->fname ?? '') . ' ' . ($req->employee?->lname ?? ''));
+            $initials = strtoupper(substr($req->employee?->fname ?? 'U', 0, 1) . substr($req->employee?->lname ?? 'K', 0, 1));
             $approveUrl = $req->type === 'adjustment'
                 ? '/supervisor/requests/adjustment/' . $req->id . '/approve'
                 : '/supervisor/requests/' . $req->id . '/approve?type=' . $req->type;
@@ -635,7 +635,7 @@
                     <div class="emp-av" style="background:{{ $req->type === 'overtime' ? '#ef4444' : ($req->type === 'shift' ? '#8b5cf6' : '#3b82f6') }};">{{ $initials }}</div>
                     <div>
                         <div class="emp-name">{{ $empName }}</div>
-                        <div class="emp-dept">{{ $req->employee->department->name ?? '—' }} · {{ $req->employee->jobTitle->title ?? '—' }}</div>
+                        <div class="emp-dept">{{ $req->employee?->department?->name ?? '—' }} · {{ $req->employee?->jobTitle?->title ?? '—' }}</div>
                     </div>
                 </div>
                 <div class="rcard-right">

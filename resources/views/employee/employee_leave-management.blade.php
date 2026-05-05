@@ -187,7 +187,35 @@
         }
     </style>
 </head>
-<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+<body class="bg-gray-50" x-data="{
+    mobileMenuOpen: false,
+    sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+    showFileLeave: false,
+    showLeaveDetails: false,
+    selectedLeave: {},
+    leaveError: '',
+    cancelling: false,
+    async openLeaveDetails(id) {
+        this.leaveError = '';
+        const res = await fetch(`/employee/leave/${id}`, {
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+        });
+        const data = await res.json();
+        if (res.ok) { this.selectedLeave = data; this.showLeaveDetails = true; }
+        else { this.leaveError = data.message ?? 'Failed to load leave details.'; }
+    },
+    async cancelLeave(id) {
+        if (!confirm('Are you sure you want to cancel this leave request?')) return;
+        this.cancelling = true;
+        const res = await fetch(`/employee/leave/${id}/cancel`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+        });
+        this.cancelling = false;
+        if (res.ok) { window.location.reload(); }
+        else { this.leaveError = 'Failed to cancel leave request.'; }
+    }
+}"
      x-init="window.addEventListener('sidebar-toggle', e => { sidebarCollapsed = e.detail.collapsed })">
 
 {{-- ══════════ DESKTOP SIDEBAR ══════════ --}}
@@ -256,8 +284,8 @@
             <div class="leave-card">
                 <span class="leave-badge" style="background:#dbeafe;color:#1d4ed8;">{{ $lt->code }}</span>
                 <div class="leave-card-label">{{ $lt->name }}</div>
-                <div class="leave-card-value">{{ $myLeaveStats[$key.'_used'] ?? 0 }}</div>
-                <div class="leave-card-sub">{{ $myLeaveStats[$key.'_remaining'] ?? 0 }} remaining</div>
+                <div class="leave-card-value">{{ $myLeaveStats[$key.'_remaining'] ?? 0 }}</div>
+                <div class="leave-card-sub">{{ $myLeaveStats[$key.'_used'] ?? 0 }} used of {{ $myLeaveStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
             </div>
             @endforeach
             <div class="leave-card">
@@ -300,7 +328,9 @@
                 @forelse($myLeaveRequests as $req)
                 <tr>
                     <td style="font-weight:600;color:#6b7280;">{{ $req->ref_no }}</td>
-                    <td><span style="background:#dbeafe;color:#1d4ed8;padding:3px 11px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;">{{ $req->leaveType->name ?? '—' }}</span></td>
+                    <td>
+                        <span style="background:#dbeafe;color:#1d4ed8;padding:3px 11px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;white-space:nowrap;" title="{{ $req->leaveType->name ?? '' }}">{{ $req->leaveType->code ?? $req->leaveType->name ?? '—' }}</span>
+                    </td>
                     <td>{{ $req->created_at->format('m/d/Y') }}</td>
                     <td>{{ $req->start_date->format('m/d/Y') }}</td>
                     <td>{{ $req->end_date->format('m/d/Y') }}</td>
@@ -470,32 +500,7 @@
         </div>
 
         {{-- Leave Details Modal --}}
-        <div x-show="showLeaveDetails" class="modal-overlay" x-cloak @click.self="showLeaveDetails = false"
-             x-data="{
-                 selectedLeave: {},
-                 leaveError: '',
-                 cancelling: false,
-                 async openLeaveDetails(id) {
-                     this.leaveError = '';
-                     const res = await fetch(`/employee/leave/${id}`, {
-                         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
-                     });
-                     const data = await res.json();
-                     if (res.ok) { this.selectedLeave = data; this.showLeaveDetails = true; }
-                     else { this.leaveError = data.message ?? 'Failed to load leave details.'; }
-                 },
-                 async cancelLeave(id) {
-                     if (!confirm('Are you sure you want to cancel this leave request?')) return;
-                     this.cancelling = true;
-                     const res = await fetch(`/employee/leave/${id}/cancel`, {
-                         method: 'POST',
-                         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
-                     });
-                     this.cancelling = false;
-                     if (res.ok) { window.location.reload(); }
-                     else { this.leaveError = 'Failed to cancel leave request.'; }
-                 }
-             }">
+        <div x-show="showLeaveDetails" class="modal-overlay" x-cloak @click.self="showLeaveDetails = false">
             <div class="modal-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
                     <div class="modal-title">Leave Details</div>
@@ -574,16 +579,6 @@
         });
     })();
     
-    // Alpine store for shared state
-    document.addEventListener('alpine:init', () => {
-        Alpine.store('leaveModal', {
-            showFileLeave: false,
-            showLeaveDetails: false,
-            selectedLeave: {},
-            leaveError: '',
-            cancelling: false
-        });
-    });
 </script>
 </body>
 </html>

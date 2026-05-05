@@ -426,6 +426,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/payroll_officer/dashboard', [\App\Http\Controllers\PayrollOfficerDashboardController::class, 'index'])->name('payroll_officer.dashboard');
         Route::get('/payroll_officer/profile',   [\App\Http\Controllers\PayrollOfficerProfileController::class, 'profile'])->name('payroll_officer.profile');
         Route::get('/payroll_officer/employees/directory', [\App\Http\Controllers\ViewOnlyDirectoryController::class, 'payroll'])->name('payroll_officer.employees.directory');
+        Route::get('/payroll_officer/employees/{id}/documents', [\App\Http\Controllers\HREmployeeController::class, 'getDocuments'])->name('payroll_officer.employees.documents.index')->whereNumber('id');
+        Route::get('/payroll_officer/employees/documents/{docId}/download', [\App\Http\Controllers\HREmployeeController::class, 'downloadDocument'])->name('payroll_officer.employees.documents.download');
         Route::post('/payroll_officer/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('payroll_officer.announcements.store');
 
         // Payroll officer settings
@@ -499,6 +501,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/finance_officer/dashboard', [\App\Http\Controllers\FinanceOfficerDashboardController::class, 'index'])->name('finance_officer.dashboard');
         Route::get('/finance_officer/profile',   [\App\Http\Controllers\FinanceOfficerProfileController::class, 'profile'])->name('finance_officer.profile');
         Route::get('/finance_officer/employees/directory', [\App\Http\Controllers\ViewOnlyDirectoryController::class, 'finance'])->name('finance_officer.employees.directory');
+        Route::get('/finance_officer/employees/{id}/documents', [\App\Http\Controllers\HREmployeeController::class, 'getDocuments'])->name('finance_officer.employees.documents.index')->whereNumber('id');
+        Route::get('/finance_officer/employees/documents/{docId}/download', [\App\Http\Controllers\HREmployeeController::class, 'downloadDocument'])->name('finance_officer.employees.documents.download');
         Route::post('/finance_officer/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('finance_officer.announcements.store');
 
         // Finance officer settings

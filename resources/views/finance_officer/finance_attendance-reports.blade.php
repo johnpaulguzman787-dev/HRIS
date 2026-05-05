@@ -162,7 +162,7 @@
      style="transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1); min-height:100vh;">
 
     {{-- Blue Header with Hamburger --}}
-    <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-hidden">
+    <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
         <div class="flex items-center justify-between px-4 sm:px-8 py-4">
             <div class="flex items-center gap-3">
                 <button @click="mobileMenuOpen = true"
@@ -173,11 +173,7 @@
                 </button>
                 <h1 class="text-white font-bold text-base sm:text-xl">My Attendance</h1>
             </div>
-            <button class="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all hover:bg-white/20">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                </svg>
-            </button>
+            <x-notification-bell />
         </div>
     </header>
 

@@ -550,7 +550,36 @@
         @media (max-width: 768px) { .main-content-padding { padding: 14px !important; } }
     </style>
 </head>
-<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+<body class="bg-gray-50" x-data="{
+    mobileMenuOpen: false,
+    sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+    showFileLeave: false,
+    showLeaveDetails: false,
+    selectedLeave: {},
+    leaveError: '',
+    cancelling: false,
+    async openLeaveDetails(id) {
+        this.leaveError = '';
+        this.selectedLeave = {};
+        const res = await fetch(`/finance_officer/leave/${id}`, {
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+        });
+        const data = await res.json();
+        if (res.ok) { this.selectedLeave = data; this.showLeaveDetails = true; }
+        else { this.leaveError = data.message ?? 'Failed to load leave details.'; }
+    },
+    async cancelLeave(id) {
+        if (!confirm('Are you sure you want to cancel this leave request?')) return;
+        this.cancelling = true;
+        const res = await fetch(`/finance_officer/leave/${id}/cancel`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+        });
+        this.cancelling = false;
+        if (res.ok) { window.location.reload(); }
+        else { this.leaveError = 'Failed to cancel leave request.'; }
+    }
+}"
      x-init="window.addEventListener('sidebar-toggle', e => { sidebarCollapsed = e.detail.collapsed })">
 
 {{-- ═══════════ DESKTOP SIDEBAR ═══════════ --}}

@@ -75,7 +75,7 @@
             this.annSaving = true;
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             try {
-                const res = await fetch('{{ route('admin.announcements.store') }}', {
+                const res = await fetch('{{ route('hr.announcements.store') }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
                     body: JSON.stringify({ type: this.annType, title: this.annTitle, message: this.annMessage, audience: this.annAudience, department_id: this.annDept || null })
@@ -358,7 +358,7 @@
                     <div class="bg-white rounded-xl p-4 lg:p-6 card-anim" style="animation-delay:0.42s; border:1px solid #e5e7eb;">
                         <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4">Quick Actions</h2>
                         <div class="grid grid-cols-2 gap-3">
-                            <button @click="window.location='{{ route('employees.directory') }}?action=add'" class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">Add Employee</button>
+                            <button @click="window.location='{{ route('hr.employees.directory') }}?action=add'" class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">Add Employee</button>
                             <button @click="openAnnouncement()"
                                 class="action-btn px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium">
                                 Create Announcement

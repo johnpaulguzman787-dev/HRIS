@@ -144,65 +144,7 @@
             }
             .p-8 {
                 padding: 1rem !important;
-<<<<<<< HEAD
-            }    
-        .card-header {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 12px;
-                padding: 16px 20px;
-        }
-        .card-header .card-title {
-            margin-bottom: 0;
-            display: block;
-            width: 100%;
-        }
-        .card-header .flex.items-center.gap-3 {
-            width: 100%;
-            display: flex;
-            flex-wrap: nowrap;
-            gap: 12px;
-        }
-        .card-header .flex.items-center.gap-3 > * {
-            flex: 1;
-            min-width: 0;
-        }
-        .card-header .flex.items-center.gap-3 form {
-            flex: 1;
-            display: flex;
-        }
-        .card-header .flex.items-center.gap-3 .year-select {
-            width: 100%;
-            min-width: 0;
-        }
-
-}
-=======
             }
-        }
-        .btn-view {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #eff6ff !important;
-            color: #2563eb !important;
-            border: 1.5px solid #93c5fd;
-            padding: 8px 18px;
-            border-radius: 7px;
-            font-size: 0.775rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: background 0.15s, color 0.15s, border-color 0.15s;
-        }
-        .btn-view:hover {
-            background: #2563eb !important;
-            color: #fff !important;
-            border-color: #2563eb !important;
-        }
-
-        @media (max-width: 768px) {
             .card-header {
                 flex-direction: column;
                 align-items: stretch;
@@ -232,11 +174,7 @@
                 width: 100%;
                 min-width: 0;
             }
-            .btn-view {
-                justify-content: center;
-            }
         }
->>>>>>> origin/KAN-35
     </style>
 </head>
 @php

@@ -473,7 +473,7 @@
                                     </tr>
                                     @endforelse
                                 </tbody>
-                            </tr>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -614,7 +614,7 @@
         function exportMyGovpay() {
             const f = v => '₱ ' + v;
             const rows = _myRecords.map(r =>
-                `<td><td class="td-name">${r.period}</td><td class="td-center">${f(r.sss)}</td><td class="td-center">${f(r.philhealth)}</td><td class="td-center">${f(r.pagibig)}</td><td class="td-center">${f(r.tax)}</td><td class="td-center">${r.status}</td></tr>`
+                `<tr><td class="td-name">${r.period}</td><td class="td-center">${f(r.sss)}</td><td class="td-center">${f(r.philhealth)}</td><td class="td-center">${f(r.pagibig)}</td><td class="td-center">${f(r.tax)}</td><td class="td-center">${r.status}</td></tr>`
             ).join('');
             const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
                 <td>TOTAL</td><td>${f(_myTotals.sss)}</td><td>${f(_myTotals.philhealth)}</td><td>${f(_myTotals.pagibig)}</td><td>${f(_myTotals.tax)}</td><td></td>

@@ -93,6 +93,14 @@
         }
         .year-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
 
+<<<<<<< HEAD
+=======
+        /* ── Transition for margin ── */
+        .transition-margin {
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+>>>>>>> origin/KAN-35
         .btn-view {
             display: inline-flex;
             align-items: center;
@@ -114,6 +122,7 @@
             color: #fff !important;
             border-color: #2563eb !important;
         }
+<<<<<<< HEAD
         .btn-view {
             justify-content: center;
         }
@@ -121,12 +130,15 @@
         .transition-margin {
             transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
+=======
+>>>>>>> origin/KAN-35
 
         @media (max-width: 768px) {
             .card-header {
                 flex-direction: column;
                 align-items: stretch;
                 gap: 12px;
+<<<<<<< HEAD
                 padding: 16px 20px;
             }
             .card-title {
@@ -169,6 +181,44 @@
         }
 
 }
+=======
+                padding: 16px 20px;
+            }
+            .card-header .card-title {
+                margin-bottom: 0;
+                display: block;
+                width: 100%;
+                font-size: 0.95rem;
+            }
+            .card-header .flex.items-center.gap-3 {
+                width: 100%;
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 12px;
+            }
+            .card-header .flex.items-center.gap-3 > * {
+                flex: 1;
+                min-width: 0;
+            }
+            .card-header .flex.items-center.gap-3 form {
+                flex: 1;
+                display: flex;
+            }
+            .card-header .flex.items-center.gap-3 .year-select {
+                width: 100%;
+                min-width: 0;
+            }
+            .btn-view {
+                justify-content: center;
+            }
+            .year-select {
+                width: auto;
+            }
+            .p-8 {
+                padding: 1rem !important;
+            }
+        }
+>>>>>>> origin/KAN-35
     </style>
 </head>
 @php

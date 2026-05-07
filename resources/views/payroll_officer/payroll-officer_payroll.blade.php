@@ -1671,59 +1671,43 @@
 
     {{-- Edit Salary Grade --}}
     <div x-show="showEditGradeModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" @click.self="showEditGradeModal=false">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-7"
-             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-             x-transition:leave="transition ease-in duration-150"  x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 sm:p-7"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-lg font-bold text-gray-800">Edit Salary Grade</h2>
-                <button @click="showEditGradeModal=false" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+                <button @click="showEditGradeModal=false" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
             </div>
-            <form :action="`/payroll_officer/payroll/grade/${editGrade.id}/update`" method="POST" class="space-y-4">
-                @csrf
-                @method('PUT')
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Grade Code</label>
-                        <input type="text" name="grade_code" x-model="editGrade.gradeCode" required class="ctrl w-full">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Monthly Basic Salary (₱)</label>
-                        <input type="number" name="monthly_basic_salary" step="0.01" x-model="editGrade.monthlySalary" required class="ctrl w-full">
-                    </div>
+            <form :action="`/admin/payroll/grade/${editGrade.id}/update`" method="POST" class="space-y-4">
+                @csrf @method('PUT')
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Grade Code</label><input type="text" name="grade_code" x-model="editGrade.gradeCode" required class="ctrl w-full"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Monthly Basic Salary (₱)</label><input type="number" name="monthly_basic_salary" step="0.01" x-model="editGrade.monthlySalary" required class="ctrl w-full"></div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Level Name</label>
-                    <input type="text" name="level_name" x-model="editGrade.levelName" required class="ctrl w-full">
-                </div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Salary Level Name</label><input type="text" name="level_name" x-model="editGrade.levelName" required class="ctrl w-full"></div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">Assign Employees</label>
-                    {{-- Selected tags — shown ABOVE the search input --}}
                     <div class="flex flex-wrap gap-1.5 mb-2" x-show="gradeSelectedEmps.length > 0">
                         <template x-for="s in gradeSelectedEmps" :key="s.id">
                             <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-1 rounded-full">
                                 <span x-text="s.name"></span>
-                                <button type="button" @click="gradeRemoveEmp(s.id)" class="hover:text-blue-900 leading-none font-bold ml-0.5">×</button>
+                                <button type="button" @click="gradeRemoveEmp(s.id)" class="hover:text-blue-900 font-bold ml-0.5">×</button>
                                 <input type="hidden" name="employee_ids[]" :value="s.id">
                             </span>
                         </template>
                     </div>
-                    {{-- Clean search input --}}
                     <div class="relative">
                         <input type="text" x-ref="empInputEdit" x-model="gradeEmpSearch"
-                               @focus="gradeShowDrop=true" @blur="setTimeout(()=>{gradeShowDrop=false},200)"
-                               placeholder="Search and add employees…"
-                               class="ctrl w-full">
+                            @focus="gradeShowDrop=true" @blur="setTimeout(()=>{gradeShowDrop=false},200)"
+                            placeholder="Search and add employees…" class="ctrl w-full">
                         <div x-show="gradeShowDrop && gradeFiltered.length > 0"
-                             class="absolute top-full left-0 right-0 mt-1 border border-gray-200 rounded-lg bg-white shadow-md max-h-44 overflow-y-auto z-20">
+                            class="absolute top-full left-0 right-0 mt-1 border border-gray-200 rounded-lg bg-white shadow-md max-h-44 overflow-y-auto z-20">
                             <template x-for="opt in gradeFiltered" :key="opt.id">
                                 <div class="px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer" @mousedown.prevent="gradeAddEmp(opt)" x-text="opt.name"></div>
                             </template>
                         </div>
                     </div>
                 </div>
-                <div class="flex justify-end gap-3 pt-2">
+                <div class="flex flex-row justify-end gap-3 pt-2">
                     <button type="button" @click="showEditGradeModal=false" class="btn-outline">Cancel</button>
                     <button type="submit" class="btn-primary">Submit</button>
                 </div>

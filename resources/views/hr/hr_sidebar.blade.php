@@ -35,6 +35,8 @@
         from { opacity: 0; transform: translateY(-12px); }
         to { opacity: 1; transform: translateY(0); }
     }
+    aside nav::-webkit-scrollbar { display: none; }
+    aside nav { scrollbar-width: none; -ms-overflow-style: none; }
 </style>
 
 <aside 

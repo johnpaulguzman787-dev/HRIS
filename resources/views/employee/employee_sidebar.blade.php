@@ -30,6 +30,8 @@
     .avatar-ring { box-shadow: 0 0 0 3px rgba(59,130,246,0.2); transition: box-shadow 0.3s ease; }
     .avatar-ring:hover { box-shadow: 0 0 0 5px rgba(59,130,246,0.35); }
     .profile-card { transition: background 0.2s ease; }
+    aside nav::-webkit-scrollbar { display: none; }
+    aside nav { scrollbar-width: none; -ms-overflow-style: none; }
 </style>
 
 <aside

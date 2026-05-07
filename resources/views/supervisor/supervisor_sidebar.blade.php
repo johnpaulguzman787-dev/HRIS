@@ -38,6 +38,8 @@
         0%, 100% { opacity: 1; transform: scale(1); }
         50%       { opacity: .5; transform: scale(1.3); }
     }
+    aside nav::-webkit-scrollbar { display: none; }
+    aside nav { scrollbar-width: none; -ms-overflow-style: none; }
 </style>
 
 <aside

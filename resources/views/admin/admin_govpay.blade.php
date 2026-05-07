@@ -60,6 +60,20 @@
         .table-wrapper {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
+            /* Make scrollbar visible on all devices */
+            scrollbar-width: auto;
+        }
+        /* WebKit scrollbar styling – always visible */
+        .table-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #9ca3af;
+            border-radius: 10px;
         }
         .contrib-table {
             width: 100%;
@@ -228,6 +242,42 @@
             .btn-view {
                 justify-content: center;
             }
+
+            /* FORCE VISIBLE HORIZONTAL SCROLLBAR ON MOBILE */
+            .table-wrapper {
+                overflow-x: scroll !important;  /* ensures scrollbar always visible */
+                scrollbar-width: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+            .table-wrapper::-webkit-scrollbar {
+                height: 6px;
+                -webkit-appearance: none;
+            }
+            .table-wrapper::-webkit-scrollbar-track {
+                background: #e5e7eb;
+                border-radius: 10px;
+            }
+            .table-wrapper::-webkit-scrollbar-thumb {
+                background: #9ca3af;
+                border-radius: 10px;
+            }
+        }
+
+        /* Ensure scrollbar is also visible on desktop if needed */
+        .table-wrapper {
+            overflow-x: auto;
+            scrollbar-width: auto;
+        }
+        .table-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #9ca3af;
+            border-radius: 10px;
         }
     </style>
 </head>
@@ -429,7 +479,7 @@
                                     </tr>
                                     @endforelse
                                 </tbody>
-                            </table>
+                            <td>
                         </div>
                     </div>
                 </div>
@@ -529,28 +579,34 @@
             const isDetail = _isView;
             const rows = _records.map(r => {
                 const cols = isDetail
-                    ? `<td>${r.name}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td>`
-                    : `<td>${r.period}</td><td>${f(r.sss)}</td><td>${f(r.philhealth)}</td><td>${f(r.pagibig)}</td><td>${f(r.tax)}</td><td>${r.status}</td>`;
-                return `<td>${cols}</tr>`;
+                    ? `<td>${r.name}</td><td>${f(r.sss)}</td><td class="td-center">${f(r.philhealth)}</td><td class="td-center">${f(r.pagibig)}</td><td class="td-center">${f(r.tax)}</td><td class="td-center">${r.status}`
+                    : `<td>${r.period}</td><td class="td-center">${f(r.sss)}</td><td class="td-center">${f(r.philhealth)}</td><td class="td-center">${f(r.pagibig)}</td><td class="td-center">${f(r.tax)}</td><td class="td-center">${r.status}`;
+                return `<td>${cols}</td>`;
             }).join('');
             const header = isDetail
                 ? `<tr><th>Employee</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th>W/ Tax</th><th>Status</th></tr>`
                 : `<tr><th>Period</th><th>SSS Total</th><th>PhilHealth Total</th><th>Pag-IBIG Total</th><th>W/ Tax Total</th><th>Status</th></tr>`;
             const totalsRow = `<tr style="font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;">
-                <td>TOTAL</td><td>${f(_totals.sss)}</td><td>${f(_totals.philhealth)}</td><td>${f(_totals.pagibig)}</td><td>${f(_totals.tax)}</td><td></td>
+                <td style="padding:12px 24px;"><strong>TOTAL</strong></td>
+                <td class="td-center">${f(_totals.sss)}</td>
+                <td class="td-center">${f(_totals.philhealth)}</td>
+                <td class="td-center">${f(_totals.pagibig)}</td>
+                <td class="td-center">${f(_totals.tax)}</td>
+                <td></td>
             </tr>`;
             const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_periodName}</title>
-    <style>*{font-family:Arial,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
-    h1{font-size:18px;font-weight:700;color:#2563eb;margin-bottom:4px;}
-    .sub{font-size:12px;color:#64748b;margin-bottom:24px;}
+    <style>*{font-family:'Inter',system-ui,sans-serif;box-sizing:border-box;margin:0;padding:0;}body{padding:40px;color:#1e293b;}
+    h1{font-size:22px;font-weight:700;color:#2563eb;margin-bottom:4px;letter-spacing:-0.3px;}
+    .sub{font-size:13px;color:#64748b;margin-bottom:28px;border-bottom:1px solid #e9eef3;padding-bottom:12px;}
     table{width:100%;border-collapse:collapse;font-size:13px;}
-    th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0;}
-    td{padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#374151;}
-    tr:hover td{background:#f8faff;}
-    .footer{margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}
+    th{background:#f8fafc;padding:12px 18px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#5b6e8c;border-bottom:2px solid #e2e8f0;}
+    td{padding:12px 18px;border-bottom:1px solid #f1f5f9;color:#334155;}
+    tr:hover td{background:#fafdff;}
+    .footer{margin-top:32px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:12px;}
+    .td-center{text-align:center;}
     @media print{@page{margin:.8cm;}body{padding:20px;}}</style>
     </head><body>
-    <div style="font-size:20px;font-weight:700;color:#2563eb;">MediSource</div>
+    <div style="font-size:24px;font-weight:800;color:#1e3a8a;">MediSource</div>
     <div class="sub">${_periodName}</div>
     <table><thead>${header}</thead><tbody>${rows}${totalsRow}</tbody></table>
     <div class="footer">This is a system-generated government contributions report from MediSource HRIS.</div>

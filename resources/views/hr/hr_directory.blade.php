@@ -1068,11 +1068,11 @@
                     x-transition:leave="transition-all duration-200 ease-in"
                     x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                     x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-                    class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden relative"
-                    style="max-height: 92vh;"
+                    class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden relative flex flex-col"
+                    style="max-height: 92vh; max-height: 90dvh;"
                     @click.stop>
 
-                    <div class="px-8 pt-7 pb-0 flex items-center justify-between">
+                    <div class="px-8 pt-7 pb-0 flex items-center justify-between shrink-0">
                         <h2 class="text-2xl font-bold text-gray-900">Add Employee</h2>
                         <button @click="closeAddEmployee()"
                             class="w-9 h-9 flex items-center justify-center rounded-full border-2 border-gray-300 text-gray-400 hover:border-gray-500 hover:text-gray-600 transition-all duration-150">
@@ -1082,7 +1082,7 @@
                         </button>
                     </div>
 
-                    <div class="px-8 pt-5 pb-0">
+                    <div class="px-8 pt-5 pb-0 shrink-0">
                         <div class="flex gap-4">
                             <button @click="addStep = 1" class="flex-1 pb-3 text-sm font-medium transition-all duration-200 relative text-left"
                                 :class="addStep === 1 ? 'text-blue-600' : addStep > 1 ? 'text-gray-500' : 'text-gray-300'">
@@ -1106,7 +1106,7 @@
                     </div>
 
                     <!-- STEP 1: Basic Details -->
-                    <div x-show="addStep === 1" class="px-8 pt-5 pb-0 space-y-4 overflow-y-auto" style="max-height: calc(92vh - 185px);">
+                    <div x-show="addStep === 1" class="px-8 pt-5 pb-0 space-y-4 overflow-y-auto flex-1">
 
                         <div>
                             <label class="block text-sm font-semibold text-gray-800 mb-1.5">Name</label>
@@ -1211,7 +1211,7 @@
                     </div>
 
                     <!-- STEP 2: Job Information -->
-                    <div x-show="addStep === 2" class="px-8 pt-5 pb-0 space-y-4 overflow-y-auto" style="max-height: calc(92vh - 185px);">
+                    <div x-show="addStep === 2" class="px-8 pt-5 pb-0 space-y-4 overflow-y-auto flex-1">
 
                         <div class="flex flex-col sm:flex-row gap-3">
                             <div class="flex-1">
@@ -1322,7 +1322,7 @@
                     </div>
 
                     <!-- STEP 3: Documents -->
-                    <div x-show="addStep === 3" class="px-8 pt-5 pb-0 space-y-4 overflow-y-auto" style="max-height: calc(92vh - 185px);">
+                    <div x-show="addStep === 3" class="px-8 pt-5 pb-0 space-y-4 overflow-y-auto flex-1">
                         <div>
                             <label class="block text-sm font-semibold text-gray-800 mb-2">Upload Documents</label>
                             <label for="file-upload-wiz"
@@ -1363,7 +1363,7 @@
                         <div class="h-2"></div>
                     </div>
 
-                    <div class="px-8 py-5 flex items-center justify-between border-t border-gray-100 bg-white">
+                    <div class="px-8 py-5 flex items-center justify-between border-t border-gray-100 bg-white shrink-0">
 
                         <div>
                             <p x-show="Object.keys(formErrors).length > 0" class="text-xs text-red-500">Please fix the highlighted errors.</p>

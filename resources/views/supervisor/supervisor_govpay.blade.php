@@ -234,7 +234,7 @@
                     </button>
                     <h1 class="text-white font-bold text-xl">My Contributions</h1>
                 </div>
-                <x-notification-bell />
+                <x-supervisor-notif />
             </div>
         </header>
 

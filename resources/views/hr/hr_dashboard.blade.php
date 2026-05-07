@@ -244,7 +244,7 @@
                     <h1 class="text-xl font-bold text-white header-title">Dashboard</h1>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <x-notification-bell />
+                    <x-hr-notif />
                 </div>
             </div>
         </header>

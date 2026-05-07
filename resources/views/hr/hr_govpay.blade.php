@@ -93,14 +93,10 @@
         }
         .year-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
 
-<<<<<<< HEAD
-=======
-        /* ── Transition for margin ── */
         .transition-margin {
             transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
->>>>>>> origin/KAN-35
         .btn-view {
             display: inline-flex;
             align-items: center;
@@ -252,7 +248,7 @@
                     </button>
                     <h1 class="text-white font-bold text-xl">My Contributions</h1>
                 </div>
-                <x-notification-bell />
+                <x-hr-notif />
             </div>
         </header>
 

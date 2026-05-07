@@ -38,6 +38,17 @@
         .chevron-icon{transition:transform .25s cubic-bezier(.4,0,.2,1);}
         .avatar-ring{box-shadow:0 0 0 3px rgba(59,130,246,.25);}
 
+        /* DESKTOP SIDEBAR */
+        .desktop-sidebar { display: none; }
+        @media (min-width: 1024px) {
+            .desktop-sidebar { display: block; }
+        }
+        @media (max-width: 1023px) {
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+
         /* stat cards - responsive grid */
         .stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
         .stat-card{border-radius:14px;padding:20px 22px;}
@@ -72,6 +83,23 @@
             .search-box input{width:100%!important;}
             .fsel{width:100%!important;padding:8px 24px 8px 10px!important;}
             .btn-primary{width:100%!important;justify-content:center!important;padding:12px 16px!important;}
+        }
+
+        /* Filters row - horizontal scroll on mobile */
+        .toolbar-filters-row {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            gap: 8px !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .toolbar-filters-row::-webkit-scrollbar { display: none; }
+        .toolbar-filters-row .fsel {
+            flex-shrink: 0 !important;
+            font-size: 12px !important;
+            padding: 8px 24px 8px 10px !important;
+            white-space: nowrap;
         }
 
         /* request card - responsive */
@@ -168,36 +196,8 @@
             .frow{grid-template-columns:1fr!important;}
         }
 
-        /* DESKTOP SIDEBAR */
-        .desktop-sidebar { display: none; }
-        @media (min-width: 1024px) {
-            .desktop-sidebar { display: block; }
-        }
-        @media (max-width: 1023px) {
-            .main-content {
-                margin-left: 0 !important;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .page-content { padding: 14px 14px !important; }
-            header.anim-fade { margin: 0 !important; border-radius: 0 !important; }
-            .toolbar-filters-row {
-                display: flex !important;
-                flex-wrap: nowrap !important;
-                overflow-x: auto !important;
-                gap: 8px !important;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-            }
-            .toolbar-filters-row::-webkit-scrollbar { display: none; }
-            .toolbar-filters-row .fsel {
-                flex-shrink: 0 !important;
-                font-size: 12px !important;
-                padding: 8px 24px 8px 10px !important;
-                white-space: nowrap;
-            }
-        }
+        .page-content { padding: 24px 32px; }
+        @media (max-width: 768px) { .page-content { padding: 14px 14px !important; } }
     </style>
 </head>
 <body class="bg-gray-50" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true', showFileReq: false, reqType: '', showCancel: false, selId: null, selName: '', selCancelUrl: '', showResult: false, resultType: 'success', resultTitle: '', resultMessage: '' }"
@@ -248,16 +248,11 @@
                 </button>
                 <h1 class="text-white font-bold text-xl">Pending Requests</h1>
             </div>
-            <button class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/20 relative">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                @if(!empty($totalPending))
-                <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold">{{ $totalPending }}</span>
-                @endif
-            </button>
+            <x-notification-bell />
         </div>
     </header>
 
-    <div class="page-content" style="padding:24px 32px;">
+    <div class="page-content">
 
         {{-- STAT CARDS --}}
         <div class="stat-cards">

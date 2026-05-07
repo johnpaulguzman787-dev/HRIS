@@ -314,7 +314,7 @@
                     </button>
                     <h1 class="text-white font-bold text-xl">My Payslips</h1>
                 </div>
-                <x-notification-bell />
+                <x-employee-notif />
             </div>
         </header>
 

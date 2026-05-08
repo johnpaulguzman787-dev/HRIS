@@ -170,7 +170,7 @@
           :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'">
 
         <!-- Top Header with Hamburger -->
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl">
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
@@ -637,8 +637,10 @@
                                             x-text="employee.status"></span>
                                     </div>
                                     <div class="col-span-2 pl-12">
+                                        @canDo('Employee Management', 'view')
                                         <button @click="viewEmployee(employee)"
                                             class="whitespace-nowrap px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">View Details</button>
+                                        @endcanDo
                                     </div>
                                 </div>
                             </div>
@@ -685,8 +687,10 @@
                                         </div>
                                     </div>
                                     <div class="mt-3">
+                                        @canDo('Employee Management', 'view')
                                         <button @click="viewEmployee(employee)"
                                             class="w-full whitespace-nowrap px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">View Details</button>
+                                        @endcanDo
                                     </div>
                                 </div>
                             </div>

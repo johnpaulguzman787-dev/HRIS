@@ -29,7 +29,9 @@
     .avatar-ring { box-shadow: 0 0 0 3px rgba(59,130,246,0.2); transition: box-shadow 0.3s ease; }
     .avatar-ring:hover { box-shadow: 0 0 0 5px rgba(59,130,246,0.35); }
     .profile-card { transition: background 0.2s ease; }
-    
+    aside nav::-webkit-scrollbar { display: none; }
+    aside nav { scrollbar-width: none; -ms-overflow-style: none; }
+
     /* Mobile responsive adjustments */
     .desktop-sidebar { display: none; }
     @media (min-width: 1024px) {
@@ -170,16 +172,20 @@
                     @endif
                     My Attendance
                 </a>
+                @canDo('Time & Attendance', 'view')
                 <a href="{{ route('payroll_officer.attendance.employee') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'payroll_officer.attendance.employee' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Employee Attendance
                 </a>
+                @endcanDo
+                @canDo('Leave Management', 'view')
                 <a href="{{ route('payroll_officer.leave.management') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'payroll_officer.leave.management' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Leave Management
                 </a>
+                @endcanDo
             </div>
         </div>
 
@@ -206,6 +212,7 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
+                @canDo('Payroll', 'view')
                 <a href="{{ route('payroll_officer.payroll') }}"
                    class="submenu-item flex items-center px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'payroll_officer.payroll' ? 'font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
@@ -225,6 +232,7 @@
                        {{ $currentRoute === 'payroll_officer.govpay' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Govt. Contributions
                 </a>
+                @endcanDo
             </div>
         </div>
 
@@ -251,6 +259,7 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
+                @canDo('Requests & Approval', 'view')
                 <a href="{{ route('payroll_officer.requests.pending') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'payroll_officer.requests.pending' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
@@ -261,6 +270,7 @@
                        {{ $currentRoute === 'payroll_officer.requests.approved' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Approved Logs
                 </a>
+                @endcanDo
             </div>
         </div>
 

@@ -299,22 +299,27 @@
 
     <!-- ===================== MAIN CONTENT ===================== -->
     <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin"
-         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
+         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
          style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
         {{-- Header with Hamburger --}}
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
-            <div class="flex items-center justify-between px-8 py-4">
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
+            <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
-                            class="lg:hidden p-2 rounded-lg hover:bg-white/20 transition-colors">
+                            class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
-                    <h1 class="text-white font-bold text-xl">My Payslips</h1>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white">My Payslips</h1>
+                        <p class="text-xs sm:text-sm text-blue-100 mt-1">Payslip Records</p>
+                    </div>
                 </div>
-                <x-hr-notif />
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <x-hr-notif />
+                </div>
             </div>
         </header>
 
@@ -353,12 +358,14 @@
                 <option value="{{ $y }}">{{ $y }}</option>
                 @endfor
             </select>
+            @canDo('Payroll', 'export')
             <button @click="exportMyAllPayslips()"
                     :disabled="filteredMyPayslips.length === 0"
                     class="btn-primary" style="flex:0 0 auto; white-space:nowrap;">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Export All PDF
             </button>
+            @endcanDo
         </div>
 
         {{-- Table + Panel --}}
@@ -436,10 +443,12 @@
                             <div class="ps-line bold"><span>Net Pay</span><span x-text="'&#8369; '+fmt(myActive.netPay||0)"></span></div>
                             <div class="flex gap-2 mt-5">
                                 <button class="btn-close" @click="mySelectedId=null;myActive={}">Close</button>
+                                @canDo('Payroll', 'export')
                                 <button class="btn-primary" @click="exportMyPayslip()">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                     Export PDF
                                 </button>
+                                @endcanDo
                             </div>
                         </div>
                     </div>

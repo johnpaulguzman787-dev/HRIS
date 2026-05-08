@@ -90,12 +90,12 @@ window._employeeData = @json($_employeeData);
     {{-- MAIN CONTENT                            --}}
     {{-- ═══════════════════════════════════════ --}}
     <main class="flex-1 overflow-y-auto min-h-screen w-full"
-        :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
+        :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
         style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
         {{-- ── HEADER ── --}}
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
-            <div class="px-4 sm:px-6 py-4 flex items-center justify-between">
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
+            <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
                             class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors">
@@ -104,11 +104,11 @@ window._employeeData = @json($_employeeData);
                         </svg>
                     </button>
                     <div>
-                        <h1 class="text-lg sm:text-xl font-bold text-white">Employee Profile</h1>
-                        <p class="text-xs text-blue-100 mt-0.5 hidden sm:block">View employee information</p>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white">Employee Profile</h1>
+                        <p class="text-xs sm:text-sm text-blue-100 mt-1">View employee information</p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2 sm:space-x-4">
                     <x-notification-bell />
                 </div>
             </div>
@@ -399,6 +399,8 @@ window._employeeData = @json($_employeeData);
 ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
+.anim-fade { animation: fadeSlideDown 0.4s ease both; }
+@keyframes fadeSlideDown { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
 .profile-card { animation: cardSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .section-card { animation: cardSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .section-card:nth-of-type(1) { animation-delay: 0.12s; }

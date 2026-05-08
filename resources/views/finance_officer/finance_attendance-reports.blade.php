@@ -162,8 +162,8 @@
      style="transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1); min-height:100vh;">
 
     {{-- Blue Header with Hamburger --}}
-    <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
-        <div class="flex items-center justify-between px-4 sm:px-8 py-4">
+    <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
+        <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <button @click="mobileMenuOpen = true"
                         class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
@@ -171,9 +171,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
-                <h1 class="text-white font-bold text-base sm:text-xl">My Attendance</h1>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white">My Attendance</h1>
+                    <p class="text-xs sm:text-sm text-blue-100 mt-1">Attendance Records</p>
+                </div>
             </div>
-            <x-notification-bell />
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <x-notification-bell />
+            </div>
         </div>
     </header>
 
@@ -237,6 +242,7 @@
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </div>
                     </div>
+                    @canDo('Time & Attendance', 'export')
                     <button @click="exportPdf()"
                             :disabled="totalRecords === 0"
                             :class="totalRecords > 0 ? 'export-btn' : ''"
@@ -245,6 +251,7 @@
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         Export PDF
                     </button>
+                    @endcanDo
                 </div>
             </div>
 

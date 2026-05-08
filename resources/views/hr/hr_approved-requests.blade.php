@@ -200,9 +200,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
-                <h1 class="text-white font-bold text-lg md:text-xl">Approved Logs</h1>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white">Approved Logs</h1>
+                    <p class="text-xs sm:text-sm text-blue-100 mt-1">Approved & Rejected Requests</p>
+                </div>
             </div>
-            <x-hr-notif />
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                    <x-hr-notif />
+                </div>
         </div>
     </header>
 

@@ -96,7 +96,7 @@ window._employeeData = @json($_employeeData);
         style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
         {{-- HEADER with hamburger --}}
-        <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
@@ -106,11 +106,11 @@ window._employeeData = @json($_employeeData);
                         </svg>
                     </button>
                     <div>
-                        <h1 class="text-lg sm:text-xl font-bold text-white">Employee Profile</h1>
-                        <p class="text-xs text-blue-100 mt-0.5 hidden sm:block">View and manage your information</p>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white">Employee Profile</h1>
+                        <p class="text-xs sm:text-sm text-blue-100 mt-1">View and manage your information</p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 sm:space-x-4">
                     <x-employee-notif />
                 </div>
             </div>

@@ -35,6 +35,8 @@
         from { opacity: 0; transform: translateY(-12px); }
         to { opacity: 1; transform: translateY(0); }
     }
+    aside nav::-webkit-scrollbar { display: none; }
+    aside nav { scrollbar-width: none; -ms-overflow-style: none; }
 </style>
 
 <aside 
@@ -197,21 +199,25 @@
                     @endif
                     My Attendance
                 </a>
+                @canDo('Time & Attendance', 'view')
                 <a href="{{ route('hr.attendance.employee') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'hr.attendance.employee' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Employee Attendance
                 </a>
+                @endcanDo
                 <a href="{{ route('hr.shift.scheduling') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'hr.shift.scheduling' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Shift Scheduling
                 </a>
-                <a href="{{ route('hr.leave.management') }}" 
-                   class="submenu-item block px-3 py-2 text-sm rounded-lg 
+                @canDo('Leave Management', 'view')
+                <a href="{{ route('hr.leave.management') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'hr.leave.management' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Leave Management
                 </a>
+                @endcanDo
             </div>
         </div>
 
@@ -242,16 +248,18 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('hr.payslips') }}" 
-                   class="submenu-item block px-3 py-2 text-sm rounded-lg 
+                @canDo('Payroll', 'view')
+                <a href="{{ route('hr.payslips') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'hr.payslips' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Payslips
                 </a>
-                <a href="{{ route('hr.govpay') }}" 
-                   class="submenu-item block px-3 py-2 text-sm rounded-lg 
+                <a href="{{ route('hr.govpay') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'hr.govpay' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Govt. Contributions
                 </a>
+                @endcanDo
             </div>
         </div>
 
@@ -282,16 +290,18 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
-                <a href="{{ route('hr.requests.pending') }}" 
-                   class="submenu-item block px-3 py-2 text-sm rounded-lg 
+                @canDo('Requests & Approval', 'view')
+                <a href="{{ route('hr.requests.pending') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'hr.requests.pending' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Pending Requests
                 </a>
-                <a href="{{ route('hr.requests.approved') }}" 
-                   class="submenu-item block px-3 py-2 text-sm rounded-lg 
+                <a href="{{ route('hr.requests.approved') }}"
+                   class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'hr.requests.approved' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Approved Logs
                 </a>
+                @endcanDo
             </div>
         </div>
 

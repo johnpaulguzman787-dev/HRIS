@@ -405,8 +405,7 @@
             gap: 8px;
             padding-bottom: 2px;
             flex-shrink: 0;
-            flex-wrap: wrap;
-            align-self: flex-end;
+            flex-wrap: wrap;    
         }
         .section-divider { margin-bottom: 20px; }
 

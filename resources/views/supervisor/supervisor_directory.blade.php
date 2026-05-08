@@ -1626,8 +1626,10 @@
                                             x-text="employee.status"></span>
                                     </div>
                                     <div class="col-span-2 pl-12">
+                                        @canDo('Employee Management', 'view')
                                         <button @click="viewEmployee(employee)"
                                             class="whitespace-nowrap px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">View Details</button>
+                                        @endcanDo
                                     </div>
                                 </div>
                             </div>
@@ -1672,8 +1674,10 @@
                                         </div>
                                     </div>
                                     <div class="mt-3">
+                                        @canDo('Employee Management', 'view')
                                         <button @click="viewEmployee(employee)"
                                             class="w-full whitespace-nowrap px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg">View Details</button>
+                                        @endcanDo
                                     </div>
                                 </div>
                             </div>

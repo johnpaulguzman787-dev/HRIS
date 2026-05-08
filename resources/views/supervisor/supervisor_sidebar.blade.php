@@ -212,21 +212,25 @@
                     @endif
                     My Attendance
                 </a>
+                @canDo('Time & Attendance', 'view')
                 <a href="{{ route('supervisor.attendance.employee') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'supervisor.attendance.employee' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Employee Attendance
                 </a>
+                @endcanDo
                 <a href="{{ route('supervisor.shift.scheduling') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'supervisor.shift.scheduling' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Shift Scheduling
                 </a>
+                @canDo('Leave Management', 'view')
                 <a href="{{ route('supervisor.leave.management') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'supervisor.leave.management' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Leave Management
                 </a>
+                @endcanDo
             </div>
         </div>
 
@@ -258,6 +262,7 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
+                @canDo('Payroll', 'view')
                 <a href="{{ route('supervisor.payslips') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'supervisor.payslips' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
@@ -268,6 +273,7 @@
                        {{ $currentRoute === 'supervisor.govpay' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Govt. Contributions
                 </a>
+                @endcanDo
             </div>
         </div>
 
@@ -299,6 +305,7 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-y-100"
                  x-transition:leave-end="opacity-0 -translate-y-3 scale-y-95"
                  class="ml-8 mt-1 space-y-0.5 origin-top">
+                @canDo('Requests & Approval', 'view')
                 <a href="{{ route('supervisor.requests.pending') }}"
                    class="submenu-item block px-3 py-2 text-sm rounded-lg
                        {{ $currentRoute === 'supervisor.requests.pending' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
@@ -309,6 +316,7 @@
                        {{ $currentRoute === 'supervisor.requests.approved' ? 'text-blue-600 font-semibold bg-blue-50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}">
                     Approved Logs
                 </a>
+                @endcanDo
             </div>
         </div>
 

@@ -58,25 +58,25 @@
 
     <!-- ===================== MAIN CONTENT ===================== -->
     <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin"
-         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
+         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
          style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
         <!-- Blue Header with Hamburger -->
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
-            <div class="px-5 py-4 flex items-center justify-between">
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
+            <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
-                            class="lg:hidden p-2 rounded-lg hover:bg-white/20 transition-colors">
+                            class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
                     <div>
-                        <h1 class="text-white font-bold text-xl">Settings</h1>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white">Settings</h1>
                         <p class="text-xs sm:text-sm text-blue-100 mt-1">Account Security</p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 sm:space-x-4">
                     <x-notification-bell />
                 </div>
             </div>

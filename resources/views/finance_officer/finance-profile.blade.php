@@ -90,8 +90,8 @@
         style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
         {{-- HEADER with hamburger --}}
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
-            <div class="px-4 sm:px-6 py-4 flex items-center justify-between">
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
+            <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
                             class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors">
@@ -100,11 +100,11 @@
                         </svg>
                     </button>
                     <div>
-                        <h1 class="text-lg sm:text-xl font-bold text-white">Employee Profile</h1>
-                        <p class="text-xs text-blue-100 mt-0.5 hidden sm:block">View employee information</p>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white">Employee Profile</h1>
+                        <p class="text-xs sm:text-sm text-blue-100 mt-1">View employee information</p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2 sm:space-x-4">
                     <x-notification-bell />
                 </div>
             </div>

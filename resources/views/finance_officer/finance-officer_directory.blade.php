@@ -170,7 +170,7 @@
           :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'">
 
         <!-- Top Header with Hamburger -->
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl">
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"

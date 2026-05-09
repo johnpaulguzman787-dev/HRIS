@@ -551,10 +551,10 @@
     </div>
 
     <main class="flex-1 overflow-y-auto transition-all duration-300 w-full"
-          :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'">
+          :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'">
 
         <!-- Top Header -->
-        <header class="anim-fade bg-gradient-to-r from-blue-600 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
             <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
@@ -574,7 +574,7 @@
             </div>
         </header>
 
-        <div class="p-4 sm:p-6 lg:p-8 mt-4 page-fade-in">
+        <div class="p-4 sm:p-6 lg:p-8 page-fade-in">
 
             <!-- ===================== ALERT MODAL ===================== -->
             <div x-show="alertModal.show" x-cloak
@@ -1489,7 +1489,7 @@
             </div>
 
             <!-- Top Control Section - Responsive Layout -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mx-0 sm:mx-4 lg:mx-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mx-4 sm:mx-8">
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                     <div class="relative flex-1 sm:flex-none sm:w-80 group">
                         <input type="text" x-model="searchQuery" placeholder="Search employees..."
@@ -1580,13 +1580,13 @@
             </div>
 
             <!-- Search Results Info -->
-            <div x-show="searchQuery.length > 0" class="mb-4 flex items-center justify-between mx-0 sm:mx-4 lg:mx-8">
+            <div x-show="searchQuery.length > 0" class="mb-4 flex items-center justify-between mx-4 sm:mx-8">
                 <p class="text-sm text-gray-600">Found <span class="font-semibold text-blue-600" x-text="resultCount"></span> result<span x-show="resultCount !== 1">s</span> for "<span class="font-semibold" x-text="searchQuery"></span>"</p>
                 <button @click="clearSearch" class="text-xs text-gray-500 hover:text-blue-600 transition-colors duration-200">Clear search</button>
             </div>
 
             <!-- Employee Table - Responsive with mobile cards -->
-            <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden mx-0 sm:mx-4 lg:mx-8">
+            <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden mx-4 sm:mx-8">
                 <!-- Desktop Table -->
                 <div class="hidden md:block">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">

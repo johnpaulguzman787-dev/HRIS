@@ -713,7 +713,8 @@
                             <td><button class="btn-outline-sm" @click="openLeaveDetails({{ $req->id }})">View</button></td>
                         </tr>
                         @empty
-                        <tr><td colspan="10" class="text-center py-10 text-gray-400">No leave requests found. Ru<br>@endforelse
+                        <tr><td colspan="10" class="text-center py-10 text-gray-400">No leave requests found.</td></tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

@@ -566,8 +566,8 @@
      style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1); min-height:100vh;">
 
     <!-- Blue Header with Hamburger - Removed overflow-hidden -->
-    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl">
-        <div class="flex items-center justify-between px-4 sm:px-8 py-4">
+    <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
+        <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3 min-w-0 flex-1">
                 <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -575,11 +575,11 @@
                     </svg>
                 </button>
                 <div class="min-w-0">
-                    <h1 class="text-white text-lg sm:text-[22px] font-bold tracking-[0.3px] m-0">Employee Attendance</h1>
-                    <p class="text-white/65 text-[11px] sm:text-[13px] mt-[2px] mb-0">Track and manage workforce attendance records</p>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white">Employee Attendance</h1>
+                    <p class="text-xs sm:text-sm text-blue-100 mt-1">Track and manage workforce attendance records</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2.5 shrink-0">
+            <div class="flex items-center space-x-2 sm:space-x-4">
                 <x-supervisor-notif />
             </div>
         </div>

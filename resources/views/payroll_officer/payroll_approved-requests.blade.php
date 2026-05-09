@@ -128,8 +128,7 @@
         .page-content { padding:16px; }
         @media(min-width:768px){ .page-content { padding:32px; } }
 
-        .page-header { margin:12px 12px 0; border-radius:16px; }
-        @media(min-width:768px){ .page-header { margin:16px 16px 0; border-radius:18px; } }
+        
 
         .modal-confirm-btn { width:100%; }
         @media(min-width:640px){ .modal-confirm-btn { width:auto; } }
@@ -201,17 +200,22 @@
      style="transition:margin-left 0.35s cubic-bezier(0.4,0,0.2,1); min-height:100vh;">
 
     {{-- ✅ Header with Hamburger --}}
-    <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg page-header">
-        <div class="flex items-center justify-between px-5 py-4 md:px-8">
+    <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
+        <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
-                <h1 class="text-white font-bold text-lg md:text-xl">Approved Logs</h1>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white">Approved Logs</h1>
+                    <p class="text-xs sm:text-sm text-blue-100 mt-1">Requests & Approvals</p>
+                </div>
             </div>
-            <x-notification-bell />
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <x-notification-bell />
+            </div>
         </div>
     </header>
 

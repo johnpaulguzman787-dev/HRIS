@@ -946,8 +946,8 @@
             <div class="leave-card">
                 <span class="leave-badge" style="background:#dbeafe;color:#1d4ed8;">{{ $lt->code }}</span>
                 <div class="leave-card-label">{{ $lt->name }}</div>
-                <div class="leave-card-value">{{ $creditStats[$key.'_used'] ?? 0 }}</div>
-                <div class="leave-card-sub">{{ $creditStats[$key.'_remaining'] ?? 0 }} remaining of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
+                <div class="leave-card-value">{{ $creditStats[$key.'_remaining'] ?? 0 }}</div>
+                <div class="leave-card-sub">{{ $creditStats[$key.'_used'] ?? 0 }} used of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
             </div>
             @endforeach
         </div>
@@ -1409,6 +1409,30 @@
                         <label class="form-label">Document Required</label>
                         <div style="display:flex;gap:16px;margin-top:8px;">
                             <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#374151;cursor:pointer;">
+                                <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;" x-model="editLt.requires_document"> Required
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <label class="form-label">Applicable To</label>
+                    <input type="text" class="form-input" x-model="editLt.applicable_to" placeholder="e.g. All regular employees">
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;cursor:pointer;">
+                        <input type="checkbox" style="width:15px;height:15px;accent-color:#3b82f6;" x-model="editLt.carry_over">
+                        Allow carry over to next year
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-cancel" @click="showEditLeaveType = false">Cancel</button>
+                    <button class="btn-save" @click="submitEditLeaveType()" :disabled="saving" x-text="saving ? 'Saving…' : 'Save Changes'"></button>
+                </div>
+            </div>
+        </div>
 
     </div>
 </div>

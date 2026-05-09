@@ -607,6 +607,23 @@
          selectedLeave: {},
          leaveError: '',
          cancelling: false,
+         editLt: { id: null, name: '', code: '', days_entitled: '', is_paid: true, requires_document: false, applicable_to: '', carry_over: false },
+         saving: false,
+         errorMsg: '',
+         async submitEditLeaveType() {
+             this.errorMsg = '';
+             if (!this.editLt.name || !this.editLt.code) { this.errorMsg = 'Name and code are required.'; return; }
+             this.saving = true;
+             const res = await fetch(`/hr/leave/types/${this.editLt.id}/update`, {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                 body: JSON.stringify(this.editLt)
+             });
+             this.saving = false;
+             const data = await res.json();
+             if (res.ok) { window.location.reload(); }
+             else { this.errorMsg = data.message ?? 'Something went wrong.'; }
+         },
          async openLeaveDetails(id) {
              this.leaveError = '';
              this.selectedLeave = {};
@@ -638,29 +655,12 @@
              });
              const data = await res.json();
              if (res.ok) {
-                 this.$dispatch('set-edit-lt', data);
+                 this.editLt = { id: data.id, name: data.name, code: data.code, days_entitled: data.days_entitled ?? '', is_paid: !!data.is_paid, requires_document: !!data.requires_document, applicable_to: data.applicable_to ?? '', carry_over: !!data.carry_over };
                  this.showEditLeaveType = true;
              }
          }
      }"
-     x-init="
-         window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed });
-         window.addEventListener('set-edit-lt', e => {
-             const d = e.detail;
-             if (document.querySelector('[x-show=\'showEditLeaveType\']') && document.querySelector('[x-show=\'showEditLeaveType\']').__x) {
-                 document.querySelector('[x-show=\'showEditLeaveType\']').__x.$data.editLt = {
-                     id:                 d.id,
-                     name:               d.name,
-                     code:               d.code,
-                     days_entitled:      d.days_entitled ?? '',
-                     is_paid:            !!d.is_paid,
-                     requires_document:  !!d.requires_document,
-                     applicable_to:      d.applicable_to ?? '',
-                     carry_over:         !!d.carry_over,
-                 };
-             }
-         });
-     "
+     x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })"
      :style="window.innerWidth >= 1024 ? (collapsed ? 'margin-left:5rem' : 'margin-left:16rem') : 'margin-left:0'"
      x-on:resize.window="$el.style.marginLeft = window.innerWidth >= 1024 ? (collapsed ? '5rem' : '16rem') : '0'"
      style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1); min-height:100vh;"
@@ -809,8 +809,8 @@
             <div class="leave-card">
                 <span class="leave-badge" style="background:#dbeafe;color:#1d4ed8;">{{ $lt->code }}</span>
                 <div class="leave-card-label">{{ $lt->name }}</div>
-                <div class="leave-card-value">{{ $creditStats[$key.'_used'] ?? 0 }}</div>
-                <div class="leave-card-sub">{{ $creditStats[$key.'_remaining'] ?? 0 }} remaining of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
+                <div class="leave-card-value">{{ $creditStats[$key.'_remaining'] ?? 0 }}</div>
+                <div class="leave-card-sub">{{ $creditStats[$key.'_used'] ?? 0 }} used of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
             </div>
             @empty
             <div class="leave-card">
@@ -1295,27 +1295,7 @@
         </div>
 
         {{-- Edit Leave Type Modal --}}
-        <div x-show="showEditLeaveType" class="modal-overlay" x-cloak @click.self="showEditLeaveType = false"
-             x-data="{
-                 editLt: { id: null, name: '', code: '', days_entitled: '', is_paid: true, requires_document: false, applicable_to: '', carry_over: false },
-                 saving: false, errorMsg: '',
-                 async submitEdit() {
-                     this.errorMsg = '';
-                     if (!this.editLt.name || !this.editLt.code) {
-                         this.errorMsg = 'Name and code are required.'; return;
-                     }
-                     this.saving = true;
-                     const res = await fetch(`/hr/leave/types/${this.editLt.id}/update`, {
-                         method: 'POST',
-                         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                         body: JSON.stringify(this.editLt)
-                     });
-                     this.saving = false;
-                     const data = await res.json();
-                     if (res.ok) { window.location.reload(); }
-                     else { this.errorMsg = data.message ?? 'Something went wrong.'; }
-                 }
-             }">
+        <div x-show="showEditLeaveType" class="modal-overlay" x-cloak @click.self="showEditLeaveType = false">
             <div class="modal-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
                     <div class="modal-title">Edit Leave Type</div>
@@ -1385,7 +1365,7 @@
 
                 <div class="modal-actions">
                     <button class="btn-cancel" @click="showEditLeaveType = false">Cancel</button>
-                    <button class="btn-save" @click="submitEdit()" :disabled="saving" x-text="saving ? 'Saving…' : 'Save Changes'"></button>
+                    <button class="btn-save" @click="submitEditLeaveType()" :disabled="saving" x-text="saving ? 'Saving…' : 'Save Changes'"></button>
                 </div>
             </div>
         </div>

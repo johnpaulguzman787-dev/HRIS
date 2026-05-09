@@ -71,10 +71,11 @@
 
         .data-table { width:100%; border-collapse:collapse; min-width:600px; }
         .data-table thead th {
-            padding: 13px 24px;
+            padding: 13px 16px;
             font-size: 0.75rem;
             font-weight: 600;
             color: #9ca3af;
+            text-align: left;
             text-transform: uppercase;
             letter-spacing: 0.06em;
             white-space: nowrap;

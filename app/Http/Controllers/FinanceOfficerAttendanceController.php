@@ -391,6 +391,13 @@ class FinanceOfficerAttendanceController extends Controller
             }
             $myLeaveRequests = $myLeaveQuery->get();
 
+            foreach ($leaveTypes as $lt) {
+                LeaveCredit::firstOrCreate(
+                    ['employee_id' => $employee->id, 'leave_type_id' => $lt->id, 'year' => $currentYear],
+                    ['total_days' => $lt->days_entitled ?? 0, 'used_days' => 0, 'remaining_days' => $lt->days_entitled ?? 0]
+                );
+            }
+
             $credits = LeaveCredit::with('leaveType')
                 ->where('employee_id', $employee->id)
                 ->where('year', $currentYear)

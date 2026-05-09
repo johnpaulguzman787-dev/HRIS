@@ -780,8 +780,8 @@
             <div class="leave-card">
                 <span class="leave-badge" style="background:#dbeafe;color:#1d4ed8;">{{ $lt->code }}</span>
                 <div class="leave-card-label">{{ $lt->name }}</div>
-                <div class="leave-card-value">{{ $creditStats[$key.'_used'] ?? 0 }}</div>
-                <div class="leave-card-sub">{{ $creditStats[$key.'_remaining'] ?? 0 }} remaining of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
+                <div class="leave-card-value">{{ $creditStats[$key.'_remaining'] ?? 0 }}</div>
+                <div class="leave-card-sub">{{ $creditStats[$key.'_used'] ?? 0 }} used of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
             </div>
             @empty
             <div class="leave-card">

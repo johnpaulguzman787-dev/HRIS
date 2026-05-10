@@ -668,6 +668,13 @@ class AdminAttendanceController extends Controller
         }
         $myLeaveRequests = $myLeaveQuery->get();
 
+        foreach ($leaveTypes as $lt) {
+            LeaveCredit::firstOrCreate(
+                ['employee_id' => $employee->id, 'leave_type_id' => $lt->id, 'year' => $currentYear],
+                ['total_days' => $lt->days_entitled ?? 0, 'used_days' => 0, 'remaining_days' => $lt->days_entitled ?? 0]
+            );
+        }
+
         $credits = LeaveCredit::with('leaveType')
             ->where('employee_id', $employee->id)
             ->where('year', $currentYear)
@@ -814,7 +821,7 @@ public function cancelLeave(Request $request, $id)
         ->where('employee_id', $employee->id)
         ->firstOrFail();
 
-    if (!in_array($leave->status, ['pending', 'approved'])) {
+    if (!in_array($leave->status, ['pending', 'supervisor_approved', 'approved'])) {
         return response()->json(['message' => 'This leave cannot be cancelled.'], 409);
     }
 
@@ -1929,6 +1936,17 @@ public function getLeaveRequest($id)
             'applicable_to'     => $request->applicable_to,
             'carry_over'        => $request->boolean('carry_over'),
         ]);
+
+        if ($request->days_entitled) {
+            LeaveCredit::where('leave_type_id', $id)
+                ->where('year', now()->year)
+                ->get()
+                ->each(function ($credit) use ($request) {
+                    $credit->total_days     = $request->days_entitled;
+                    $credit->remaining_days = max(0, $request->days_entitled - $credit->used_days);
+                    $credit->save();
+                });
+        }
 
         return response()->json(['message' => 'Leave type updated successfully.']);
     }

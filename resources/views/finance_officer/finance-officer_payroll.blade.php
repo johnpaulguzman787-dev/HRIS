@@ -69,10 +69,11 @@
 
         .data-table { width:100%; border-collapse:collapse; min-width:600px; }
         .data-table thead th {
-            padding: 13px 24px;
+            padding: 13px 16px;
             font-size: 0.75rem;
             font-weight: 600;
             color: #9ca3af;
+            text-align: left;
             text-transform: uppercase;
             letter-spacing: 0.06em;
             white-space: nowrap;
@@ -1316,7 +1317,7 @@
                 <h2 class="text-lg font-bold text-gray-800">Edit Salary Grade</h2>
                 <button @click="showEditGradeModal=false" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
             </div>
-            <form :action="`/admin/payroll/grade/${editGrade.id}/update`" method="POST" class="space-y-4">
+            <form :action="`/finance_officer/payroll/grade/${editGrade.id}/update`" method="POST" class="space-y-4">
                 @csrf @method('PUT')
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Grade Code</label><input type="text" name="grade_code" x-model="editGrade.gradeCode" required class="ctrl w-full"></div>

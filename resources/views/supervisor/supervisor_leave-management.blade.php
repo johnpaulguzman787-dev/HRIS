@@ -230,11 +230,12 @@
         }
 
         /* ── STATUS BADGES ── */
-        .status-pending  { background: #ffedd5; color: #c2410c; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; display: inline-block; }
-        .status-approved { background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; display: inline-block; }
-        .status-rejected { background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; display: inline-block; }
+        .status-pending   { background: #ffedd5; color: #c2410c; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; display: inline-block; }
+        .status-approved  { background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; display: inline-block; }
+        .status-rejected  { background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; display: inline-block; }
+        .status-cancelled { background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; display: inline-block; }
         @media (min-width: 640px) {
-            .status-pending, .status-approved, .status-rejected { padding: 3px 12px; font-size: 12px; }
+            .status-pending, .status-approved, .status-rejected, .status-cancelled { padding: 3px 12px; font-size: 12px; }
         }
 
         /* ── LEAVE CREDITS SECTION ── */
@@ -598,6 +599,8 @@
          selectedLeave: {},
          leaveError: '',
          cancelling: false,
+         showCancelConfirm: false,
+         cancelTargetId: null,
          async openLeaveDetails(id) {
              this.leaveError = '';
              this.selectedLeave = {};
@@ -609,7 +612,6 @@
              else { this.leaveError = data.message ?? 'Failed to load leave details.'; }
          },
          async cancelLeave(id) {
-             if (!confirm('Are you sure you want to cancel this leave request?')) return;
              this.cancelling = true;
              const res = await fetch(`/supervisor/leave/${id}/cancel`, {
                  method: 'POST',
@@ -627,17 +629,22 @@
      class="main-content">
 
     {{-- HEADER with Hamburger --}}
-    <header class="bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
-        <div class="flex items-center justify-between px-6 py-4">
-            <div class="flex items-center gap-3">
+    <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
+        <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
                 <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
-                <h1 class="text-white font-bold text-lg">Leave Management</h1>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white">Leave Management</h1>
+                    <p class="text-xs sm:text-sm text-blue-100 mt-1">Manage your leave requests</p>
+                </div>
             </div>
-            <x-supervisor-notif />
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <x-supervisor-notif />
+            </div>
         </div>
     </header>
 
@@ -678,7 +685,8 @@
                     <option value="">All Status</option>
                     <option value="pending"  {{ request('status')==='pending'  ? 'selected' : '' }}>Pending</option>
                     <option value="approved" {{ request('status')==='approved' ? 'selected' : '' }}>Approved</option>
-                    <option value="rejected" {{ request('status')==='rejected' ? 'selected' : '' }}>Rejected</option>
+                    <option value="rejected"   {{ request('status')==='rejected'   ? 'selected' : '' }}>Rejected</option>
+                    <option value="cancelled" {{ request('status')==='cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
                 <select class="filter-select" onchange="window.location.href='{{ route('supervisor.leave.management') }}?tab=my-leave&type='+this.value+'&status={{ request('status') }}'">
                     <option value="">All Types</option>
@@ -775,8 +783,8 @@
             <div class="leave-card">
                 <span class="leave-badge" style="background:#dbeafe;color:#1d4ed8;">{{ $lt->code }}</span>
                 <div class="leave-card-label">{{ $lt->name }}</div>
-                <div class="leave-card-value">{{ $creditStats[$key.'_used'] ?? 0 }}</div>
-                <div class="leave-card-sub">{{ $creditStats[$key.'_remaining'] ?? 0 }} remaining of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
+                <div class="leave-card-value">{{ $creditStats[$key.'_remaining'] ?? 0 }}</div>
+                <div class="leave-card-sub">{{ $creditStats[$key.'_used'] ?? 0 }} used of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
             </div>
             @empty
             <div class="leave-card">
@@ -792,7 +800,8 @@
                     <option value="">All Status</option>
                     <option value="pending"  {{ request('status')==='pending'  ? 'selected' : '' }}>Pending</option>
                     <option value="approved" {{ request('status')==='approved' ? 'selected' : '' }}>Approved</option>
-                    <option value="rejected" {{ request('status')==='rejected' ? 'selected' : '' }}>Rejected</option>
+                    <option value="rejected"   {{ request('status')==='rejected'   ? 'selected' : '' }}>Rejected</option>
+                    <option value="cancelled" {{ request('status')==='cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
                 <select class="filter-select">
                     <option value="">All Types</option>
@@ -1072,10 +1081,10 @@
                 </template>
 
                 <div class="modal-actions">
-                    <template x-if="selectedLeave.status === 'pending'">
+                    <template x-if="selectedLeave.status === 'pending' || selectedLeave.status === 'supervisor_approved'">
                         @canDo('Leave Management', 'create')
                         <button class="btn-cancel" style="background:#fef2f2;color:#dc2626;border-color:#fecaca;"
-                            @click="cancelLeave(selectedLeave.id)" x-text="cancelling ? 'Cancelling…' : 'Cancel Request'"></button>
+                            @click="window.dispatchEvent(new CustomEvent('open-cancel-confirm',{detail:{id:selectedLeave.id}}))">Cancel Request</button>
                         @endcanDo
                     </template>
                     <button class="btn-save" @click="showLeaveDetails = false">Close</button>
@@ -1083,6 +1092,52 @@
             </div>
         </div>
 
+    </div>
+
+    {{-- ── Cancel Leave Confirmation Modal ── --}}
+    <div x-data="{ open: false, targetId: null, cancelling: false }"
+         @open-cancel-confirm.window="open = true; targetId = $event.detail.id"
+         x-show="open"
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/50">
+        <div x-show="open"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-gray-900">Cancel Leave Request</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">This action cannot be undone.</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600 mb-6">Are you sure you want to cancel this leave request?</p>
+            <div class="flex gap-3 justify-end">
+                <button @click="open = false; targetId = null"
+                        class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200">
+                    Keep Request
+                </button>
+                <button @click="cancelling = true; fetch('/supervisor/leave/'+targetId+'/cancel',{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content}}).then(r=>{cancelling=false;if(r.ok)location.reload();else alert('Failed to cancel.');open=false;})"
+                        :disabled="cancelling"
+                        class="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-all duration-200 disabled:opacity-60"
+                        x-text="cancelling ? 'Cancelling…' : 'Yes, Cancel'">
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 

@@ -200,7 +200,7 @@
         @media (max-width: 768px) { .page-content { padding: 14px 14px !important; } }
     </style>
 </head>
-<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true', showFileReq: false, reqType: '', showCancel: false, selId: null, selName: '', selCancelUrl: '', showResult: false, resultType: 'success', resultTitle: '', resultMessage: '' }"
+<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true', showFileReq: false, reqType: '', showCancel: false, selId: null, selName: '', selCancelUrl: '', selType: '', showResult: false, resultType: 'success', resultTitle: '', resultMessage: '' }"
      x-init="window.addEventListener('sidebar-toggle', e => { sidebarCollapsed = e.detail.collapsed })">
 
 {{-- ═══════════ DESKTOP SIDEBAR ═══════════ --}}
@@ -238,17 +238,22 @@
      style="transition:margin-left .35s cubic-bezier(.4,0,.2,1);min-height:100vh;">
 
     {{-- HEADER with Hamburger --}}
-    <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-4 mx-4 rounded-2xl">
-        <div class="flex items-center justify-between px-6 py-4">
+    <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
+        <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <button @click="mobileMenuOpen = true" class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
-                <h1 class="text-white font-bold text-xl">Pending Requests</h1>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white">Pending Requests</h1>
+                    <p class="text-xs sm:text-sm text-blue-100 mt-1">Requests & Approvals</p>
+                </div>
             </div>
-            <x-notification-bell />
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <x-notification-bell />
+            </div>
         </div>
     </header>
 
@@ -370,7 +375,7 @@
                 </div></div>
             </div>
             <div class="action-row">
-                <button class="btn-cancel-req" @click="selId={{ $req->id }};selName='{{ addslashes(trim((auth()->user()->employee->fname ?? '').' '.(auth()->user()->employee->lname ?? ''))) }}';selCancelUrl='{{ route('payroll_officer.requests.cancel', $req->id) }}';showCancel=true">
+                <button class="btn-cancel-req" @click="selId={{ $req->id }};selName='{{ addslashes(trim((auth()->user()->employee->fname ?? '').' '.(auth()->user()->employee->lname ?? ''))) }}';selCancelUrl='{{ route('payroll_officer.requests.cancel', $req->id) }}';selType='{{ $req->type }}';showCancel=true">
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Cancel Request
                 </button>
             </div>
@@ -625,7 +630,7 @@
             <div style="display:flex;justify-content:center;gap:12px;">
                 <button class="btn-cancel" style="min-width:100px;" @click="showCancel=false">Back</button>
                 <button style="min-width:100px;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;background:#dc2626;color:#fff;"
-                    @click="fetch(selCancelUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({})}).then(async r=>{const d=await r.json();showCancel=false;if(r.ok){resultType='success';resultTitle='Request Cancelled';resultMessage=d.message??'Your request has been cancelled successfully.';showResult=true;setTimeout(()=>window.location.reload(),2500);}else{resultType='error';resultTitle='Cancellation Failed';resultMessage=d.message??'Something went wrong. Please try again.';showResult=true;}}).catch(()=>{showCancel=false;resultType='error';resultTitle='Error';resultMessage='An error occurred. Please try again.';showResult=true;})">
+                    @click="fetch(selCancelUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({type:selType})}).then(async r=>{const d=await r.json();showCancel=false;if(r.ok){resultType='success';resultTitle='Request Cancelled';resultMessage=d.message??'Your request has been cancelled successfully.';showResult=true;setTimeout(()=>window.location.reload(),2500);}else{resultType='error';resultTitle='Cancellation Failed';resultMessage=d.message??'Something went wrong. Please try again.';showResult=true;}}).catch(()=>{showCancel=false;resultType='error';resultTitle='Error';resultMessage='An error occurred. Please try again.';showResult=true;})">
                     Yes, Cancel
                 </button>
             </div>

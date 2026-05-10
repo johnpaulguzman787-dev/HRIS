@@ -49,6 +49,8 @@
         .anim-4 { animation: fadeSlideUp 0.38s 0.18s ease both; }
         @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to   { opacity: 1; transform: translateX(0); }
         }
+        .anim-fade { animation: fadeSlideDown 0.4s ease both; }
+        @keyframes fadeSlideDown { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
         .slide-in-right { animation: slideInRight 0.25s cubic-bezier(0.4,0,0.2,1) both; }
         .cards-wrap { display: flex; gap: 16px; flex-wrap: wrap }   
         .summary-card { background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; padding: 22px 26px; flex: 1; transition: transform 0.2s ease, box-shadow 0.2s ease;}
@@ -73,10 +75,11 @@
         /* ── Tables ── */
         .data-table { width:100%; border-collapse:collapse; min-width:600px; }
         .data-table thead th {
-            padding: 13px 24px;
+            padding: 13px 16px;
             font-size: 0.75rem;
             font-weight: 600;
             color: #9ca3af;
+            text-align: left;
             text-transform: uppercase;
             letter-spacing: 0.06em;
             white-space: nowrap;
@@ -260,22 +263,27 @@
     ══════════════════════════════════════════════════ --}}
     <!-- ===================== MAIN CONTENT ===================== -->
     <div class="flex-1 overflow-y-auto min-h-screen w-full transition-margin"
-         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
+         :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
          style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
         {{-- Header with Hamburger --}}
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
-            <div class="flex items-center justify-between px-8 py-4">
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
+            <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <button @click="mobileMenuOpen = true"
-                            class="lg:hidden p-2 rounded-lg hover:bg-white/20 transition-colors">
+                            class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
-                    <h1 class="text-white font-bold text-xl">Payroll</h1>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white">Payroll</h1>
+                        <p class="text-xs sm:text-sm text-blue-100 mt-1">Manage payroll periods and structures</p>
+                    </div>
                 </div>
-                <x-notification-bell />
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <x-notification-bell />
+                </div>
             </div>
         </header>
 
@@ -1677,7 +1685,7 @@
                 <h2 class="text-lg font-bold text-gray-800">Edit Salary Grade</h2>
                 <button @click="showEditGradeModal=false" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
             </div>
-            <form :action="`/admin/payroll/grade/${editGrade.id}/update`" method="POST" class="space-y-4">
+            <form :action="`/payroll_officer/payroll/grade/${editGrade.id}/update`" method="POST" class="space-y-4">
                 @csrf @method('PUT')
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label class="block text-sm font-medium text-gray-700 mb-1.5">Grade Code</label><input type="text" name="grade_code" x-model="editGrade.gradeCode" required class="ctrl w-full"></div>

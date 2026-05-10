@@ -88,13 +88,13 @@ window._employeeData = @json($_employeeData);
     {{-- MAIN CONTENT                            --}}
     {{-- ═══════════════════════════════════════ --}}
     <main class="flex-1 overflow-y-auto min-h-screen w-full"
-        :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'"
+        :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
         style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);">
 
         {{-- ── HEADER ── --}}
-        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 shadow-lg mt-3 mx-3 rounded-2xl overflow-visible">
-            <div class="px-4 sm:px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
+        <header class="anim-fade bg-gradient-to-br from-blue-500 to-blue-700 sticky top-0 z-10 shadow-lg mt-3 mx-3 lg:mt-4 lg:mx-4 rounded-2xl">
+            <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
                     <button @click="mobileMenuOpen = true"
                             class="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,11 +102,11 @@ window._employeeData = @json($_employeeData);
                         </svg>
                     </button>
                     <div>
-                        <h1 class="text-lg sm:text-xl font-bold text-white">Employee Profile</h1>
-                        <p class="text-xs text-blue-100 mt-0.5 hidden sm:block">View employee information</p>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white">Employee Profile</h1>
+                        <p class="text-xs sm:text-sm text-blue-100 mt-1">View employee information</p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2 sm:space-x-4">
                     <x-supervisor-notif />
                 </div>
             </div>
@@ -283,9 +283,6 @@ window._employeeData = @json($_employeeData);
                                 <span class="text-xs font-semibold text-gray-700 truncate max-w-[150px] sm:max-w-none" x-text="doc.name"></span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <button @click="openDoc(doc)" class="px-2 py-1 text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200">
-                                    View
-                                </button>
                                 <button @click="window.open(doc.download_url, '_blank')" class="px-2 py-1 text-[10px] font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200">
                                     Download
                                 </button>

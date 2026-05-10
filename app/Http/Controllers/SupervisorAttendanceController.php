@@ -665,6 +665,13 @@ class SupervisorAttendanceController extends Controller
             }
             $myLeaveRequests = $myLeaveQuery->get();
 
+            foreach ($leaveTypes as $lt) {
+                LeaveCredit::firstOrCreate(
+                    ['employee_id' => $authEmployee->id, 'leave_type_id' => $lt->id, 'year' => $currentYear],
+                    ['total_days' => $lt->days_entitled ?? 0, 'used_days' => 0, 'remaining_days' => $lt->days_entitled ?? 0]
+                );
+            }
+
             $credits = LeaveCredit::with('leaveType')
                 ->where('employee_id', $authEmployee->id)
                 ->where('year', $currentYear)
@@ -847,7 +854,7 @@ class SupervisorAttendanceController extends Controller
             ->where('employee_id', $employee->id)
             ->firstOrFail();
 
-        if (!in_array($leave->status, ['pending', 'approved'])) {
+        if (!in_array($leave->status, ['pending', 'supervisor_approved', 'approved'])) {
             return response()->json(['message' => 'This leave cannot be cancelled.'], 409);
         }
 

@@ -391,6 +391,13 @@ class PayrollOfficerAttendanceController extends Controller
             }
             $myLeaveRequests = $myLeaveQuery->get();
 
+            foreach ($leaveTypes as $lt) {
+                LeaveCredit::firstOrCreate(
+                    ['employee_id' => $employee->id, 'leave_type_id' => $lt->id, 'year' => $currentYear],
+                    ['total_days' => $lt->days_entitled ?? 0, 'used_days' => 0, 'remaining_days' => $lt->days_entitled ?? 0]
+                );
+            }
+
             $credits = LeaveCredit::with('leaveType')
                 ->where('employee_id', $employee->id)
                 ->where('year', $currentYear)
@@ -542,7 +549,7 @@ class PayrollOfficerAttendanceController extends Controller
             ->where('employee_id', $employee->id)
             ->firstOrFail();
 
-        if (!in_array($leave->status, ['pending', 'approved'])) {
+        if (!in_array($leave->status, ['pending', 'supervisor_approved', 'approved'])) {
             return response()->json(['message' => 'This leave cannot be cancelled.'], 409);
         }
 
@@ -955,39 +962,58 @@ class PayrollOfficerAttendanceController extends Controller
             return response()->json(['message' => 'Employee record not found.'], 422);
         }
 
-        $leave = LeaveRequest::where('id', $id)->where('employee_id', $employee->id)->first();
-        if ($leave) {
-            return $this->cancelLeave($request, $id);
-        }
+        $type = $request->input('type');
 
-        $ot = OvertimeRequest::where('id', $id)->where('employee_id', $employee->id)->first();
-        if ($ot) {
-            if (!in_array($ot->status, ['pending', 'supervisor_approved'])) {
-                return response()->json(['message' => 'This request cannot be cancelled.'], 409);
+        if ($type === 'leave' || $type === null) {
+            $leave = LeaveRequest::where('id', $id)->where('employee_id', $employee->id)->first();
+            if ($leave) {
+                return $this->cancelLeave($request, $id);
             }
-            $ot->update(['status' => 'cancelled']);
-            return response()->json(['message' => 'Overtime request cancelled.']);
-        }
-
-        $scr = ShiftChangeRequest::where('id', $id)->where('employee_id', $employee->id)->first();
-        if ($scr) {
-            if (!in_array($scr->status, ['pending', 'supervisor_approved'])) {
-                return response()->json(['message' => 'This request cannot be cancelled.'], 409);
+            if ($type === 'leave') {
+                return response()->json(['message' => 'Request not found.'], 404);
             }
-            $scr->update(['status' => 'cancelled']);
-            return response()->json(['message' => 'Shift change request cancelled.']);
         }
 
-        $adj = AttendanceAdjustmentRequest::where('id', $id)->where('employee_id', $employee->id)->first();
-        if ($adj) {
-            if (!in_array($adj->status, ['pending', 'supervisor_approved'])) {
-                return response()->json(['message' => 'This request cannot be cancelled.'], 409);
+        if ($type === 'overtime' || $type === null) {
+            $ot = OvertimeRequest::where('id', $id)->where('employee_id', $employee->id)->first();
+            if ($ot) {
+                if (!in_array($ot->status, ['pending', 'supervisor_approved'])) {
+                    return response()->json(['message' => 'This request cannot be cancelled.'], 409);
+                }
+                $ot->update(['status' => 'cancelled']);
+                return response()->json(['message' => 'Overtime request cancelled.']);
             }
-            $adj->update(['status' => 'cancelled']);
-            return response()->json(['message' => 'Attendance adjustment request cancelled.']);
+            if ($type === 'overtime') {
+                return response()->json(['message' => 'Request not found.'], 404);
+            }
         }
 
-        return response()->json(['message' => 'Request not found.']);
+        if ($type === 'shift' || $type === null) {
+            $scr = ShiftChangeRequest::where('id', $id)->where('employee_id', $employee->id)->first();
+            if ($scr) {
+                if (!in_array($scr->status, ['pending', 'supervisor_approved'])) {
+                    return response()->json(['message' => 'This request cannot be cancelled.'], 409);
+                }
+                $scr->update(['status' => 'cancelled']);
+                return response()->json(['message' => 'Shift change request cancelled.']);
+            }
+            if ($type === 'shift') {
+                return response()->json(['message' => 'Request not found.'], 404);
+            }
+        }
+
+        if ($type === 'adjustment' || $type === null) {
+            $adj = AttendanceAdjustmentRequest::where('id', $id)->where('employee_id', $employee->id)->first();
+            if ($adj) {
+                if (!in_array($adj->status, ['pending', 'supervisor_approved'])) {
+                    return response()->json(['message' => 'This request cannot be cancelled.'], 409);
+                }
+                $adj->update(['status' => 'cancelled']);
+                return response()->json(['message' => 'Attendance adjustment request cancelled.']);
+            }
+        }
+
+        return response()->json(['message' => 'Request not found.'], 404);
     }
 
     public function fileAttendanceAdjustment(Request $request)

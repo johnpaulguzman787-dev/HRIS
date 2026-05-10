@@ -197,9 +197,10 @@
         .lt-spl  { background: #fef9c3; color: #a16207; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
 
         /* ── STATUS BADGES ── */
-        .status-pending  { background: #ffedd5; color: #c2410c; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
-        .status-approved { background: #dcfce7; color: #15803d; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
-        .status-rejected { background: #fee2e2; color: #dc2626; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
+        .status-pending   { background: #ffedd5; color: #c2410c; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
+        .status-approved  { background: #dcfce7; color: #15803d; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
+        .status-rejected  { background: #fee2e2; color: #dc2626; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
+        .status-cancelled { background: #f3f4f6; color: #6b7280; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
 
         /* ── LEAVE CREDITS SECTION ── */
         .credits-3col {
@@ -607,6 +608,25 @@
          selectedLeave: {},
          leaveError: '',
          cancelling: false,
+         showCancelConfirm: false,
+         cancelTargetId: null,
+         editLt: { id: null, name: '', code: '', days_entitled: '', is_paid: true, requires_document: false, applicable_to: '', carry_over: false },
+         saving: false,
+         errorMsg: '',
+         async submitEditLeaveType() {
+             this.errorMsg = '';
+             if (!this.editLt.name || !this.editLt.code) { this.errorMsg = 'Name and code are required.'; return; }
+             this.saving = true;
+             const res = await fetch(`/hr/leave/types/${this.editLt.id}/update`, {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                 body: JSON.stringify(this.editLt)
+             });
+             this.saving = false;
+             const data = await res.json();
+             if (res.ok) { window.location.reload(); }
+             else { this.errorMsg = data.message ?? 'Something went wrong.'; }
+         },
          async openLeaveDetails(id) {
              this.leaveError = '';
              this.selectedLeave = {};
@@ -622,7 +642,6 @@
              }
          },
          async cancelLeave(id) {
-             if (!confirm('Are you sure you want to cancel this leave request?')) return;
              this.cancelling = true;
              const res = await fetch(`/hr/leave/${id}/cancel`, {
                  method: 'POST',
@@ -638,29 +657,12 @@
              });
              const data = await res.json();
              if (res.ok) {
-                 this.$dispatch('set-edit-lt', data);
+                 this.editLt = { id: data.id, name: data.name, code: data.code, days_entitled: data.days_entitled ?? '', is_paid: !!data.is_paid, requires_document: !!data.requires_document, applicable_to: data.applicable_to ?? '', carry_over: !!data.carry_over };
                  this.showEditLeaveType = true;
              }
          }
      }"
-     x-init="
-         window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed });
-         window.addEventListener('set-edit-lt', e => {
-             const d = e.detail;
-             if (document.querySelector('[x-show=\'showEditLeaveType\']') && document.querySelector('[x-show=\'showEditLeaveType\']').__x) {
-                 document.querySelector('[x-show=\'showEditLeaveType\']').__x.$data.editLt = {
-                     id:                 d.id,
-                     name:               d.name,
-                     code:               d.code,
-                     days_entitled:      d.days_entitled ?? '',
-                     is_paid:            !!d.is_paid,
-                     requires_document:  !!d.requires_document,
-                     applicable_to:      d.applicable_to ?? '',
-                     carry_over:         !!d.carry_over,
-                 };
-             }
-         });
-     "
+     x-init="window.addEventListener('sidebar-toggle', e => { collapsed = e.detail.collapsed })"
      :style="window.innerWidth >= 1024 ? (collapsed ? 'margin-left:5rem' : 'margin-left:16rem') : 'margin-left:0'"
      x-on:resize.window="$el.style.marginLeft = window.innerWidth >= 1024 ? (collapsed ? '5rem' : '16rem') : '0'"
      style="transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1); min-height:100vh;"
@@ -723,7 +725,8 @@
                     <option value="">All Status</option>
                     <option value="pending" {{ request('status')==='pending' ? 'selected' : '' }}>Pending</option>
                     <option value="approved" {{ request('status')==='approved' ? 'selected' : '' }}>Approved</option>
-                    <option value="rejected" {{ request('status')==='rejected' ? 'selected' : '' }}>Rejected</option>
+                    <option value="rejected"   {{ request('status')==='rejected'   ? 'selected' : '' }}>Rejected</option>
+                    <option value="cancelled" {{ request('status')==='cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
                 <select class="filter-select" onchange="window.location.href='{{ route('hr.leave.management') }}?tab=my-leave&type='+this.value+'&status={{ request('status') }}'">
                     <option value="">All Types</option>
@@ -809,8 +812,8 @@
             <div class="leave-card">
                 <span class="leave-badge" style="background:#dbeafe;color:#1d4ed8;">{{ $lt->code }}</span>
                 <div class="leave-card-label">{{ $lt->name }}</div>
-                <div class="leave-card-value">{{ $creditStats[$key.'_used'] ?? 0 }}</div>
-                <div class="leave-card-sub">{{ $creditStats[$key.'_remaining'] ?? 0 }} remaining of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
+                <div class="leave-card-value">{{ $creditStats[$key.'_remaining'] ?? 0 }}</div>
+                <div class="leave-card-sub">{{ $creditStats[$key.'_used'] ?? 0 }} used of {{ $creditStats[$key.'_total'] ?? $lt->days_entitled ?? 0 }}</div>
             </div>
             @empty
             <div class="leave-card">
@@ -826,7 +829,8 @@
                     <option value="">All Status</option>
                     <option value="pending" {{ request('status')==='pending' ? 'selected' : '' }}>Pending</option>
                     <option value="approved" {{ request('status')==='approved' ? 'selected' : '' }}>Approved</option>
-                    <option value="rejected" {{ request('status')==='rejected' ? 'selected' : '' }}>Rejected</option>
+                    <option value="rejected"   {{ request('status')==='rejected'   ? 'selected' : '' }}>Rejected</option>
+                    <option value="cancelled" {{ request('status')==='cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
                 <select class="filter-select" onchange="window.location.href='{{ route('hr.leave.management') }}?tab=my-leave&type='+this.value+'&status={{ request('status') }}'">
                     <option value="">All Types</option>
@@ -1284,9 +1288,9 @@
 
                 <div class="modal-actions">
                     @canDo('Leave Management', 'create')
-                    <template x-if="selectedLeave.status === 'pending'">
+                    <template x-if="selectedLeave.status === 'pending' || selectedLeave.status === 'supervisor_approved'">
                         <button class="btn-cancel" style="background:#fef2f2;color:#dc2626;border-color:#fecaca;"
-                            @click="cancelLeave(selectedLeave.id)" x-text="cancelling ? 'Cancelling…' : 'Cancel Request'"></button>
+                            @click="window.dispatchEvent(new CustomEvent('open-cancel-confirm',{detail:{id:selectedLeave.id}}))">Cancel Request</button>
                     </template>
                     @endcanDo
                     <button class="btn-save" @click="showLeaveDetails = false">Close</button>
@@ -1295,27 +1299,7 @@
         </div>
 
         {{-- Edit Leave Type Modal --}}
-        <div x-show="showEditLeaveType" class="modal-overlay" x-cloak @click.self="showEditLeaveType = false"
-             x-data="{
-                 editLt: { id: null, name: '', code: '', days_entitled: '', is_paid: true, requires_document: false, applicable_to: '', carry_over: false },
-                 saving: false, errorMsg: '',
-                 async submitEdit() {
-                     this.errorMsg = '';
-                     if (!this.editLt.name || !this.editLt.code) {
-                         this.errorMsg = 'Name and code are required.'; return;
-                     }
-                     this.saving = true;
-                     const res = await fetch(`/hr/leave/types/${this.editLt.id}/update`, {
-                         method: 'POST',
-                         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                         body: JSON.stringify(this.editLt)
-                     });
-                     this.saving = false;
-                     const data = await res.json();
-                     if (res.ok) { window.location.reload(); }
-                     else { this.errorMsg = data.message ?? 'Something went wrong.'; }
-                 }
-             }">
+        <div x-show="showEditLeaveType" class="modal-overlay" x-cloak @click.self="showEditLeaveType = false">
             <div class="modal-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
                     <div class="modal-title">Edit Leave Type</div>
@@ -1385,11 +1369,57 @@
 
                 <div class="modal-actions">
                     <button class="btn-cancel" @click="showEditLeaveType = false">Cancel</button>
-                    <button class="btn-save" @click="submitEdit()" :disabled="saving" x-text="saving ? 'Saving…' : 'Save Changes'"></button>
+                    <button class="btn-save" @click="submitEditLeaveType()" :disabled="saving" x-text="saving ? 'Saving…' : 'Save Changes'"></button>
                 </div>
             </div>
         </div>
 
+    </div>
+
+    {{-- ── Cancel Leave Confirmation Modal ── --}}
+    <div x-data="{ open: false, targetId: null, cancelling: false }"
+         @open-cancel-confirm.window="open = true; targetId = $event.detail.id"
+         x-show="open"
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/50">
+        <div x-show="open"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-gray-900">Cancel Leave Request</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">This action cannot be undone.</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600 mb-6">Are you sure you want to cancel this leave request?</p>
+            <div class="flex gap-3 justify-end">
+                <button @click="open = false; targetId = null"
+                        class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200">
+                    Keep Request
+                </button>
+                <button @click="cancelling = true; fetch('/hr/leave/'+targetId+'/cancel',{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content}}).then(r=>{cancelling=false;if(r.ok)location.reload();else alert('Failed to cancel.');open=false;})"
+                        :disabled="cancelling"
+                        class="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-all duration-200 disabled:opacity-60"
+                        x-text="cancelling ? 'Cancelling…' : 'Yes, Cancel'">
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 

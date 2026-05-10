@@ -290,9 +290,6 @@ window._employeeData = @json($_employeeData);
                                 <span class="text-xs lg:text-sm font-semibold text-gray-700 group-hover:text-blue-700 transition-colors duration-200" x-text="doc.name"></span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <button @click="openDoc(doc)" class="px-2 py-1 lg:px-4 lg:py-1.5 text-[10px] lg:text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200 hover:shadow-md">
-                                    View
-                                </button>
                                 <button @click="window.open(doc.download_url, '_blank')" class="px-2 py-1 lg:px-4 lg:py-1.5 text-[10px] lg:text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200 hover:shadow-md">
                                     Download
                                 </button>
@@ -313,9 +310,6 @@ window._employeeData = @json($_employeeData);
                                     <span class="text-xs lg:text-sm font-semibold text-gray-700">contract.pdf</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <button class="view-sample px-2 py-1 lg:px-4 lg:py-1.5 text-[10px] lg:text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200">
-                                        View
-                                    </button>
                                     <button class="download-sample px-2 py-1 lg:px-4 lg:py-1.5 text-[10px] lg:text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200">
                                         Download
                                     </button>
@@ -331,9 +325,6 @@ window._employeeData = @json($_employeeData);
                                     <span class="text-xs lg:text-sm font-semibold text-gray-700">resume.pdf</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <button class="view-sample px-2 py-1 lg:px-4 lg:py-1.5 text-[10px] lg:text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200">
-                                        View
-                                    </button>
                                     <button class="download-sample px-2 py-1 lg:px-4 lg:py-1.5 text-[10px] lg:text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200">
                                         Download
                                     </button>

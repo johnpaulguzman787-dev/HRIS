@@ -226,7 +226,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true', showFileReq: false, reqType: '', showCancel: false, selId: null, selName: '', selCancelUrl: '', showResult: false, resultType: 'success', resultTitle: '', resultMessage: '' }"
+<body class="bg-gray-50" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true', showFileReq: false, reqType: '', showCancel: false, selId: null, selName: '', selCancelUrl: '', selType: '', showResult: false, resultType: 'success', resultTitle: '', resultMessage: '' }"
      x-init="window.addEventListener('sidebar-toggle', e => { sidebarCollapsed = e.detail.collapsed })">
 
 {{-- ══════════ SIDEBAR (Desktop & Mobile Drawer) ══════════ --}}
@@ -427,7 +427,7 @@
                 </div></div>
             </div>
             <div class="action-row">
-                <button class="btn-cancel-req" @click="selId={{ $req->id }};selName='{{ addslashes(trim((auth()->user()->employee->fname ?? '').' '.(auth()->user()->employee->lname ?? ''))) }}';selCancelUrl='{{ route('employee.requests.cancel', $req->id) }}';showCancel=true">
+                <button class="btn-cancel-req" @click="selId={{ $req->id }};selName='{{ addslashes(trim((auth()->user()->employee->fname ?? '').' '.(auth()->user()->employee->lname ?? ''))) }}';selCancelUrl='{{ route('employee.requests.cancel', $req->id) }}';selType='{{ $req->type }}';showCancel=true">
                     <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Cancel Request
                 </button>
             </div>
@@ -677,7 +677,7 @@
             <div style="display:flex;justify-content:center;gap:12px;">
                 <button class="btn-cancel" style="min-width:100px;" @click="showCancel=false">Back</button>
                 <button style="min-width:100px;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;border:none;background:#dc2626;color:#fff;cursor:pointer;"
-                    @click="fetch(selCancelUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({})}).then(async r=>{const d=await r.json();showCancel=false;if(r.ok){resultType='success';resultTitle='Request Cancelled';resultMessage=d.message??'Your request has been cancelled successfully.';showResult=true;setTimeout(()=>window.location.reload(),2500);}else{resultType='error';resultTitle='Cancellation Failed';resultMessage=d.message??'Something went wrong.';showResult=true;}}).catch(()=>{showCancel=false;resultType='error';resultTitle='Error';resultMessage='An error occurred.';showResult=true;})">
+                    @click="fetch(selCancelUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({type:selType})}).then(async r=>{const d=await r.json();showCancel=false;if(r.ok){resultType='success';resultTitle='Request Cancelled';resultMessage=d.message??'Your request has been cancelled successfully.';showResult=true;setTimeout(()=>window.location.reload(),2500);}else{resultType='error';resultTitle='Cancellation Failed';resultMessage=d.message??'Something went wrong.';showResult=true;}}).catch(()=>{showCancel=false;resultType='error';resultTitle='Error';resultMessage='An error occurred.';showResult=true;})">
                     Yes, Cancel
                 </button>
             </div>

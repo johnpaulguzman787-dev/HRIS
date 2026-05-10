@@ -873,7 +873,7 @@
                     <!-- STEP 1: Basic Details -->
                     <div x-show="addStep === 1" class="px-6 sm:px-8 pt-5 pb-0 space-y-4 overflow-y-auto" style="max-height: calc(92vh - 185px);">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-800 mb-1.5">Name</label>
+                            <label class="block text-sm font-semibold text-gray-800 mb-1.5">Full Name</label>
                             <div class="flex flex-col sm:flex-row gap-2">
                                 <div class="flex-1 min-w-0">
                                     <input type="text" x-model="newEmployeeForm.first_name" placeholder="First Name"
@@ -891,24 +891,24 @@
                                         class="w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-transparent text-gray-700 placeholder-gray-400">
                                     <p x-show="hasError('last_name')" x-text="fieldError('last_name')" class="text-xs text-red-500 mt-1"></p>
                                 </div>
-                                <div class="flex flex-row gap-2">
-                                    <div class="w-16">
-                                        <input type="text" x-model="newEmployeeForm.mi" placeholder="MI" minlength="1" maxlength="2"
-                                            @input="newEmployeeForm.mi = $event.target.value.replace(/[^a-zA-Z]/g, '')"
-                                            class="w-full px-2 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 text-center uppercase text-gray-700 placeholder-gray-400">
-                                    </div>
-                                    <div class="relative flex-1 sm:w-36">
-                                        <select x-model="newEmployeeForm.suffix"
-                                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 appearance-none bg-white text-gray-400">
-                                            <option value="" disabled selected>Suffix</option>
-                                            <option value="None">None</option>
-                                            <option value="Sr.">Sr.</option>
-                                            <option value="Jr.">Jr.</option>
-                                            <option value="Other">Other</option>
-                                        </select>
-                                        <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                        </div>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-2 mt-2">
+                                <div class="w-full sm:w-14">
+                                    <input type="text" x-model="newEmployeeForm.mi" placeholder="MI" minlength="1" maxlength="2"
+                                        @input="newEmployeeForm.mi = $event.target.value.replace(/[^a-zA-Z]/g, '')"
+                                        class="w-full px-2 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 uppercase text-gray-700 placeholder-gray-400 text-left sm:text-center">
+                                </div>
+                                <div class="relative flex-1 sm:w-36">
+                                    <select x-model="newEmployeeForm.suffix"
+                                        class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 appearance-none bg-white text-gray-700">
+                                        <option value="" disabled selected>Suffix</option>
+                                        <option value="None">None</option>
+                                        <option value="Sr.">Sr.</option>
+                                        <option value="Jr.">Jr.</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                                     </div>
                                 </div>
                             </div>
@@ -1227,7 +1227,7 @@
                                 <div x-show="empTab === 'basic'" class="px-6 sm:px-8 py-5 space-y-4">
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Full Name</label>
-                                        <div class="flex flex-col sm:flex-row gap-2">
+                                        <div class="flex flex-row gap-2">
                                             <div class="flex-1">
                                                 <input type="text" x-model="selectedEmployee.first_name" placeholder="First Name"
                                                     :readonly="!isEditMode"
@@ -1244,11 +1244,11 @@
                                                     :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
                                                     class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                                             </div>
-                                            <div class="w-full sm:w-20">
+                                            <div class="w-14">
                                                 <input type="text" x-model="selectedEmployee.mi" placeholder="MI" maxlength="2"
                                                     :readonly="!isEditMode"
                                                     :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
-                                                    class="w-full px-2 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center uppercase transition-all">
+                                                    class="w-full px-2 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase transition-all text-center">
                                             </div>
                                         </div>
                                         <div class="mt-2 relative">

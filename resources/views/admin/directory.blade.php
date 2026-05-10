@@ -1112,7 +1112,7 @@
                     <div x-show="addStep === 1" class="px-8 pt-5 pb-0 space-y-4 overflow-y-auto flex-1">
 
                         <div>
-                            <label class="block text-sm font-semibold text-gray-800 mb-1.5">Name</label>
+                            <label class="block text-sm font-semibold text-gray-800 mb-1.5">Full Name</label>
                             <div class="flex flex-col sm:flex-row gap-2">
                                 <div class="flex-1 min-w-0">
                                     <input type="text" x-model="newEmployeeForm.first_name" placeholder="First Name"
@@ -1133,7 +1133,7 @@
                                 <div class="w-full sm:w-14">
                                     <input type="text" x-model="newEmployeeForm.mi" placeholder="MI" minlength="1" maxlength="2"
                                         @input="newEmployeeForm.mi = $event.target.value.replace(/[^a-zA-Z]/g, '')"
-                                        class="w-full px-2 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 text-center uppercase text-gray-700 placeholder-gray-400">
+                                        class="w-full px-2 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 uppercase text-gray-700 placeholder-gray-400 text-left sm:text-center">
                                 </div>
                                 <div class="relative w-full sm:w-36">
                                     <select x-model="newEmployeeForm.suffix"
@@ -1481,7 +1481,7 @@
 
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Full Name</label>
-                                        <div class="flex flex-col sm:flex-row gap-2">
+                                        <div class="flex flex-row gap-2">
                                             <div class="flex-1">
                                                 <input type="text" x-model="selectedEmployee.first_name" placeholder="First Name"
                                                     :readonly="!isEditMode"
@@ -1498,11 +1498,11 @@
                                                     :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
                                                     class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                                             </div>
-                                            <div class="w-full sm:w-20">
+                                            <div class="w-14">
                                                 <input type="text" x-model="selectedEmployee.mi" placeholder="MI" maxlength="2"
                                                     :readonly="!isEditMode"
                                                     :class="{'bg-gray-50 cursor-not-allowed': !isEditMode, 'bg-white': isEditMode}"
-                                                    class="w-full px-2 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center uppercase transition-all">
+                                                    class="w-full px-2 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase transition-all text-center">
                                             </div>
                                         </div>
                                         <div class="mt-2 relative">

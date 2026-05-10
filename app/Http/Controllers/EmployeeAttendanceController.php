@@ -56,7 +56,10 @@ class EmployeeAttendanceController extends Controller
             ->with('shift')
             ->first() : null;
 
-        return view('employee.employee_attendance-reports', compact('employeeShift', 'availableShifts', 'stats', 'todayLog', 'month', 'year'));
+        $perm = \App\Models\Permission::where('role', 'employee')->where('module', 'Time & Attendance')->first();
+        $canExportAttendance = $perm ? (bool) $perm->can_export : false;
+
+        return view('employee.employee_attendance-reports', compact('employeeShift', 'availableShifts', 'stats', 'todayLog', 'month', 'year', 'canExportAttendance'));
     }
 
     public function clockIn(Request $request)

@@ -124,7 +124,7 @@
         @media (max-width: 768px) { .main-content-padding { padding: 14px !important; } }
     </style>
 </head>
-<body class="bg-gray-100" x-data="{ mobileMenuOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+<body class="bg-gray-100" x-data="attendancePage()" x-init="init()"
      x-init="window.addEventListener('sidebar-toggle', e => { sidebarCollapsed = e.detail.collapsed })">
 
 {{-- ═══════════ DESKTOP SIDEBAR ═══════════ --}}
@@ -213,8 +213,8 @@
         </div>
 
         {{-- ── ATTENDANCE RECORDS TABLE (Responsive) ── --}}
-        <div class="anim-up bg-white rounded-2xl overflow-hidden"
-             style="animation-delay:0.26s; box-shadow:0 1px 12px rgba(0,0,0,0.07);">
+       <div class="anim-up bg-white rounded-2xl overflow-visible"
+     style="animation-delay:0.26s; box-shadow:0 1px 12px rgba(0,0,0,0.07);">
 
             <div class="px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <h3 class="font-bold text-gray-800 text-base">Attendance Records</h3>
@@ -244,10 +244,7 @@
                     </div>
                     @canDo('Time & Attendance', 'export')
                     <button @click="exportPdf()"
-                            :disabled="totalRecords === 0"
-                            :class="totalRecords > 0 ? 'export-btn' : ''"
-                            :style="totalRecords > 0 ? '' : 'background:#d1d5db;cursor:not-allowed;'"
-                            class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white border-none">
+                            class="export-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white border-none">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         Export PDF
                     </button>
@@ -255,7 +252,7 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto overflow-y-visible">
                 <table class="w-full">
                     <thead>
                         <tr class="border-t border-b border-gray-100 bg-gray-50/60">
@@ -401,7 +398,7 @@ function attendancePage() {
         currentSessionStart: {{ $openSession?->clock_in ? \Carbon\Carbon::parse($openSession->clock_in)->valueOf() : 'null' }},
         currentSessionBreakMinutes: {{ $openSession?->break_minutes ?? 0 }},
         liveTime: '', liveDate: '', elapsedSeconds: 0,
-        rows: [], currentPage: 1, totalRecords: 0, perPage: 10,
+        rows: [], currentPage: 1, totalRecords: {{ $records->total() ?? 0 }}, perPage: 10,
         currentMonth: {{ $month }}, currentYear: {{ $year }},
         selectedMonth: {{ $month }},
         errorMessage: '',

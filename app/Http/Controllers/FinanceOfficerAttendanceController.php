@@ -55,7 +55,14 @@ class FinanceOfficerAttendanceController extends Controller
             ->with('shift')
             ->first() : null;
 
-        return view('finance_officer.finance_attendance-reports', compact('employeeShift', 'availableShifts', 'stats', 'todayLog', 'month', 'year'));
+        $records = $employee ? AttendanceLog::with('shift')
+            ->where('employee_id', $employee->id)
+            ->whereMonth('attendance_date', $month)
+            ->whereYear('attendance_date', $year)
+            ->orderByDesc('attendance_date')
+            ->paginate(10) : collect();
+
+        return view('finance_officer.finance_attendance-reports', compact('employeeShift', 'availableShifts', 'stats', 'todayLog', 'month', 'year', 'records'));
     }
 
     public function clockIn(Request $request)

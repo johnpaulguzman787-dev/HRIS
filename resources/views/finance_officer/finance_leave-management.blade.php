@@ -288,9 +288,10 @@
         .data-table tbody tr:hover { background: #fafafa; }
 
         /* ─── STATUS BADGES ─────────────────────────────────────── */
-        .status-pending  { background: #ffedd5; color: #c2410c; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
-        .status-approved { background: #dcfce7; color: #15803d; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
-        .status-rejected { background: #fee2e2; color: #dc2626; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
+        .status-pending   { background: #ffedd5; color: #c2410c; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
+        .status-approved  { background: #dcfce7; color: #15803d; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
+        .status-rejected  { background: #fee2e2; color: #dc2626; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
+        .status-cancelled { background: #f3f4f6; color: #6b7280; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
         @media (min-width: 640px) {
             .status-pending, .status-approved, .status-rejected { padding: 3px 12px; font-size: 12px; }
         }
@@ -558,6 +559,8 @@
     selectedLeave: {},
     leaveError: '',
     cancelling: false,
+    showCancelConfirm: false,
+    cancelTargetId: null,
     async openLeaveDetails(id) {
         this.leaveError = '';
         this.selectedLeave = {};
@@ -569,7 +572,6 @@
         else { this.leaveError = data.message ?? 'Failed to load leave details.'; }
     },
     async cancelLeave(id) {
-        if (!confirm('Are you sure you want to cancel this leave request?')) return;
         this.cancelling = true;
         const res = await fetch(`/finance_officer/leave/${id}/cancel`, {
             method: 'POST',
@@ -671,7 +673,8 @@
                     <option value="">All Status</option>
                     <option value="pending" {{ request('status')==='pending' ? 'selected' : '' }}>Pending</option>
                     <option value="approved" {{ request('status')==='approved' ? 'selected' : '' }}>Approved</option>
-                    <option value="rejected" {{ request('status')==='rejected' ? 'selected' : '' }}>Rejected</option>
+                    <option value="rejected"   {{ request('status')==='rejected'   ? 'selected' : '' }}>Rejected</option>
+                    <option value="cancelled" {{ request('status')==='cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
                 <select class="filter-select" onchange="window.location.href='{{ route('finance_officer.leave.management') }}?tab=my-leave&type='+this.value+'&status={{ request('status') }}'">
                     <option value="">All Types</option>
@@ -823,7 +826,7 @@
                 <div class="mb-4"><div class="detail-label">Reason / Remarks</div><div class="detail-field" x-text="selectedLeave.reason || '—'"></div></div>
                 <div class="mb-4"><div class="detail-label">Status</div><div class="detail-field" x-text="selectedLeave.status ? selectedLeave.status.charAt(0).toUpperCase() + selectedLeave.status.slice(1) : '—'"></div></div>
                 <template x-if="selectedLeave.rejection_reason"><div class="mb-4"><div class="detail-label text-red-600">Rejection Reason</div><div class="bg-red-50 text-red-700 p-3 rounded-xl text-sm border border-red-200" x-text="selectedLeave.rejection_reason"></div></div></template>
-                <div class="modal-actions"><template x-if="selectedLeave.status === 'pending'"><button class="btn-cancel bg-red-50 text-red-600 border-red-200" @click="cancelLeave(selectedLeave.id)" x-text="cancelling ? 'Cancelling...' : 'Cancel Request'"></button></template><button class="btn-save" @click="showLeaveDetails = false">Close</button></div>
+                <div class="modal-actions"><template x-if="selectedLeave.status === 'pending' || selectedLeave.status === 'supervisor_approved'"><button class="btn-cancel bg-red-50 text-red-600 border-red-200" @click="window.dispatchEvent(new CustomEvent('open-cancel-confirm',{detail:{id:selectedLeave.id}}))">Cancel Request</button></template><button class="btn-save" @click="showLeaveDetails = false">Close</button></div>
             </div>
         </div>
 
@@ -851,5 +854,51 @@
         });
     })();
 </script>
+
+{{-- ── Cancel Leave Confirmation Modal ── --}}
+<div x-data="{ open: false, targetId: null, cancelling: false }"
+     @open-cancel-confirm.window="open = true; targetId = $event.detail.id"
+     x-show="open"
+     x-cloak
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/50">
+    <div x-show="open"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-gray-900">Cancel Leave Request</h3>
+                <p class="text-xs text-gray-500 mt-0.5">This action cannot be undone.</p>
+            </div>
+        </div>
+        <p class="text-sm text-gray-600 mb-6">Are you sure you want to cancel this leave request?</p>
+        <div class="flex gap-3 justify-end">
+            <button @click="open = false; targetId = null"
+                    class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200">
+                Keep Request
+            </button>
+            <button @click="cancelling = true; fetch('/finance_officer/leave/'+targetId+'/cancel',{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content}}).then(r=>{cancelling=false;if(r.ok)location.reload();else alert('Failed to cancel.');open=false;})"
+                    :disabled="cancelling"
+                    class="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-all duration-200 disabled:opacity-60"
+                    x-text="cancelling ? 'Cancelling…' : 'Yes, Cancel'">
+            </button>
+        </div>
+    </div>
+</div>
 </body>
 </html>

@@ -821,7 +821,7 @@ public function cancelLeave(Request $request, $id)
         ->where('employee_id', $employee->id)
         ->firstOrFail();
 
-    if (!in_array($leave->status, ['pending', 'approved'])) {
+    if (!in_array($leave->status, ['pending', 'supervisor_approved', 'approved'])) {
         return response()->json(['message' => 'This leave cannot be cancelled.'], 409);
     }
 

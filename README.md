@@ -21,6 +21,52 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## HRIS Test Server
+
+If you would like to test and explore the HRIS application without setting it up locally, you may access the test server using the credentials below.
+
+### Test Server URL
+
+https://hristest.medisource.com/
+
+### User Credentials
+
+#### Admin
+
+* Email: [admin@medisource.com](mailto:admin@medisource.com)
+* Password: admin123!
+
+#### HR Manager
+
+* Email: [hr@medisource.com](mailto:hr@medisource.com)
+* Password: password123
+
+#### Supervisor
+
+* Email: [supervisor@medisource.com](mailto:supervisor@medisource.com)
+* Password: password123
+
+#### Employee
+
+* Email: [employee@medisource.com](mailto:employee@medisource.com)
+* Password: password123
+
+#### Finance Officer
+
+* Email: [finance@medisource.com](mailto:finance@medisource.com)
+* Password: password123
+
+#### Payroll Officer
+
+* Email: [payroll@medisource.com](mailto:payroll@medisource.com)
+* Password: password123
+
+### Notes
+
+* These accounts are for testing and demonstration purposes only.
+* Each account has different permissions based on its assigned role.
+* Please avoid modifying or deleting important data while testing.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
